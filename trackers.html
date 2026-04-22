@@ -808,6 +808,18 @@ document.getElementById('invPwInput').addEventListener('keydown', e => {
   if (e.key === 'Escape') invCancelPw();
 });
 
+// Expose inventory functions globally so switchTab (outer scope) and inline onclick handlers can call them
+window.invLoad = invLoad;
+window.invStartEdit = invStartEdit;
+window.invCancelPw = invCancelPw;
+window.invConfirmPw = invConfirmPw;
+window.invExitEdit = invExitEdit;
+// Expose form handlers that are called from inline onclick attributes in the decrypted HTML
+window.handleEventSubmit = handleEventSubmit;
+window.handleAttSubmit = handleAttSubmit;
+window.setS = setS;
+window.markAll = markAll;
+
 
 // ═══════ INIT (called by decryption callback) ═══════
   buildRoster();

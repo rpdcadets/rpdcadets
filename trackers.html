@@ -378,6 +378,22 @@ function switchTab(tab) {
   }
 }
 
+// ═══════ SHARED ROSTER ═══════
+const names = [
+  "Lt. Daniel Hemmi",
+  "Sgt. Armando Rizvanovic","Sgt. Dimas Fredrik","Sgt. Jonathan Nidam","Sgt. Rhiannon Harris",
+  "Atzyri Orozco","Brandon Burell","Eric Velazquez","Evan Bowns",
+  "Hunter Huffman","Kara Dupre","Khaled Khmaish","Knox Giles",
+  "Luke Veldhuizen","Mariah Diaz","Naveah Lee Spell","Scout StJohn",
+  "Sebastion Ross","Taha Safi","William Knowlton"
+];
+
+const rosterGroups = [
+  { section:"Lieutenant", members:["Lt. Daniel Hemmi"]},
+  { section:"Sergeants", members:["Sgt. Armando Rizvanovic","Sgt. Dimas Fredrik","Sgt. Jonathan Nidam","Sgt. Rhiannon Harris"]},
+  { section:"Cadets", members:["Atzyri Orozco","Brandon Burell","Eric Velazquez","Evan Bowns","Hunter Huffman","Kara Dupre","Khaled Khmaish","Knox Giles","Luke Veldhuizen","Mariah Diaz","Naveah Lee Spell","Scout StJohn","Sebastion Ross","Taha Safi","William Knowlton"]}
+];
+
 // ═══════ EVENT FORM ═══════
 // These run after decryption via initForms()
 let selectedName = '';
@@ -555,14 +571,6 @@ function showToast(msg){ const t=document.getElementById('toast'); t.textContent
     });
   });
 } // end initForms
-
-// ═══════ NAV ═══════
-const navbar=document.getElementById('navbar');
-window.addEventListener('scroll',()=>{ navbar.classList.toggle('scrolled',window.scrollY>50); });
-const hamburger=document.getElementById('hamburger');
-const mobileMenu=document.getElementById('mobileMenu');
-hamburger.addEventListener('click',()=>mobileMenu.classList.toggle('open'));
-document.querySelectorAll('.mobile-menu a').forEach(l=>{ l.addEventListener('click',()=>mobileMenu.classList.remove('open')); });
 
 </script>
 <script src="shared.js"></script>

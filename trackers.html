@@ -243,12 +243,13 @@ footer { background: var(--navy); border-top: 1px solid rgba(255,255,255,0.05); 
   .inv-table th.name-col, .inv-table td.name-col { min-width: 140px; }
   .inv-table td { padding: 6px 4px; }
   .inv-checkbox { width: 18px; height: 18px; }
+}
 
 /* VIEW TOGGLE */
 .inv-view-toggle { display: flex; gap: 6px; background: rgba(255,255,255,0.03); border: 1px solid var(--card-border); border-radius: 10px; padding: 4px; margin-bottom: 16px; }
-.inv-view-btn { flex: 1; padding: 10px 14px; border: none; background: transparent; color: var(--text-muted); font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; border-radius: 7px; cursor: pointer; transition: all 0.25s ease; display: flex; align-items: center; justify-content: center; gap: 6px; }
+.inv-view-btn { flex: 1; padding: 12px 16px; border: none; background: transparent; color: var(--text-muted); font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 13px; letter-spacing: 1.5px; text-transform: uppercase; border-radius: 7px; cursor: pointer; transition: all 0.25s ease; display: flex; align-items: center; justify-content: center; gap: 8px; }
 .inv-view-btn:hover { color: var(--white); background: rgba(255,255,255,0.04); }
-.inv-view-btn.active { background: var(--red); color: var(--white); }
+.inv-view-btn.active { background: var(--red); color: var(--white); box-shadow: 0 4px 12px rgba(192,57,43,0.3); }
 .inv-view-btn svg { width: 14px; height: 14px; }
 
 /* BY-CADET: grid of cards */
@@ -258,17 +259,9 @@ footer { background: var(--navy); border-top: 1px solid rgba(255,255,255,0.05); 
 .inv-cadet-section-title .line { flex: 1; height: 1px; background: rgba(255,255,255,0.06); }
 .inv-cadet-card { display: flex; align-items: center; gap: 12px; background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 10px; padding: 12px 14px; cursor: pointer; transition: all 0.2s ease; position: relative; overflow: hidden; }
 .inv-cadet-card:hover { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.12); transform: translateY(-1px); }
-.inv-cadet-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--red); opacity: 0; transition: opacity 0.2s ease; }
-.inv-cadet-card.complete::before { background: var(--green); opacity: 1; }
-.inv-cadet-card.partial::before { background: var(--amber); opacity: 1; }
 .inv-cadet-card .avatar { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 12px; flex-shrink: 0; background: rgba(255,255,255,0.06); color: var(--text-muted); letter-spacing: 0.5px; }
-.inv-cadet-card.complete .avatar { background: var(--green); color: #fff; }
-.inv-cadet-card.partial .avatar { background: var(--amber); color: #fff; }
 .inv-cadet-card .info { flex: 1; min-width: 0; }
 .inv-cadet-card .cname { font-weight: 500; font-size: 14px; color: var(--white); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.inv-cadet-card .csub { font-family: 'Barlow Condensed', sans-serif; font-size: 11px; letter-spacing: 1px; color: var(--text-muted); text-transform: uppercase; margin-top: 2px; }
-.inv-cadet-card.complete .csub { color: var(--green); }
-.inv-cadet-card.partial .csub { color: var(--amber); }
 .inv-cadet-card .arrow { color: var(--text-muted); font-size: 18px; opacity: 0.5; }
 
 /* BY-CADET: detail view */
@@ -277,7 +270,6 @@ footer { background: var(--navy); border-top: 1px solid rgba(255,255,255,0.05); 
 .inv-detail-header { display: flex; align-items: center; gap: 14px; padding: 16px 18px; background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px 12px 0 0; border-bottom: none; }
 .inv-detail-header .avatar { width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 14px; background: var(--red); color: #fff; }
 .inv-detail-header .dname { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 1.5px; }
-.inv-detail-header .dsub { font-family: 'Barlow Condensed', sans-serif; font-size: 11px; letter-spacing: 1.5px; color: var(--text-muted); text-transform: uppercase; margin-top: 2px; }
 .inv-detail-list { background: var(--card-bg); border: 1px solid var(--card-border); border-top: none; border-radius: 0 0 12px 12px; }
 .inv-detail-row { display: flex; align-items: center; gap: 14px; padding: 12px 18px; border-bottom: 1px solid rgba(255,255,255,0.04); transition: background 0.2s ease; }
 .inv-detail-row:last-child { border-bottom: none; }
@@ -290,6 +282,7 @@ footer { background: var(--navy); border-top: 1px solid rgba(255,255,255,0.05); 
 .inv-detail-row.editable { cursor: pointer; }
 .inv-detail-row.editable:hover { background: rgba(255,255,255,0.03); }
 .inv-detail-row.editable.issued:hover { background: rgba(39,174,96,0.08); }
+
 @media (max-width: 600px) {
   .inv-cadet-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
   .inv-cadet-card { padding: 10px; gap: 8px; }

@@ -206,43 +206,28 @@ footer { background: var(--navy); border-top: 1px solid rgba(255,255,255,0.05); 
 /* INVENTORY PANEL */
 .inv-status { text-align: center; padding: 24px; color: var(--text-muted); font-size: 14px; font-style: italic; }
 .inv-status.error { color: var(--red-glow); font-style: normal; }
-.inv-controls { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; min-height: 40px; }
-.inv-edit-banner { display: flex; align-items: center; gap: 10px; flex: 1; background: rgba(217,119,6,0.08); border: 1px solid rgba(217,119,6,0.25); border-radius: 8px; padding: 10px 14px; font-size: 13px; color: var(--gold-light); }
-.inv-table-wrap { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; overflow: auto; max-height: 70vh; position: relative; }
-.inv-table { border-collapse: collapse; width: 100%; font-size: 13px; }
-.inv-table th, .inv-table td { padding: 8px 10px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.04); border-right: 1px solid rgba(255,255,255,0.04); }
-.inv-table th { position: sticky; top: 0; background: var(--navy-light); color: var(--text-muted); font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 10px; letter-spacing: 1px; text-transform: uppercase; z-index: 2; white-space: normal; min-width: 90px; max-width: 130px; line-height: 1.3; }
-.inv-table th.name-col { text-align: left; left: 0; z-index: 3; min-width: 180px; background: var(--navy-light); }
-.inv-table td.name-col { position: sticky; left: 0; background: var(--navy-deep); text-align: left; font-weight: 500; color: var(--white); font-size: 13px; z-index: 1; min-width: 180px; white-space: nowrap; }
-.inv-table tr:hover td { background: rgba(255,255,255,0.02); }
-.inv-table tr:hover td.name-col { background: rgba(26,39,68,0.95); }
 .inv-section-row td { background: rgba(212,169,82,0.06); color: var(--gold); font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; text-align: left; padding: 10px 14px; }
-.inv-checkbox { width: 20px; height: 20px; border-radius: 4px; border: 1px solid var(--card-border); background: transparent; display: inline-flex; align-items: center; justify-content: center; transition: all 0.2s ease; cursor: default; }
-.inv-checkbox.issued { background: var(--green); border-color: var(--green); color: #fff; }
-.inv-checkbox.issued::before { content: '✓'; font-weight: 700; font-size: 13px; }
-.inv-table.editing .inv-checkbox { cursor: pointer; }
-.inv-table.editing .inv-checkbox:hover { border-color: var(--green); box-shadow: 0 0 8px rgba(39,174,96,0.3); }
-.inv-table.editing .inv-checkbox.saving { opacity: 0.4; }
 .inv-meta { margin-top: 14px; text-align: center; font-size: 11px; color: var(--text-muted); font-family: 'Barlow Condensed', sans-serif; letter-spacing: 1px; text-transform: uppercase; }
-.inv-pw-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(6px); display: none; align-items: center; justify-content: center; z-index: 10000; padding: 24px; }
-.inv-pw-modal.show { display: flex; }
-.inv-pw-card { background: var(--navy); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 32px 28px; max-width: 380px; width: 100%; box-shadow: 0 30px 80px rgba(0,0,0,0.4); }
-.inv-pw-title { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 1.5px; margin-bottom: 6px; text-align: center; }
-.inv-pw-sub { font-size: 13px; color: var(--text-muted); margin-bottom: 20px; text-align: center; line-height: 1.5; }
-.inv-pw-input { width: 100%; padding: 14px 18px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: var(--white); font-family: 'Barlow', sans-serif; font-size: 15px; letter-spacing: 2px; text-align: center; outline: none; margin-bottom: 14px; }
-.inv-pw-input:focus { border-color: rgba(192,57,43,0.5); background: rgba(255,255,255,0.06); }
-.inv-pw-err { color: var(--red-glow); font-size: 12px; text-align: center; min-height: 18px; margin-bottom: 10px; }
-.inv-pw-btns { display: flex; gap: 8px; }
-.inv-pw-btns button { flex: 1; padding: 12px; border-radius: 8px; border: none; font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 13px; letter-spacing: 1.5px; text-transform: uppercase; cursor: pointer; transition: all 0.3s ease; }
-.inv-pw-confirm { background: var(--red); color: var(--white); }
-.inv-pw-confirm:hover { background: var(--red-glow); }
-.inv-pw-cancel { background: transparent; color: var(--text-muted); border: 1px solid var(--card-border); }
-.inv-pw-cancel:hover { color: var(--white); background: rgba(255,255,255,0.04); }
+
+/* Stock tables (Overall + Uniforms) */
+.inv-stock-table { width: 100%; border-collapse: collapse; background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; overflow: hidden; }
+.inv-stock-table th { background: var(--navy-light); color: var(--text-muted); font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; padding: 12px 14px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.06); }
+.inv-stock-table td { padding: 10px 14px; border-bottom: 1px solid rgba(255,255,255,0.04); text-align: center; font-size: 13px; }
+.inv-stock-table tr:last-child td { border-bottom: none; }
+.inv-stock-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+/* Status pills inside stock tables */
+.inv-status-pill { font-family: 'Barlow Condensed', sans-serif; font-size: 10px; font-weight: 600; padding: 3px 12px; border-radius: 20px; text-transform: uppercase; letter-spacing: 1px; white-space: nowrap; }
+.inv-status-pill.status-available { background: rgba(39,174,96,0.12); color: var(--green); }
+.inv-status-pill.status-unavailable { background: rgba(220,38,38,0.12); color: var(--red-abs); }
+
+/* Uniforms-by-size groupings */
+.inv-uniform-group { margin-bottom: 20px; }
+.inv-uniform-heading { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 13px; letter-spacing: 2px; text-transform: uppercase; color: var(--gold); padding: 8px 0; margin-bottom: 6px; }
+
 @media (max-width: 600px) {
-  .inv-table th { min-width: 70px; font-size: 9px; padding: 6px 4px; }
-  .inv-table th.name-col, .inv-table td.name-col { min-width: 140px; }
-  .inv-table td { padding: 6px 4px; }
-  .inv-checkbox { width: 18px; height: 18px; }
+  .inv-stock-table th, .inv-stock-table td { padding: 8px 6px; font-size: 11px; }
+  .inv-stock-table th:nth-child(6), .inv-stock-table td:nth-child(6) { display: none; } /* hide Notes on mobile */
 }
 
 /* VIEW TOGGLE */
@@ -282,6 +267,30 @@ footer { background: var(--navy); border-top: 1px solid rgba(255,255,255,0.05); 
 .inv-detail-row.editable { cursor: pointer; }
 .inv-detail-row.editable:hover { background: rgba(255,255,255,0.03); }
 .inv-detail-row.editable.issued:hover { background: rgba(39,174,96,0.08); }
+
+/* Section labels inside detail view */
+.inv-section-label { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: var(--gold); padding: 20px 2px 8px; margin-top: 8px; border-bottom: 1px solid rgba(255,255,255,0.06); margin-bottom: 0; }
+.inv-section-label:first-of-type { margin-top: 20px; }
+
+/* Size badge in read-only detail view */
+.inv-size-badge { font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 1.5px; padding: 4px 12px; border-radius: 20px; text-transform: uppercase; background: rgba(255,255,255,0.06); color: var(--text-muted); min-width: 44px; text-align: center; }
+.inv-size-badge.issued { background: rgba(39,174,96,0.12); color: var(--green); }
+
+/* Size select in detail view (edit mode) */
+.inv-size-select { background: var(--input-bg); border: 1px solid var(--input-border); color: var(--white); padding: 6px 10px; border-radius: 6px; font-family: 'Barlow', sans-serif; font-size: 13px; cursor: pointer; outline: none; transition: all 0.2s ease; }
+.inv-size-select:focus { border-color: var(--input-focus); background: rgba(255,255,255,0.06); }
+.inv-size-select option { background: var(--navy); color: var(--white); }
+
+/* Size select inside the table */
+.inv-table-size { background: var(--input-bg); border: 1px solid var(--input-border); color: var(--white); padding: 4px 4px; border-radius: 4px; font-family: 'Barlow', sans-serif; font-size: 12px; cursor: pointer; outline: none; width: 100%; min-width: 60px; }
+.inv-table-size:focus { border-color: var(--input-focus); }
+.inv-table-size option { background: var(--navy); color: var(--white); }
+
+/* Read-only size badge inside the table cell */
+.inv-table td .inv-size-badge { padding: 2px 8px; font-size: 11px; min-width: 32px; }
+
+/* Legend at bottom of detail view */
+.inv-legend { margin-top: 16px; padding: 10px 14px; font-size: 11px; color: var(--text-muted); font-style: italic; text-align: center; border-top: 1px solid rgba(255,255,255,0.04); }
 
 @media (max-width: 600px) {
   .inv-cadet-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
@@ -358,24 +367,10 @@ footer { background: var(--navy); border-top: 1px solid rgba(255,255,255,0.05); 
 
 <div class="toast" id="toast"></div>
 
-<!-- Inventory edit-password modal -->
-<div class="inv-pw-modal" id="invPwModal">
-  <div class="inv-pw-card">
-    <div class="inv-pw-title">🔐 Edit Inventory</div>
-    <p class="inv-pw-sub">Enter the admin password to modify gear assignments.</p>
-    <input type="password" class="inv-pw-input" id="invPwInput" placeholder="Admin password" autocomplete="off">
-    <div class="inv-pw-err" id="invPwErr"></div>
-    <div class="inv-pw-btns">
-      <button type="button" class="inv-pw-cancel" onclick="invCancelPw()">Cancel</button>
-      <button type="button" class="inv-pw-confirm" onclick="invConfirmPw()">Unlock</button>
-    </div>
-  </div>
-</div>
-
 <script>
 // Encrypted content decryption
 (function(){
-  const ENCRYPTED = "xGbmcDBrapUrySaAUgpuMtkfFQgXp0tbssUxhCeSUhYN/1D5wO5dYTZrF4w=.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";
+  const ENCRYPTED = "my9AK3QgJL2FNwvCH3PvgBdOJy0HdiRKommZuBflqP6d9LMMIyeQkFf8sGE=.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";
   const ITERATIONS = 150000;
 
   async function deriveKey(password, salt) {
@@ -489,16 +484,16 @@ function switchTab(tab) {
 const names = [
   "Lt. Daniel Hemmi",
   "Sgt. Armando Rizvanovic","Sgt. Dimas Fredrik","Sgt. Jonathan Nidam","Sgt. Rhiannon Harris",
-  "Atzyri Orozco","Brandon Burell","Eric Velazquez","Evan Bowns",
+  "Atzyri Orozco","Eric Velazquez","Evan Bowns",
   "Hunter Huffman","Kara Dupre","Khaled Khmaish","Knox Giles",
   "Luke Veldhuizen","Mariah Diaz","Naveah Lee Spell","Scout StJohn",
-  "Sebastion Ross","Taha Safi","William Knowlton"
+  "Sebastion Ross","Taha Safi"
 ];
 
 const rosterGroups = [
   { section:"Lieutenant", members:["Lt. Daniel Hemmi"]},
   { section:"Sergeants", members:["Sgt. Armando Rizvanovic","Sgt. Dimas Fredrik","Sgt. Jonathan Nidam","Sgt. Rhiannon Harris"]},
-  { section:"Cadets", members:["Atzyri Orozco","Brandon Burell","Eric Velazquez","Evan Bowns","Hunter Huffman","Kara Dupre","Khaled Khmaish","Knox Giles","Luke Veldhuizen","Mariah Diaz","Naveah Lee Spell","Scout StJohn","Sebastion Ross","Taha Safi","William Knowlton"]}
+  { section:"Cadets", members:["Atzyri Orozco","Eric Velazquez","Evan Bowns","Hunter Huffman","Kara Dupre","Khaled Khmaish","Knox Giles","Luke Veldhuizen","Mariah Diaz","Naveah Lee Spell","Scout StJohn","Sebastion Ross","Taha Safi"]}
 ];
 
 // ═══════ EVENT FORM ═══════
@@ -665,156 +660,283 @@ function handleAttSubmit() {
 
 function showToast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2000); }
 
-// ═══════ INVENTORY ═══════
-// ⚠️ To add/remove/rename gear items, edit INV_GEAR below.
-// ⚠️ To change who appears in the inventory, edit the roster arrays above (rosterGroups).
-const INV_GEAR = [
-  "Grey Short Sleeve Uniform Shirt (Class B)",
-  "Grey Long Sleeve Uniform Shirt (Class A)",
-  "Pants w/ Blue Stripe (Class A & B)",
-  "Polo (Class C)",
-  "Black BDU Pants (Class C)",
-  "T-Shirt Color #1 (PT)",
-  "T-Shirt Color #2 (PT)",
-  "Black Boots",
-  "Solid Black Tennis Shoes",
-  "Name Tag",
-  "Bar Holder / Organizer (Class A & B)",
-  "Rank Insignia (Class A & B)"
+// ═══════ INVENTORY (reads from Google Sheet) ═══════
+// Data is maintained by the cadet leader in the "Explorer Quartermaster's Inventory"
+// Google Sheet (File → Share → Publish to web must be enabled).
+// The website is read-only — edits happen in the sheet.
+
+const INV_SHEET_ID = "1x_oQ6RFtNwsIRi60K-leWBb8vP9-cXs_Fm6pUBIoqo8";
+const INV_GIDS = {
+  overall: 1798564157,
+  uniforms: 282216588,
+  issued: 1933552635
+};
+const INV_CSV = (gid) =>
+  `https://docs.google.com/spreadsheets/d/${INV_SHEET_ID}/export?format=csv&gid=${gid}&t=${Date.now()}`;
+
+// Items in the Overall tab whose "Type" column matches one of these will be hidden.
+// Adjust as needed — patches/pins/bars/awards/buttons are not tracked per-cadet.
+const INV_HIDDEN_TYPES = [
+  "Miscellaneous",
+  "Uniform Accessories",
+  "Uniform Accessories - Awards"
 ];
 
-// JSONBin config
-const INV_BIN_ID = "69e94070aaba882197292765";
-const INV_ACCESS_KEY = "$2a$10$LOHMF1bwePcucborEkyDuuILKqObwSVZWUXY2Tm/6Slaexc6/xmRu";
-const INV_API = "https://api.jsonbin.io/v3/b/" + INV_BIN_ID;
+// Optional: map raw sheet item names → preferred display names on the website.
+// Missing keys fall back to the raw sheet name.
+const INV_NAME_MAP = {
+  "Class A Shirt LS": "Class A Long Sleeve Shirt (Grey)",
+  "Class A Shirt SS": "Class A Short Sleeve Shirt (Grey)",
+  "Class B Shirt Gray": "Class B Gray Shirt",
+  "Class B Shirt Blue": "Class B Blue Shirt",
+  "Beltkeepers": "Belt Keepers"
+};
+function invDisplayName(rawName) {
+  return INV_NAME_MAP[rawName] || rawName;
+}
 
-// SHA-256 of the admin password. The raw password is NOT stored in this file.
-const INV_EDIT_HASH = "c96ad119538fe99f5b0e9bef74a90315f50f8aedfaeb594f15dec25613da9a58";
+// Given a name as written in the sheet (e.g. "Daniel Hemmi"), return the preferred
+// display name from the roster (e.g. "Lt. Daniel Hemmi"). If no match, return the
+// original sheet name so nobody disappears.
+function invDisplayCadet(sheetName) {
+  if (!sheetName) return sheetName;
+  const cleaned = sheetName.trim();
+  // Exact match against roster
+  for (const n of names) {
+    if (n === cleaned) return n;
+  }
+  // Match where roster name ends with the sheet name (handles "Lt. Daniel Hemmi" vs "Daniel Hemmi")
+  for (const n of names) {
+    // Strip leading rank prefix like "Lt. " or "Sgt. "
+    const stripped = n.replace(/^(Lt\.|Sgt\.)\s+/, '');
+    if (stripped === cleaned) return n;
+  }
+  // Case-insensitive / diacritic-tolerant fallback (handles "Sebastiòn" vs "Sebastion")
+  const norm = s => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  const target = norm(cleaned);
+  for (const n of names) {
+    const stripped = n.replace(/^(Lt\.|Sgt\.)\s+/, '');
+    if (norm(stripped) === target) return n;
+  }
+  return sheetName; // unknown cadet — show as-is
+}
 
-let invData = null;
-let invEditing = false;
-let invLoaded = false;
-let invSaveTimer = null;
-let invPending = {}; // { "name||item": true/false }
-let invView = 'table'; // 'table' | 'cadet'
+// ───── State ─────
+let invIssuedData = null;   // { itemRows: [{name, values: {cadetName: cellText}}], cadets: [names...] }
+let invOverallData = null;  // [{name, type, total, available, issued, status, notes}]
+let invUniformsData = null; // [{name, type, total, available, issued, status, size, notes}]
+let invLoading = false;
+let invSubView = 'cadet';   // 'cadet' | 'overall' | 'uniforms'
 let invSelectedCadet = null;
 
-async function sha256Hex(str) {
-  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
-  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+// ───── CSV parsing ─────
+// Handles quoted fields, embedded commas, doubled quotes ("").
+function parseCSV(text) {
+  const rows = [];
+  let row = [], field = '', inQuotes = false;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (inQuotes) {
+      if (ch === '"') {
+        if (text[i+1] === '"') { field += '"'; i++; }
+        else { inQuotes = false; }
+      } else {
+        field += ch;
+      }
+    } else {
+      if (ch === '"') { inQuotes = true; }
+      else if (ch === ',') { row.push(field); field = ''; }
+      else if (ch === '\r') { /* skip */ }
+      else if (ch === '\n') { row.push(field); rows.push(row); row = []; field = ''; }
+      else { field += ch; }
+    }
+  }
+  // last field/row
+  if (field.length > 0 || row.length > 0) { row.push(field); rows.push(row); }
+  return rows;
 }
 
+// Strip asterisks and whitespace; return normalized cell display
+function invCleanCell(raw) {
+  if (raw == null) return '';
+  return String(raw).replace(/\*/g, '').trim();
+}
+
+// ───── Data loading ─────
 async function invLoad() {
-  if (invLoaded) return;
+  // Always fetch fresh — no session cache. In-flight guard only (prevents double-fire
+  // if the user rapidly clicks the tab).
+  if (invLoading) return;
+  invLoading = true;
   const status = document.getElementById('invStatus');
-  try {
-    const res = await fetch(INV_API + "/latest", {
-      headers: { "X-Access-Key": INV_ACCESS_KEY }
-    });
-    if (!res.ok) throw new Error("HTTP " + res.status);
-    const json = await res.json();
-    invData = json.record || { inventory:{}, lastUpdated:"", lastUpdatedBy:"" };
-    if (!invData.inventory) invData.inventory = {};
-    invLoaded = true;
-    status.style.display = 'none';
-    document.getElementById('invMain').style.display = 'block';
-    invRenderTable();
-    invRenderMeta();
-  } catch (err) {
-    status.textContent = "Could not load inventory. Check your connection and try switching tabs.";
-    status.classList.add('error');
-    console.error("Inventory load failed:", err);
-  }
-}
-
-function invSetView(view) {
-  invView = view;
-  invSelectedCadet = null;
-  document.getElementById('invViewTableBtn').classList.toggle('active', view === 'table');
-  document.getElementById('invViewCadetBtn').classList.toggle('active', view === 'cadet');
-  document.getElementById('invTableView').style.display = view === 'table' ? 'block' : 'none';
-  document.getElementById('invCadetView').style.display = view === 'cadet' ? 'block' : 'none';
-  if (view === 'table') {
-    invRenderTable();
+  const main = document.getElementById('invMain');
+  // On refetch, show the loading status (unless it's the very first load and main is already visible)
+  if (main.style.display === 'block') {
+    // Already showing content from a previous load — keep it visible; don't flash the loading text.
+    // We'll just refresh in place when fetches return.
   } else {
-    invRenderCadetGrid();
+    status.textContent = 'Loading inventory…';
+    status.classList.remove('error');
+    status.style.display = 'block';
+  }
+  try {
+    // Fire all three fetches in parallel
+    const [issuedCsv, overallCsv, uniformsCsv] = await Promise.all([
+      fetch(INV_CSV(INV_GIDS.issued)).then(r => { if (!r.ok) throw new Error('Issued HTTP '+r.status); return r.text(); }),
+      fetch(INV_CSV(INV_GIDS.overall)).then(r => { if (!r.ok) throw new Error('Overall HTTP '+r.status); return r.text(); }),
+      fetch(INV_CSV(INV_GIDS.uniforms)).then(r => { if (!r.ok) throw new Error('Uniforms HTTP '+r.status); return r.text(); })
+    ]);
+
+    invIssuedData = parseIssuedTab(parseCSV(issuedCsv));
+    invOverallData = parseOverallTab(parseCSV(overallCsv));
+    invUniformsData = parseUniformsTab(parseCSV(uniformsCsv));
+
+    status.style.display = 'none';
+    main.style.display = 'block';
+    invRenderCurrent();
+  } catch (err) {
+    console.error("Inventory load failed:", err);
+    if (main.style.display !== 'block') {
+      // First load ever failed — show full error in place of the content
+      status.innerHTML =
+        'Could not load inventory from the Google Sheet.<br>' +
+        '<span style="font-size:12px;opacity:0.7">Make sure the sheet is published to web (File → Share → Publish to web).</span>';
+      status.classList.add('error');
+      status.style.display = 'block';
+    } else {
+      // Refetch failed but we have stale data showing — non-disruptive toast
+      showToast('Could not refresh inventory — showing last-loaded data');
+    }
+  } finally {
+    invLoading = false;
   }
 }
 
-function invCountIssued(name) {
-  const row = (invData && invData.inventory && invData.inventory[name]) || {};
-  let count = 0;
-  INV_GEAR.forEach(item => { if (row[item]) count++; });
-  return count;
+// ───── Parse each tab ─────
+// Issued Equipment tab structure:
+//   Row 1: color key (ignore)
+//   Row 2: column A = (blank), column B = (blank), column C onwards = cadet names
+//   Row 3+: column A = item name, column C+ = per-cadet values
+function parseIssuedTab(rows) {
+  if (rows.length < 3) return { itemRows: [], cadets: [] };
+  const headerRow = rows[1] || [];
+  // Cadets start at column index 2 (column C); blank entries terminate the list
+  const cadets = [];
+  for (let i = 2; i < headerRow.length; i++) {
+    const name = invCleanCell(headerRow[i]);
+    if (!name) break;
+    cadets.push(name);
+  }
+  const itemRows = [];
+  for (let r = 2; r < rows.length; r++) {
+    const row = rows[r];
+    const itemName = invCleanCell(row[0]);
+    if (!itemName) continue;
+    const values = {};
+    cadets.forEach((cadet, ci) => {
+      values[cadet] = invCleanCell(row[2 + ci]);
+    });
+    itemRows.push({ name: itemName, values: values });
+  }
+  return { itemRows, cadets };
 }
 
+// Overall tab structure:
+//   Row 1: headers: Item name, Type, Total Count, Available, Issued, Status, Notes
+//   Row 2+: data
+function parseOverallTab(rows) {
+  const result = [];
+  for (let r = 1; r < rows.length; r++) {
+    const row = rows[r];
+    const name = invCleanCell(row[0]);
+    if (!name) continue;
+    const type = invCleanCell(row[1]);
+    if (INV_HIDDEN_TYPES.includes(type)) continue;
+    result.push({
+      name,
+      type,
+      total: invCleanCell(row[2]),
+      available: invCleanCell(row[3]),
+      issued: invCleanCell(row[4]),
+      status: invCleanCell(row[5]),
+      notes: invCleanCell(row[6])
+    });
+  }
+  return result;
+}
+
+// Uniforms tab: Item name, Type, Total, Available, Issued, Status, Size, Notes
+function parseUniformsTab(rows) {
+  const result = [];
+  for (let r = 1; r < rows.length; r++) {
+    const row = rows[r];
+    const name = invCleanCell(row[0]);
+    if (!name) continue;
+    result.push({
+      name,
+      type: invCleanCell(row[1]),
+      total: invCleanCell(row[2]),
+      available: invCleanCell(row[3]),
+      issued: invCleanCell(row[4]),
+      status: invCleanCell(row[5]),
+      size: invCleanCell(row[6]),
+      notes: invCleanCell(row[7])
+    });
+  }
+  return result;
+}
+
+// ───── View switching ─────
+function invSetView(view) {
+  invSubView = view;
+  invSelectedCadet = null;
+  ['cadet','overall','uniforms'].forEach(v => {
+    const btn = document.getElementById('invView_' + v);
+    if (btn) btn.classList.toggle('active', v === view);
+  });
+  invRenderCurrent();
+}
+
+function invRenderCurrent() {
+  const panels = ['invCadetPane','invOverallPane','invUniformsPane'];
+  panels.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
+  if (invSubView === 'cadet') {
+    document.getElementById('invCadetPane').style.display = 'block';
+    if (invSelectedCadet) invRenderCadetDetail();
+    else invRenderCadetGrid();
+  } else if (invSubView === 'overall') {
+    document.getElementById('invOverallPane').style.display = 'block';
+    invRenderOverall();
+  } else {
+    document.getElementById('invUniformsPane').style.display = 'block';
+    invRenderUniforms();
+  }
+}
+
+// ───── By-Cadet view ─────
 function invRenderCadetGrid() {
   document.getElementById('invCadetDetail').style.display = 'none';
   const grid = document.getElementById('invCadetGrid');
   grid.style.display = 'block';
-  let html = '';
-  rosterGroups.forEach(g => {
-    html += '<div class="inv-cadet-section-title"><span>' + g.section + '</span><div class="line"></div></div>';
-    html += '<div class="inv-cadet-grid">';
-    g.members.forEach(name => {
-      const init = initials(name);
-      const safeName = name.replace(/"/g, '&quot;').replace(/'/g, "\\'");
-      html += '<div class="inv-cadet-card" onclick="invSelectCadet(\'' + safeName + '\')">'
-        + '<div class="avatar">' + init + '</div>'
-        + '<div class="info"><div class="cname">' + name + '</div></div>'
-        + '<div class="arrow">›</div>'
-        + '</div>';
-    });
-    html += '</div>';
+  const sheetCadets = invIssuedData.cadets;
+  let html = '<div class="inv-cadet-grid">';
+  sheetCadets.forEach(sheetName => {
+    const displayName = invDisplayCadet(sheetName);
+    const init = initials(displayName);
+    // IMPORTANT: the onclick passes the SHEET name so lookups work; display uses roster name.
+    html += '<div class="inv-cadet-card" onclick="invSelectCadet(\'' + invEsc(sheetName) + '\')">'
+      + '<div class="avatar">' + init + '</div>'
+      + '<div class="info"><div class="cname">' + displayName + '</div></div>'
+      + '<div class="arrow">›</div>'
+      + '</div>';
   });
+  html += '</div>';
   grid.innerHTML = html;
 }
 
 function invSelectCadet(name) {
-  invSelectedCadet = name;
+  invSelectedCadet = name; // stored as sheet name — data lookups need it
   invRenderCadetDetail();
-}
-
-function invRenderCadetDetail() {
-  const name = invSelectedCadet;
-  if (!name) return;
-  const grid = document.getElementById('invCadetGrid');
-  const detail = document.getElementById('invCadetDetail');
-  grid.style.display = 'none';
-  detail.style.display = 'block';
-  const row = invData.inventory[name] || {};
-  let html = '<button type="button" class="inv-detail-back" onclick="invBackToGrid()">← Back to all cadets</button>';
-  html += '<div class="inv-detail-header">'
-    + '<div class="avatar">' + initials(name) + '</div>'
-    + '<div><div class="dname">' + name + '</div></div>'
-    + '</div>';
-  html += '<div class="inv-detail-list">';
-  INV_GEAR.forEach(item => {
-    const isIssued = !!row[item];
-    const editableClass = invEditing ? ' editable' : '';
-    const issuedClass = isIssued ? ' issued' : '';
-    const safeName = name.replace(/"/g, '&quot;').replace(/'/g, "\\'");
-    const safeItem = item.replace(/"/g, '&quot;').replace(/'/g, "\\'");
-    const clickAttr = invEditing ? ' onclick="invToggleItem(\'' + safeName + '\', \'' + safeItem + '\')"' : '';
-    html += '<div class="inv-detail-row' + issuedClass + editableClass + '"' + clickAttr + '>'
-      + '<span class="inv-checkbox' + (isIssued ? ' issued' : '') + '"></span>'
-      + '<div class="item-name">' + item + '</div>'
-      + '<span class="item-tag">' + (isIssued ? 'Issued' : 'Not Issued') + '</span>'
-      + '</div>';
-  });
-  html += '</div>';
-  detail.innerHTML = html;
-}
-
-function invToggleItem(name, item) {
-  if (!invEditing) return;
-  if (!invData.inventory[name]) invData.inventory[name] = {};
-  const currently = !!invData.inventory[name][item];
-  const newVal = !currently;
-  invData.inventory[name][item] = newVal;
-  invPending[name + '||' + item] = newVal;
-  invRenderCadetDetail();
-  invScheduleSave();
 }
 
 function invBackToGrid() {
@@ -822,164 +944,147 @@ function invBackToGrid() {
   invRenderCadetGrid();
 }
 
-function invRenderTable() {
-  const wrap = document.getElementById('invTableWrap');
-  let html = '<table class="inv-table' + (invEditing ? ' editing' : '') + '"><thead><tr>';
-  html += '<th class="name-col">Cadet</th>';
-  INV_GEAR.forEach(item => { html += '<th>' + item + '</th>'; });
-  html += '</tr></thead><tbody>';
-  const colSpan = INV_GEAR.length + 1;
-  rosterGroups.forEach(g => {
-    html += '<tr class="inv-section-row"><td colspan="' + colSpan + '">' + g.section + '</td></tr>';
-    g.members.forEach(name => {
-      const row = invData.inventory[name] || {};
-      html += '<tr><td class="name-col">' + name + '</td>';
-      INV_GEAR.forEach(item => {
-        const issued = !!row[item];
-        const safeName = name.replace(/"/g, '&quot;');
-        const safeItem = item.replace(/"/g, '&quot;');
-        html += '<td><span class="inv-checkbox' + (issued ? ' issued' : '') + '" data-name="' + safeName + '" data-item="' + safeItem + '"></span></td>';
-      });
-      html += '</tr>';
+function invRenderCadetDetail() {
+  const sheetName = invSelectedCadet;
+  if (!sheetName) return;
+  const displayName = invDisplayCadet(sheetName);
+  const grid = document.getElementById('invCadetGrid');
+  const detail = document.getElementById('invCadetDetail');
+  grid.style.display = 'none';
+  detail.style.display = 'block';
+
+  let html = '<button type="button" class="inv-detail-back" onclick="invBackToGrid()">← Back to all cadets</button>';
+  html += '<div class="inv-detail-header">'
+    + '<div class="avatar">' + initials(displayName) + '</div>'
+    + '<div><div class="dname">' + displayName + '</div></div>'
+    + '</div>';
+
+  // Split items into "issued" (has value) and "not issued" (blank) for readability
+  const issuedItems = [];
+  const notIssuedItems = [];
+  invIssuedData.itemRows.forEach(row => {
+    const raw = row.values[sheetName];
+    if (raw && raw !== '0') issuedItems.push({ name: row.name, value: raw });
+    else notIssuedItems.push({ name: row.name });
+  });
+
+  html += '<div class="inv-section-label">Issued (' + issuedItems.length + ')</div>';
+  html += '<div class="inv-detail-list">';
+  if (issuedItems.length === 0) {
+    html += '<div class="inv-detail-row"><div class="item-name" style="color:var(--text-muted);font-style:italic">No items recorded for this cadet.</div></div>';
+  } else {
+    issuedItems.forEach(item => {
+      html += '<div class="inv-detail-row issued">'
+        + '<div class="item-name">' + invDisplayName(item.name) + '</div>'
+        + '<span class="inv-size-badge issued">' + item.value + '</span>'
+        + '</div>';
+    });
+  }
+  html += '</div>';
+
+  if (notIssuedItems.length) {
+    html += '<div class="inv-section-label">Not Issued (' + notIssuedItems.length + ')</div>';
+    html += '<div class="inv-detail-list">';
+    notIssuedItems.forEach(item => {
+      html += '<div class="inv-detail-row">'
+        + '<div class="item-name" style="color:var(--text-muted)">' + invDisplayName(item.name) + '</div>'
+        + '<span class="inv-size-badge">—</span>'
+        + '</div>';
+    });
+    html += '</div>';
+  }
+
+  detail.innerHTML = html;
+}
+
+// ───── Overall Stock view ─────
+function invRenderOverall() {
+  const wrap = document.getElementById('invOverallTable');
+  // Group by type
+  const groups = {};
+  invOverallData.forEach(item => {
+    const t = item.type || 'Other';
+    if (!groups[t]) groups[t] = [];
+    groups[t].push(item);
+  });
+  const typeOrder = ['Uniforms','Duty Belts','Duty Belt Accessories','Equipment'];
+  const sortedTypes = Object.keys(groups).sort((a,b) => {
+    const ai = typeOrder.indexOf(a), bi = typeOrder.indexOf(b);
+    if (ai === -1 && bi === -1) return a.localeCompare(b);
+    if (ai === -1) return 1;
+    if (bi === -1) return -1;
+    return ai - bi;
+  });
+  let html = '<table class="inv-stock-table"><thead><tr>'
+    + '<th style="text-align:left">Item</th>'
+    + '<th>Total</th><th>Available</th><th>Issued</th><th>Status</th>'
+    + '<th style="text-align:left">Notes</th>'
+    + '</tr></thead><tbody>';
+  sortedTypes.forEach(type => {
+    html += '<tr class="inv-section-row"><td colspan="6">' + type + '</td></tr>';
+    groups[type].forEach(item => {
+      const statusClass = (item.status || '').toLowerCase() === 'available' ? 'status-available' : 'status-unavailable';
+      html += '<tr>'
+        + '<td style="text-align:left">' + invDisplayName(item.name) + '</td>'
+        + '<td>' + (item.total || '—') + '</td>'
+        + '<td>' + (item.available || '—') + '</td>'
+        + '<td>' + (item.issued || '—') + '</td>'
+        + '<td><span class="inv-status-pill ' + statusClass + '">' + (item.status || '—') + '</span></td>'
+        + '<td style="text-align:left;color:var(--text-muted);font-size:12px">' + (item.notes || '') + '</td>'
+        + '</tr>';
     });
   });
   html += '</tbody></table>';
   wrap.innerHTML = html;
-  // Wire up click handlers on checkboxes (only active when editing)
-  wrap.querySelectorAll('.inv-checkbox').forEach(cb => {
-    cb.addEventListener('click', () => {
-      if (!invEditing) return;
-      const n = cb.dataset.name;
-      const it = cb.dataset.item;
-      const currentlyIssued = cb.classList.contains('issued');
-      const newVal = !currentlyIssued;
-      cb.classList.toggle('issued', newVal);
-      if (!invData.inventory[n]) invData.inventory[n] = {};
-      invData.inventory[n][it] = newVal;
-      invPending[n + '||' + it] = newVal;
-      cb.classList.add('saving');
-      invScheduleSave(cb);
-    });
+}
+
+// ───── Uniforms by Size view ─────
+function invRenderUniforms() {
+  const wrap = document.getElementById('invUniformsTable');
+  // Group uniforms by item name; each row is a size
+  const groups = {};
+  invUniformsData.forEach(row => {
+    if (!groups[row.name]) groups[row.name] = [];
+    groups[row.name].push(row);
   });
-}
-
-function invRenderMeta() {
-  const meta = document.getElementById('invMeta');
-  if (invData.lastUpdated) {
-    const d = new Date(invData.lastUpdated);
-    const when = d.toLocaleString('en-US', { month:'short', day:'numeric', year:'numeric', hour:'numeric', minute:'2-digit' });
-    meta.textContent = "Last updated " + when + (invData.lastUpdatedBy ? " by " + invData.lastUpdatedBy : "");
-  } else {
-    meta.textContent = "No updates yet.";
-  }
-}
-
-function invStartEdit() {
-  document.getElementById('invPwInput').value = '';
-  document.getElementById('invPwErr').textContent = '';
-  document.getElementById('invPwModal').classList.add('show');
-  setTimeout(()=>document.getElementById('invPwInput').focus(), 100);
-}
-
-function invCancelPw() {
-  document.getElementById('invPwModal').classList.remove('show');
-}
-
-async function invConfirmPw() {
-  const input = document.getElementById('invPwInput');
-  const err = document.getElementById('invPwErr');
-  const entered = input.value.trim().toLowerCase();
-  if (!entered) { err.textContent = 'Enter the admin password.'; return; }
-  const hash = await sha256Hex(entered);
-  if (hash === INV_EDIT_HASH) {
-    document.getElementById('invPwModal').classList.remove('show');
-    invEditing = true;
-    document.getElementById('invEditBtn').style.display = 'none';
-    document.getElementById('invEditBanner').style.display = 'flex';
-    invRefreshCurrentView();
-    showToast('Edit mode unlocked');
-  } else {
-    err.textContent = 'Incorrect password.';
-    input.value = '';
-    input.focus();
-  }
-}
-
-function invExitEdit() {
-  invEditing = false;
-  document.getElementById('invEditBtn').style.display = 'inline-flex';
-  document.getElementById('invEditBanner').style.display = 'none';
-  invRefreshCurrentView();
-  showToast('Edit mode closed');
-}
-
-function invRefreshCurrentView() {
-  if (invView === 'table') {
-    invRenderTable();
-  } else if (invSelectedCadet) {
-    invRenderCadetDetail();
-  } else {
-    invRenderCadetGrid();
-  }
-}
-
-// Debounced save: collect rapid changes, push once, then flush any changes made during the push
-function invScheduleSave(triggerCheckbox) {
-  clearTimeout(invSaveTimer);
-  invSaveTimer = setTimeout(invDoSave, 500);
-}
-
-async function invDoSave() {
-  const snapshot = { ...invPending };
-  invPending = {};
-  invData.lastUpdated = new Date().toISOString();
-  invData.lastUpdatedBy = "Admin";
-  try {
-    const res = await fetch(INV_API, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Access-Key': INV_ACCESS_KEY
-      },
-      body: JSON.stringify(invData)
+  let html = '';
+  Object.keys(groups).forEach(itemName => {
+    html += '<div class="inv-uniform-group">';
+    html += '<div class="inv-uniform-heading">' + invDisplayName(itemName) + '</div>';
+    html += '<table class="inv-stock-table"><thead><tr>'
+      + '<th>Size</th><th>Total</th><th>Available</th><th>Issued</th><th>Status</th>'
+      + '<th style="text-align:left">Notes</th>'
+      + '</tr></thead><tbody>';
+    groups[itemName].forEach(r => {
+      const statusClass = (r.status || '').toLowerCase() === 'available' ? 'status-available' : 'status-unavailable';
+      html += '<tr>'
+        + '<td><strong>' + (r.size || '—') + '</strong></td>'
+        + '<td>' + (r.total || '—') + '</td>'
+        + '<td>' + (r.available || '—') + '</td>'
+        + '<td>' + (r.issued || '—') + '</td>'
+        + '<td><span class="inv-status-pill ' + statusClass + '">' + (r.status || '—') + '</span></td>'
+        + '<td style="text-align:left;color:var(--text-muted);font-size:12px">' + (r.notes || '') + '</td>'
+        + '</tr>';
     });
-    if (!res.ok) throw new Error("HTTP " + res.status);
-    // Clear saving indicator
-    document.querySelectorAll('.inv-checkbox.saving').forEach(cb => cb.classList.remove('saving'));
-    invRenderMeta();
-  } catch (err) {
-    console.error("Inventory save failed:", err);
-    showToast('Save failed — check connection');
-    // Restore pending changes to retry next time
-    Object.assign(invPending, snapshot);
-  }
-  // If more changes came in during save, schedule another save
-  if (Object.keys(invPending).length > 0) {
-    invScheduleSave();
-  }
+    html += '</tbody></table></div>';
+  });
+  wrap.innerHTML = html;
 }
 
-// Allow Enter key in password modal
-document.getElementById('invPwInput').addEventListener('keydown', e => {
-  if (e.key === 'Enter') invConfirmPw();
-  if (e.key === 'Escape') invCancelPw();
-});
+// Safely escape a string for use as a single-quoted JS onclick argument
+function invEsc(s) { return String(s).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;'); }
 
-// Expose inventory functions globally so switchTab (outer scope) and inline onclick handlers can call them
+// Expose functions that are called from inline onclick attributes in the decrypted HTML
 window.invLoad = invLoad;
-window.invStartEdit = invStartEdit;
-window.invCancelPw = invCancelPw;
-window.invConfirmPw = invConfirmPw;
-window.invExitEdit = invExitEdit;
 window.invSetView = invSetView;
 window.invSelectCadet = invSelectCadet;
 window.invBackToGrid = invBackToGrid;
-window.invToggleItem = invToggleItem;
-// Expose form handlers that are called from inline onclick attributes in the decrypted HTML
+// Expose form handlers called from inline onclick attributes in the decrypted HTML
 window.handleEventSubmit = handleEventSubmit;
 window.handleAttSubmit = handleAttSubmit;
 window.setS = setS;
 window.markAll = markAll;
+
 
 
 // ═══════ INIT (called by decryption callback) ═══════

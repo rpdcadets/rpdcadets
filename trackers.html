@@ -700,9 +700,46 @@ const INV_NAME_MAP = {
 };
 
 // Items whose raw sheet name matches any of these are hidden from the website entirely.
-// Used for items that exist in the inventory but aren't used by cadets.
+// Used for items that exist in the inventory but either (a) aren't used by cadets,
+// or (b) aren't things we care to display per-cadet (awards, patches, buttons, pins).
 const INV_HIDDEN_ITEMS = [
-  "Class A Patrol Style Pants"
+  // Unused
+  "Class A Patrol Style Pants",
+  // Patches (ordered and sewn on uniforms, not tracked per-cadet)
+  "New Patches",
+  "Old Patches",
+  "Chest Patches",
+  "Vintage Patches",
+  "Vintage Chest Patches",
+  "National Rifle Assoc. Patch",
+  // Rank insignia & uniform accessories (issued as part of uniform assignment)
+  "Sergeant Sleeve Stripes (White)",
+  "Sergeant Collar Pins (Silver)",
+  "Sergeant Collar Pins (Gold)",
+  "Corporal Collar Pins (Gold)",
+  "Captain Bar Collar Pins (Gold)",
+  "Chief 2 Star Collar Pins (Gold)",
+  "Shoulder Loops",
+  "Axon Body 4 Mount",
+  "Bar Holders",
+  "Silver Buttons",
+  "Gold Buttons",
+  // Award bars (ordered as needed, cadets keep them when they leave — not tracked per-cadet)
+  "Volunteer Bronze Pin",
+  "Law Enf. Service Training Bar",
+  "Tenure Bar",
+  "Nationals Attendance Bar",
+  "Firearms Training Bar",
+  "Bike Patrol Bar",
+  "Emergency Prep. Bar",
+  "Crime Prevention Bar",
+  "Perfect Attendance Bar",
+  "Law Enforcement Training Bar",
+  "Community Service Bar",
+  "Explorer of The Year Bar",
+  "Drug Abuse Prevention Bar",
+  "Ride Along Certification Bar",
+  "Explorer Marksman Bar"
 ];
 function invDisplayName(rawName) {
   return INV_NAME_MAP[rawName] || rawName;

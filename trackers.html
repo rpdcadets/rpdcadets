@@ -814,27 +814,64 @@ async function invLoad() {
 
 // ───── Parse each tab ─────
 // Issued Equipment tab structure:
-//   Row 1: color key (ignore)
-//   Row 2: column A = (blank), column B = (blank), column C onwards = cadet names
-//   Row 3+: column A = item name, column C+ = per-cadet values
+//   Row 1: color key legend (can ignore)
+//   Row 2 OR 3: cadet names as column headers (first few columns are blank or hold "Item name"-ish labels)
+//   Subsequent rows: column A = item name, remaining columns = per-cadet cell values
+//
+// Real-world sheets mess with this via merged cells / edits — so we detect the header row
+// and the first cadet column dynamically rather than hardcoding indexes.
 function parseIssuedTab(rows) {
-  if (rows.length < 3) return { itemRows: [], cadets: [] };
-  const headerRow = rows[1] || [];
-  // Cadets start at column index 2 (column C); blank entries terminate the list
-  const cadets = [];
-  for (let i = 2; i < headerRow.length; i++) {
-    const name = invCleanCell(headerRow[i]);
-    if (!name) break;
-    cadets.push(name);
+  if (rows.length < 2) return { itemRows: [], cadets: [] };
+
+  // Find the row that looks like the cadet-name header.
+  // Heuristic: a row where at least 5 cells contain plausible human names (2+ words, starts with a capital letter).
+  const looksLikeName = (s) => {
+    if (!s) return false;
+    const t = String(s).trim();
+    if (t.length < 3) return false;
+    if (/^color key/i.test(t)) return false;
+    // Two words, each starting with a capital letter
+    return /^[A-ZÀ-Ÿ][a-zà-ÿ'\-]+\s+[A-ZÀ-Ÿ][a-zà-ÿ'\-]+/.test(t);
+  };
+
+  let headerRowIdx = -1;
+  let firstCadetCol = -1;
+  for (let r = 0; r < Math.min(rows.length, 5); r++) {
+    const row = rows[r] || [];
+    const nameCount = row.filter(looksLikeName).length;
+    if (nameCount >= 5) {
+      headerRowIdx = r;
+      // Find the first column in this row that looks like a name
+      for (let c = 0; c < row.length; c++) {
+        if (looksLikeName(row[c])) { firstCadetCol = c; break; }
+      }
+      break;
+    }
   }
+
+  if (headerRowIdx === -1 || firstCadetCol === -1) {
+    console.error('parseIssuedTab: could not detect cadet header row. First 3 rows:', rows.slice(0, 3));
+    return { itemRows: [], cadets: [] };
+  }
+
+  const headerRow = rows[headerRowIdx];
+  const cadets = [];
+  const cadetCols = []; // actual column indexes in the CSV
+  for (let i = firstCadetCol; i < headerRow.length; i++) {
+    const name = invCleanCell(headerRow[i]);
+    if (!name) break; // blank cell = end of cadet list
+    cadets.push(name);
+    cadetCols.push(i);
+  }
+
   const itemRows = [];
-  for (let r = 2; r < rows.length; r++) {
+  for (let r = headerRowIdx + 1; r < rows.length; r++) {
     const row = rows[r];
     const itemName = invCleanCell(row[0]);
     if (!itemName) continue;
     const values = {};
     cadets.forEach((cadet, ci) => {
-      values[cadet] = invCleanCell(row[2 + ci]);
+      values[cadet] = invCleanCell(row[cadetCols[ci]]);
     });
     itemRows.push({ name: itemName, values: values });
   }

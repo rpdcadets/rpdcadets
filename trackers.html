@@ -682,15 +682,28 @@ const INV_HIDDEN_TYPES = [
   "Uniform Accessories - Awards"
 ];
 
-// Optional: map raw sheet item names → preferred display names on the website.
+// Map raw sheet item names → preferred display names on the website.
 // Missing keys fall back to the raw sheet name.
+//
+// ⚠️ IMPORTANT: The Quartermaster's sheet uses legacy explorer-era labels that don't
+// match current cadet terminology. Specifically, the sheet's "Class B Shirt Gray" /
+// "Class B Shirt Blue" rows are actually the PT T-shirts, and "Class A Shirt SS" is
+// what we now call a Class B (short sleeve) shirt. This mapping corrects for that.
+// When the sheet is eventually relabeled for cadet terminology, update these keys.
 const INV_NAME_MAP = {
-  "Class A Shirt LS": "Class A Long Sleeve Shirt (Grey)",
-  "Class A Shirt SS": "Class A Short Sleeve Shirt (Grey)",
-  "Class B Shirt Gray": "Class B Gray Shirt",
-  "Class B Shirt Blue": "Class B Blue Shirt",
+  "Class A Shirt LS": "Class A Shirt (Grey Long Sleeve)",
+  "Class A Shirt SS": "Class B Shirt (Grey Short Sleeve)",
+  "Class B Shirt Gray": "PT T-Shirt (Grey)",
+  "Class B Shirt Blue": "PT T-Shirt (Blue)",
+  "Class A Pants": "Class A/B Pants (Blue Stripe)",
   "Beltkeepers": "Belt Keepers"
 };
+
+// Items whose raw sheet name matches any of these are hidden from the website entirely.
+// Used for items that exist in the inventory but aren't used by cadets.
+const INV_HIDDEN_ITEMS = [
+  "Class A Patrol Style Pants"
+];
 function invDisplayName(rawName) {
   return INV_NAME_MAP[rawName] || rawName;
 }
@@ -869,6 +882,7 @@ function parseIssuedTab(rows) {
     const row = rows[r];
     const itemName = invCleanCell(row[0]);
     if (!itemName) continue;
+    if (INV_HIDDEN_ITEMS.includes(itemName)) continue;
     const values = {};
     cadets.forEach((cadet, ci) => {
       values[cadet] = invCleanCell(row[cadetCols[ci]]);
@@ -887,6 +901,7 @@ function parseOverallTab(rows) {
     const row = rows[r];
     const name = invCleanCell(row[0]);
     if (!name) continue;
+    if (INV_HIDDEN_ITEMS.includes(name)) continue;
     const type = invCleanCell(row[1]);
     if (INV_HIDDEN_TYPES.includes(type)) continue;
     result.push({
@@ -909,6 +924,7 @@ function parseUniformsTab(rows) {
     const row = rows[r];
     const name = invCleanCell(row[0]);
     if (!name) continue;
+    if (INV_HIDDEN_ITEMS.includes(name)) continue;
     result.push({
       name,
       type: invCleanCell(row[1]),

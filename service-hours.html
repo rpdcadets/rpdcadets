@@ -563,10 +563,13 @@ function buildPDF(v){
     } else {
       doc.setDrawColor(180,180,180); doc.setLineWidth(0.7); doc.line(x, y+4, x+200, y+4);
       try{
+        doc.setFont('helvetica','normal');           // match the rest of the form
         const tf = new doc.AcroFormTextField();
         tf.fieldName = keyPrefix+"_signature";
         tf.Rect = [x, y-12, 200, 16];
         tf.fontSize = 12;
+        tf.fontName = 'helvetica';
+        tf.DA = "/Helv 12 Tf 0.1 0.15 0.28 rg";   // force Helvetica, navy text, to match the form
         doc.addField(tf);
       }catch(e){ console.error("sig field", e); }
     }

@@ -169,12 +169,61 @@
   #statusMsg.ok{display:block; background:rgba(39,174,96,.12); color:#1e7e44; border:1px solid rgba(39,174,96,.4);}
   #statusMsg.err{display:block; background:rgba(196,30,58,.1); color:#a01a30; border:1px solid rgba(196,30,58,.4);}
 
+  .toolbar-bottom{margin-top:18px;}
+
+  /* SUCCESS MODAL */
+  #successModal{
+    position:fixed; inset:0; z-index:10000; display:none;
+    align-items:center; justify-content:center; padding:20px;
+    background:rgba(15,24,41,0.72); backdrop-filter:blur(4px);
+  }
+  #successModal.show{display:flex; animation:fadeIn .25s ease;}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  .success-card{
+    background:#fff; border-radius:18px; padding:42px 38px; max-width:420px; width:100%;
+    text-align:center; box-shadow:0 24px 70px rgba(0,0,0,0.4); animation:popIn .3s cubic-bezier(.2,.8,.3,1.2);
+  }
+  @keyframes popIn{from{transform:scale(.85); opacity:0}to{transform:scale(1); opacity:1}}
+  .success-check{
+    width:74px; height:74px; border-radius:50%; margin:0 auto 22px;
+    background:#1e7e44; color:#fff; display:flex; align-items:center; justify-content:center;
+    animation:checkPop .4s ease .1s both;
+  }
+  @keyframes checkPop{0%{transform:scale(0)}60%{transform:scale(1.15)}100%{transform:scale(1)}}
+  .success-title{
+    font-family:'Barlow Condensed',sans-serif; font-size:30px; letter-spacing:1px; color:#1B2A4A;
+    text-transform:uppercase; margin-bottom:12px;
+  }
+  .success-msg{font-size:15px; color:#444; line-height:1.6; margin-bottom:26px;}
+  .success-card .btn{width:100%; background:#1e7e44;}
+  .success-card .btn:hover{filter:brightness(1.08);}
+  .btn-text{
+    display:block; width:100%; margin-top:12px; background:none; border:none; cursor:pointer;
+    color:#7A8BA0; font-family:'Barlow',sans-serif; font-size:13px; padding:8px;
+  }
+  .btn-text:hover{color:#444; text-decoration:underline;}
+
   /* PRINT — strip everything but the sheet, render fields as their values */
   @media print{
     body{background:#fff; padding:0;}
-    .toolbar,.sample-banner,#statusMsg,#lockScreen{display:none !important;}
+    .toolbar,.sample-banner,#statusMsg,#lockScreen,#successModal{display:none !important;}
     .sheet{box-shadow:none; max-width:100%;}
     input.fld:focus{box-shadow:none;}
+  }
+
+  /* MOBILE refinements */
+  @media (max-width:560px){
+    body{padding:14px 10px;}
+    .body{padding:28px 22px 24px;}
+    .toolbar{flex-direction:column; align-items:stretch; gap:12px;}
+    .toolbar .hint{text-align:center;}
+    .toolbar .btn{flex:1;}
+    .toolbar > div[style*="flex"]{display:flex; gap:10px;}
+    .approvals{flex-direction:column; gap:30px;}   /* stack advisor + supervisor */
+    .fld-date,.fld-sup,.fld-from,.fld-div{width:100%;}
+    .fld-on{width:150px;}
+    input.sig-input{width:100%;}
+    .hdr h1{font-size:30px;}
   }
 
   /* LOCK SCREEN */
@@ -260,7 +309,7 @@
   <div class="body">
     <div class="row">
       <span class="lbl">Today's Date:</span>
-      <input class="fld fld-date" id="todays_date" type="text" placeholder="MM/DD/YYYY">
+      <input class="fld fld-date" id="todays_date" type="text" placeholder="MM/DD/YYYY" inputmode="numeric">
     </div>
     <div class="row">
       <span class="lbl">To: Supervisor</span>
@@ -272,7 +321,7 @@
     </div>
 
     <div class="flow">
-      On <input class="fld fld-on" id="request_date" type="text" placeholder="date">
+      On <input class="fld fld-on" id="request_date" type="text" placeholder="MM/DD/YYYY" inputmode="numeric">
       at <input class="fld fld-time" id="request_time" type="text" placeholder="time">
       <span class="ampm">
         <input type="radio" name="ampm" id="am" value="AM"><label for="am">AM</label>
@@ -319,7 +368,28 @@
   </div>
 </div>
 
+<div class="toolbar toolbar-bottom">
+  <div class="hint">Finished? Send your request to your advisor, or print a copy for your records.</div>
+  <div style="display:flex; gap:10px;">
+    <button class="btn btn-print" onclick="window.print()">Print / Save PDF</button>
+    <button class="btn btn-send" id="sendBtnBottom" onclick="sendForm()">Send to Advisor</button>
+  </div>
+</div>
+
 <div id="statusMsg"></div>
+
+<!-- SUCCESS MODAL -->
+<div id="successModal">
+  <div class="success-card">
+    <div class="success-check">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+    </div>
+    <h2 class="success-title">Request Submitted</h2>
+    <p class="success-msg" id="successMsg">Your Service Hours Request has been sent to the program. You don't need to submit again.</p>
+    <button class="btn btn-send" id="successAnother" onclick="submitAnother()">Submit Another Request</button>
+    <button class="btn-text" id="successClose" onclick="closeSuccess()">Done</button>
+  </div>
+</div>
 
 </div><!-- end appContent -->
 
@@ -395,6 +465,22 @@ function pairExclude(aId,bId){
 }
 pairExclude('advisor_approved','advisor_denied');
 pairExclude('supervisor_approved','supervisor_denied');
+
+// Auto-format date fields to MM/DD/YYYY as the user types digits
+function attachDateMask(id){
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.addEventListener('input', function(){
+    let d = this.value.replace(/\D/g,'').slice(0,8);   // digits only, max 8 (MMDDYYYY)
+    let out = d;
+    if(d.length > 4){ out = d.slice(0,2)+'/'+d.slice(2,4)+'/'+d.slice(4); }
+    else if(d.length > 2){ out = d.slice(0,2)+'/'+d.slice(2); }
+    this.value = out;
+  });
+  // On blur, if they typed a 2-digit year, leave as-is (don't guess the century)
+}
+attachDateMask('todays_date');
+attachDateMask('request_date');
 
 function getValues(){
   return {
@@ -530,6 +616,39 @@ function showStatus(msg, ok){
   el.textContent=msg; el.className = ok ? 'ok' : 'err';
 }
 
+function setSendButtons(disabled, label){
+  ['sendBtn','sendBtnBottom'].forEach(id=>{
+    const b=document.getElementById(id);
+    if(b){ b.disabled=disabled; if(label) b.textContent=label; }
+  });
+}
+
+function showSuccess(msg){
+  if(msg) document.getElementById('successMsg').textContent = msg;
+  document.getElementById('successModal').classList.add('show');
+}
+function closeSuccess(){
+  document.getElementById('successModal').classList.remove('show');
+}
+
+function submitAnother(){
+  // Clear all text/signature inputs
+  ['todays_date','supervisor','from_name','request_date','request_time','division',
+   'cadet_signature','advisor_signature','supervisor_signature'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.value='';
+  });
+  // Clear AM/PM and approval checkboxes
+  ['am','pm','advisor_approved','advisor_denied','supervisor_approved','supervisor_denied'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.checked=false;
+  });
+  // Clear status, re-enable buttons, close modal, scroll to top
+  const sm=document.getElementById('statusMsg'); sm.textContent=''; sm.className='';
+  setSendButtons(false, "Send to Advisor");
+  closeSuccess();
+  window.scrollTo({top:0, behavior:'smooth'});
+  const first=document.getElementById('todays_date'); if(first) first.focus();
+}
+
 async function sendForm(){
   const v = getValues();
   if(!v.from_name || !v.request_date || !v.division){
@@ -542,8 +661,7 @@ async function sendForm(){
     return;
   }
   v.signed_at = new Date().toLocaleString();
-  const btn=document.getElementById('sendBtn');
-  btn.disabled=true; btn.textContent="Sending…";
+  setSendButtons(true, "Sending…");
 
   // 1) Build the branded PDF as a Blob
   let pdfBlob=null;
@@ -594,13 +712,16 @@ async function sendForm(){
     });
     if(res.ok){
       showStatus("Sent. Your request has been submitted to the program." + (pdfUrl ? "" : " (Note: the PDF link could not be created, but your details were sent.)"), true);
+      showSuccess("Your Service Hours Request has been sent to the program." + (pdfUrl ? "" : " (Note: the PDF copy could not be created, but your request details were sent.)") + " You don't need to submit again.");
+      setSendButtons(true, "Submitted \u2713");   // stay disabled to prevent a duplicate submission
+      return;
     }else{
       showStatus("Could not send (error "+res.status+"). Please try again.", false);
     }
   }catch(e){
     showStatus("Network error while sending. Please try again.", false);
   }
-  btn.disabled=false; btn.textContent="Send to Advisor";
+  setSendButtons(false, "Send to Advisor");   // re-enable only if it failed
 }
 </script>
 </body>

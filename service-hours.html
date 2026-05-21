@@ -375,9 +375,10 @@
 
 <script>
 // ====== CONFIG ======
-// Replace this placeholder with your real Web3Forms access key (free at web3forms.com).
-// The key only routes submissions to the email tied to your Web3Forms account; it is safe to put in the page.
-const WEB3FORMS_KEY = "3a810599-46f1-4480-a763-d9ce460391ec";
+// Formspark form endpoint (public, safe to embed) — emails submissions to your account.
+const FORMSPARK_ACTION = "https://submit-form.com/llnko51Zo";
+// Uploadcare public key (safe to embed per Uploadcare) — hosts the PDF and returns a link.
+const UPLOADCARE_PUBLIC_KEY = "9754e896dc17179bd184";
 // ====================
 
 // Embed logo (injected below)
@@ -514,32 +515,38 @@ async function sendForm(){
   const btn=document.getElementById('sendBtn');
   btn.disabled=true; btn.textContent="Sending…";
 
-  // Build the branded PDF
-  let pdfBase64="";
+  // 1) Build the branded PDF as a Blob
+  let pdfBlob=null;
   try{
     const doc = buildPDF(v);
-    const dataUri = doc.output('datauristring');           // data:application/pdf;base64,XXXX
-    pdfBase64 = dataUri.split(',')[1];
-  }catch(e){ console.error(e); }
+    pdfBlob = doc.output('blob');
+  }catch(e){ console.error("PDF build failed", e); }
 
-  if(WEB3FORMS_KEY.startsWith("YOUR-")){
-    // Sample mode: no real key yet. Show what would happen + let them download the PDF.
-    showStatus("SAMPLE MODE: no Web3Forms key set yet, so nothing was emailed. In the live version this would email the filled PDF to your advisor. Downloading the generated PDF so you can see it.", true);
-    try{ buildPDF(v).save(`ServiceHours_${(v.from_name||'cadet').replace(/\s+/g,'_')}.pdf`); }catch(e){}
-    btn.disabled=false; btn.textContent="Send to Advisor";
-    return;
+  // 2) Upload the PDF to Uploadcare to get a shareable link
+  let pdfUrl="";
+  if(pdfBlob){
+    try{
+      const fname = `ServiceHours_${(v.from_name||'cadet').replace(/\s+/g,'_')}_${v.request_date.replace(/[^0-9A-Za-z]/g,'-')}.pdf`;
+      const fd = new FormData();
+      fd.append("UPLOADCARE_PUB_KEY", UPLOADCARE_PUBLIC_KEY);
+      fd.append("UPLOADCARE_STORE", "1");           // keep the file (don't auto-delete)
+      fd.append("file", pdfBlob, fname);
+      const up = await fetch("https://upload.uploadcare.com/base/", { method:"POST", body: fd });
+      const upJson = await up.json();
+      if(upJson && upJson.file){
+        pdfUrl = `https://ucarecdn.com/${upJson.file}/${fname}`;
+      }
+    }catch(e){ console.error("Uploadcare upload failed", e); }
   }
 
-  // LIVE: send to Web3Forms with PDF attachment
+  // 3) Submit details (plus the PDF link) to Formspark, which emails you
   const payload = {
-    access_key: WEB3FORMS_KEY,
-    subject: `Service Hours Request — ${v.from_name}`,
-    from_name: "RPD Cadets Website",
+    _subject: `Service Hours Request — ${v.from_name}`,
     "Today's Date": v.todays_date,
     "To (Supervisor)": v.supervisor,
     "From (Cadet)": v.from_name,
     "Requested Date": v.request_date,
-    "Requested Time": `${v.request_time} ${v.ampm}`,
+    "Requested Time": `${v.request_time} ${v.ampm}`.trim(),
     "Division": v.division,
     "Cadet Signature": v.cadet_signature,
     "Signed At": v.signed_at,
@@ -547,15 +554,19 @@ async function sendForm(){
     "Advisor Decision": v.advisor_decision,
     "Supervisor Signature": v.supervisor_signature,
     "Supervisor Decision": v.supervisor_decision,
-    attachment: pdfBase64 ? [{ filename:`ServiceHours_${v.from_name.replace(/\s+/g,'_')}.pdf`, data: pdfBase64 }] : undefined
+    "PDF Download": pdfUrl || "(PDF could not be generated — see details above)"
   };
   try{
-    const res = await fetch("https://api.web3forms.com/submit",{
-      method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(payload)
+    const res = await fetch(FORMSPARK_ACTION,{
+      method:"POST",
+      headers:{ "Content-Type":"application/json", "Accept":"application/json" },
+      body: JSON.stringify(payload)
     });
-    const out = await res.json();
-    if(out.success){ showStatus("Sent. Your advisor will receive the request shortly.", true); }
-    else { showStatus("Could not send: "+(out.message||"unknown error"), false); }
+    if(res.ok){
+      showStatus("Sent. Your request has been submitted to the program." + (pdfUrl ? "" : " (Note: the PDF link could not be created, but your details were sent.)"), true);
+    }else{
+      showStatus("Could not send (error "+res.status+"). Please try again.", false);
+    }
   }catch(e){
     showStatus("Network error while sending. Please try again.", false);
   }

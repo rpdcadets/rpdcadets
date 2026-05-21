@@ -379,6 +379,8 @@
 const FORMSPARK_ACTION = "https://submit-form.com/llnko51Zo";
 // Uploadcare public key (safe to embed per Uploadcare) — hosts the PDF and returns a link.
 const UPLOADCARE_PUBLIC_KEY = "9754e896dc17179bd184";
+// Your project's CDN host (from the Uploadcare dashboard file URLs). Generic fallback is ucarecdn.com.
+const UPLOADCARE_CDN_BASE = "https://5t97mttm8f.ucarecd.net";
 // ====================
 
 // Embed logo (injected below)
@@ -529,12 +531,12 @@ async function sendForm(){
       const fname = `ServiceHours_${(v.from_name||'cadet').replace(/\s+/g,'_')}_${v.request_date.replace(/[^0-9A-Za-z]/g,'-')}.pdf`;
       const fd = new FormData();
       fd.append("UPLOADCARE_PUB_KEY", UPLOADCARE_PUBLIC_KEY);
-      fd.append("UPLOADCARE_STORE", "1");           // keep the file (don't auto-delete)
+      fd.append("UPLOADCARE_STORE", "1");           // store permanently (also enable Auto-store in the dashboard)
       fd.append("file", pdfBlob, fname);
       const up = await fetch("https://upload.uploadcare.com/base/", { method:"POST", body: fd });
       const upJson = await up.json();
       if(upJson && upJson.file){
-        pdfUrl = `https://ucarecdn.com/${upJson.file}/${fname}`;
+        pdfUrl = `${UPLOADCARE_CDN_BASE}/${upJson.file}/${fname}`;
       }
     }catch(e){ console.error("Uploadcare upload failed", e); }
   }

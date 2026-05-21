@@ -551,14 +551,33 @@ function handleEventSubmit() {
   if(!month||!day||!year){ err.textContent='Please fill in the complete date.'; return; }
   if(!ev){ err.textContent='Please enter the event name.'; return; }
   if(!time){ err.textContent='Please enter the time worked.'; return; }
-  document.getElementById('hName').value=name;
-  document.getElementById('hMonth').value=month;
-  document.getElementById('hDay').value=day;
-  document.getElementById('hYear').value=year;
-  document.getElementById('hEvent').value=ev;
-  document.getElementById('hTime').value=time;
-  document.getElementById('hComments').value=comments;
-  document.getElementById('eventRealForm').submit();
+
+  // Combine the date into one readable value
+  const dateStr = month + ' ' + day + ', ' + year;
+
+  // Disable the old static fields so they don't appear (lowercase month/day/year) in the email
+  ['hName','hMonth','hDay','hYear','hEvent','hTime','hComments'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.disabled=true;
+  });
+
+  // Inject clean, ordered fields with friendly labels
+  const form=document.getElementById('eventRealForm');
+  // remove any previously-injected clean fields (in case of re-submit)
+  form.querySelectorAll('.cleanField').forEach(n=>n.remove());
+  const addField=(label,value)=>{
+    const inp=document.createElement('input');
+    inp.type='hidden'; inp.name=label; inp.value=value; inp.className='cleanField';
+    // insert at the top of the form so order is controlled
+    form.insertBefore(inp, form.firstChild);
+  };
+  // insert in reverse so final order reads: Name, Date, Event, Time Worked, Comments
+  addField('Comments', comments || '(none)');
+  addField('Time Worked', time);
+  addField('Event / Activity', ev);
+  addField('Date', dateStr);
+  addField('Name', name);
+
+  form.submit();
 }
 
 // ═══════ ATTENDANCE FORM ═══════

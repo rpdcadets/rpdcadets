@@ -644,14 +644,34 @@ function handleAttSubmit() {
   if(!byVal){ err.textContent='Please enter your name.'; return; }
   const d=new Date(dateVal+'T12:00:00');
   const formatted=d.toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
-  const hf=document.getElementById('attHiddenFields'); hf.innerHTML='';
+
+  // Build clean present / excused / unexcused lists for a readable email
+  const present=[], excused=[], unexcused=[];
   allNames.forEach(name => {
     const s=attState[name];
-    if(s==='present'){ const inp=document.createElement('input'); inp.type='hidden'; inp.name='present[]'; inp.value=name; hf.appendChild(inp); }
-    else { const inp=document.createElement('input'); inp.type='hidden'; inp.name='absent_status_'+nk(name); inp.value=s==='excused'?'Excused':'Unexcused'; hf.appendChild(inp); }
+    if(s==='present') present.push(name);
+    else if(s==='excused') excused.push(name);
+    else if(s==='unexcused') unexcused.push(name);
   });
-  document.getElementById('aDate').value=formatted;
-  document.getElementById('aBy').value=byVal;
+  const join = arr => arr.length ? arr.join(', ') : '(none)';
+
+  const hf=document.getElementById('attHiddenFields'); hf.innerHTML='';
+  const addField=(label,value)=>{
+    const inp=document.createElement('input');
+    inp.type='hidden'; inp.name=label; inp.value=value; hf.appendChild(inp);
+  };
+  // Order matters — Formspark lists fields in this order in the email
+  addField('Date', formatted);
+  addField('Submitted By', byVal);
+  addField('Total Roster', String(allNames.length));
+  addField('Present ('+present.length+')', join(present));
+  addField('Excused ('+excused.length+')', join(excused));
+  addField('Unexcused ('+unexcused.length+')', join(unexcused));
+
+  // Disable the old static date/submitted_by inputs so they don't duplicate in the email
+  const ad=document.getElementById('aDate'); if(ad) ad.disabled=true;
+  const ab=document.getElementById('aBy'); if(ab) ab.disabled=true;
+
   document.getElementById('attRealForm').submit();
 }
 

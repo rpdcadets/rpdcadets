@@ -572,7 +572,7 @@ function buildPDF(v){
   y+=34;
 
   doc.setFont('helvetica','normal'); doc.setTextColor(34,34,34); doc.setFontSize(11.5);
-  const sentence = `On ${v.request_date||'____________'}, I request permission to ride with Officer ${v.officer||'____________'} of ${v.watch||'____'} Watch Patrol.  (Days-A, Days-B, Nights-A, Nights-B)`;
+  const sentence = `On ${v.request_date||'____________'}, I request permission to ride with Officer ${v.officer||'____________'} of ${v.watch||'____'} Watch Patrol.`;
   const wrapped = doc.splitTextToSize(sentence, W-L-56);
   doc.text(wrapped, L, y); y += wrapped.length*16 + 12;
   const ack = doc.splitTextToSize("I understand that this is only a request and that I may be assigned to any available officer.", W-L-56);

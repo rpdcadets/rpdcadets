@@ -17,6 +17,7 @@ const NAV_LINKS = [
   { label: 'Training', href: 'training.html' },
   { label: 'Trackers', href: 'trackers.html' },
   { label: 'FAQ', href: 'faq.html' },
+  { label: 'Donate', href: 'donate.html' },
   { label: 'Contact', href: 'contact.html' }
 ];
 

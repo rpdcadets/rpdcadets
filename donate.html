@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Donate | Richardson Police Public Safety Cadets</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@300;400;500;600;700&family=Barlow+Condensed:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --navy: #1a2744; --navy-deep: #0f1a30; --navy-light: #253758;
+  --red: #c0392b; --red-glow: #e74c3c;
+  --gold: #d4a952; --white: #ffffff; --text-muted: #8899b0;
+}
+html { scroll-behavior: smooth; }
+body { font-family: 'Barlow', sans-serif; background: var(--navy-deep); color: var(--white); -webkit-font-smoothing: antialiased; min-height: 100vh; display: flex; flex-direction: column; }
+nav { position: fixed; top: 0; left: 0; right: 0; z-index: 1000; background: rgba(15,26,48,0.85); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255,255,255,0.06); transition: all 0.4s ease; }
+nav.scrolled { background: rgba(15,26,48,0.97); box-shadow: 0 4px 30px rgba(0,0,0,0.3); }
+.nav-inner { max-width: 1200px; margin: 0 auto; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; height: 72px; }
+.nav-brand { display: flex; align-items: center; gap: 14px; text-decoration: none; color: var(--white); }
+.nav-brand img { width: 44px; height: 44px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.15); }
+.nav-brand-text { display: flex; flex-direction: column; line-height: 1.15; }
+.nav-brand-dept { font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 11px; letter-spacing: 2.5px; text-transform: uppercase; color: var(--gold); }
+.nav-brand-unit { font-family: 'Barlow Condensed', sans-serif; font-weight: 400; font-size: 13px; letter-spacing: 1px; color: var(--text-muted); }
+.nav-links { display: flex; align-items: center; gap: 8px; list-style: none; }
+.nav-links a { text-decoration: none; color: rgba(255,255,255,0.7); font-family: 'Barlow Condensed', sans-serif; font-weight: 500; font-size: 14px; letter-spacing: 1.5px; text-transform: uppercase; padding: 8px 16px; border-radius: 6px; transition: all 0.3s ease; position: relative; }
+.nav-links a:hover, .nav-links a.active { color: var(--white); background: rgba(255,255,255,0.08); }
+.nav-links a.active::after { content: ''; position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%); width: 16px; height: 2px; background: var(--red); border-radius: 2px; }
+.hamburger { display: none; flex-direction: column; gap: 5px; cursor: pointer; padding: 8px; background: none; border: none; }
+.hamburger span { width: 24px; height: 2px; background: var(--white); border-radius: 2px; }
+.mobile-menu { display: none; position: fixed; top: 72px; left: 0; right: 0; background: rgba(15,26,48,0.98); backdrop-filter: blur(20px); padding: 24px; border-bottom: 1px solid rgba(255,255,255,0.06); z-index: 999; }
+.mobile-menu.open { display: block; }
+.mobile-menu a { display: block; padding: 14px 0; color: rgba(255,255,255,0.7); text-decoration: none; font-family: 'Barlow Condensed', sans-serif; font-weight: 500; font-size: 16px; letter-spacing: 2px; text-transform: uppercase; border-bottom: 1px solid rgba(255,255,255,0.04); }
+.mobile-menu a:last-child { border-bottom: none; }
+.mobile-menu a:hover { color: var(--white); }
+.donate-page { flex: 1; display: flex; align-items: flex-start; justify-content: center; padding: 120px 24px 64px; position: relative; }
+.donate-bg { position: fixed; inset: 0; background: radial-gradient(ellipse 80% 60% at 50% 40%, rgba(26,39,68,0.95) 0%, rgba(15,26,48,1) 70%), radial-gradient(circle at 30% 70%, rgba(192,57,43,0.06) 0%, transparent 50%), radial-gradient(circle at 70% 30%, rgba(212,169,82,0.04) 0%, transparent 50%); z-index: 0; }
+.donate-bg::before { content: ''; position: absolute; inset: 0; background-image: linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px); background-size: 60px 60px; }
+.donate-wrapper { position: relative; z-index: 1; max-width: 880px; width: 100%; }
+.donate-header { text-align: center; margin-bottom: 40px; }
+.section-label { font-family: 'Barlow Condensed', sans-serif; font-weight: 500; font-size: 12px; letter-spacing: 3px; text-transform: uppercase; color: var(--red); margin-bottom: 16px; display: flex; align-items: center; justify-content: center; gap: 12px; }
+.section-label::before { content: ''; width: 24px; height: 1px; background: var(--red); }
+.donate-title { font-family: 'Bebas Neue', sans-serif; font-size: clamp(36px,6vw,56px); letter-spacing: 2px; line-height: 1; margin-bottom: 16px; opacity: 0; animation: fadeUp 0.6s ease 0.2s forwards; }
+.donate-desc { font-weight: 300; font-size: 16px; line-height: 1.7; color: rgba(255,255,255,0.5); max-width: 560px; margin: 0 auto; opacity: 0; animation: fadeUp 0.6s ease 0.4s forwards; }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+.tax-strip { background: rgba(212,169,82,0.07); border: 1px solid rgba(212,169,82,0.25); border-radius: 12px; padding: 18px 28px; text-align: center; margin-bottom: 28px; opacity: 0; animation: fadeUp 0.6s ease 0.45s forwards; }
+.tax-strip p { font-size: 14px; font-weight: 300; line-height: 1.7; color: rgba(255,255,255,0.65); }
+.tax-strip strong { color: var(--gold); font-weight: 600; }
+.earmark-banner { background: rgba(192,57,43,0.1); border: 1px solid rgba(192,57,43,0.3); border-radius: 12px; padding: 20px 28px; text-align: center; margin-bottom: 28px; opacity: 0; animation: fadeUp 0.6s ease 0.5s forwards; }
+.earmark-banner .em-label { font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 2.5px; text-transform: uppercase; color: var(--red-glow); margin-bottom: 8px; }
+.earmark-banner p { font-size: 15px; font-weight: 300; line-height: 1.7; color: rgba(255,255,255,0.75); }
+.earmark-banner p strong { color: var(--white); font-weight: 600; }
+.donate-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 28px; }
+.donate-card { background: rgba(255,255,255,0.025); border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; padding: 36px 32px; display: flex; flex-direction: column; gap: 16px; position: relative; overflow: hidden; opacity: 0; animation: fadeUp 0.6s ease forwards; }
+.donate-card:nth-child(1) { animation-delay: 0.55s; }
+.donate-card:nth-child(2) { animation-delay: 0.65s; }
+.donate-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--red), var(--gold), var(--red)); }
+.card-icon { width: 56px; height: 56px; border-radius: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.card-icon.cc-icon { background: rgba(192,57,43,0.1); border: 1px solid rgba(192,57,43,0.2); color: var(--red-glow); }
+.card-icon.check-icon { background: rgba(212,169,82,0.1); border: 1px solid rgba(212,169,82,0.2); color: var(--gold); }
+.donate-card h2 { font-family: 'Bebas Neue', sans-serif; font-size: 26px; letter-spacing: 1px; font-weight: 400; }
+.donate-card p { font-size: 14px; font-weight: 300; line-height: 1.75; color: rgba(255,255,255,0.55); }
+.donate-card p strong { color: var(--white); font-weight: 500; }
+.addr-block { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; padding: 16px 20px; font-size: 13.5px; font-weight: 300; line-height: 1.8; color: rgba(255,255,255,0.7); }
+.addr-block strong { color: var(--white); font-weight: 500; }
+.btn-row { margin-top: auto; display: flex; flex-wrap: wrap; gap: 12px; }
+.btn { display: inline-flex; align-items: center; gap: 8px; text-decoration: none; font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 15px; letter-spacing: 1.5px; text-transform: uppercase; padding: 13px 26px; border-radius: 8px; transition: all 0.3s ease; }
+.btn-primary { background: var(--red); color: var(--white); }
+.btn-primary:hover { background: var(--red-glow); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(192,57,43,0.35); }
+.btn-outline { border: 1px solid rgba(212,169,82,0.4); color: var(--gold); }
+.btn-outline:hover { background: rgba(212,169,82,0.1); border-color: var(--gold); transform: translateY(-2px); }
+.info-card { background: rgba(255,255,255,0.025); border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; padding: 32px 40px; text-align: center; opacity: 0; animation: fadeUp 0.6s ease 0.75s forwards; margin-bottom: 24px; }
+.info-card h3 { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 1px; font-weight: 400; margin-bottom: 12px; }
+.info-card p { font-weight: 300; font-size: 14.5px; line-height: 1.8; color: rgba(255,255,255,0.5); max-width: 620px; margin: 0 auto; }
+.info-card p strong { color: var(--white); font-weight: 500; }
+.info-card p a { color: var(--gold); text-decoration: none; }
+.info-card p a:hover { text-decoration: underline; }
+.disclaimer { text-align: center; font-size: 12px; font-weight: 300; line-height: 1.8; color: rgba(255,255,255,0.3); max-width: 680px; margin: 0 auto; opacity: 0; animation: fadeUp 0.6s ease 0.85s forwards; }
+footer { background: var(--navy); border-top: 1px solid rgba(255,255,255,0.05); padding: 40px 0; position: relative; z-index: 1; }
+.footer-bottom { max-width: 1200px; margin: 0 auto; padding: 0 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; }
+.footer-copy { font-size: 12px; color: rgba(255,255,255,0.3); }
+.footer-back a { font-family: 'Barlow Condensed', sans-serif; font-size: 13px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-muted); text-decoration: none; transition: color 0.3s ease; }
+.footer-back a:hover { color: var(--white); }
+@media (max-width: 900px) { .nav-links { display: none; } .hamburger { display: flex; } }
+@media (max-width: 700px) { .donate-grid { grid-template-columns: 1fr; } .info-card { padding: 28px 24px; } .footer-bottom { flex-direction: column; text-align: center; } .donate-page { padding-top: 104px; } }
+</style>
+</head>
+<body>
+
+<div id="site-nav"></div>
+
+<div class="donate-page">
+  <div class="donate-bg"></div>
+  <div class="donate-wrapper">
+
+    <div class="donate-header">
+      <div class="section-label">Support the Program</div>
+      <h1 class="donate-title">Donate</h1>
+      <p class="donate-desc">Your support funds competition travel, uniforms, training equipment, awards, and program scholarships for families in need. Every dollar helps keep the program within reach of every cadet.</p>
+    </div>
+
+    <div class="tax-strip">
+      <p>Donations are received by the <strong>Richardson Citizen Police Academy Alumni Association (RCPAAA)</strong>, a tax-exempt 501(c)(3) nonprofit organization, US Internal Revenue Tax ID <strong>75-2484541</strong>. All donations to the RCPAAA are fully deductible to the extent provided by law.</p>
+    </div>
+
+    <div class="earmark-banner">
+      <div class="em-label">Important</div>
+      <p>To make sure your gift reaches the cadets, designate <strong>"Public Safety Cadets"</strong> on your donation: in the <strong>Reference field</strong> for credit card gifts, or on the <strong>check memo line</strong> for gifts by mail. Undesignated credit card donations default to the RCPAAA's Back the Blue Fund.</p>
+    </div>
+
+    <div class="donate-grid">
+
+      <div class="donate-card">
+        <div class="card-icon cc-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+        </div>
+        <h2>Donate by Credit Card</h2>
+        <p>Give securely online through the RCPAAA's donation portal. Enter <strong>"Public Safety Cadets"</strong> in the <strong>Reference</strong> field so your gift is directed to the cadet program.</p>
+        <div class="btn-row">
+          <a href="https://secure.affinipay.com/pages/rcpaaa/donations" target="_blank" rel="noopener" class="btn btn-primary">Donate Now</a>
+        </div>
+      </div>
+
+      <div class="donate-card">
+        <div class="card-icon check-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        </div>
+        <h2>Donate by Check</h2>
+        <p>Make checks payable to the <strong>"Richardson Citizen Police Academy Alumni Association"</strong> and write <strong>"Public Safety Cadets"</strong> on the memo line. Print and enclose the Check Donor Form so your gift can be acknowledged for tax purposes. On the form, write <strong>"Public Safety Cadets"</strong> on the <strong>"Designated for"</strong> line, same as the check memo.</p>
+        <div class="addr-block">
+          <strong>Mail your check and Check Donor Form to:</strong><br>
+          Richardson Citizen Police Academy Alumni Association<br>
+          c/o Richardson Police Department<br>
+          PO Box 831078<br>
+          Richardson, TX 75083-1078<br>
+          Attn: RCPAAA Treasurer
+        </div>
+        <div class="btn-row">
+          <a href="RCPAAA_Check_Donor_Form.pdf" target="_blank" rel="noopener" class="btn btn-outline">Check Donor Form</a>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="info-card">
+      <h3>In-Kind Donations &amp; Sponsorships</h3>
+      <p>In-kind donations are welcome year-round: meals, water and sports drinks, printing, equipment, and awards. For in-kind gifts, business sponsorships, or questions about giving, email our advisors at <a href="mailto:advisors@rpdcadets.com">advisors@rpdcadets.com</a>.</p>
+    </div>
+
+    <p class="disclaimer">Every sponsor is gratefully acknowledged. Sponsor names are recognized in program materials in accordance with program and city guidelines. Recognition is an acknowledgment of support and is not an endorsement of any business, product, or service by the City of Richardson or the Richardson Police Department.</p>
+
+  </div>
+</div>
+
+<div id="site-footer" data-style="simple"></div>
+
+<script src="shared.js"></script>
+</body>
+</html>

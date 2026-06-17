@@ -116,6 +116,16 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
 .cat-size-row select{background:var(--input-bg);border:1px solid var(--input-border);border-radius:8px;padding:9px 11px;color:var(--white);font-family:'Barlow',sans-serif;font-size:13.5px;outline:none;appearance:none;cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%238899b0' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 9px center;padding-right:28px}
 .cat-size-row select:focus{border-color:var(--input-focus)}
 .cat-size-row select option{background:var(--navy)}
+.cat-size-row.pants{grid-template-columns:1fr 96px 34px}
+.pants-fields{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.pants-fields select,.pants-fields input{background:var(--input-bg);border:1px solid var(--input-border);border-radius:8px;padding:9px 10px;color:var(--white);font-family:'Barlow',sans-serif;font-size:13.5px;outline:none}
+.pants-fields select{appearance:none;cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%238899b0' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;padding-right:26px}
+.pants-fields select:focus,.pants-fields input:focus{border-color:var(--input-focus)}
+.pants-fields select option{background:var(--navy)}
+.pants-fields .cut{width:58px;text-align:center}
+.pants-fields .pn{width:56px;text-align:center}
+.pants-fields .len{min-width:104px}
+.pants-x{color:var(--text-muted);font-weight:700;padding:0 1px}
 .cat-add-size{background:none;border:1px dashed var(--card-border);color:var(--text-muted);border-radius:8px;padding:8px 12px;font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;margin-top:6px}
 .cat-add-size:hover{color:var(--white);border-color:rgba(255,255,255,0.2)}
 .cat-size-note{font-size:11px;color:var(--text-muted);font-weight:400;letter-spacing:0;text-transform:none}
@@ -198,7 +208,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
 
 <script src="roster.js?v=4"></script>
 <script>
-console.log('[admin] Build v4 — catalog letter-size dropdowns');
+console.log('[admin] Build v5 — structured pants picker');
 const SESSION_KEY = 'rpd761_auth';   // shares the cadet session with members/trackers
 const RANKS = ['Captain','Lt.','Sgt.','Cadet','Probationary'];
 const SQUADS = [['leadership','Leadership'],[1,'Squad 1'],[2,'Squad 2'],[3,'Squad 3'],[4,'Squad 4 (Admin)']];
@@ -380,6 +390,17 @@ function showToast(m){ const t=document.getElementById('toast'); t.textContent=m
 /* ── ITEM CATALOG ── */
 function openCatalog(){ showView('catalogView'); catalog = RPDRoster.getCatalog(); renderCatalog(); }
 const isSized = t => t === 'letter' || t === 'custom';
+function pantsLabel(s){
+  if(s.cut === 'W'){
+    const sz = (s.wsize ?? '') !== '' ? s.wsize : '';
+    const ln = s.length || 'Regular';
+    return ('W ' + sz + (sz !== '' ? ' ' + ln : '')).trim();
+  }
+  const w = (s.waist ?? '') !== '' ? s.waist : '';
+  const i = (s.inseam ?? '') !== '' ? s.inseam : '';
+  if(w === '' && i === '') return 'M';
+  return 'M ' + w + 'x' + i;
+}
 
 function renderCatalog(){
   const host = document.getElementById('catRows'); host.innerHTML = '';
@@ -403,24 +424,35 @@ function catItemEl(item){
     </div>`;
   if(isSized(item.type)){
     const rows = (item.sizes||[]).map((s,si) => {
-      const sizeCell = item.type === 'letter'
-        ? `<select data-act="size-label" data-si="${si}">
+      let sizeCell;
+      if(item.type === 'letter'){
+        sizeCell = `<select data-act="size-label" data-si="${si}">
              <option value="" ${!s.label?'selected':''} disabled>Size…</option>
              ${LETTER_SIZES.map(z => `<option value="${z}" ${z===s.label?'selected':''}>${z}</option>`).join('')}
-           </select>`
-        : `<input type="text" data-act="size-label" data-si="${si}" value="${(s.label||'').replace(/"/g,'&quot;')}" placeholder="e.g. M 32x30">`;
-      return `<div class="cat-size-row">
+           </select>`;
+      } else { // custom = pants picker
+        const isW = s.cut === 'W';
+        const cutSel = `<select class="cut" data-act="pants-cut" data-si="${si}">
+             <option value="M" ${!isW?'selected':''}>M</option>
+             <option value="W" ${isW?'selected':''}>W</option></select>`;
+        const mFields = `<input type="number" min="0" class="pn" data-act="pants-waist" data-si="${si}" value="${s.waist??''}" placeholder="32"><span class="pants-x">×</span><input type="number" min="0" class="pn" data-act="pants-inseam" data-si="${si}" value="${s.inseam??''}" placeholder="30">`;
+        const wFields = `<input type="number" min="0" class="pn" data-act="pants-wsize" data-si="${si}" value="${s.wsize??''}" placeholder="8"><select class="len" data-act="pants-length" data-si="${si}">
+             <option value="Regular" ${(!s.length||s.length==='Regular')?'selected':''}>Regular</option>
+             <option value="Short" ${s.length==='Short'?'selected':''}>Short</option>
+             <option value="Long" ${s.length==='Long'?'selected':''}>Long</option></select>`;
+        sizeCell = `<div class="pants-fields">${cutSel}${isW?wFields:mFields}</div>`;
+      }
+      return `<div class="cat-size-row${item.type==='custom'?' pants':''}">
         ${sizeCell}
         <input type="number" min="0" data-act="size-qty" data-si="${si}" value="${s.qty||0}" placeholder="Qty">
         <button class="del" data-act="size-del" data-si="${si}" title="Remove size">&times;</button>
       </div>`;
     }).join('');
     const sum = (item.sizes||[]).reduce((a,s)=>a+(+s.qty||0),0);
-    const addLabel = item.type === 'letter' ? '+ Size' : '+ Size';
     html += `<div class="cat-sizes">
       <div class="cat-sizes-head"><span>Stock by size <span class="cat-size-note">(optional — counts ${sum} of ${item.onHand||0} on hand)</span></span></div>
       ${rows}
-      <button class="cat-add-size" data-act="add-size">${addLabel}</button>
+      <button class="cat-add-size" data-act="add-size">+ Size</button>
     </div>`;
   }
   wrap.innerHTML = html;
@@ -430,7 +462,7 @@ function catItemEl(item){
   wrap.querySelector('input[data-f="onHand"]').addEventListener('input', e => { itemAt(item).onHand = +e.target.value || 0; catSchedule(); reSizeNote(wrap, item); });
   wrap.querySelector('select[data-f="type"]').addEventListener('change', e => {
     const it = itemAt(item); it.type = e.target.value;
-    if(isSized(it.type) && !it.sizes) it.sizes = [];
+    it.sizes = [];   // size shapes differ per type, so start the new type clean
     catSchedule(); renderCatalog();
   });
   wrap.querySelector('[data-act="del-item"]').addEventListener('click', () => {
@@ -439,13 +471,29 @@ function catItemEl(item){
 
   // size rows
   if(isSized(item.type)){
-    wrap.querySelectorAll('[data-act="size-label"]').forEach(el => {
+    // letter dropdown
+    wrap.querySelectorAll('select[data-act="size-label"]').forEach(el =>
+      el.addEventListener('change', () => { itemAt(item).sizes[+el.dataset.si].label = el.value; catSchedule(); }));
+    // pants picker
+    wrap.querySelectorAll('[data-act="pants-cut"]').forEach(el => el.addEventListener('change', () => {
+      const s = itemAt(item).sizes[+el.dataset.si]; s.cut = el.value;
+      if(s.cut === 'W' && !s.length) s.length = 'Regular';
+      s.label = pantsLabel(s); catSchedule(); renderCatalog();   // re-render to swap M/W fields
+    }));
+    const pantsField = (act, prop) => wrap.querySelectorAll(`[data-act="${act}"]`).forEach(el => {
       const ev = el.tagName === 'SELECT' ? 'change' : 'input';
-      el.addEventListener(ev, e => { itemAt(item).sizes[+el.dataset.si].label = e.target.value; catSchedule(); });
+      el.addEventListener(ev, () => { const s = itemAt(item).sizes[+el.dataset.si]; s[prop] = el.value; s.label = pantsLabel(s); catSchedule(); });
     });
-    wrap.querySelectorAll('input[data-act="size-qty"]').forEach(el => el.addEventListener('input', e => { itemAt(item).sizes[+el.dataset.si].qty = +e.target.value || 0; catSchedule(); reSizeNote(wrap, item); }));
+    pantsField('pants-waist','waist'); pantsField('pants-inseam','inseam');
+    pantsField('pants-wsize','wsize'); pantsField('pants-length','length');
+    // quantity + remove + add
+    wrap.querySelectorAll('input[data-act="size-qty"]').forEach(el => el.addEventListener('input', () => { itemAt(item).sizes[+el.dataset.si].qty = +el.value || 0; catSchedule(); reSizeNote(wrap, item); }));
     wrap.querySelectorAll('[data-act="size-del"]').forEach(el => el.addEventListener('click', () => { itemAt(item).sizes.splice(+el.dataset.si,1); catSchedule(); renderCatalog(); }));
-    wrap.querySelector('[data-act="add-size"]').addEventListener('click', () => { const it = itemAt(item); (it.sizes = it.sizes||[]).push({label:'',qty:0}); catSchedule(); renderCatalog(); });
+    wrap.querySelector('[data-act="add-size"]').addEventListener('click', () => {
+      const it = itemAt(item); it.sizes = it.sizes || [];
+      it.sizes.push(it.type === 'custom' ? { cut:'M', waist:'', inseam:'', qty:0, label:'M' } : { label:'', qty:0 });
+      catSchedule(); renderCatalog();
+    });
   }
   return wrap;
 }

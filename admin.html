@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — Richardson Police Public Safety Cadets Unit #761</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@300;400;500;600;700&family=Barlow+Condensed:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{--navy:#1a2744;--navy-deep:#0f1a30;--navy-light:#253758;--red:#c0392b;--red-glow:#e74c3c;--gold:#d4a952;--gold-light:#f0d68a;--white:#fff;--text-muted:#8899b0;--green:#27ae60;--amber:#d97706;--red-abs:#dc2626;--card-bg:rgba(255,255,255,0.025);--card-border:rgba(255,255,255,0.06);--input-bg:rgba(255,255,255,0.04);--input-border:rgba(255,255,255,0.1);--input-focus:rgba(192,57,43,0.4)}
+body{font-family:'Barlow',sans-serif;background:var(--navy-deep);color:var(--white);min-height:100vh;-webkit-font-smoothing:antialiased}
+.container{max-width:880px;margin:0 auto;padding:0 24px}
+nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.85);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,0.06)}
+.nav-inner{max-width:1100px;margin:0 auto;padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:72px}
+.nav-brand{display:flex;align-items:center;gap:14px;text-decoration:none;color:var(--white)}
+.nav-brand img{width:44px;height:44px;border-radius:50%;border:2px solid rgba(255,255,255,0.15)}
+.nav-brand-text{display:flex;flex-direction:column;line-height:1.15}
+.nav-brand-dept{font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:11px;letter-spacing:2.5px;text-transform:uppercase;color:var(--gold)}
+.nav-brand-unit{font-family:'Barlow Condensed',sans-serif;font-weight:400;font-size:13px;letter-spacing:1px;color:var(--text-muted)}
+.nav-links{display:flex;gap:8px;list-style:none}
+.nav-links a{text-decoration:none;color:rgba(255,255,255,0.7);font-family:'Barlow Condensed',sans-serif;font-weight:500;font-size:14px;letter-spacing:1.5px;text-transform:uppercase;padding:8px 16px;border-radius:6px}
+.nav-links a:hover{color:var(--white);background:rgba(255,255,255,0.08)}
+.hamburger{display:none}.mobile-menu{display:none}
+
+/* LOCK */
+.lock-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:72px 24px 40px}
+.lock-card{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:20px;padding:56px 44px;max-width:430px;width:100%;text-align:center;box-shadow:0 30px 80px rgba(0,0,0,0.3);position:relative}
+.lock-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--red),var(--gold),var(--red));border-radius:20px 20px 0 0}
+.lock-icon{width:68px;height:68px;margin:0 auto 24px;background:rgba(192,57,43,0.1);border:1px solid rgba(192,57,43,0.2);border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--red)}
+.lock-title{font-family:'Bebas Neue',sans-serif;font-size:30px;letter-spacing:2px;margin-bottom:8px}
+.lock-subtitle{font-weight:300;font-size:14px;color:var(--text-muted);margin-bottom:30px;line-height:1.6}
+.lock-input{width:100%;padding:15px 18px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:var(--white);font-family:'Barlow',sans-serif;font-size:16px;letter-spacing:3px;text-align:center;outline:none;margin-bottom:18px}
+.lock-input:focus{border-color:rgba(192,57,43,0.5);background:rgba(255,255,255,0.06)}
+.lock-btn{width:100%;padding:15px;background:var(--red);color:var(--white);border:none;border-radius:10px;font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:15px;letter-spacing:2.5px;text-transform:uppercase;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 4px 20px rgba(192,57,43,0.3)}
+.lock-btn:hover{background:var(--red-glow)}
+.lock-btn:disabled{opacity:0.5;cursor:wait}
+.lock-error{margin-top:14px;font-size:13px;color:var(--red-glow);opacity:0;height:18px;transition:opacity .3s}
+.lock-error.show{opacity:1}
+.lock-home{margin-top:24px}
+.lock-home a{font-family:'Barlow Condensed',sans-serif;font-size:13px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted);text-decoration:none}
+.lock-home a:hover{color:var(--white)}
+.setup-note{margin-top:18px;font-size:12px;color:var(--gold-light);background:rgba(217,119,6,0.06);border:1px solid rgba(217,119,6,0.2);border-radius:9px;padding:12px 14px;line-height:1.6;text-align:left}
+
+/* APP */
+.app{display:none}.app.on{display:block}
+.page-header{padding:108px 0 24px;text-align:center}
+.section-label{font-family:'Barlow Condensed',sans-serif;font-weight:500;font-size:12px;letter-spacing:3px;text-transform:uppercase;color:var(--red);margin-bottom:12px;display:flex;align-items:center;justify-content:center;gap:12px}
+.section-label::before,.section-label::after{content:'';width:24px;height:1px;background:var(--red)}
+.section-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(32px,5vw,46px);letter-spacing:2px;line-height:1;margin-bottom:10px}
+.page-desc{font-weight:300;font-size:15px;color:rgba(255,255,255,0.5);max-width:520px;margin:0 auto;line-height:1.6}
+.view{display:none}.view.on{display:block}
+
+/* HUB */
+.tool-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px;padding-bottom:60px}
+.tool-card{position:relative;text-align:left;background:var(--card-bg);border:1px solid var(--card-border);border-radius:16px;padding:24px;cursor:pointer;transition:all .25s;overflow:hidden;color:var(--white);font-family:'Barlow',sans-serif}
+.tool-card:hover{transform:translateY(-3px);border-color:rgba(212,169,82,0.35);background:rgba(255,255,255,0.04)}
+.tool-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--red),var(--gold));opacity:0;transition:opacity .25s}
+.tool-card:hover::before{opacity:1}
+.tool-ico{width:46px;height:46px;border-radius:12px;background:rgba(192,57,43,0.12);border:1px solid rgba(192,57,43,0.22);display:flex;align-items:center;justify-content:center;color:var(--red-glow);margin-bottom:16px}
+.tool-name{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:1px;margin-bottom:6px}
+.tool-desc{font-size:13.5px;color:var(--text-muted);line-height:1.55}
+.tool-card.soon{cursor:default;opacity:0.5}
+.tool-card.soon:hover{transform:none;border-color:var(--card-border);background:var(--card-bg)}
+.tool-card.soon:hover::before{opacity:0}
+.tool-card.soon .tool-ico{background:rgba(255,255,255,0.04);border-color:var(--card-border);color:var(--text-muted)}
+.soon-tag{position:absolute;top:18px;right:18px;font-family:'Barlow Condensed',sans-serif;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted);border:1px solid var(--card-border);border-radius:20px;padding:3px 9px}
+
+/* ROSTER TOOL */
+.back-link{display:inline-flex;align-items:center;gap:8px;background:none;border:none;color:var(--text-muted);font-family:'Barlow Condensed',sans-serif;font-size:13px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;margin-bottom:18px}
+.back-link:hover{color:var(--white)}
+.bar{display:flex;align-items:center;gap:12px;margin-bottom:18px;flex-wrap:wrap}
+.status-pill{display:inline-flex;align-items:center;gap:7px;font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted);padding:8px 13px;border:1px solid var(--card-border);border-radius:9px}
+.status-pill .dot{width:8px;height:8px;border-radius:50%;background:var(--text-muted)}
+.status-pill.synced .dot{background:var(--green);box-shadow:0 0 8px rgba(39,174,96,0.6)}
+.status-pill.saving .dot{background:var(--amber)}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:11px 16px;border-radius:9px;border:1px solid var(--card-border);background:rgba(255,255,255,0.03);color:var(--text-muted);font-family:'Barlow Condensed',sans-serif;font-size:13px;letter-spacing:1.2px;text-transform:uppercase;cursor:pointer}
+.btn:hover{color:var(--white);border-color:rgba(255,255,255,0.18)}
+.btn.add{margin-left:auto}
+.squad-block{margin-bottom:22px}
+.squad-head{display:flex;align-items:center;gap:10px;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:600;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px}
+.squad-dot{width:12px;height:12px;border-radius:4px}
+.c-red{background:var(--red)}.c-yellow{background:#f1c40f}.c-blue{background:#3498db}.c-green{background:var(--green)}.c-gold{background:var(--gold)}
+.row{display:grid;grid-template-columns:1fr 130px 150px 40px;gap:10px;align-items:center;background:var(--card-bg);border:1px solid var(--card-border);border-radius:10px;padding:10px 12px;margin-bottom:8px}
+.row input,.row select{width:100%;background:var(--input-bg);border:1px solid var(--input-border);border-radius:8px;padding:10px 12px;color:var(--white);font-family:'Barlow',sans-serif;font-size:14px;outline:none}
+.row input:focus,.row select:focus{border-color:var(--input-focus)}
+.row select{appearance:none;cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%238899b0' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:30px}
+.row select option{background:var(--navy)}
+.row.open input[type=text]{font-style:italic;color:var(--text-muted)}
+.del{width:34px;height:34px;border-radius:8px;border:1px solid var(--card-border);background:transparent;color:var(--text-muted);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px}
+.del:hover{color:var(--red-glow);border-color:rgba(231,76,60,0.4)}
+.col-head{display:grid;grid-template-columns:1fr 130px 150px 40px;gap:10px;padding:0 12px 6px;font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)}
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--navy-light);border:1px solid var(--gold);color:var(--white);padding:12px 22px;border-radius:10px;font-size:14px;opacity:0;transition:all .35s;z-index:2000}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+@media(max-width:640px){.nav-links{display:none}.row,.col-head{grid-template-columns:1fr 100px 36px}.row select.squad-sel,.col-head .h-squad{display:none}}
+@keyframes shake{0%,100%{transform:translateX(0)}15%{transform:translateX(-8px)}30%{transform:translateX(8px)}45%{transform:translateX(-6px)}60%{transform:translateX(6px)}75%{transform:translateX(-3px)}90%{transform:translateX(3px)}}
+</style>
+</head>
+<body>
+<div id="site-nav"></div>
+
+<!-- LOCK -->
+<div class="lock-screen" id="lockScreen">
+  <div class="lock-card">
+    <div class="lock-icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+    <h2 class="lock-title">Admin</h2>
+    <p class="lock-subtitle" id="lockSub">Enter the cadet passcode to open the admin console.</p>
+    <input type="password" class="lock-input" id="pc1" placeholder="Cadet passcode" autocomplete="off" autofocus>
+    <input type="password" class="lock-input" id="pc2" placeholder="Quartermaster password" autocomplete="off" style="display:none">
+    <div class="setup-note" id="setupNote" style="display:none"></div>
+    <button class="lock-btn" id="goBtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg><span id="goLabel">Unlock</span></button>
+    <div class="lock-error" id="lockErr">Incorrect passcode.</div>
+    <div class="lock-home"><a href="index.html">← Return to Home</a></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="app" id="app">
+
+  <!-- HUB VIEW -->
+  <div class="view on" id="hubView">
+    <div class="page-header">
+      <div class="section-label">Unit #761</div>
+      <h1 class="section-title">Admin Console</h1>
+      <p class="page-desc">Internal tools for unit leadership.</p>
+    </div>
+    <div class="container">
+      <div class="tool-grid" id="toolGrid"></div>
+    </div>
+  </div>
+
+  <!-- ROSTER TOOL VIEW -->
+  <div class="view" id="rosterView">
+    <div class="page-header">
+      <div class="section-label">Admin Tool</div>
+      <h1 class="section-title">Roster Editor</h1>
+      <p class="page-desc">One list, shared by the Members, Trackers, and Quartermaster pages. Edits save and sync everywhere.</p>
+    </div>
+    <div class="container">
+      <button class="back-link" id="rosterBack"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Admin Console</button>
+      <div class="bar">
+        <div class="status-pill" id="pill"><span class="dot"></span><span id="pillText">Synced</span></div>
+        <button class="btn add" id="addBtn">+ Add Person</button>
+      </div>
+      <div class="col-head"><span>Name</span><span>Rank</span><span class="h-squad">Squad</span><span></span></div>
+      <div id="rows"></div>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="roster.js"></script>
+<script>
+const SESSION_KEY = 'rpd761_auth';   // shares the cadet session with members/trackers
+const RANKS = ['Captain','Lt.','Sgt.','Cadet','Probationary'];
+const SQUADS = [['leadership','Leadership'],[1,'Squad 1'],[2,'Squad 2'],[3,'Squad 3'],[4,'Squad 4 (Admin)']];
+
+/* ── Admin tools. To add a tool later, drop another entry here and the
+      hub builds its tile automatically. `open` is the handler; omit it
+      (or set soon:true) to show a disabled "coming soon" tile. ── */
+const TOOLS = [
+  {
+    id: 'roster',
+    name: 'Roster Editor',
+    desc: 'Add, remove, and organize cadets. Syncs to Members, Trackers, and Quartermaster.',
+    icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
+    open: openRoster
+  },
+  { id: 'more', name: 'More tools', desc: 'Additional admin tools will live here.', soon: true,
+    icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>' }
+];
+
+let data = [];
+let saveTimer = null;
+
+function showErr(msg){ const e=document.getElementById('lockErr'); if(msg) e.textContent=msg; e.classList.add('show'); const c=document.querySelector('.lock-card'); c.style.animation='none'; c.offsetHeight; c.style.animation='shake .5s ease'; }
+
+async function go(){
+  const pc1 = document.getElementById('pc1').value.trim().toLowerCase();
+  if(!pc1) return;
+  const btn = document.getElementById('goBtn'); btn.disabled = true;
+  try {
+    const res = await RPDRoster.connect({ passcode: pc1, role: 'cadet' });
+    if(res.ok){ sessionStorage.setItem(SESSION_KEY, pc1); enterApp(); return; }
+    if(res.needsSetup){
+      const pc2el = document.getElementById('pc2');
+      if(pc2el.style.display === 'none'){
+        pc2el.style.display = 'block';
+        document.getElementById('lockSub').textContent = 'First-time setup. Confirm both passwords to create the shared roster.';
+        document.getElementById('goLabel').textContent = 'Create roster';
+        document.getElementById('setupNote').style.display = 'block';
+        document.getElementById('setupNote').innerHTML = 'This seeds the roster from the current unit list and links both the cadet passcode and the quartermaster password so all three pages can read it. You only do this once.';
+        pc2el.focus(); btn.disabled = false; return;
+      }
+      const pc2 = pc2el.value.trim().toLowerCase();
+      if(!pc2){ btn.disabled=false; return; }
+      await RPDRoster.setup(pc1, pc2, RPDRoster.SEED);
+      sessionStorage.setItem(SESSION_KEY, pc1);
+      enterApp(); showToast('Shared roster created'); return;
+    }
+    if(res.needsLink){ showErr('Roster exists but this passcode is not linked.'); btn.disabled=false; return; }
+    showErr('Incorrect passcode.'); btn.disabled=false;
+  } catch(e){ showErr('Could not reach the database. Check your connection.'); btn.disabled=false; }
+}
+
+function enterApp(){
+  document.getElementById('lockScreen').style.display='none';
+  document.getElementById('app').classList.add('on');
+  if(typeof buildNav==='function') buildNav();
+  buildHub();
+  RPDRoster.subscribe(arr => {
+    data = arr.slice();
+    if(document.getElementById('rosterView').classList.contains('on')){
+      const ae=document.activeElement;
+      if(ae.tagName!=='INPUT' && ae.tagName!=='SELECT') renderRows();
+    }
+  });
+  data = RPDRoster.get();
+}
+
+/* ── HUB ── */
+function buildHub(){
+  const grid = document.getElementById('toolGrid'); grid.innerHTML='';
+  TOOLS.forEach(t => {
+    const el = document.createElement(t.soon ? 'div' : 'button');
+    el.className = 'tool-card' + (t.soon ? ' soon' : '');
+    el.innerHTML = (t.soon ? '<span class="soon-tag">Soon</span>' : '') +
+      `<div class="tool-ico">${t.icon}</div><div class="tool-name">${t.name}</div><div class="tool-desc">${t.desc}</div>`;
+    if(!t.soon && t.open) el.addEventListener('click', t.open);
+    grid.appendChild(el);
+  });
+}
+function showView(id){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('on'));
+  document.getElementById(id).classList.add('on');
+  window.scrollTo(0,0);
+}
+function openRoster(){ showView('rosterView'); renderRows(); }
+
+/* ── ROSTER EDITOR ── */
+function renderRows(){
+  const groups = [['leadership','Leadership','c-gold'],[1,'Squad 1','c-red'],[2,'Squad 2','c-yellow'],[3,'Squad 3','c-blue'],[4,'Squad 4 — Admin','c-green']];
+  const host = document.getElementById('rows'); host.innerHTML='';
+  groups.forEach(([sq,label,cls]) => {
+    const members = data.filter(p => String(p.squad)===String(sq));
+    if(!members.length) return;
+    const block = document.createElement('div'); block.className='squad-block';
+    block.innerHTML = `<div class="squad-head"><span class="squad-dot ${cls}"></span>${label}</div>`;
+    members.forEach(p => block.appendChild(rowEl(p)));
+    host.appendChild(block);
+  });
+}
+function rowEl(p){
+  const idx = data.indexOf(p);
+  const row = document.createElement('div'); row.className='row'+(p.open?' open':'');
+  const rankOpts = RANKS.map(r=>`<option value="${r}" ${r===p.rank?'selected':''}>${r}</option>`).join('');
+  const sqOpts = SQUADS.map(([v,l])=>`<option value="${v}" ${String(v)===String(p.squad)?'selected':''}>${l}</option>`).join('');
+  row.innerHTML =
+    `<input type="text" value="${(p.name||'').replace(/"/g,'&quot;')}" data-i="${idx}" data-f="name" placeholder="Full name">
+     <select data-i="${idx}" data-f="rank">${rankOpts}</select>
+     <select class="squad-sel" data-i="${idx}" data-f="squad">${sqOpts}</select>
+     <button class="del" data-i="${idx}" title="Remove">&times;</button>`;
+  row.querySelectorAll('input,select').forEach(el=>{
+    const ev = el.tagName==='SELECT' ? 'change' : 'input';
+    el.addEventListener(ev, () => {
+      const i = +el.dataset.i, f = el.dataset.f;
+      let v = el.value;
+      if(f==='squad' && v!=='leadership') v = +v;
+      data[i][f] = v;
+      if(f==='squad' || f==='rank'){ scheduleSave(); renderRows(); }
+      else scheduleSave();
+    });
+  });
+  row.querySelector('.del').addEventListener('click', () => {
+    if(confirm('Remove '+(p.name||'this person')+' from the roster?')){ data.splice(+row.querySelector('.del').dataset.i,1); scheduleSave(); renderRows(); }
+  });
+  return row;
+}
+function addPerson(){
+  data.push({ name:'', rank:'Cadet', squad:1 });
+  renderRows();
+  const inputs = document.querySelectorAll('.row input[data-f="name"]');
+  if(inputs.length) inputs[inputs.length-1].focus();
+  scheduleSave();
+}
+function scheduleSave(){
+  setStatus('saving');
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(async () => {
+    try { await RPDRoster.save(data.filter(p=>p.open || (p.name||'').trim())); setStatus('synced'); }
+    catch(e){ setStatus('saving'); showToast('Save failed — check connection'); }
+  }, 600);
+}
+function setStatus(s){ const p=document.getElementById('pill'); p.className='status-pill '+s; document.getElementById('pillText').textContent = s==='saving'?'Saving':'Synced'; }
+function showToast(m){ const t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2200); }
+
+document.getElementById('goBtn').addEventListener('click', go);
+document.getElementById('pc1').addEventListener('keydown', e=>{ document.getElementById('lockErr').classList.remove('show'); if(e.key==='Enter') go(); });
+document.getElementById('pc2').addEventListener('keydown', e=>{ if(e.key==='Enter') go(); });
+document.getElementById('addBtn').addEventListener('click', addPerson);
+document.getElementById('rosterBack').addEventListener('click', ()=>showView('hubView'));
+
+// auto-resume from an existing cadet session
+(function(){
+  const saved = sessionStorage.getItem(SESSION_KEY);
+  if(!saved) return;
+  RPDRoster.connect({ passcode: saved, role:'cadet' }).then(res=>{ if(res.ok) enterApp(); }).catch(()=>{});
+})();
+</script>
+<script src="shared.js"></script>
+</body>
+</html>

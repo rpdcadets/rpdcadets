@@ -177,6 +177,7 @@ const TOOLS = [
 
 let data = [];
 let saveTimer = null;
+let dirty = false;   // true while a local edit is waiting to be saved
 
 function showErr(msg){ const e=document.getElementById('lockErr'); if(msg) e.textContent=msg; e.classList.add('show'); const c=document.querySelector('.lock-card'); c.style.animation='none'; c.offsetHeight; c.style.animation='shake .5s ease'; }
 
@@ -214,11 +215,13 @@ function enterApp(){
   if(typeof buildNav==='function') buildNav();
   buildHub();
   RPDRoster.subscribe(arr => {
+    // Never let an incoming snapshot overwrite edits that haven't saved yet,
+    // or yank a field the user is actively editing. Pending writes are our own.
+    if(dirty) return;
+    const ae = document.activeElement;
+    if(ae && (ae.tagName==='INPUT' || ae.tagName==='SELECT') && ae.closest('#rows')) return;
     data = arr.slice();
-    if(document.getElementById('rosterView').classList.contains('on')){
-      const ae=document.activeElement;
-      if(ae.tagName!=='INPUT' && ae.tagName!=='SELECT') renderRows();
-    }
+    if(document.getElementById('rosterView').classList.contains('on')) renderRows();
   });
   data = RPDRoster.get();
 }
@@ -289,12 +292,16 @@ function addPerson(){
   scheduleSave();
 }
 function scheduleSave(){
+  dirty = true;
   setStatus('saving');
   clearTimeout(saveTimer);
-  saveTimer = setTimeout(async () => {
-    try { await RPDRoster.save(data.filter(p=>p.open || (p.name||'').trim())); setStatus('synced'); }
-    catch(e){ setStatus('saving'); showToast('Save failed — check connection'); }
-  }, 600);
+  saveTimer = setTimeout(flushSave, 600);
+}
+async function flushSave(){
+  clearTimeout(saveTimer); saveTimer = null;
+  const payload = data.filter(p => p.open || (p.name||'').trim());
+  try { await RPDRoster.save(payload); dirty = false; setStatus('synced'); }
+  catch(e){ setStatus('saving'); showToast('Save failed — check connection'); }
 }
 function setStatus(s){ const p=document.getElementById('pill'); p.className='status-pill '+s; document.getElementById('pillText').textContent = s==='saving'?'Saving':'Synced'; }
 function showToast(m){ const t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2200); }
@@ -304,6 +311,7 @@ document.getElementById('pc1').addEventListener('keydown', e=>{ document.getElem
 document.getElementById('pc2').addEventListener('keydown', e=>{ if(e.key==='Enter') go(); });
 document.getElementById('addBtn').addEventListener('click', addPerson);
 document.getElementById('rosterBack').addEventListener('click', ()=>showView('hubView'));
+window.addEventListener('beforeunload', ()=>{ if(dirty && saveTimer) flushSave(); });
 
 // auto-resume from an existing cadet session
 (function(){

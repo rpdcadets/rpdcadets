@@ -11,7 +11,8 @@
 <!-- Firebase (compat SDK, loaded from Google's CDN) -->
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
-<script src="roster.js?v=3"></script>
+<script src="roster.js?v=4"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
 
 <style>
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
@@ -137,7 +138,8 @@ nav.scrolled { background: rgba(15,26,48,0.97); box-shadow: 0 4px 30px rgba(0,0,
 .qm-card:hover .arrow { opacity: 1; transform: translateX(2px); }
 
 /* DETAIL */
-.detail-back { display: inline-flex; align-items: center; gap: 8px; background: none; border: none; color: var(--text-muted); font-family: 'Barlow Condensed', sans-serif; font-size: 13px; letter-spacing: 1.5px; text-transform: uppercase; cursor: pointer; margin-bottom: 18px; transition: color 0.25s; }
+.detail-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; gap: 12px; flex-wrap: wrap; }
+.detail-back { display: inline-flex; align-items: center; gap: 8px; background: none; border: none; color: var(--text-muted); font-family: 'Barlow Condensed', sans-serif; font-size: 13px; letter-spacing: 1.5px; text-transform: uppercase; cursor: pointer; margin-bottom: 0; transition: color 0.25s; }
 .detail-back:hover { color: var(--white); }
 .detail-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 16px; padding: 28px; position: relative; overflow: hidden; }
 .detail-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--red), var(--gold), var(--red)); }
@@ -179,6 +181,35 @@ nav.scrolled { background: rgba(15,26,48,0.97); box-shadow: 0 4px 30px rgba(0,0,
 .cell-yes { color: var(--green); font-weight: 700; }
 .cell-no { color: rgba(255,255,255,0.12); }
 .cell-size { color: var(--gold-light); font-weight: 600; }
+.cell-purchased { color: #a78bfa; font-weight: 700; }
+
+/* ISSUE LIST (cadet detail) */
+.issue-legend { font-size: 12px; color: var(--text-muted); margin-bottom: 16px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.issue-legend .leg { font-family: 'Barlow Condensed', sans-serif; font-size: 11px; letter-spacing: 0.5px; text-transform: uppercase; padding: 2px 8px; border-radius: 20px; }
+.leg.s-none { color: var(--text-muted); border: 1px solid var(--card-border); }
+.leg.s-unit { color: var(--gold-light); background: rgba(212,169,82,0.12); }
+.leg.s-purchased { color: #c4b5fd; background: rgba(167,139,250,0.12); }
+.issue-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 26px; }
+.issue-row { display: flex; align-items: center; gap: 12px; background: var(--input-bg); border: 1px solid var(--input-border); border-radius: 10px; padding: 10px 14px; flex-wrap: wrap; }
+.issue-name { flex: 1; font-size: 14px; min-width: 140px; }
+.issue-controls { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.status-btn { font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; padding: 8px 14px; border-radius: 8px; cursor: pointer; transition: all 0.18s ease; min-width: 130px; text-align: center; }
+.status-btn.s-none { background: transparent; border: 1px dashed rgba(255,255,255,0.2); color: var(--text-muted); }
+.status-btn.s-none:hover { border-color: rgba(255,255,255,0.4); color: var(--white); }
+.status-btn.s-unit { background: var(--gold); border: 1px solid var(--gold); color: #1a1206; }
+.status-btn.s-purchased { background: #8b5cf6; border: 1px solid #8b5cf6; color: #fff; }
+.size-sel { background: var(--input-bg); border: 1px solid var(--input-border); border-radius: 8px; padding: 8px 28px 8px 11px; color: var(--white); font-family: 'Barlow', sans-serif; font-size: 13.5px; outline: none; appearance: none; cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%238899b0' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 9px center; }
+.size-sel.set { border-color: var(--green-border); background-color: var(--green-bg); }
+.size-sel option { background: var(--navy); }
+.pants-fields { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.pants-fields select, .pants-fields input { background: var(--input-bg); border: 1px solid var(--input-border); border-radius: 8px; padding: 8px 10px; color: var(--white); font-family: 'Barlow', sans-serif; font-size: 13.5px; outline: none; }
+.pants-fields select { appearance: none; cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%238899b0' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 8px center; padding-right: 24px; }
+.pants-fields select:focus, .pants-fields input:focus { border-color: var(--input-focus); }
+.pants-fields select option { background: var(--navy); }
+.pants-fields .cut { width: 54px; text-align: center; }
+.pants-fields .pn { width: 52px; text-align: center; }
+.pants-fields .len { min-width: 100px; }
+.pants-x { color: var(--text-muted); font-weight: 700; }
 
 /* STOCK */
 .stock-list { display: flex; flex-direction: column; gap: 8px; }
@@ -187,8 +218,20 @@ nav.scrolled { background: rgba(15,26,48,0.97); box-shadow: 0 4px 30px rgba(0,0,
 .stock-row .scount { font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 1px; min-width: 70px; text-align: right; }
 .stock-row .stk-track { width: 120px; height: 5px; background: rgba(255,255,255,0.06); border-radius: 5px; overflow: hidden; }
 .stock-row .stk-fill { height: 100%; background: var(--gold); border-radius: 5px; }
+.stock-row2 { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; padding: 14px 16px; }
+.stock-row2.bad { border-color: rgba(220,38,38,0.4); }
+.stock-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
+.stock-top .sname { font-size: 15px; font-weight: 600; }
+.stock-top .scount { font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 1px; color: var(--gold-light); }
+.stock-row2 .stk-track { height: 5px; background: rgba(255,255,255,0.06); border-radius: 5px; overflow: hidden; margin-bottom: 8px; }
+.stock-row2 .stk-fill { height: 100%; background: var(--gold); border-radius: 5px; }
+.stock-sub { font-size: 12.5px; color: var(--text-muted); }
+.stock-sub .over { color: #f87171; font-weight: 600; }
+.stock-sizes { font-size: 12px; color: var(--text-muted); margin-top: 6px; opacity: 0.85; }
 .stock-cat { font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 2.5px; text-transform: uppercase; color: var(--gold); margin: 22px 0 12px; }
 .stock-cat:first-child { margin-top: 0; }
+.table-legend { font-size: 12px; color: var(--text-muted); margin-bottom: 12px; }
+.table-legend .cell-yes { color: var(--gold); } .table-legend .cell-purchased { color: #a78bfa; }
 
 /* TOAST */
 .toast { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--navy-light); border: 1px solid var(--gold); color: var(--white); padding: 13px 24px; border-radius: 10px; font-size: 14px; box-shadow: 0 10px 40px rgba(0,0,0,0.4); opacity: 0; transition: all 0.35s ease; z-index: 2000; }
@@ -268,6 +311,10 @@ footer { border-top: 1px solid var(--card-border); padding: 30px 0; margin-top: 
         <button data-view="stock">Stock</button>
       </div>
       <div class="status-pill" id="statusPill"><span class="dot"></span><span id="statusText">Connecting</span></div>
+      <button class="icon-btn" id="invPdfBtn" title="Download the full inventory report (PDF)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        Inventory PDF
+      </button>
       <button class="icon-btn" id="exportBtn" title="Download a CSV summary">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         CSV
@@ -316,25 +363,30 @@ const firebaseConfig = {
 let ROSTER = [];
 
 /* ══════════════════════════════════════════════════════════════
-   3. GEAR  —  edit these two lists to change what is tracked.
+   GEAR  —  now defined in Admin → Quartermaster Toolbox (the catalog).
+   Items load live from the shared catalog via roster.js.
    ══════════════════════════════════════════════════════════════ */
-const EQUIPMENT = [
-  'Outer Belt', 'Inner Belt', 'Belt Keepers (x3)',
-  'Handcuff Pouch', 'Glove Pouch', 'Mag Pouch',
-  'Gun Holster', 'Taser Holster', 'OC Spray Holster',
-  'Baton Holster', 'Radio Holster', 'Flashlight Holder', 'Tourniquet Holster',
-  'Mock Firearm', 'Mock Taser', 'Mock OC Spray',
-  'Tourniquet', 'Training Tourniquet',
-  'Coat', 'Raincoat'
-];
-const UNIFORMS = [
-  'Class A Shirt (Long Sleeve)',
-  'Class B Shirt (Short Sleeve)',
-  'Uniform Pants',
-  'PT Shirt (Grey)',
-  'PT Shirt (Blue)'
-];
-const SIZES = ['', 'XS', 'S', 'M', 'L', 'XL', '2XL', '3XL'];
+let CATALOG = [];
+let ISSUED_ITEMS = [];   // checkbox / letter / custom — appear on cadet cards
+let SHARED_ITEMS = [];   // shared stock — pool only, never per cadet
+const LETTER_SIZES = ['XS','S','M','L','XL','2XL','3XL'];
+function rebuildCatalogIndex(){
+  ISSUED_ITEMS = CATALOG.filter(i => i && i.type !== 'shared');
+  SHARED_ITEMS = CATALOG.filter(i => i && i.type === 'shared');
+}
+function totalItems(){ return ISSUED_ITEMS.length; }
+function pantsLabel(s){
+  if(!s) return '';
+  if(s.cut === 'W'){
+    const sz = (s.wsize ?? '') !== '' ? s.wsize : '';
+    const ln = s.length || 'Regular';
+    return ('W ' + sz + (sz !== '' ? ' ' + ln : '')).trim();
+  }
+  const w = (s.waist ?? '') !== '' ? s.waist : '';
+  const i = (s.inseam ?? '') !== '' ? s.inseam : '';
+  if(w === '' && i === '') return 'M';
+  return 'M ' + w + 'x' + i;
+}
 
 /* ══════════════════════════════════════════════════════════════
    App code — no need to edit below this line.
@@ -343,10 +395,6 @@ const SESSION_KEY = 'rpd761_qm_auth';      // independent from trackers' rpd761_
 const DB_ROOT = 'quartermaster';
 const VERIFY_TOKEN = 'RPD-QM-VERIFY';
 const ITERATIONS = 150000;
-
-const slug = s => s.toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');
-const EQUIP_KEYS = EQUIPMENT.map(slug);
-const UNI_KEYS   = UNIFORMS.map(slug);
 
 let PASSWORD = null;
 let inv = null;
@@ -398,34 +446,41 @@ async function decryptStr(blob, password){
   } catch(e){ return null; }
 }
 
-/* ---------- data model ---------- */
+/* ---------- data model ----------
+   per cadet: { items: { [itemId]: { status:'none'|'unit'|'purchased', size, pants } }, notes }
+   status drives the math: 'unit' draws down stock, 'purchased' is the cadet's own gear. */
 function freshInv(){
   const people = {};
-  ROSTER.forEach(p => {
-    const equip = {}; EQUIP_KEYS.forEach(k => equip[k] = false);
-    const uniforms = {}; UNI_KEYS.forEach(k => uniforms[k] = '');
-    people[p.name] = { equip, uniforms, notes: '' };
-  });
-  return { version: 2, people, updatedBy: '', updatedAt: 0 };
+  ROSTER.forEach(p => { people[p.name] = { items:{}, notes:'' }; });
+  return { version: 3, people, updatedBy: '', updatedAt: 0 };
 }
 function ensureRoster(state){
   if(!state.people) state.people = {};
   ROSTER.forEach(p => {
-    if(!state.people[p.name]) state.people[p.name] = { equip:{}, uniforms:{}, notes:'' };
+    if(!state.people[p.name]) state.people[p.name] = { items:{}, notes:'' };
     const pe = state.people[p.name];
-    if(!pe.equip) pe.equip = {}; if(!pe.uniforms) pe.uniforms = {};
-    EQUIP_KEYS.forEach(k => { if(typeof pe.equip[k] !== 'boolean') pe.equip[k] = false; });
-    UNI_KEYS.forEach(k => { if(typeof pe.uniforms[k] !== 'string') pe.uniforms[k] = ''; });
+    if(!pe.items || typeof pe.items !== 'object') pe.items = {};
     if(typeof pe.notes !== 'string') pe.notes = '';
+    ISSUED_ITEMS.forEach(it => {
+      if(!pe.items[it.id] || typeof pe.items[it.id] !== 'object') pe.items[it.id] = { status:'none' };
+      if(!pe.items[it.id].status) pe.items[it.id].status = 'none';
+    });
   });
 }
 function issuedCount(p){
   let n = 0;
-  EQUIP_KEYS.forEach(k => { if(p.equip[k]) n++; });
-  UNI_KEYS.forEach(k => { if(p.uniforms[k]) n++; });
+  ISSUED_ITEMS.forEach(it => { const a = p.items && p.items[it.id]; if(a && a.status && a.status !== 'none') n++; });
   return n;
 }
-const TOTAL_ITEMS = EQUIP_KEYS.length + UNI_KEYS.length;
+const STATUS_CYCLE = { 'none':'unit', 'unit':'purchased', 'purchased':'none' };
+const STATUS_LABEL = { 'none':'Not Issued', 'unit':'Unit-Issued', 'purchased':'Cadet Purchased' };
+function assignDisplay(a, it){
+  if(!a || !a.status || a.status === 'none') return { status:'none', size:'' };
+  let size = '';
+  if(it.type === 'letter') size = a.size || '';
+  else if(it.type === 'custom') size = a.pants ? pantsLabel(a.pants) : '';
+  return { status: a.status, size };
+}
 
 /* ---------- firebase ---------- */
 function configFilledIn(){
@@ -564,7 +619,9 @@ async function loadSharedRoster(pw){
     const res = await RPDRoster.connect({ passcode: pw, role: 'qm' });
     if(res && res.ok){
       applySharedRoster(RPDRoster.get());
+      CATALOG = RPDRoster.getCatalog(); rebuildCatalogIndex();
       RPDRoster.subscribe(arr => { applySharedRoster(arr); if(inv){ ensureRoster(inv); render(); } });
+      RPDRoster.subscribeCatalog(arr => { CATALOG = arr || []; rebuildCatalogIndex(); if(inv){ ensureRoster(inv); render(); } });
     }
     // if not ok (roster not set up or qm not linked yet), ROSTER stays empty
   } catch(e){ /* offline / SDK issue: ROSTER stays empty, page still loads */ }
@@ -597,6 +654,14 @@ function render(){
     renderMeta();
     return;
   }
+  if(!CATALOG.length){
+    document.getElementById('qmBody').innerHTML =
+      '<div style="background:var(--card-bg);border:1px solid var(--card-border);border-radius:14px;padding:32px;text-align:center;color:var(--text-muted);line-height:1.7">'
+      + '<p style="color:var(--white);font-family:\'Bebas Neue\',sans-serif;font-size:22px;letter-spacing:1px;margin-bottom:10px">No gear items yet</p>'
+      + 'Add items in <b>Admin → Quartermaster Toolbox</b>, then reload this page to start issuing.</div>';
+    renderMeta();
+    return;
+  }
   if(openName){ renderDetail(openName); }
   else if(view === 'cards'){ renderCards(); }
   else if(view === 'table'){ renderTable(); }
@@ -616,14 +681,15 @@ function renderMeta(){
   }
 }
 
-function statClass(n){ return n === 0 ? 'none' : n >= TOTAL_ITEMS ? 'full' : 'partial'; }
+function statClass(n){ const t = totalItems(); return n === 0 ? 'none' : (t > 0 && n >= t) ? 'full' : 'partial'; }
 
 function syncStatStrip(){ /* strip is rendered inside cards view header */ }
 
 function renderCards(){
+  const T = totalItems();
   const q = document.getElementById('searchInput').value.toLowerCase().trim();
   let full=0, partial=0, none=0;
-  ROSTER.forEach(p => { const n = issuedCount(inv.people[p.name]); if(n===0) none++; else if(n>=TOTAL_ITEMS) full++; else partial++; });
+  ROSTER.forEach(p => { const n = issuedCount(inv.people[p.name]); if(n===0) none++; else if(T>0 && n>=T) full++; else partial++; });
 
   let html = `<div class="stat-strip">
     <div class="stat-box"><div class="num">${ROSTER.length}</div><div class="lbl">Cadets</div></div>
@@ -638,13 +704,13 @@ function renderCards(){
   } else {
     shown.forEach(p => {
       const n = issuedCount(inv.people[p.name]);
-      const pct = Math.round((n/TOTAL_ITEMS)*100);
+      const pct = T > 0 ? Math.round((n/T)*100) : 0;
       const cls = statClass(n);
       html += `<div class="qm-card" data-name="${escapeHtml(p.name)}">
         <svg class="arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
         <div class="rank">${p.rank}</div>
         <div class="cname">${escapeHtml(p.name)}</div>
-        <div class="bar-label"><span>Issued</span><span>${n}/${TOTAL_ITEMS}</span></div>
+        <div class="bar-label"><span>Issued</span><span>${n}/${T}</span></div>
         <div class="track"><div class="fill ${cls}" style="width:${pct}%"></div></div>
       </div>`;
     });
@@ -660,34 +726,47 @@ function closeDetail(){ openName = null; applyPendingRemote(); render(); }
 function renderDetail(name){
   const p = inv.people[name];
   const meta = ROSTER.find(r => r.name === name) || { rank:'' };
+  const T = totalItems();
   const n = issuedCount(p);
-  const check = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5"><path d="M20 6L9 17l-5-5"/></svg>`;
 
-  let html = `<button class="detail-back" id="detailBack">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> All Cadets
-    </button>
+  let html = `<div class="detail-bar">
+      <button class="detail-back" id="detailBack">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> All Cadets
+      </button>
+      <button class="icon-btn" id="cadetPdfBtn" title="Download this cadet's equipment sheet (PDF)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        Cadet Sheet PDF
+      </button>
+    </div>
     <div class="detail-card">
       <div class="detail-head">
         <span class="rank">${meta.rank}</span>
         <span class="dname">${escapeHtml(name)}</span>
-        <span class="count" id="detailCount">${n}/${TOTAL_ITEMS} issued</span>
+        <span class="count" id="detailCount">${n}/${T} issued</span>
       </div>
-      <div class="sect-title">Equipment</div>
-      <div class="chip-grid">`;
-  EQUIPMENT.forEach((item,i) => {
-    const k = EQUIP_KEYS[i];
-    const on = p.equip[k];
-    html += `<button class="chip ${on?'on':''}" data-act="equip" data-key="${k}">
-      <span class="box">${check}</span><span>${escapeHtml(item)}</span></button>`;
-  });
-  html += `</div><div class="sect-title">Uniforms</div><div class="uniform-grid">`;
-  UNIFORMS.forEach((u,i) => {
-    const k = UNI_KEYS[i];
-    const val = p.uniforms[k] || '';
-    html += `<div class="ufield"><label>${escapeHtml(u)}</label>
-      <select data-act="uniform" data-key="${k}" class="${val?'set':''}">` +
-      SIZES.map(s => `<option value="${s}" ${s===val?'selected':''}>${s || '— not issued —'}</option>`).join('') +
-      `</select></div>`;
+      <div class="issue-legend">Tap a status to cycle: <span class="leg s-none">Not Issued</span> → <span class="leg s-unit">Unit-Issued</span> → <span class="leg s-purchased">Cadet Purchased</span></div>
+      <div class="issue-list">`;
+  ISSUED_ITEMS.forEach(it => {
+    const a = p.items[it.id] || { status:'none' };
+    const st = a.status || 'none';
+    let sizeControl = '';
+    if(st !== 'none'){
+      if(it.type === 'letter'){
+        sizeControl = `<select class="size-sel ${a.size?'set':''}" data-act="size" data-id="${it.id}">
+          <option value="">Size…</option>
+          ${LETTER_SIZES.map(z=>`<option value="${z}" ${z===(a.size||'')?'selected':''}>${z}</option>`).join('')}
+        </select>`;
+      } else if(it.type === 'custom'){
+        sizeControl = pantsPickerHTML(it.id, a.pants || { cut:'M' });
+      }
+    }
+    html += `<div class="issue-row" data-id="${it.id}">
+      <div class="issue-name">${escapeHtml(it.name || '(unnamed item)')}</div>
+      <div class="issue-controls">
+        <button class="status-btn s-${st}" data-act="status" data-id="${it.id}">${STATUS_LABEL[st]}</button>
+        ${sizeControl}
+      </div>
+    </div>`;
   });
   html += `</div><div class="sect-title">Notes</div>
       <div class="notes-field"><textarea data-act="notes" placeholder="Anything to flag — missing items, sizes to reorder, damage…">${escapeHtml(p.notes||'')}</textarea></div>
@@ -696,46 +775,70 @@ function renderDetail(name){
   const body = document.getElementById('qmBody');
   body.innerHTML = html;
   document.getElementById('detailBack').addEventListener('click', closeDetail);
+  document.getElementById('cadetPdfBtn').addEventListener('click', () => generateCadetPDF(name));
 
-  body.querySelectorAll('.chip').forEach(chip => {
-    chip.addEventListener('click', () => {
-      const k = chip.dataset.key;
-      p.equip[k] = !p.equip[k];
-      chip.classList.toggle('on', p.equip[k]);
-      updateDetailCount(name);
-      touch();
-    });
-  });
-  body.querySelectorAll('select[data-act="uniform"]').forEach(sel => {
-    sel.addEventListener('change', () => {
-      p.uniforms[sel.dataset.key] = sel.value;
-      sel.classList.toggle('set', !!sel.value);
-      updateDetailCount(name);
-      touch();
-    });
-  });
+  body.querySelectorAll('[data-act="status"]').forEach(btn => btn.addEventListener('click', () => {
+    const a = (p.items[btn.dataset.id] = p.items[btn.dataset.id] || { status:'none' });
+    a.status = STATUS_CYCLE[a.status || 'none'];
+    touch(); renderDetail(name);   // re-render to show/hide the size control
+  }));
+  body.querySelectorAll('select[data-act="size"]').forEach(sel => sel.addEventListener('change', () => {
+    const a = (p.items[sel.dataset.id] = p.items[sel.dataset.id] || { status:'unit' });
+    a.size = sel.value; sel.classList.toggle('set', !!sel.value); touch();
+  }));
+  wirePantsPicker(body, p);
+
   const ta = body.querySelector('textarea[data-act="notes"]');
   ta.addEventListener('input', () => { p.notes = ta.value; touch(); });
   ta.addEventListener('blur', applyPendingRemote);
 }
 
+function pantsPickerHTML(id, s){
+  s = s || { cut:'M' };
+  const isW = s.cut === 'W';
+  const cut = `<select class="cut" data-act="pcut" data-id="${id}"><option value="M" ${!isW?'selected':''}>M</option><option value="W" ${isW?'selected':''}>W</option></select>`;
+  const m = `<input type="number" min="0" class="pn" data-act="pwaist" data-id="${id}" value="${s.waist??''}" placeholder="32"><span class="pants-x">×</span><input type="number" min="0" class="pn" data-act="pinseam" data-id="${id}" value="${s.inseam??''}" placeholder="30">`;
+  const w = `<input type="number" min="0" class="pn" data-act="pwsize" data-id="${id}" value="${s.wsize??''}" placeholder="8"><select class="len" data-act="plength" data-id="${id}"><option value="Regular" ${(!s.length||s.length==='Regular')?'selected':''}>Regular</option><option value="Short" ${s.length==='Short'?'selected':''}>Short</option><option value="Long" ${s.length==='Long'?'selected':''}>Long</option></select>`;
+  return `<div class="pants-fields">${cut}${isW?w:m}</div>`;
+}
+function wirePantsPicker(body, p){
+  const ensure = id => { const a = (p.items[id] = p.items[id] || { status:'unit' }); a.pants = a.pants || { cut:'M' }; return a; };
+  body.querySelectorAll('[data-act="pcut"]').forEach(el => el.addEventListener('change', () => {
+    const a = ensure(el.dataset.id); a.pants.cut = el.value;
+    if(a.pants.cut === 'W' && !a.pants.length) a.pants.length = 'Regular';
+    touch(); renderDetail(openName);   // re-render to swap M/W fields
+  }));
+  const f = (act, prop) => body.querySelectorAll(`[data-act="${act}"]`).forEach(el => {
+    const ev = el.tagName === 'SELECT' ? 'change' : 'input';
+    el.addEventListener(ev, () => { const a = ensure(el.dataset.id); a.pants[prop] = el.value; touch(); });
+  });
+  f('pwaist','waist'); f('pinseam','inseam'); f('pwsize','wsize'); f('plength','length');
+}
+
 function updateDetailCount(name){
   const el = document.getElementById('detailCount');
-  if(el) el.textContent = issuedCount(inv.people[name]) + '/' + TOTAL_ITEMS + ' issued';
+  if(el) el.textContent = issuedCount(inv.people[name]) + '/' + totalItems() + ' issued';
 }
 
 function renderTable(){
   const q = document.getElementById('searchInput').value.toLowerCase().trim();
   const shown = ROSTER.filter(p => !q || p.name.toLowerCase().includes(q));
-  let html = `<div class="table-scroll"><table class="qm-table"><thead><tr><th style="text-align:left;">Cadet</th>`;
-  EQUIPMENT.forEach(e => html += `<th title="${escapeHtml(e)}">${escapeHtml(shortLabel(e))}</th>`);
-  UNIFORMS.forEach(u => html += `<th title="${escapeHtml(u)}">${escapeHtml(shortLabel(u))}</th>`);
+  let html = `<div class="table-legend"><span class="cell-yes">●</span> Unit-Issued &nbsp; <span class="cell-purchased">●</span> Cadet Purchased</div>`;
+  html += `<div class="table-scroll"><table class="qm-table"><thead><tr><th style="text-align:left;">Cadet</th>`;
+  ISSUED_ITEMS.forEach(it => html += `<th title="${escapeHtml(it.name||'')}">${escapeHtml(it.name||'')}</th>`);
   html += `</tr></thead><tbody>`;
   shown.forEach(p => {
     const pe = inv.people[p.name];
     html += `<tr><td class="name-cell">${escapeHtml(p.name)}</td>`;
-    EQUIP_KEYS.forEach(k => html += pe.equip[k] ? `<td class="cell-yes">✓</td>` : `<td class="cell-no">·</td>`);
-    UNI_KEYS.forEach(k => html += pe.uniforms[k] ? `<td class="cell-size">${escapeHtml(pe.uniforms[k])}</td>` : `<td class="cell-no">·</td>`);
+    ISSUED_ITEMS.forEach(it => {
+      const d = assignDisplay(pe.items[it.id], it);
+      if(d.status === 'none'){ html += `<td class="cell-no">·</td>`; }
+      else {
+        const cls = d.status === 'unit' ? 'cell-yes' : 'cell-purchased';
+        const mark = d.size ? escapeHtml(d.size) : (it.type==='checkbox' ? '✓' : '✓');
+        html += `<td class="${cls}">${mark}</td>`;
+      }
+    });
     html += `</tr>`;
   });
   html += `</tbody></table></div>`;
@@ -743,51 +846,277 @@ function renderTable(){
 }
 
 function renderStock(){
-  let html = `<div class="stock-list"><div class="stock-cat">Equipment Issued</div>`;
-  EQUIPMENT.forEach((item,i) => {
-    const k = EQUIP_KEYS[i];
-    const count = ROSTER.reduce((s,p) => s + (inv.people[p.name].equip[k] ? 1 : 0), 0);
-    const pct = Math.round((count/ROSTER.length)*100);
-    html += stockRow(item, count + '/' + ROSTER.length, pct);
-  });
-  html += `<div class="stock-cat">Uniforms Issued</div>`;
-  UNIFORMS.forEach((u,i) => {
-    const k = UNI_KEYS[i];
-    const count = ROSTER.reduce((s,p) => s + (inv.people[p.name].uniforms[k] ? 1 : 0), 0);
-    const pct = Math.round((count/ROSTER.length)*100);
-    html += stockRow(u, count + '/' + ROSTER.length, pct);
-  });
-  html += `</div>`;
-  document.getElementById('qmBody').innerHTML = html;
-}
-function stockRow(name, count, pct){
-  return `<div class="stock-row"><span class="sname">${escapeHtml(name)}</span>
-    <span class="stk-track"><span class="stk-fill" style="width:${pct}%"></span></span>
-    <span class="scount">${count}</span></div>`;
-}
-
-function shortLabel(s){
-  return s.replace('Class A Shirt (Long Sleeve)','Class A LS')
-          .replace('Class B Shirt (Short Sleeve)','Class B SS')
-          .replace('Uniform Pants','Pants')
-          .replace('PT Shirt (Grey)','PT Grey')
-          .replace('PT Shirt (Blue)','PT Blue')
-          .replace('Belt Keepers (x3)','Belt Keepers')
-          .replace(' Holster','').replace(' Pouch','').replace(' Holder','');
+  let html = '';
+  if(ISSUED_ITEMS.length){
+    html += `<div class="stock-cat">Issued Gear</div>`;
+    ISSUED_ITEMS.forEach(it => {
+      let unit=0, purch=0;
+      ROSTER.forEach(p => { const a = inv.people[p.name].items[it.id]; if(a){ if(a.status==='unit') unit++; else if(a.status==='purchased') purch++; } });
+      const onHand = +it.onHand || 0;
+      const spare = onHand - unit;
+      const pct = onHand > 0 ? Math.min(100, Math.round((unit/onHand)*100)) : 0;
+      const spareTxt = spare < 0 ? `<span class="over">over-issued by ${-spare}</span>` : `${spare} spare`;
+      let sub = `${unit}/${onHand} unit-issued · ${spareTxt}` + (purch ? ` · ${purch} cadet-purchased` : '');
+      let sizes = '';
+      if((it.type==='letter' || it.type==='custom') && (it.sizes||[]).length){
+        sizes = `<div class="stock-sizes">On hand by size: ` +
+          it.sizes.filter(s=>s.label||s.cut).map(s => `${escapeHtml(it.type==='custom' ? pantsLabel(s) : (s.label||'?'))} ×${+s.qty||0}`).join(', ') + `</div>`;
+      }
+      html += `<div class="stock-row2 ${spare<0?'bad':''}">
+        <div class="stock-top"><span class="sname">${escapeHtml(it.name||'')}</span><span class="scount">${unit}/${onHand}</span></div>
+        <div class="stk-track"><span class="stk-fill" style="width:${pct}%"></span></div>
+        <div class="stock-sub">${sub}</div>${sizes}
+      </div>`;
+    });
+  }
+  if(SHARED_ITEMS.length){
+    html += `<div class="stock-cat">Shared Stock</div>`;
+    SHARED_ITEMS.forEach(it => {
+      html += `<div class="stock-row2">
+        <div class="stock-top"><span class="sname">${escapeHtml(it.name||'')}</span><span class="scount">${+it.onHand||0}</span></div>
+        <div class="stock-sub">${+it.onHand||0} on hand · shared, not assigned to cadets</div>
+      </div>`;
+    });
+  }
+  document.getElementById('qmBody').innerHTML = `<div class="stock-list">${html}</div>`;
 }
 
 function touch(){ scheduleSave(); }
 function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
+/* ---------- PDF generation (pdf-lib, client-side) ---------- */
+let _logoBytes = undefined;
+async function embedLogo(doc){
+  try {
+    if(_logoBytes === undefined){
+      _logoBytes = null;
+      for(const u of ['logo_transparent.png','/logo_transparent.png','logo.png','/logo.png']){
+        try { const r = await fetch(u, {cache:'force-cache'}); if(r.ok){ const ab = await r.arrayBuffer(); if(ab.byteLength > 100){ _logoBytes = new Uint8Array(ab); break; } } } catch(e){}
+      }
+    }
+    if(_logoBytes) return await doc.embedPng(_logoBytes);
+  } catch(e){}
+  return null;
+}
+function wrapLines(text, font, size, maxW){
+  const words = String(text).split(/\s+/); const lines = []; let cur = '';
+  for(const w of words){ const t = cur ? cur+' '+w : w; if(font.widthOfTextAtSize(t,size) > maxW && cur){ lines.push(cur); cur = w; } else cur = t; }
+  if(cur) lines.push(cur); return lines;
+}
+function drawParagraph(page, font, text, x, y, maxW, size, lh, color){
+  for(const ln of wrapLines(text, font, size, maxW)){ page.drawText(ln, {x,y,size,font,color}); y -= lh; }
+  return y;
+}
+function downloadBytes(bytes, filename){
+  const blob = new Blob([bytes], {type:'application/pdf'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
+async function pdfBase(){
+  const { PDFDocument, StandardFonts, rgb } = PDFLib;
+  const doc = await PDFDocument.create();
+  const font = await doc.embedFont(StandardFonts.Helvetica);
+  const bold = await doc.embedFont(StandardFonts.HelveticaBold);
+  const logo = await embedLogo(doc);
+  const C = {
+    navy: rgb(0.102,0.153,0.267), red: rgb(0.753,0.224,0.169), gold: rgb(0.831,0.663,0.322),
+    violet: rgb(0.55,0.36,0.96), grey: rgb(0.42,0.45,0.5), white: rgb(1,1,1), line: rgb(0.84,0.85,0.87)
+  };
+  const W = 612, H = 792, M = 50;
+  function header(page, title){
+    page.drawRectangle({ x:0, y:H-96, width:W, height:96, color:C.navy });
+    let tx = M;
+    if(logo){ const h = 56, w = logo.width*(h/logo.height); page.drawImage(logo, { x:M, y:H-78, width:w, height:h }); tx = M + w + 16; }
+    page.drawText('RICHARDSON POLICE', { x:tx, y:H-44, size:15, font:bold, color:C.white });
+    page.drawText('Public Safety Cadets  ·  Unit #761', { x:tx, y:H-60, size:9.5, font, color:C.gold });
+    const t = (title||'').toUpperCase();
+    page.drawText(t, { x:W-M-bold.widthOfTextAtSize(t,10.5), y:H-72, size:10.5, font:bold, color:C.gold });
+    page.drawRectangle({ x:0, y:H-100, width:W, height:3, color:C.red });
+    return H-128;
+  }
+  function addPage(title){ const pg = doc.addPage([W,H]); const y = header(pg, title); return { pg, y }; }
+  async function save(filename){
+    const pages = doc.getPages(); const n = pages.length;
+    pages.forEach((pg,i) => {
+      pg.drawRectangle({ x:0, y:42, width:W, height:0.8, color:C.line });
+      pg.drawText('Richardson Public Safety Cadets · Unit #761 · 200 N. Greenville Ave, Richardson, TX 75081 · advisors@rpdcadets.com', { x:M, y:30, size:7.5, font, color:C.grey });
+      const pn = 'Page '+(i+1)+' of '+n; pg.drawText(pn, { x:W-M-font.widthOfTextAtSize(pn,7.5), y:30, size:7.5, font, color:C.grey });
+    });
+    downloadBytes(await doc.save(), filename);
+  }
+  return { doc, font, bold, logo, C, W, H, M, header, addPage, save };
+}
+function sectionLabel(page, bold, C, text, x, y){
+  page.drawText((text||'').toUpperCase(), { x, y, size:11, font:bold, color:C.navy });
+  page.drawRectangle({ x, y:y-6, width:612-2*50, height:1.5, color:C.gold });
+  return y-22;
+}
+function cadetTableHeader(page, bold, C, x, y){
+  page.drawText('ITEM', { x, y, size:8, font:bold, color:C.grey });
+  page.drawText('STATUS', { x:x+300, y, size:8, font:bold, color:C.grey });
+  page.drawText('SIZE', { x:x+440, y, size:8, font:bold, color:C.grey });
+  page.drawRectangle({ x, y:y-4, width:612-2*50, height:0.8, color:C.line });
+  return y-16;
+}
+function cadetRow(page, font, bold, C, x, y, name, status, size){
+  page.drawText(String(name), { x, y, size:10, font, color:C.navy });
+  const stTxt = status === 'unit' ? 'Unit-Issued' : 'Cadet Purchased';
+  page.drawText(stTxt, { x:x+300, y, size:9.5, font:bold, color: status === 'unit' ? C.navy : C.violet });
+  if(size) page.drawText(String(size), { x:x+440, y, size:9.5, font, color:C.navy });
+  return y-16;
+}
+
+async function generateCadetPDF(name){
+  try {
+    if(typeof PDFLib === 'undefined'){ showToast('PDF library still loading — try again'); return; }
+    showToast('Building cadet sheet…');
+    const B = await pdfBase(); const { C, M, W } = B, font = B.font, bold = B.bold;
+    let { pg, y } = B.addPage('Equipment Issue Record');
+    const meta = ROSTER.find(r => r.name === name) || { rank:'' };
+    const p = inv.people[name];
+    y -= 24;
+    pg.drawText(String(name), { x:M, y, size:18, font:bold, color:C.navy });
+    if(meta.rank) pg.drawText(meta.rank, { x:M, y:y-15, size:10, font, color:C.grey });
+    const dateStr = new Date().toLocaleDateString('en-US',{ year:'numeric', month:'long', day:'numeric' });
+    const dtxt = 'Date: ' + dateStr;
+    pg.drawText(dtxt, { x:W-M-font.widthOfTextAtSize(dtxt,10), y, size:10, font, color:C.grey });
+    y -= 42;
+
+    const issued = ISSUED_ITEMS.map(it => ({ it, d: assignDisplay(p.items[it.id], it) })).filter(x => x.d.status !== 'none');
+    const notIssued = ISSUED_ITEMS.filter(it => assignDisplay(p.items[it.id], it).status === 'none');
+
+    y = sectionLabel(pg, bold, C, 'Issued Equipment', M, y);
+    if(issued.length){
+      y = cadetTableHeader(pg, bold, C, M, y);
+      for(const { it, d } of issued){
+        if(y < 180){ const np = B.addPage('Equipment Issue Record'); pg = np.pg; y = np.y - 10; y = cadetTableHeader(pg, bold, C, M, y); }
+        y = cadetRow(pg, font, bold, C, M, y, it.name || '(unnamed item)', d.status, d.size);
+      }
+    } else { pg.drawText('No equipment currently issued.', { x:M, y, size:10, font, color:C.grey }); y -= 16; }
+    y -= 20;
+
+    if(y < 160){ const np = B.addPage('Equipment Issue Record'); pg = np.pg; y = np.y - 10; }
+    y = sectionLabel(pg, bold, C, 'Not Issued', M, y);
+    if(notIssued.length){
+      const colW = (W-2*M)/2; let i = 0;
+      for(const it of notIssued){
+        if(y < 140){ const np = B.addPage('Equipment Issue Record'); pg = np.pg; y = np.y - 10; }
+        const col = i % 2, x = M + col*colW;
+        pg.drawText('•  ' + (it.name || '(unnamed item)'), { x, y, size:10, font, color:C.navy });
+        if(col === 1) y -= 15;
+        i++;
+      }
+      if(notIssued.length % 2 === 1) y -= 15;
+    } else { pg.drawText('All catalog items issued.', { x:M, y, size:10, font, color:C.grey }); y -= 15; }
+    y -= 26;
+
+    if(y < 240){ const np = B.addPage('Equipment Issue Record'); pg = np.pg; y = np.y - 10; }
+    y = sectionLabel(pg, bold, C, 'Acknowledgment', M, y);
+    const ack = 'I acknowledge receipt of the unit-issued equipment listed above. I understand that all unit-issued items remain the property of the Richardson Police Department and the Richardson Public Safety Cadets, are issued to me solely for authorized program use, and must be returned in good condition upon request or upon my separation from the program. I understand that failure to return issued equipment, or the conversion of such property to personal use, may result in restitution and/or criminal prosecution for theft under applicable Texas law. Items marked "Cadet Purchased" are my own property and are noted for reference only.';
+    y = drawParagraph(pg, font, ack, M, y, W-2*M, 9.5, 13, C.navy);
+    y -= 34;
+    pg.drawLine({ start:{x:M,y}, end:{x:M+250,y}, thickness:0.8, color:C.navy });
+    pg.drawText('Cadet Signature', { x:M, y:y-12, size:8, font, color:C.grey });
+    pg.drawLine({ start:{x:W-M-150,y}, end:{x:W-M,y}, thickness:0.8, color:C.navy });
+    pg.drawText('Date', { x:W-M-150, y:y-12, size:8, font, color:C.grey });
+    y -= 42;
+    pg.drawText('Printed Name:', { x:M, y, size:9, font, color:C.navy });
+    pg.drawLine({ start:{x:M+74,y:y-2}, end:{x:M+330,y:y-2}, thickness:0.6, color:C.navy });
+
+    await B.save('equipment-sheet-' + name.replace(/[^a-z0-9]+/gi,'-').toLowerCase() + '-' + dateStamp() + '.pdf');
+    showToast('Cadet sheet downloaded');
+  } catch(e){ console.error(e); showToast('PDF failed: ' + (e.message||e)); }
+}
+
+async function generateInventoryPDF(){
+  try {
+    if(typeof PDFLib === 'undefined'){ showToast('PDF library still loading — try again'); return; }
+    showToast('Building inventory report…');
+    const B = await pdfBase(); const { C, M, W } = B, font = B.font, bold = B.bold;
+    let { pg, y } = B.addPage('Inventory Report');
+    y -= 24;
+    pg.drawText('Quartermaster Inventory Report', { x:M, y, size:17, font:bold, color:C.navy });
+    const dateStr = new Date().toLocaleDateString('en-US',{ year:'numeric', month:'long', day:'numeric' });
+    pg.drawText('As of ' + dateStr, { x:M, y:y-15, size:10, font, color:C.grey });
+    y -= 40;
+
+    let totUnit = 0, totPurch = 0, totOnHand = 0;
+    const rows = ISSUED_ITEMS.map(it => {
+      let unit = 0, purch = 0;
+      ROSTER.forEach(p => { const a = inv.people[p.name].items[it.id]; if(a){ if(a.status==='unit') unit++; else if(a.status==='purchased') purch++; } });
+      const onHand = +it.onHand || 0; totUnit += unit; totPurch += purch; totOnHand += onHand;
+      return { it, unit, purch, onHand, spare: onHand - unit };
+    });
+    pg.drawText(ISSUED_ITEMS.length + ' tracked item types  ·  ' + totOnHand + ' units on hand  ·  ' + totUnit + ' unit-issued  ·  ' + totPurch + ' cadet-purchased', { x:M, y, size:9.5, font, color:C.navy });
+    y -= 28;
+
+    const cols = { item:M, onhand:M+250, unit:M+322, spare:M+390, purch:M+462 };
+    const invHeader = (page, yy) => {
+      page.drawText('ITEM', { x:cols.item, y:yy, size:8, font:bold, color:C.grey });
+      page.drawText('ON HAND', { x:cols.onhand, y:yy, size:8, font:bold, color:C.grey });
+      page.drawText('ISSUED', { x:cols.unit, y:yy, size:8, font:bold, color:C.grey });
+      page.drawText('SPARE', { x:cols.spare, y:yy, size:8, font:bold, color:C.grey });
+      page.drawText('PURCH.', { x:cols.purch, y:yy, size:8, font:bold, color:C.grey });
+      page.drawRectangle({ x:M, y:yy-4, width:W-2*M, height:0.8, color:C.line });
+      return yy-16;
+    };
+    y = sectionLabel(pg, bold, C, 'Issued Gear', M, y);
+    y = invHeader(pg, y);
+    for(const r of rows){
+      if(y < 120){ const np = B.addPage('Inventory Report'); pg = np.pg; y = np.y - 10; y = invHeader(pg, y); }
+      pg.drawText(String(r.it.name||''), { x:cols.item, y, size:9.5, font, color:C.navy });
+      pg.drawText(String(r.onHand), { x:cols.onhand, y, size:9.5, font, color:C.navy });
+      pg.drawText(String(r.unit), { x:cols.unit, y, size:9.5, font, color:C.navy });
+      if(r.spare < 0) pg.drawText('-' + (-r.spare) + ' over', { x:cols.spare, y, size:9, font:bold, color:C.red });
+      else pg.drawText(String(r.spare), { x:cols.spare, y, size:9.5, font, color:C.navy });
+      pg.drawText(String(r.purch), { x:cols.purch, y, size:9.5, font, color: r.purch ? C.violet : C.grey });
+      y -= 15;
+    }
+    y -= 18;
+
+    const sized = ISSUED_ITEMS.filter(it => (it.type==='letter' || it.type==='custom') && (it.sizes||[]).length);
+    if(sized.length){
+      if(y < 150){ const np = B.addPage('Inventory Report'); pg = np.pg; y = np.y - 10; }
+      y = sectionLabel(pg, bold, C, 'Stock by Size', M, y);
+      for(const it of sized){
+        if(y < 120){ const np = B.addPage('Inventory Report'); pg = np.pg; y = np.y - 10; }
+        pg.drawText(String(it.name||''), { x:M, y, size:10, font:bold, color:C.navy }); y -= 14;
+        const parts = it.sizes.filter(s => s.label || s.cut).map(s => (it.type==='custom' ? pantsLabel(s) : (s.label||'?')) + ' x' + (+s.qty||0));
+        y = drawParagraph(pg, font, parts.join('     '), M+10, y, W-2*M-10, 9.5, 13, C.grey) - 8;
+      }
+      y -= 8;
+    }
+
+    if(SHARED_ITEMS.length){
+      if(y < 120){ const np = B.addPage('Inventory Report'); pg = np.pg; y = np.y - 10; }
+      y = sectionLabel(pg, bold, C, 'Shared Stock', M, y);
+      for(const it of SHARED_ITEMS){
+        if(y < 90){ const np = B.addPage('Inventory Report'); pg = np.pg; y = np.y - 10; }
+        pg.drawText(String(it.name||''), { x:M, y, size:10, font, color:C.navy });
+        pg.drawText((+it.onHand||0) + ' on hand', { x:cols.onhand, y, size:9.5, font, color:C.navy });
+        y -= 15;
+      }
+    }
+
+    await B.save('quartermaster-inventory-' + dateStamp() + '.pdf');
+    showToast('Inventory report downloaded');
+  } catch(e){ console.error(e); showToast('PDF failed: ' + (e.message||e)); }
+}
+
 /* ---------- export ---------- */
 function exportCSV(){
-  const head = ['Cadet','Rank'].concat(EQUIPMENT, UNIFORMS, ['Notes']);
+  const head = ['Cadet','Rank'].concat(ISSUED_ITEMS.map(it => it.name || ''), ['Notes']);
   const rows = [head];
   ROSTER.forEach(p => {
     const pe = inv.people[p.name];
     const row = [p.name, p.rank];
-    EQUIP_KEYS.forEach(k => row.push(pe.equip[k] ? 'Y' : ''));
-    UNI_KEYS.forEach(k => row.push(pe.uniforms[k] || ''));
+    ISSUED_ITEMS.forEach(it => {
+      const d = assignDisplay(pe.items[it.id], it);
+      if(d.status === 'none'){ row.push(''); }
+      else { const lbl = d.status === 'unit' ? 'Unit-Issued' : 'Cadet Purchased'; row.push(d.size ? `${lbl} (${d.size})` : lbl); }
+    });
     row.push(pe.notes || '');
     rows.push(row);
   });
@@ -832,6 +1161,7 @@ document.getElementById('searchInput').addEventListener('input', () => { if(!ope
 document.getElementById('editorName').addEventListener('input', e => {
   try { localStorage.setItem('rpd761_qm_editor', e.target.value.trim()); } catch(err){}
 });
+document.getElementById('invPdfBtn').addEventListener('click', generateInventoryPDF);
 document.getElementById('exportBtn').addEventListener('click', exportCSV);
 document.getElementById('backupBtn').addEventListener('click', exportBackup);
 document.getElementById('lockBtn').addEventListener('click', () => {

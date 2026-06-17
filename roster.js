@@ -159,7 +159,9 @@
     if (!keyB64) return { ok: false, badPasscode: true };
     rosterKey = b64ToArr(keyB64);
     await refresh();
+    try { await loadCatalog(); } catch (e) { catalogCache = []; }
     startListener();
+    startCatalogListener();
     return { ok: true };
   }
 
@@ -194,8 +196,10 @@
     const wrapQm = await pwEncrypt(keyB64, qmPass);
     await ref.set({ data, wrap: { cadet: wrapCadet, qm: wrapQm } });
     cache = (initial || SEED).slice();
+    catalogCache = [];
     role = 'cadet';
     startListener();
+    startCatalogListener();
     return cache;
   }
 
@@ -218,6 +222,42 @@
 
   function subscribe(cb) { subscribers.push(cb); if (cache) cb(cache); }
   function get() { return cache ? cache.slice() : []; }
+
+  /* ── Quartermaster item catalog ──
+     Item definitions + on-hand counts + per-size stock breakdown.
+     Stored at roster/catalog, encrypted with the same shared roster key,
+     so it's editable from /admin (cadet passcode) and readable by the
+     quartermaster page (qm password). No extra Firebase rules needed —
+     it lives under the roster node which is already permitted. */
+  let catalogCache = null;
+  const catalogSubs = [];
+
+  async function loadCatalog() {
+    const blob = await once('catalog');
+    if (!blob) { catalogCache = []; return catalogCache; }
+    const txt = await keyDecrypt(blob, rosterKey);
+    catalogCache = JSON.parse(txt);
+    return catalogCache;
+  }
+  function startCatalogListener() {
+    db.ref(ROOT + '/catalog').on('value', async (snap) => {
+      const blob = snap.val();
+      if (!blob || !rosterKey) return;
+      try {
+        const txt = await keyDecrypt(blob, rosterKey);
+        catalogCache = JSON.parse(txt);
+        catalogSubs.forEach(cb => { try { cb(catalogCache); } catch (e) {} });
+      } catch (e) {}
+    });
+  }
+  async function saveCatalog(arr) {
+    if (!rosterKey) throw new Error('not unlocked');
+    catalogCache = arr;
+    const blob = await keyEncrypt(JSON.stringify(arr), rosterKey);
+    await db.ref(ROOT + '/catalog').set(blob);
+  }
+  function subscribeCatalog(cb) { catalogSubs.push(cb); if (catalogCache) cb(catalogCache); }
+  function getCatalog() { return catalogCache ? catalogCache.slice() : []; }
 
   // ── display helpers ──
   const RANK_ORDER = { 'Captain': 0, 'Lt.': 1, 'Sgt.': 2, 'Cadet': 3, 'Probationary': 4 };
@@ -270,6 +310,7 @@
 
   global.RPDRoster = {
     connect, setup, linkRole, save, refresh, subscribe, get, getSorted,
+    loadCatalog, saveCatalog, subscribeCatalog, getCatalog,
     initials, displayName, flatNames, bySquad, squadLead, byRankSections,
     rankRank, SQUAD_META, SEED
   };

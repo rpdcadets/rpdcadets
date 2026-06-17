@@ -570,7 +570,11 @@ async function loadSharedRoster(pw){
   } catch(e){ /* offline / SDK issue: ROSTER stays empty, page still loads */ }
 }
 function applySharedRoster(arr){
-  ROSTER = (arr || []).filter(p => !p.open).map(p => ({ name: p.name, rank: p.rank }));
+  const order = { 'Captain':0, 'Lt.':1, 'Sgt.':2, 'Cadet':3, 'Probationary':4 };
+  ROSTER = (arr || []).filter(p => !p.open)
+    .map((p, i) => ({ p, i }))
+    .sort((a, b) => ((order[a.p.rank] ?? 5) - (order[b.p.rank] ?? 5)) || a.i - b.i)
+    .map(x => ({ name: x.p.name, rank: x.p.rank }));
 }
 
 function showApp(){

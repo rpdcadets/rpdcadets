@@ -220,6 +220,15 @@
   function get() { return cache ? cache.slice() : []; }
 
   // ── display helpers ──
+  const RANK_ORDER = { 'Captain': 0, 'Lt.': 1, 'Sgt.': 2, 'Cadet': 3, 'Probationary': 4 };
+  function rankRank(r) { return r in RANK_ORDER ? RANK_ORDER[r] : 5; }
+  // roster sorted by rank (Captain → Lt. → Sgt. → Cadet → Probationary),
+  // stable within a rank so newer entries stay at the bottom of their rank.
+  function getSorted() {
+    return get().map((e, i) => ({ e, i }))
+      .sort((a, b) => rankRank(a.e.rank) - rankRank(b.e.rank) || a.i - b.i)
+      .map(x => x.e);
+  }
   function initials(name) {
     const parts = String(name).trim().split(/\s+/).filter(Boolean);
     if (!parts.length) return '?';
@@ -228,11 +237,12 @@
   }
   function displayName(entry) {
     if (entry.open) return entry.name;
-    return (entry.rank === 'Lt.' || entry.rank === 'Sgt.') ? entry.rank + ' ' + entry.name : entry.name;
+    const pfx = { 'Captain': 'Capt.', 'Lt.': 'Lt.', 'Sgt.': 'Sgt.' }[entry.rank];
+    return pfx ? pfx + ' ' + entry.name : entry.name;
   }
   function flatNames() {
-    // every real person, leadership-ranked names prefixed (for attendance)
-    return get().filter(e => !e.open).map(displayName);
+    // every real person, rank-ordered, leadership prefixed (for attendance/dropdown)
+    return getSorted().filter(e => !e.open).map(displayName);
   }
   function bySquad() {
     const order = ['leadership', 1, 2, 3, 4];
@@ -246,10 +256,11 @@
     return sgt ? sgt.name : null;
   }
   function byRankSections() {
-    const list = get().filter(e => !e.open);
+    const list = getSorted().filter(e => !e.open);
     const sec = (title, pred) => ({ section: title, members: list.filter(pred).map(displayName) });
     const groups = [
-      sec('Lieutenant', e => e.rank === 'Lt.' || e.rank === 'Captain'),
+      sec('Captain', e => e.rank === 'Captain'),
+      sec('Lieutenant', e => e.rank === 'Lt.'),
       sec('Sergeants', e => e.rank === 'Sgt.'),
       sec('Cadets', e => e.rank === 'Cadet'),
       sec('Probationary', e => e.rank === 'Probationary')
@@ -258,8 +269,8 @@
   }
 
   global.RPDRoster = {
-    connect, setup, linkRole, save, refresh, subscribe, get,
+    connect, setup, linkRole, save, refresh, subscribe, get, getSorted,
     initials, displayName, flatNames, bySquad, squadLead, byRankSections,
-    SQUAD_META, SEED
+    rankRank, SQUAD_META, SEED
   };
 })(window);

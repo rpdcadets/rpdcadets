@@ -333,7 +333,54 @@
   global.RPDRoster = {
     connect, setup, linkRole, save, refresh, subscribe, get, getSorted, activeSorted,
     loadCatalog, saveCatalog, subscribeCatalog, getCatalog,
+    getAlumni, defaultRoleLabel, rankRank, SQUAD_META, SEED,
     initials, displayName, flatNames, bySquad, squadLead, byRankSections,
-    getAlumni, defaultRoleLabel, rankRank, SQUAD_META, SEED
+    // ── Cadet Records: a fully separate, independently-keyed store ──
+    records: {
+      connect: recordsConnect, setup: recordsSetup, get: recordsGet, save: recordsSave, isUnlocked: () => !!recordsKey
+    }
   };
+
+  /* ══════════════════════════════════════════════════════════════
+     CADET RECORDS  —  operational cadet details (safe tier).
+     Its own random key, wrapped under the ADVISOR passcode, so the
+     same passcode that opens /admin also opens records — but the
+     cadet/qm passcodes cannot (they never get this key). Stored in
+     the roster node (roster/records, roster/recordsWrap) so no extra
+     Firebase rule is required.
+     ══════════════════════════════════════════════════════════════ */
+  let recordsKey = null;
+  async function recordsConnect(passphrase) {
+    ensureFirebase();
+    const wrap = await once('recordsWrap');
+    if (!wrap) {
+      const dataExists = await once('records');
+      return { ok: false, needsSetup: !dataExists, needsLink: !!dataExists };
+    }
+    const keyB64 = await pwDecrypt(wrap, passphrase);
+    if (!keyB64) return { ok: false, badPass: true };
+    recordsKey = b64ToArr(keyB64);
+    return { ok: true };
+  }
+  async function recordsSetup(passphrase) {
+    ensureFirebase();
+    recordsKey = crypto.getRandomValues(new Uint8Array(32));
+    const keyB64 = arrToB64(recordsKey);
+    const wrap = await pwEncrypt(keyB64, passphrase);
+    const data = await keyEncrypt(JSON.stringify({}), recordsKey);
+    await db.ref(ROOT + '/recordsWrap').set(wrap);
+    await db.ref(ROOT + '/records').set(data);
+    return { ok: true };
+  }
+  async function recordsGet() {
+    if (!recordsKey) return null;
+    const blob = await once('records');
+    if (!blob) return {};
+    try { return JSON.parse(await keyDecrypt(blob, recordsKey)); } catch (e) { return {}; }
+  }
+  async function recordsSave(obj) {
+    if (!recordsKey) throw new Error('records locked');
+    const data = await keyEncrypt(JSON.stringify(obj), recordsKey);
+    await db.ref(ROOT + '/records').set(data);
+  }
 })(window);

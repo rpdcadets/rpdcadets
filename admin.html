@@ -94,6 +94,42 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
 .row-extra select option{background:var(--navy)}
 .btn.ghost{margin-left:0;font-size:11px;padding:9px 12px}
 @media(max-width:640px){.row-extra{grid-template-columns:1fr}}
+
+/* CADET RECORDS */
+.rec-lock{display:flex;flex-direction:column;align-items:center;text-align:center;background:var(--card-bg);border:1px solid var(--card-border);border-radius:16px;padding:36px 28px;max-width:420px;margin:0 auto}
+.rec-lock .lock-icon{width:52px;height:52px;border-radius:14px;background:rgba(212,169,82,0.1);border:1px solid rgba(212,169,82,0.25);color:var(--gold);display:flex;align-items:center;justify-content:center;margin-bottom:16px}
+.rec-lock-sub{color:var(--text-muted);font-size:14px;line-height:1.6;margin-bottom:18px}
+.rec-lock .lock-input{width:100%;margin-bottom:10px}
+.rec-lock .lock-btn{width:100%}
+.rec-warning{background:rgba(212,169,82,0.06);border:1px solid rgba(212,169,82,0.2);border-radius:12px;padding:13px 16px;font-size:12.5px;line-height:1.6;color:var(--text-muted);margin-bottom:18px}
+.rec-warning b{color:var(--gold-light)}
+.rec-card{background:var(--card-bg);border:1px solid var(--card-border);border-radius:12px;margin-bottom:8px;overflow:hidden}
+.rec-card.open{border-color:rgba(212,169,82,0.3)}
+.rec-head{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;cursor:pointer}
+.rec-head:hover{background:rgba(255,255,255,0.02)}
+.rec-rank{font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--gold);margin-right:8px}
+.rec-name{font-size:15px;font-weight:600}
+.rec-meta{display:flex;align-items:center;gap:8px;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);font-family:'Barlow Condensed',sans-serif}
+.rec-chev{transition:transform .2s}
+.rec-card.open .rec-chev{transform:rotate(180deg)}
+.rec-body{padding:6px 16px 18px;border-top:1px solid var(--card-border)}
+.rec-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:14px}
+.rec-grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:14px}
+.rec-field{display:flex;flex-direction:column;gap:5px}
+.rec-field span{font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--text-muted)}
+.rec-field input,.rec-field textarea,.rec-field select{background:var(--input-bg);border:1px solid var(--input-border);border-radius:8px;padding:9px 11px;color:var(--white);font-family:'Barlow',sans-serif;font-size:13.5px;outline:none;resize:vertical}
+.rec-field input:focus,.rec-field textarea:focus,.rec-field select:focus{border-color:var(--input-focus)}
+.rec-field select{appearance:none;cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%238899b0' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:28px}
+.rec-field select option{background:var(--navy)}
+.rec-field input[type=date]{color-scheme:dark}
+.rec-compute{margin:14px 0 4px;font-size:12.5px;color:var(--text-muted)}
+.rec-compute b{color:var(--gold-light);font-weight:600}
+.rec-checks{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 2px}
+.rec-check{display:inline-flex;align-items:center;gap:7px;background:var(--input-bg);border:1px solid var(--input-border);border-radius:20px;padding:7px 14px 7px 9px;color:var(--text-muted);font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:0.8px;text-transform:uppercase;cursor:pointer;transition:all .18s}
+.rec-check .box{width:16px;height:16px;border-radius:5px;border:1px solid var(--input-border);display:flex;align-items:center;justify-content:center;font-size:11px;color:#1a1206}
+.rec-check.on{background:rgba(39,174,96,0.12);border-color:var(--green);color:#fff}
+.rec-check.on .box{background:var(--green);border-color:var(--green);color:#fff}
+@media(max-width:640px){.rec-grid,.rec-grid3{grid-template-columns:1fr}}
 .c-red{background:var(--red)}.c-yellow{background:#f1c40f}.c-blue{background:#3498db}.c-green{background:var(--green)}.c-gold{background:var(--gold)}
 .row{display:grid;grid-template-columns:1fr 130px 150px 40px;gap:10px;align-items:center;background:var(--card-bg);border:1px solid var(--card-border);border-radius:10px;padding:10px 12px;margin-bottom:8px}
 .row input,.row select{width:100%;background:var(--input-bg);border:1px solid var(--input-border);border-radius:8px;padding:10px 12px;color:var(--white);font-family:'Barlow',sans-serif;font-size:14px;outline:none}
@@ -159,7 +195,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
     <button class="lock-btn" id="goBtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg><span id="goLabel">Unlock</span></button>
     <div class="lock-error" id="lockErr">Incorrect passcode.</div>
     <div class="lock-home"><a href="index.html">← Return to Home</a></div>
-    <div style="margin-top:16px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v7 · advisor gate</div>
+    <div style="margin-top:16px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v9 · cadet records</div>
   </div>
 </div>
 
@@ -189,12 +225,32 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
       <button class="back-link" id="rosterBack"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Admin Console</button>
       <div class="bar">
         <div class="status-pill" id="pill"><span class="dot"></span><span id="pillText">Synced</span></div>
-        <span style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v7</span>
+        <span style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v9</span>
         <button class="btn ghost" id="syncMembersBtn" title="One-time: pull titles and alumni from the Members page into the shared roster">Sync members data</button>
         <button class="btn add" id="addBtn">+ Add Person</button>
       </div>
       <div class="col-head"><span>Name</span><span>Rank</span><span class="h-squad">Squad</span><span></span></div>
       <div id="rows"></div>
+    </div>
+  </div>
+
+  <!-- CADET RECORDS (unlocked by the advisor passcode; safe-tier fields only) -->
+  <div class="view" id="recordsView">
+    <div class="page-header">
+      <div class="section-label">Cadet Records</div>
+      <h1 class="section-title">Cadet Records</h1>
+      <p class="page-desc">Operational details per cadet, encrypted and readable only with the advisor passcode.</p>
+    </div>
+    <div class="container">
+      <button class="back-link" id="recBack"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Admin Console</button>
+      <div id="recApp">
+        <div class="bar">
+          <div class="status-pill" id="recPill"><span class="dot"></span><span id="recPillText">Synced</span></div>
+          <input type="text" id="recSearch" placeholder="Search cadet…" style="flex:1;min-width:160px;background:var(--input-bg);border:1px solid var(--input-border);border-radius:9px;padding:10px 14px;color:var(--white);font-family:'Barlow',sans-serif;font-size:14px;outline:none">
+        </div>
+        <div class="rec-warning">Program info only: certifications, dates, shirt size, radio number, email, phone. Keep home addresses, dates of birth, emergency contacts, and medical details out of this tool.</div>
+        <div id="recRows"></div>
+      </div>
     </div>
   </div>
 
@@ -219,9 +275,9 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
 
 <div class="toast" id="toast"></div>
 
-<script src="roster.js?v=6"></script>
+<script src="roster.js?v=8"></script>
 <script>
-console.log('[admin] Build v7 — advisor gate');
+console.log('[admin] Build v9 — records via advisor passcode');
 const SESSION_KEY = 'rpd761_admin_auth';   // advisor-only; NOT shared with cadet pages
 const RANKS = ['Captain','Lt.','Sgt.','Cadet','Probationary'];
 const SQUADS = [['leadership','Leadership'],[1,'Squad 1'],[2,'Squad 2'],[3,'Squad 3'],[4,'Squad 4 (Admin)']];
@@ -243,6 +299,13 @@ const TOOLS = [
     desc: 'Define gear items, types, and on-hand counts. The Quartermaster page issues from this list.',
     icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7h-4V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/><path d="M10 5h4v2h-4z"/></svg>',
     open: openCatalog
+  },
+  {
+    id: 'records',
+    name: 'Cadet Records',
+    desc: 'Confidential cadet details. Separate passphrase, separate encryption, isolated from the roster.',
+    icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18"/><path d="M8 4v16"/></svg>',
+    open: openRecords
   },
   { id: 'more', name: 'More tools', desc: 'Additional admin tools will live here.', soon: true,
     icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>' }
@@ -592,6 +655,107 @@ async function catFlush(){
 }
 function setCatStatus(s){ const p=document.getElementById('catPill'); p.className='status-pill '+s; document.getElementById('catPillText').textContent = s==='saving'?'Saving':'Synced'; }
 
+/* ── CADET RECORDS (separate passphrase, separate node/key) ── */
+let recData = null;
+let recSaveTimer = null;
+const REC_CHECKS = [['offProbation','Off Probation'],['rideAlong','Ride-Along Certified'],['competition','Competition Team'],['waivers','Waivers Completed'],['uas','UAS Certified']];
+const REC_SHIRT = ['','XS','S','M','L','XL','2XL','3XL'];
+function escapeHtmlA(s){ return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+function addMonths(dateStr, n){
+  if(!dateStr) return '';
+  const d = new Date(dateStr + 'T00:00:00'); if(isNaN(d)) return '';
+  const day = d.getDate(); d.setMonth(d.getMonth() + n);
+  if(d.getDate() < day) d.setDate(0);
+  return (d.getMonth()+1) + '/' + d.getDate() + '/' + d.getFullYear();
+}
+function timeIn(dateStr){
+  if(!dateStr) return '';
+  const a = new Date(dateStr + 'T00:00:00'); if(isNaN(a)) return '';
+  const b = new Date();
+  let y = b.getFullYear()-a.getFullYear(), m = b.getMonth()-a.getMonth(), d = b.getDate()-a.getDate();
+  if(d < 0){ m--; const pm = new Date(b.getFullYear(), b.getMonth(), 0).getDate(); d += pm; }
+  if(m < 0){ y--; m += 12; }
+  if(y < 0) return '';
+  return `${y} year${y!==1?'s':''}, ${m} month${m!==1?'s':''}, ${d} day${d!==1?'s':''}`;
+}
+
+async function openRecords(){
+  showView('recordsView');
+  const host = document.getElementById('recRows');
+  host.innerHTML = '<p style="color:var(--text-muted);padding:24px;text-align:center">Unlocking…</p>';
+  const adv = sessionStorage.getItem(SESSION_KEY);
+  try {
+    let res = await RPDRoster.records.connect(adv);
+    if(res.needsSetup){ await RPDRoster.records.setup(adv); res = { ok:true }; }
+    if(res.ok){ recData = (await RPDRoster.records.get()) || {}; renderRecords(); }
+    else { host.innerHTML = '<p style="color:var(--red-glow);padding:24px;text-align:center">Could not unlock records. Re-open the admin page and try again.</p>'; }
+  } catch(e){ host.innerHTML = '<p style="color:var(--red-glow);padding:24px;text-align:center">Could not reach the database. Check your connection.</p>'; }
+}
+
+function renderRecords(){
+  const host = document.getElementById('recRows'); host.innerHTML='';
+  const q = (document.getElementById('recSearch').value||'').toLowerCase().trim();
+  const cadets = RPDRoster.activeSorted().filter(p => !q || p.name.toLowerCase().includes(q));
+  if(!cadets.length){ host.innerHTML='<p style="color:var(--text-muted);padding:24px;text-align:center">No cadet matches.</p>'; return; }
+  cadets.forEach(p => host.appendChild(recCard(p)));
+}
+function recFilledCount(rec){
+  let n = 0;
+  ['radio','shirt','joinDate','email','phone','notes'].forEach(k => { if((rec[k]||'').toString().trim()) n++; });
+  REC_CHECKS.forEach(([k]) => { if(rec[k]) n++; });
+  return n;
+}
+function recCard(p){
+  const wrap = document.createElement('div'); wrap.className='rec-card';
+  const rec = recData[p.name] || (recData[p.name] = {});
+  const shirtOpts = REC_SHIRT.map(s => `<option value="${s}" ${s===(rec.shirt||'')?'selected':''}>${s||'Shirt size…'}</option>`).join('');
+  const checks = REC_CHECKS.map(([k,l]) => `<button type="button" class="rec-check ${rec[k]?'on':''}" data-k="${k}"><span class="box">${rec[k]?'✓':''}</span>${l}</button>`).join('');
+  wrap.innerHTML =
+    `<div class="rec-head" data-act="toggle">
+       <div><span class="rec-rank">${p.rank}</span> <span class="rec-name">${escapeHtmlA(p.name)}</span></div>
+       <div class="rec-meta"><span class="rec-filled">${recFilledCount(rec)?recFilledCount(rec)+' filled':'empty'}</span> <svg class="rec-chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div>
+     </div>
+     <div class="rec-body" style="display:none">
+       <div class="rec-grid3">
+         <label class="rec-field"><span>Radio #</span><input type="text" data-k="radio" value="${escapeHtmlA(rec.radio||'')}" placeholder="e.g. 311"></label>
+         <label class="rec-field"><span>Shirt size</span><select data-k="shirt">${shirtOpts}</select></label>
+         <label class="rec-field"><span>Date of join</span><input type="date" data-k="joinDate" value="${escapeHtmlA(rec.joinDate||'')}"></label>
+       </div>
+       <div class="rec-compute" data-role="compute">${recComputeText(rec)}</div>
+       <div class="rec-checks">${checks}</div>
+       <div class="rec-grid">
+         <label class="rec-field"><span>Email</span><input type="text" data-k="email" value="${escapeHtmlA(rec.email||'')}" placeholder="cadet@example.com"></label>
+         <label class="rec-field"><span>Phone</span><input type="text" data-k="phone" value="${escapeHtmlA(rec.phone||'')}" placeholder="(972) 555-0100"></label>
+       </div>
+       <label class="rec-field"><span>Notes</span><textarea data-k="notes" rows="2" placeholder="Program notes">${escapeHtmlA(rec.notes||'')}</textarea></label>
+     </div>`;
+  const body = wrap.querySelector('.rec-body');
+  wrap.querySelector('.rec-head').addEventListener('click', ()=>{ const open=body.style.display!=='none'; body.style.display=open?'none':'block'; wrap.classList.toggle('open', !open); });
+  wrap.querySelectorAll('input,textarea,select').forEach(el => el.addEventListener('input', () => {
+    rec[el.dataset.k] = el.value; 
+    if(el.dataset.k==='joinDate'){ const c=wrap.querySelector('[data-role="compute"]'); if(c) c.innerHTML = recComputeText(rec); }
+    wrap.querySelector('.rec-filled').textContent = recFilledCount(rec)?recFilledCount(rec)+' filled':'empty';
+    recSchedule();
+  }));
+  wrap.querySelectorAll('.rec-check').forEach(btn => btn.addEventListener('click', () => {
+    const k = btn.dataset.k; rec[k] = !rec[k];
+    btn.classList.toggle('on', rec[k]); btn.querySelector('.box').textContent = rec[k]?'✓':'';
+    wrap.querySelector('.rec-filled').textContent = recFilledCount(rec)?recFilledCount(rec)+' filled':'empty';
+    recSchedule();
+  }));
+  return wrap;
+}
+function recComputeText(rec){
+  if(!rec.joinDate) return 'Enter a join date to auto-calculate probation end and time in.';
+  const ends = addMonths(rec.joinDate, 6);
+  const tin = timeIn(rec.joinDate);
+  return `Probation ends <b>${ends}</b> &nbsp;·&nbsp; Time in: <b>${tin}</b>`;
+}
+function recSchedule(){ setRecStatus('saving'); clearTimeout(recSaveTimer); recSaveTimer=setTimeout(recFlush,700); }
+async function recFlush(){ clearTimeout(recSaveTimer); recSaveTimer=null; try { await RPDRoster.records.save(recData); setRecStatus('synced'); } catch(e){ setRecStatus('saving'); showToast('Records save failed'); } }
+function setRecStatus(s){ const p=document.getElementById('recPill'); p.className='status-pill '+s; document.getElementById('recPillText').textContent = s==='saving'?'Saving':'Synced'; }
+
 document.getElementById('goBtn').addEventListener('click', go);
 document.getElementById('pc1').addEventListener('keydown', e=>{ document.getElementById('lockErr').classList.remove('show'); if(e.key==='Enter') go(); });
 document.getElementById('pc2').addEventListener('keydown', e=>{ if(e.key==='Enter') go(); });
@@ -600,7 +764,9 @@ document.getElementById('syncMembersBtn').addEventListener('click', syncMembersD
 document.getElementById('rosterBack').addEventListener('click', ()=>showView('hubView'));
 document.getElementById('catAddBtn').addEventListener('click', addItem);
 document.getElementById('catBack').addEventListener('click', ()=>showView('hubView'));
-window.addEventListener('beforeunload', ()=>{ if(dirty && saveTimer) flushSave(); if(catDirty && catSaveTimer) catFlush(); });
+document.getElementById('recBack').addEventListener('click', ()=>showView('hubView'));
+document.getElementById('recSearch').addEventListener('input', renderRecords);
+window.addEventListener('beforeunload', ()=>{ if(dirty && saveTimer) flushSave(); if(catDirty && catSaveTimer) catFlush(); if(recSaveTimer) recFlush(); });
 
 // auto-resume from an existing advisor session (admin-only)
 (function(){

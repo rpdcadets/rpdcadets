@@ -926,15 +926,17 @@ async function pdfBase(){
   };
   const W = 612, H = 792, M = 50;
   function header(page, title){
-    page.drawRectangle({ x:0, y:H-96, width:W, height:96, color:C.navy });
     let tx = M;
-    if(logo){ const h = 56, w = logo.width*(h/logo.height); page.drawImage(logo, { x:M, y:H-78, width:w, height:h }); tx = M + w + 16; }
-    page.drawText('RICHARDSON POLICE', { x:tx, y:H-44, size:15, font:bold, color:C.white });
-    page.drawText('Public Safety Cadets  ·  Unit #761', { x:tx, y:H-60, size:9.5, font, color:C.gold });
+    if(logo){ const h = 76, w = logo.width*(h/logo.height); page.drawImage(logo, { x:M, y:H-40-h, width:w, height:h }); tx = M + w + 18; }
+    page.drawText('RICHARDSON POLICE', { x:tx, y:H-50, size:17, font:bold, color:C.navy });
+    page.drawText('Public Safety Cadets  ·  Unit #761', { x:tx, y:H-66, size:10, font, color:C.grey });
     const t = (title||'').toUpperCase();
-    page.drawText(t, { x:W-M-bold.widthOfTextAtSize(t,10.5), y:H-72, size:10.5, font:bold, color:C.gold });
-    page.drawRectangle({ x:0, y:H-100, width:W, height:3, color:C.red });
-    return H-128;
+    page.drawText(t, { x:tx, y:H-82, size:9.5, font:bold, color:C.red });
+    // thin brand rule under the masthead (short red lead into gold)
+    const ry = H-98;
+    page.drawRectangle({ x:M, y:ry, width:64, height:2, color:C.red });
+    page.drawRectangle({ x:M+64, y:ry, width:W-2*M-64, height:2, color:C.gold });
+    return H-120;
   }
   function addPage(title){ const pg = doc.addPage([W,H]); const y = header(pg, title); return { pg, y }; }
   async function save(filename){

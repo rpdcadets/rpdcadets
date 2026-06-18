@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Quartermaster — Richardson Police Public Safety Cadets Unit #761</title>
+<title>Quartermaster — Richardson Police Public Safety Cadets</title>
 <meta name="robots" content="noindex, nofollow">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@300;400;500;600;700&family=Barlow+Condensed:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -291,7 +291,7 @@ footer { border-top: 1px solid var(--card-border); padding: 30px 0; margin-top: 
 <!-- ════════ APP (hidden until unlocked) ════════ -->
 <div class="qm-app" id="qmApp">
   <div class="page-header">
-    <div class="section-label">Unit #761</div>
+    <div class="section-label">Public Safety Cadets</div>
     <h1 class="section-title">Quartermaster Inventory</h1>
     <p class="page-desc">Issued gear and uniforms by cadet. Changes save and sync live for everyone with access.</p>
   </div>
@@ -927,9 +927,9 @@ async function pdfBase(){
   const W = 612, H = 792, M = 50;
   function header(page, title){
     let tx = M;
-    if(logo){ const h = 76, w = logo.width*(h/logo.height); page.drawImage(logo, { x:M, y:H-40-h, width:w, height:h }); tx = M + w + 18; }
+    if(logo){ const h = 64, w = logo.width*(h/logo.height); page.drawImage(logo, { x:M, y:H-94, width:w, height:h }); tx = M + w + 18; }
     page.drawText('RICHARDSON POLICE', { x:tx, y:H-50, size:17, font:bold, color:C.navy });
-    page.drawText('Public Safety Cadets  ·  Unit #761', { x:tx, y:H-66, size:10, font, color:C.grey });
+    page.drawText('Public Safety Cadets', { x:tx, y:H-66, size:10, font, color:C.grey });
     const t = (title||'').toUpperCase();
     page.drawText(t, { x:tx, y:H-82, size:9.5, font:bold, color:C.red });
     // thin brand rule under the masthead (short red lead into gold)
@@ -943,7 +943,7 @@ async function pdfBase(){
     const pages = doc.getPages(); const n = pages.length;
     pages.forEach((pg,i) => {
       pg.drawRectangle({ x:0, y:42, width:W, height:0.8, color:C.line });
-      pg.drawText('Richardson Public Safety Cadets · Unit #761 · 200 N. Greenville Ave, Richardson, TX 75081 · advisors@rpdcadets.com', { x:M, y:30, size:7.5, font, color:C.grey });
+      pg.drawText('Richardson Public Safety Cadets · 200 N. Greenville Ave, Richardson, TX 75081 · advisors@rpdcadets.com', { x:M, y:30, size:7.5, font, color:C.grey });
       const pn = 'Page '+(i+1)+' of '+n; pg.drawText(pn, { x:W-M-font.widthOfTextAtSize(pn,7.5), y:30, size:7.5, font, color:C.grey });
     });
     downloadBytes(await doc.save(), filename);

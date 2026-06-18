@@ -152,14 +152,14 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
   <div class="lock-card">
     <div class="lock-icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
     <h2 class="lock-title">Admin</h2>
-    <p class="lock-subtitle" id="lockSub">Enter the cadet passcode to open the admin console.</p>
-    <input type="password" class="lock-input" id="pc1" placeholder="Cadet passcode" autocomplete="off" autofocus>
+    <p class="lock-subtitle" id="lockSub">Enter the advisor passcode to open the admin console.</p>
+    <input type="password" class="lock-input" id="pc1" placeholder="Advisor passcode" autocomplete="off" autofocus>
     <input type="password" class="lock-input" id="pc2" placeholder="Quartermaster password" autocomplete="off" style="display:none">
     <div class="setup-note" id="setupNote" style="display:none"></div>
     <button class="lock-btn" id="goBtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg><span id="goLabel">Unlock</span></button>
     <div class="lock-error" id="lockErr">Incorrect passcode.</div>
     <div class="lock-home"><a href="index.html">← Return to Home</a></div>
-    <div style="margin-top:16px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v2 · roster race-fix</div>
+    <div style="margin-top:16px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v7 · advisor gate</div>
   </div>
 </div>
 
@@ -189,7 +189,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
       <button class="back-link" id="rosterBack"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Admin Console</button>
       <div class="bar">
         <div class="status-pill" id="pill"><span class="dot"></span><span id="pillText">Synced</span></div>
-        <span style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v6</span>
+        <span style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v7</span>
         <button class="btn ghost" id="syncMembersBtn" title="One-time: pull titles and alumni from the Members page into the shared roster">Sync members data</button>
         <button class="btn add" id="addBtn">+ Add Person</button>
       </div>
@@ -219,10 +219,10 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
 
 <div class="toast" id="toast"></div>
 
-<script src="roster.js?v=5"></script>
+<script src="roster.js?v=6"></script>
 <script>
-console.log('[admin] Build v6 — auto-total on hand + roster fields');
-const SESSION_KEY = 'rpd761_auth';   // shares the cadet session with members/trackers
+console.log('[admin] Build v7 — advisor gate');
+const SESSION_KEY = 'rpd761_admin_auth';   // advisor-only; NOT shared with cadet pages
 const RANKS = ['Captain','Lt.','Sgt.','Cadet','Probationary'];
 const SQUADS = [['leadership','Leadership'],[1,'Squad 1'],[2,'Squad 2'],[3,'Squad 3'],[4,'Squad 4 (Admin)']];
 
@@ -267,31 +267,40 @@ const LETTER_SIZES = ['XS','S','M','L','XL','2XL','3XL'];
 function showErr(msg){ const e=document.getElementById('lockErr'); if(msg) e.textContent=msg; e.classList.add('show'); const c=document.querySelector('.lock-card'); c.style.animation='none'; c.offsetHeight; c.style.animation='shake .5s ease'; }
 
 async function go(){
-  const pc1 = document.getElementById('pc1').value.trim().toLowerCase();
+  // Advisor passcode is case-sensitive (kept strong); existing cadet/qm passcodes are lowercase.
+  const pc1 = document.getElementById('pc1').value.trim();
   if(!pc1) return;
   const btn = document.getElementById('goBtn'); btn.disabled = true;
+  const pc2el = document.getElementById('pc2');
   try {
-    const res = await RPDRoster.connect({ passcode: pc1, role: 'cadet' });
-    if(res.ok){ sessionStorage.setItem(SESSION_KEY, pc1); enterApp(); return; }
-    if(res.needsSetup){
-      const pc2el = document.getElementById('pc2');
-      if(pc2el.style.display === 'none'){
-        pc2el.style.display = 'block';
-        document.getElementById('lockSub').textContent = 'First-time setup. Confirm both passwords to create the shared roster.';
-        document.getElementById('goLabel').textContent = 'Create roster';
-        document.getElementById('setupNote').style.display = 'block';
-        document.getElementById('setupNote').innerHTML = 'This seeds the roster from the current unit list and links both the cadet passcode and the quartermaster password so all three pages can read it. You only do this once.';
-        pc2el.focus(); btn.disabled = false; return;
-      }
-      const pc2 = pc2el.value.trim().toLowerCase();
-      if(!pc2){ btn.disabled=false; return; }
-      await RPDRoster.setup(pc1, pc2, RPDRoster.SEED);
-      sessionStorage.setItem(SESSION_KEY, pc1);
-      enterApp(); showToast('Shared roster created'); return;
+    // ── one-time bootstrap mode (pc2 visible): link this advisor passcode to the existing roster ──
+    if(pc2el.style.display !== 'none'){
+      const existing = pc2el.value.trim().toLowerCase();
+      if(!existing){ btn.disabled = false; return; }
+      let r = await RPDRoster.connect({ passcode: existing, role: 'qm' });
+      if(!r.ok) r = await RPDRoster.connect({ passcode: existing, role: 'cadet' });
+      if(!r.ok){ showErr('That existing passcode did not work.'); btn.disabled = false; return; }
+      await RPDRoster.linkRole('advisor', pc1);
+      const a = await RPDRoster.connect({ passcode: pc1, role: 'advisor' });
+      if(a.ok){ sessionStorage.setItem(SESSION_KEY, pc1); enterApp(); showToast('Advisor access established'); return; }
+      showErr('Could not establish advisor access.'); btn.disabled = false; return;
     }
-    if(res.needsLink){ showErr('Roster exists but this passcode is not linked.'); btn.disabled=false; return; }
-    showErr('Incorrect passcode.'); btn.disabled=false;
-  } catch(e){ showErr('Could not reach the database. Check your connection.'); btn.disabled=false; }
+
+    const res = await RPDRoster.connect({ passcode: pc1, role: 'advisor' });
+    if(res.ok){ sessionStorage.setItem(SESSION_KEY, pc1); enterApp(); return; }
+    if(res.needsSetup){ showErr('The shared roster has not been set up yet.'); btn.disabled = false; return; }
+    if(res.needsLink){
+      // first time this advisor passcode is used: bootstrap from an existing passcode
+      pc2el.style.display = 'block';
+      pc2el.placeholder = 'Existing admin or cadet passcode (one-time)';
+      document.getElementById('lockSub').textContent = 'First-time advisor setup.';
+      document.getElementById('setupNote').style.display = 'block';
+      document.getElementById('setupNote').innerHTML = 'Enter an existing admin (quartermaster) or cadet passcode once to grant this advisor passcode access to the roster. You only do this one time; after that, only the advisor passcode is needed here.';
+      document.getElementById('goLabel').textContent = 'Establish access';
+      pc2el.focus(); btn.disabled = false; return;
+    }
+    showErr('Incorrect advisor passcode.'); btn.disabled = false;
+  } catch(e){ showErr('Could not reach the database. Check your connection.'); btn.disabled = false; }
 }
 
 function enterApp(){
@@ -593,11 +602,11 @@ document.getElementById('catAddBtn').addEventListener('click', addItem);
 document.getElementById('catBack').addEventListener('click', ()=>showView('hubView'));
 window.addEventListener('beforeunload', ()=>{ if(dirty && saveTimer) flushSave(); if(catDirty && catSaveTimer) catFlush(); });
 
-// auto-resume from an existing cadet session
+// auto-resume from an existing advisor session (admin-only)
 (function(){
   const saved = sessionStorage.getItem(SESSION_KEY);
   if(!saved) return;
-  RPDRoster.connect({ passcode: saved, role:'cadet' }).then(res=>{ if(res.ok) enterApp(); }).catch(()=>{});
+  RPDRoster.connect({ passcode: saved, role:'advisor' }).then(res=>{ if(res.ok) enterApp(); }).catch(()=>{});
 })();
 </script>
 <script src="shared.js"></script>

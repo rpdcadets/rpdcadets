@@ -156,7 +156,7 @@
   async function connect(opts) {
     ensureFirebase();
     role = opts.role;
-    const wrapPath = 'wrap/' + (role === 'qm' ? 'qm' : 'cadet');
+    const wrapPath = 'wrap/' + (role === 'qm' ? 'qm' : role === 'advisor' ? 'advisor' : 'cadet');
     const wrapped = await once(wrapPath);
     if (!wrapped) {
       // Either brand-new (no roster at all) or this role hasn't been linked.
@@ -211,14 +211,15 @@
     return cache;
   }
 
-  /* link an additional role to an existing roster (e.g. first qm read
-     after the roster already existed). Needs the role being linked to
+  /* link an additional role to an existing roster (e.g. first qm read,
+     or granting an advisor passcode). Needs the role being linked to
      supply its password, plus a working session that holds rosterKey. */
   async function linkRole(targetRole, targetPass) {
     if (!rosterKey) throw new Error('not unlocked');
     const keyB64 = arrToB64(rosterKey);
     const wrapped = await pwEncrypt(keyB64, targetPass);
-    await db.ref(ROOT + '/wrap/' + (targetRole === 'qm' ? 'qm' : 'cadet')).set(wrapped);
+    const name = targetRole === 'qm' ? 'qm' : targetRole === 'advisor' ? 'advisor' : 'cadet';
+    await db.ref(ROOT + '/wrap/' + name).set(wrapped);
   }
 
   async function save(arr) {

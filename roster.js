@@ -43,7 +43,7 @@
   // open: true marks an unfilled position (no person yet)
   const SEED = [
     { name: 'Captain', rank: 'Captain', squad: 'leadership', open: true },
-    { name: 'Daniel Hemmi', rank: 'Lt.', squad: 'leadership' },
+    { name: 'Daniel Hemmi', rank: 'Lt.', squad: 'leadership', title: 'Lieutenant / XO' },
 
     { name: 'Jonathan Nidam', rank: 'Sgt.', squad: 1 },
     { name: 'Mariah Diaz', rank: 'Cadet', squad: 1 },
@@ -63,7 +63,15 @@
     { name: 'Knox Giles', rank: 'Cadet', squad: 3 },
     { name: 'Addison Wilham', rank: 'Probationary', squad: 3 },
 
-    { name: 'Armando Rizvanovic', rank: 'Sgt.', squad: 4 }
+    { name: 'Armando Rizvanovic', rank: 'Sgt.', squad: 4, title: 'Admin Sergeant' },
+
+    // Alumni (status:'alumni' — shown only on the Members page, excluded from ops)
+    { name: 'Kara Dupre', rank: 'Cadet', squad: 1, status: 'alumni' },
+    { name: 'Evan Bowns', rank: 'Cadet', squad: 4, status: 'alumni' },
+    { name: 'William Knowlton', rank: 'Cadet', squad: 'leadership', status: 'alumni', note: '– 2026' },
+    { name: 'Matthew Zeigler', rank: 'Captain', squad: 'leadership', status: 'alumni', title: 'Cpt.', note: 'Sep 2022 – May 2025' },
+    { name: 'Sarah Antosh', rank: 'Cadet', squad: 'leadership', status: 'alumni', note: 'Jul 2024 – Jan 2026' },
+    { name: 'Shoham Ghose', rank: 'Cadet', squad: 'leadership', status: 'alumni', note: 'May 2023 – Dec 2024' }
   ];
 
   // ── Squad display metadata ──
@@ -72,7 +80,7 @@
     1: { label: 'Squad 1', color: 'red',    badge: '1' },
     2: { label: 'Squad 2', color: 'yellow', badge: '2' },
     3: { label: 'Squad 3', color: 'blue',   badge: '3' },
-    4: { label: 'Squad 4 — Admin', color: 'green', badge: '4' }
+    4: { label: 'Squad 4 (Admin)', color: 'green', badge: '4' }
   };
 
   // ── crypto helpers ──
@@ -281,14 +289,27 @@
     return pfx ? pfx + ' ' + entry.name : entry.name;
   }
   function flatNames() {
-    // every real person, rank-ordered, leadership prefixed (for attendance/dropdown)
-    return getSorted().filter(e => !e.open).map(displayName);
+    // every active person, rank-ordered, leadership prefixed (for attendance/dropdown)
+    return getSorted().filter(e => !e.open && e.status !== 'alumni').map(displayName);
   }
+  const ROLE_LABEL = { 'Captain': 'Captain', 'Lt.': 'Lieutenant', 'Sgt.': 'Sergeant', 'Cadet': 'Cadet', 'Probationary': 'Probationary' };
+  function defaultRoleLabel(rank) { return ROLE_LABEL[rank] || 'Cadet'; }
+  function getAlumni() { return get().filter(e => e && e.status === 'alumni'); }
+  function activeSorted() { return getSorted().filter(e => !e.open && e.status !== 'alumni'); }
   function bySquad() {
     const order = ['leadership', 1, 2, 3, 4];
     const groups = {};
     order.forEach(s => groups[s] = []);
-    get().forEach(e => { const s = e.squad in groups ? e.squad : 'leadership'; groups[s].push(e); });
+    get().forEach(e => {
+      if (e.status === 'alumni') return;            // alumni live in their own section
+      const s = e.squad in groups ? e.squad : 'leadership';
+      groups[s].push(e);
+    });
+    // keep each squad rank-ordered, stable
+    order.forEach(s => groups[s] = groups[s]
+      .map((e, i) => ({ e, i }))
+      .sort((a, b) => rankRank(a.e.rank) - rankRank(b.e.rank) || a.i - b.i)
+      .map(x => x.e));
     return order.map(s => ({ squad: s, meta: SQUAD_META[s], members: groups[s] })).filter(g => g.members.length);
   }
   function squadLead(members) {
@@ -296,7 +317,7 @@
     return sgt ? sgt.name : null;
   }
   function byRankSections() {
-    const list = getSorted().filter(e => !e.open);
+    const list = getSorted().filter(e => !e.open && e.status !== 'alumni');
     const sec = (title, pred) => ({ section: title, members: list.filter(pred).map(displayName) });
     const groups = [
       sec('Captain', e => e.rank === 'Captain'),
@@ -309,9 +330,9 @@
   }
 
   global.RPDRoster = {
-    connect, setup, linkRole, save, refresh, subscribe, get, getSorted,
+    connect, setup, linkRole, save, refresh, subscribe, get, getSorted, activeSorted,
     loadCatalog, saveCatalog, subscribeCatalog, getCatalog,
     initials, displayName, flatNames, bySquad, squadLead, byRankSections,
-    rankRank, SQUAD_META, SEED
+    getAlumni, defaultRoleLabel, rankRank, SQUAD_META, SEED
   };
 })(window);

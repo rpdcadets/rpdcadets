@@ -83,6 +83,17 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
 .squad-block{margin-bottom:22px}
 .squad-head{display:flex;align-items:center;gap:10px;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:600;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px}
 .squad-dot{width:12px;height:12px;border-radius:4px}
+.squad-dot.c-grey{background:var(--text-muted)}
+.row-wrap{margin-bottom:8px}
+.row-wrap .row{margin-bottom:0}
+.row-extra{display:grid;grid-template-columns:140px 1fr 1fr;gap:10px;padding:7px 12px 2px}
+.row-extra input,.row-extra select{width:100%;background:var(--input-bg);border:1px solid var(--input-border);border-radius:8px;padding:8px 11px;color:var(--white);font-family:'Barlow',sans-serif;font-size:13px;outline:none}
+.row-extra input::placeholder{color:rgba(255,255,255,0.25)}
+.row-extra input:focus,.row-extra select:focus{border-color:var(--input-focus)}
+.row-extra select{appearance:none;cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%238899b0' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 9px center;padding-right:26px}
+.row-extra select option{background:var(--navy)}
+.btn.ghost{margin-left:0;font-size:11px;padding:9px 12px}
+@media(max-width:640px){.row-extra{grid-template-columns:1fr}}
 .c-red{background:var(--red)}.c-yellow{background:#f1c40f}.c-blue{background:#3498db}.c-green{background:var(--green)}.c-gold{background:var(--gold)}
 .row{display:grid;grid-template-columns:1fr 130px 150px 40px;gap:10px;align-items:center;background:var(--card-bg);border:1px solid var(--card-border);border-radius:10px;padding:10px 12px;margin-bottom:8px}
 .row input,.row select{width:100%;background:var(--input-bg);border:1px solid var(--input-border);border-radius:8px;padding:10px 12px;color:var(--white);font-family:'Barlow',sans-serif;font-size:14px;outline:none}
@@ -108,6 +119,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
 .cat-onhand{display:flex;align-items:center;gap:8px;font-family:'Barlow Condensed',sans-serif;font-size:10px;letter-spacing:1.2px;text-transform:uppercase;color:var(--text-muted)}
 .cat-onhand input{width:60px;text-align:center;background:var(--input-bg);border:1px solid var(--input-border);border-radius:8px;padding:10px 6px;color:var(--white);font-family:'Barlow',sans-serif;font-size:14px;outline:none}
 .cat-onhand input:focus{border-color:var(--input-focus)}
+.cat-onhand input.auto{opacity:.65;cursor:not-allowed;background:rgba(255,255,255,0.02)}
 .cat-sizes{margin-top:14px;padding-top:12px;border-top:1px solid var(--card-border)}
 .cat-sizes-head{font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted);margin-bottom:10px;display:flex;justify-content:space-between;align-items:center}
 .cat-size-row{display:grid;grid-template-columns:1fr 96px 34px;gap:8px;margin-bottom:6px}
@@ -177,7 +189,8 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
       <button class="back-link" id="rosterBack"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Admin Console</button>
       <div class="bar">
         <div class="status-pill" id="pill"><span class="dot"></span><span id="pillText">Synced</span></div>
-        <span style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v2</span>
+        <span style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v6</span>
+        <button class="btn ghost" id="syncMembersBtn" title="One-time: pull titles and alumni from the Members page into the shared roster">Sync members data</button>
         <button class="btn add" id="addBtn">+ Add Person</button>
       </div>
       <div class="col-head"><span>Name</span><span>Rank</span><span class="h-squad">Squad</span><span></span></div>
@@ -206,9 +219,9 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
 
 <div class="toast" id="toast"></div>
 
-<script src="roster.js?v=4"></script>
+<script src="roster.js?v=5"></script>
 <script>
-console.log('[admin] Build v5 — structured pants picker');
+console.log('[admin] Build v6 — auto-total on hand + roster fields');
 const SESSION_KEY = 'rpd761_auth';   // shares the cadet session with members/trackers
 const RANKS = ['Captain','Lt.','Sgt.','Cadet','Probationary'];
 const SQUADS = [['leadership','Leadership'],[1,'Squad 1'],[2,'Squad 2'],[3,'Squad 3'],[4,'Squad 4 (Admin)']];
@@ -327,43 +340,80 @@ function showView(id){
 function openRoster(){ showView('rosterView'); renderRows(); }
 
 /* ── ROSTER EDITOR ── */
+const STATUSES = [['','Active'],['loa','LOA'],['suspended','Suspended'],['alumni','Alumni']];
+
 function renderRows(){
-  const groups = [['leadership','Leadership','c-gold'],[1,'Squad 1','c-red'],[2,'Squad 2','c-yellow'],[3,'Squad 3','c-blue'],[4,'Squad 4 — Admin','c-green']];
+  const groups = [['leadership','Leadership','c-gold'],[1,'Squad 1','c-red'],[2,'Squad 2','c-yellow'],[3,'Squad 3','c-blue'],[4,'Squad 4 (Admin)','c-green']];
   const host = document.getElementById('rows'); host.innerHTML='';
   groups.forEach(([sq,label,cls]) => {
-    const members = data.filter(p => String(p.squad)===String(sq));
+    const members = data.filter(p => String(p.squad)===String(sq) && p.status!=='alumni');
     if(!members.length) return;
     const block = document.createElement('div'); block.className='squad-block';
     block.innerHTML = `<div class="squad-head"><span class="squad-dot ${cls}"></span>${label}</div>`;
     members.forEach(p => block.appendChild(rowEl(p)));
     host.appendChild(block);
   });
+  const alumni = data.filter(p => p.status==='alumni');
+  if(alumni.length){
+    const block = document.createElement('div'); block.className='squad-block';
+    block.innerHTML = `<div class="squad-head"><span class="squad-dot c-grey"></span>Alumni</div>`;
+    alumni.forEach(p => block.appendChild(rowEl(p)));
+    host.appendChild(block);
+  }
 }
 function rowEl(p){
   const idx = data.indexOf(p);
-  const row = document.createElement('div'); row.className='row'+(p.open?' open':'');
+  const wrap = document.createElement('div'); wrap.className='row-wrap'+(p.open?' open':'');
   const rankOpts = RANKS.map(r=>`<option value="${r}" ${r===p.rank?'selected':''}>${r}</option>`).join('');
   const sqOpts = SQUADS.map(([v,l])=>`<option value="${v}" ${String(v)===String(p.squad)?'selected':''}>${l}</option>`).join('');
-  row.innerHTML =
-    `<input type="text" value="${(p.name||'').replace(/"/g,'&quot;')}" data-i="${idx}" data-f="name" placeholder="Full name">
-     <select data-i="${idx}" data-f="rank">${rankOpts}</select>
-     <select class="squad-sel" data-i="${idx}" data-f="squad">${sqOpts}</select>
-     <button class="del" data-i="${idx}" title="Remove">&times;</button>`;
-  row.querySelectorAll('input,select').forEach(el=>{
+  const statusOpts = STATUSES.map(([v,l])=>`<option value="${v}" ${v===(p.status||'')?'selected':''}>${l}</option>`).join('');
+  wrap.innerHTML =
+    `<div class="row${p.open?' open':''}">
+       <input type="text" value="${(p.name||'').replace(/"/g,'&quot;')}" data-i="${idx}" data-f="name" placeholder="Full name">
+       <select data-i="${idx}" data-f="rank">${rankOpts}</select>
+       <select class="squad-sel" data-i="${idx}" data-f="squad">${sqOpts}</select>
+       <button class="del" data-i="${idx}" title="Remove">&times;</button>
+     </div>
+     <div class="row-extra">
+       <select data-i="${idx}" data-f="status">${statusOpts}</select>
+       <input type="text" value="${(p.title||'').replace(/"/g,'&quot;')}" data-i="${idx}" data-f="title" placeholder="Custom title (optional)">
+       <input type="text" value="${(p.note||'').replace(/"/g,'&quot;')}" data-i="${idx}" data-f="note" placeholder="Note (optional)">
+     </div>`;
+  wrap.querySelectorAll('input,select').forEach(el=>{
     const ev = el.tagName==='SELECT' ? 'change' : 'input';
     el.addEventListener(ev, () => {
       const i = +el.dataset.i, f = el.dataset.f;
       let v = el.value;
       if(f==='squad' && v!=='leadership') v = +v;
-      data[i][f] = v;
-      if(f==='squad' || f==='rank'){ scheduleSave(); renderRows(); }
+      if(f==='status' && v==='') delete data[i].status;
+      else if(f==='title' && !v.trim()) delete data[i].title;
+      else if(f==='note' && !v.trim()) delete data[i].note;
+      else data[i][f] = v;
+      if(f==='squad' || f==='rank' || f==='status'){ scheduleSave(); renderRows(); }
       else scheduleSave();
     });
   });
-  row.querySelector('.del').addEventListener('click', () => {
-    if(confirm('Remove '+(p.name||'this person')+' from the roster?')){ data.splice(+row.querySelector('.del').dataset.i,1); scheduleSave(); renderRows(); }
+  wrap.querySelector('.del').addEventListener('click', () => {
+    if(confirm('Remove '+(p.name||'this person')+' from the roster?')){ const i=data.indexOf(p); if(i>-1) data.splice(i,1); scheduleSave(); renderRows(); }
   });
-  return row;
+  return wrap;
+}
+function syncMembersData(){
+  if(!confirm('One-time sync: pull the Members-page titles and alumni into the shared roster. Your current cadets are kept; alumni and titles are added. Continue?')) return;
+  const seed = RPDRoster.SEED;
+  seed.forEach(sp => {
+    const cur = data.find(p => (p.name||'').trim().toLowerCase() === sp.name.trim().toLowerCase());
+    if(!cur){ data.push(JSON.parse(JSON.stringify(sp))); }
+    else {
+      if(sp.title) cur.title = sp.title;
+      if(sp.note) cur.note = sp.note;
+      if(sp.status) cur.status = sp.status;
+    }
+  });
+  // Brandon Burell resigned in lieu of suspension — not an alumnus, remove if present
+  data = data.filter(p => (p.name||'').trim().toLowerCase() !== 'brandon burell');
+  scheduleSave(); renderRows();
+  showToast('Members data synced into roster');
 }
 function addPerson(){
   data.push({ name:'', rank:'Cadet', squad:1 });
@@ -414,12 +464,17 @@ function renderCatalog(){
 function catItemEl(item){
   const wrap = document.createElement('div'); wrap.className = 'cat-item';
   const typeOpts = ITYPES.map(([v,l]) => `<option value="${v}" ${v===item.type?'selected':''}>${l}</option>`).join('');
-  const onHandLabel = item.type === 'shared' ? 'On hand' : 'On hand';
+  const sizeSum = (item.sizes||[]).reduce((a,s)=>a+(+s.qty||0),0);
+  const autoTotal = isSized(item.type) && (item.sizes||[]).length > 0;
+  if(autoTotal) item.onHand = sizeSum;   // keep the model in sync for save
+  const onHandVal = autoTotal ? sizeSum : (item.onHand||0);
+  const onHandLabel = autoTotal ? 'On hand <span style="opacity:.6;text-transform:none;letter-spacing:0">(auto)</span>' : 'On hand';
+  const onHandAttrs = autoTotal ? 'readonly title="Adds up from the sizes below" class="auto"' : '';
   let html =
     `<div class="cat-main">
       <input type="text" data-f="name" value="${(item.name||'').replace(/"/g,'&quot;')}" placeholder="Item name (e.g. Functioning Tourniquet)">
       <select data-f="type">${typeOpts}</select>
-      <label class="cat-onhand">${onHandLabel}<input type="number" min="0" data-f="onHand" value="${item.onHand||0}"></label>
+      <label class="cat-onhand">${onHandLabel}<input type="number" min="0" data-f="onHand" value="${onHandVal}" ${onHandAttrs}></label>
       <button class="del" data-act="del-item" title="Remove item">&times;</button>
     </div>`;
   if(isSized(item.type)){
@@ -450,7 +505,7 @@ function catItemEl(item){
     }).join('');
     const sum = (item.sizes||[]).reduce((a,s)=>a+(+s.qty||0),0);
     html += `<div class="cat-sizes">
-      <div class="cat-sizes-head"><span>Stock by size <span class="cat-size-note">(optional — counts ${sum} of ${item.onHand||0} on hand)</span></span></div>
+      <div class="cat-sizes-head"><span>Stock by size <span class="cat-size-note">on hand totals ${sum} from the sizes below</span></span></div>
       ${rows}
       <button class="cat-add-size" data-act="add-size">+ Size</button>
     </div>`;
@@ -499,9 +554,15 @@ function catItemEl(item){
 }
 function itemAt(item){ const i = catalog.indexOf(item); return i>-1 ? catalog[i] : item; }
 function reSizeNote(wrap, item){
-  const note = wrap.querySelector('.cat-size-note'); if(!note) return;
+  const note = wrap.querySelector('.cat-size-note');
   const sum = (item.sizes||[]).reduce((a,s)=>a+(+s.qty||0),0);
-  note.textContent = `(optional — counts ${sum} of ${item.onHand||0} on hand)`;
+  if(note) note.textContent = `on hand totals ${sum} from the sizes below`;
+  // auto-total the On Hand field/model from the size rows
+  if(isSized(item.type) && (item.sizes||[]).length){
+    item.onHand = sum;
+    const oh = wrap.querySelector('input[data-f="onHand"]');
+    if(oh) oh.value = sum;
+  }
 }
 function addItem(){
   catalog.push({ id: genId(), name:'', type:'checkbox', onHand:0, sizes:[] });
@@ -526,6 +587,7 @@ document.getElementById('goBtn').addEventListener('click', go);
 document.getElementById('pc1').addEventListener('keydown', e=>{ document.getElementById('lockErr').classList.remove('show'); if(e.key==='Enter') go(); });
 document.getElementById('pc2').addEventListener('keydown', e=>{ if(e.key==='Enter') go(); });
 document.getElementById('addBtn').addEventListener('click', addPerson);
+document.getElementById('syncMembersBtn').addEventListener('click', syncMembersData);
 document.getElementById('rosterBack').addEventListener('click', ()=>showView('hubView'));
 document.getElementById('catAddBtn').addEventListener('click', addItem);
 document.getElementById('catBack').addEventListener('click', ()=>showView('hubView'));

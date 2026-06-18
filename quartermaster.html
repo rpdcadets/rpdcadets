@@ -11,7 +11,7 @@
 <!-- Firebase (compat SDK, loaded from Google's CDN) -->
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
-<script src="roster.js?v=4"></script>
+<script src="roster.js?v=5"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
 
 <style>
@@ -628,7 +628,7 @@ async function loadSharedRoster(pw){
 }
 function applySharedRoster(arr){
   const order = { 'Captain':0, 'Lt.':1, 'Sgt.':2, 'Cadet':3, 'Probationary':4 };
-  ROSTER = (arr || []).filter(p => !p.open)
+  ROSTER = (arr || []).filter(p => !p.open && p.status !== 'alumni')
     .map((p, i) => ({ p, i }))
     .sort((a, b) => ((order[a.p.rank] ?? 5) - (order[b.p.rank] ?? 5)) || a.i - b.i)
     .map(x => ({ name: x.p.name, rank: x.p.rank }));

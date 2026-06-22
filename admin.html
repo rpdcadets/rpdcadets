@@ -130,6 +130,45 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
 .rec-check.on{background:rgba(39,174,96,0.12);border-color:var(--green);color:#fff}
 .rec-check.on .box{background:var(--green);border-color:var(--green);color:#fff}
 @media(max-width:640px){.rec-grid,.rec-grid3{grid-template-columns:1fr}}
+
+/* RIDE-ALONG LOG */
+.ra-form{background:var(--card-bg);border:1px solid var(--card-border);border-radius:14px;padding:18px 18px 16px;margin-bottom:20px}
+.ra-form-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:12px}
+.ra-f{display:flex;flex-direction:column;gap:5px}
+.ra-f span{font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--text-muted)}
+.ra-f input,.ra-f select{background:var(--input-bg);border:1px solid var(--input-border);border-radius:8px;padding:9px 11px;color:var(--white);font-family:'Barlow',sans-serif;font-size:13.5px;outline:none}
+.ra-f input:focus,.ra-f select:focus{border-color:var(--input-focus)}
+.ra-f select{appearance:none;cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%238899b0' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:28px}
+.ra-f select option{background:var(--navy)}
+.ra-form-actions{display:flex;gap:10px;align-items:center;margin-top:4px}
+.ra-row{display:grid;grid-template-columns:1fr auto auto;gap:14px;align-items:center;background:var(--card-bg);border:1px solid var(--card-border);border-radius:11px;padding:12px 16px;margin-bottom:8px}
+.ra-cadet{font-size:15px;font-weight:600}
+.ra-officer{font-size:12.5px;color:var(--text-muted);margin-top:1px}
+.ra-notes{font-size:12px;color:var(--text-muted);margin-top:5px;opacity:.85}
+.ra-when{text-align:right;white-space:nowrap}
+.ra-date{font-size:13px;font-weight:600}
+.ra-time{font-size:12px;color:var(--text-muted);margin-top:2px}
+.ra-dur{color:var(--gold-light);font-weight:600;margin-left:4px}
+.ra-actions{display:flex;gap:6px}
+.ra-edit{background:none;border:1px solid var(--card-border);color:var(--text-muted);width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:13px}
+.ra-edit:hover{color:var(--white);border-color:rgba(255,255,255,0.25)}
+.ra-alert{border-radius:10px;padding:11px 14px;font-size:13px;line-height:1.55;margin-bottom:12px}
+.ra-alert.warn{background:rgba(212,169,82,0.1);border:1px solid rgba(212,169,82,0.3);color:var(--gold-light)}
+.ra-alert.bad{background:rgba(220,38,38,0.1);border:1px solid rgba(220,38,38,0.45);color:#f3b4b4}
+.ra-alert.bad b{color:#f87171}
+.ra-officers{margin-top:14px;padding-top:14px;border-top:1px solid var(--card-border)}
+.ra-officers-head{font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted);margin-bottom:10px}
+.ra-officers-add{display:flex;gap:10px;margin-bottom:12px}
+.ra-officers-add input{flex:1;background:var(--input-bg);border:1px solid var(--input-border);border-radius:8px;padding:9px 12px;color:var(--white);font-family:'Barlow',sans-serif;font-size:13.5px;outline:none}
+.ra-officers-add input:focus{border-color:var(--input-focus)}
+.ra-officer-chips{display:flex;flex-wrap:wrap;gap:8px}
+.ra-officer-empty{font-size:12.5px;color:var(--text-muted)}
+.ra-officer-chip{display:inline-flex;align-items:center;gap:7px;background:var(--input-bg);border:1px solid var(--input-border);border-radius:20px;padding:5px 6px 5px 13px;font-size:13px}
+.ra-officer-chip button{background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:16px;line-height:1;width:20px;height:20px;border-radius:50%}
+.ra-officer-chip button:hover{background:rgba(220,38,38,0.15);color:#f87171}
+.ra-row.over{border-color:rgba(220,38,38,0.4)}
+.ra-flag{display:inline-block;font-family:'Barlow Condensed',sans-serif;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:#f87171;border:1px solid rgba(220,38,38,0.45);border-radius:4px;padding:1px 6px;margin-left:8px;vertical-align:middle}
+@media(max-width:680px){.ra-form-grid{grid-template-columns:1fr 1fr}.ra-row{grid-template-columns:1fr auto}.ra-when{grid-column:1;text-align:left}.ra-actions{grid-row:1;grid-column:2}}
 .c-red{background:var(--red)}.c-yellow{background:#f1c40f}.c-blue{background:#3498db}.c-green{background:var(--green)}.c-gold{background:var(--gold)}
 .row{display:grid;grid-template-columns:1fr 130px 150px 40px;gap:10px;align-items:center;background:var(--card-bg);border:1px solid var(--card-border);border-radius:10px;padding:10px 12px;margin-bottom:8px}
 .row input,.row select{width:100%;background:var(--input-bg);border:1px solid var(--input-border);border-radius:8px;padding:10px 12px;color:var(--white);font-family:'Barlow',sans-serif;font-size:14px;outline:none}
@@ -195,7 +234,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
     <button class="lock-btn" id="goBtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg><span id="goLabel">Unlock</span></button>
     <div class="lock-error" id="lockErr">Incorrect passcode.</div>
     <div class="lock-home"><a href="index.html">← Return to Home</a></div>
-    <div style="margin-top:16px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v9 · cadet records</div>
+    <div style="margin-top:16px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v12 · ride-along log</div>
   </div>
 </div>
 
@@ -225,7 +264,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
       <button class="back-link" id="rosterBack"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Admin Console</button>
       <div class="bar">
         <div class="status-pill" id="pill"><span class="dot"></span><span id="pillText">Synced</span></div>
-        <span style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v9</span>
+        <span style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v12</span>
         <button class="btn ghost" id="syncMembersBtn" title="One-time: pull titles and alumni from the Members page into the shared roster">Sync members data</button>
         <button class="btn add" id="addBtn">+ Add Person</button>
       </div>
@@ -254,6 +293,50 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
     </div>
   </div>
 
+  <!-- RIDE-ALONG LOG (advisor passcode) -->
+  <div class="view" id="ridealongsView">
+    <div class="page-header">
+      <div class="section-label">Ride-Along Log</div>
+      <h1 class="section-title">Ride-Along Log</h1>
+      <p class="page-desc">Record which cadet rode with which officer, the date, and start and end times.</p>
+    </div>
+    <div class="container">
+      <button class="back-link" id="raBack"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Admin Console</button>
+      <div id="raApp">
+        <div class="ra-form">
+          <div class="ra-form-grid">
+            <label class="ra-f"><span>Cadet</span><select id="raCadet"></select></label>
+            <label class="ra-f"><span>Officer</span><select id="raOfficer"></select></label>
+            <label class="ra-f"><span>Date</span><input type="date" id="raDate"></label>
+            <label class="ra-f"><span>Start</span><input type="time" id="raStart"></label>
+            <label class="ra-f"><span>End</span><input type="time" id="raEnd"></label>
+          </div>
+          <label class="ra-f"><span>Notes (optional)</span><input type="text" id="raNotes" placeholder="Beat, district, anything worth noting"></label>
+          <div id="raRuleAlert" class="ra-alert" style="display:none"></div>
+          <div class="ra-form-actions">
+            <button class="btn add" id="raAdd">+ Log ride-along</button>
+            <button class="btn ghost" id="raCancel" style="display:none">Cancel edit</button>
+            <button class="btn ghost" id="raManageOfficers" style="margin-left:auto">Manage officers</button>
+          </div>
+          <div id="raOfficerPanel" class="ra-officers" style="display:none">
+            <div class="ra-officers-head">Approved officers</div>
+            <div class="ra-officers-add">
+              <input type="text" id="raNewOfficer" placeholder="Officer name / badge, e.g. Ofc. Reyes #482">
+              <button class="btn add" id="raAddOfficer">Add officer</button>
+            </div>
+            <div id="raOfficerList" class="ra-officer-chips"></div>
+          </div>
+        </div>
+        <div class="bar">
+          <div class="status-pill" id="raPill"><span class="dot"></span><span id="raPillText">Synced</span></div>
+          <input type="text" id="raSearch" placeholder="Search cadet or officer…" style="flex:1;min-width:150px;background:var(--input-bg);border:1px solid var(--input-border);border-radius:9px;padding:10px 14px;color:var(--white);font-family:'Barlow',sans-serif;font-size:14px;outline:none">
+          <button class="btn ghost" id="raCsv">Export CSV</button>
+        </div>
+        <div id="raList"></div>
+      </div>
+    </div>
+  </div>
+
   <!-- QUARTERMASTER TOOLBOX: ITEM CATALOG -->
   <div class="view" id="catalogView">
     <div class="page-header">
@@ -275,9 +358,9 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
 
 <div class="toast" id="toast"></div>
 
-<script src="roster.js?v=8"></script>
+<script src="roster.js?v=11"></script>
 <script>
-console.log('[admin] Build v9 — records via advisor passcode');
+console.log('[admin] Build v12 — officers shared key');
 const SESSION_KEY = 'rpd761_admin_auth';   // advisor-only; NOT shared with cadet pages
 const RANKS = ['Captain','Lt.','Sgt.','Cadet','Probationary'];
 const SQUADS = [['leadership','Leadership'],[1,'Squad 1'],[2,'Squad 2'],[3,'Squad 3'],[4,'Squad 4 (Admin)']];
@@ -306,6 +389,13 @@ const TOOLS = [
     desc: 'Confidential cadet details. Separate passphrase, separate encryption, isolated from the roster.',
     icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18"/><path d="M8 4v16"/></svg>',
     open: openRecords
+  },
+  {
+    id: 'ridealongs',
+    name: 'Ride-Along Log',
+    desc: 'Record which cadet rode with which officer, the date, and start and end times.',
+    icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 17h-2v-6l2-5h9l4 5h3a1 1 0 0 1 1 1v5h-2"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/></svg>',
+    open: openRideAlongs
   },
   { id: 'more', name: 'More tools', desc: 'Additional admin tools will live here.', soon: true,
     icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>' }
@@ -756,6 +846,169 @@ function recSchedule(){ setRecStatus('saving'); clearTimeout(recSaveTimer); recS
 async function recFlush(){ clearTimeout(recSaveTimer); recSaveTimer=null; try { await RPDRoster.records.save(recData); setRecStatus('synced'); } catch(e){ setRecStatus('saving'); showToast('Records save failed'); } }
 function setRecStatus(s){ const p=document.getElementById('recPill'); p.className='status-pill '+s; document.getElementById('recPillText').textContent = s==='saving'?'Saving':'Synced'; }
 
+/* ── RIDE-ALONG LOG (advisor passcode) ── */
+let raData = [];
+let raOfficers = [];
+let raSaveTimer = null;
+let raEditId = null;
+async function openRideAlongs(){
+  showView('ridealongsView');
+  const list = document.getElementById('raList');
+  list.innerHTML = '<p style="color:var(--text-muted);padding:24px;text-align:center">Unlocking…</p>';
+  const adv = sessionStorage.getItem(SESSION_KEY);
+  try {
+    let res = await RPDRoster.records.connect(adv);
+    if(res.needsSetup){ await RPDRoster.records.setup(adv); res = { ok:true }; }
+    if(!res.ok){ list.innerHTML='<p style="color:var(--red-glow);padding:24px;text-align:center">Could not unlock. Re-open the admin page and try again.</p>'; return; }
+    raData = (await RPDRoster.ridealongs.get()) || [];
+    raOfficers = (await RPDRoster.officers.get()) || [];
+    fillCadetDropdown(); fillOfficerDropdown(); renderOfficerChips(); raResetForm(); renderRaList();
+  } catch(e){ list.innerHTML='<p style="color:var(--red-glow);padding:24px;text-align:center">Could not reach the database.</p>'; }
+}
+function fillCadetDropdown(){
+  const sel = document.getElementById('raCadet');
+  const names = RPDRoster.activeSorted().map(p=>p.name);
+  sel.innerHTML = '<option value="">Select cadet…</option>' + names.map(n=>`<option value="${escapeHtmlA(n)}">${escapeHtmlA(n)}</option>`).join('');
+}
+function fillOfficerDropdown(selected){
+  const sel = document.getElementById('raOfficer');
+  const cur = selected!=null ? selected : sel.value;
+  let opts = raOfficers.slice().sort((a,b)=>a.localeCompare(b));
+  if(cur && !opts.includes(cur)) opts = [cur].concat(opts);   // keep an edited entry's officer even if delisted
+  const hint = raOfficers.length ? 'Select officer…' : 'Add officers below ↓';
+  sel.innerHTML = `<option value="">${hint}</option>` + opts.map(o=>`<option value="${escapeHtmlA(o)}" ${o===cur?'selected':''}>${escapeHtmlA(o)}</option>`).join('');
+}
+function renderOfficerChips(){
+  const host = document.getElementById('raOfficerList');
+  if(!raOfficers.length){ host.innerHTML = '<span class="ra-officer-empty">No officers added yet.</span>'; return; }
+  host.innerHTML='';
+  raOfficers.slice().sort((a,b)=>a.localeCompare(b)).forEach(o=>{
+    const chip=document.createElement('span'); chip.className='ra-officer-chip';
+    chip.innerHTML = `${escapeHtmlA(o)} <button title="Remove">&times;</button>`;
+    chip.querySelector('button').addEventListener('click', ()=>{
+      if(confirm(`Remove ${o} from the approved officers list?`)){
+        raOfficers = raOfficers.filter(x=>x!==o);
+        saveOfficers(); fillOfficerDropdown(); renderOfficerChips(); raCheckRule();
+      }
+    });
+    host.appendChild(chip);
+  });
+}
+function addOfficer(){
+  const inp=document.getElementById('raNewOfficer'); const name=inp.value.trim();
+  if(!name) return;
+  if(raOfficers.some(o=>o.toLowerCase()===name.toLowerCase())){ showToast('That officer is already on the list'); return; }
+  raOfficers.push(name); saveOfficers();
+  fillOfficerDropdown(name); renderOfficerChips();
+  inp.value=''; inp.focus();
+}
+async function saveOfficers(){ try{ await RPDRoster.officers.save(raOfficers); }catch(e){ showToast('Could not save officer list'); } }
+
+function raResetForm(){
+  raEditId = null;
+  document.getElementById('raCadet').value='';
+  fillOfficerDropdown('');
+  document.getElementById('raDate').value = new Date().toISOString().slice(0,10);
+  document.getElementById('raStart').value='';
+  document.getElementById('raEnd').value='';
+  document.getElementById('raNotes').value='';
+  document.getElementById('raAdd').textContent='+ Log ride-along';
+  document.getElementById('raCancel').style.display='none';
+  raCheckRule();
+}
+function raDuration(start,end){
+  if(!start||!end) return '';
+  const [sh,sm]=start.split(':').map(Number), [eh,em]=end.split(':').map(Number);
+  let mins=(eh*60+em)-(sh*60+sm); if(mins<0) mins+=24*60;   // handles overnight shifts
+  const h=Math.floor(mins/60), m=mins%60;
+  return (h?h+'h ':'')+(m+'m');
+}
+/* ── Two-in-30-days rule ── */
+function raDaysApart(d1,d2){ return Math.abs((new Date(d1+'T00:00:00') - new Date(d2+'T00:00:00')) / 86400000); }
+function raWindowCount(cadet,officer,date,excludeId){
+  if(!cadet||!officer||!date) return 0;
+  return raData.filter(r => r.id!==excludeId && r.cadet===cadet && r.officer===officer && raDaysApart(r.date,date) <= 30).length;
+}
+function raCheckRule(){
+  const cadet=document.getElementById('raCadet').value;
+  const officer=document.getElementById('raOfficer').value;
+  const date=document.getElementById('raDate').value;
+  const box=document.getElementById('raRuleAlert');
+  if(!cadet||!officer||!date){ box.style.display='none'; return; }
+  const n = raWindowCount(cadet,officer,date,raEditId);
+  const first = cadet.split(' ')[0] || cadet;
+  if(n >= 2){
+    box.className='ra-alert bad';
+    box.innerHTML = `<b>⚠ Rule limit reached.</b> ${escapeHtmlA(first)} has already ridden with ${escapeHtmlA(officer)} <b>${n} times</b> within 30 days of this date. The program allows no more than two ride-alongs with the same officer in a 30-day period — do not approve a third.`;
+    box.style.display='block';
+  } else if(n === 1){
+    box.className='ra-alert warn';
+    box.innerHTML = `Heads up: this would be the <b>2nd</b> ride-along between ${escapeHtmlA(first)} and ${escapeHtmlA(officer)} within 30 days, which is the maximum allowed.`;
+    box.style.display='block';
+  } else { box.style.display='none'; }
+}
+function raAddOrUpdate(){
+  const cadet=document.getElementById('raCadet').value;
+  const officer=document.getElementById('raOfficer').value;
+  const date=document.getElementById('raDate').value;
+  const start=document.getElementById('raStart').value;
+  const end=document.getElementById('raEnd').value;
+  const notes=document.getElementById('raNotes').value.trim();
+  if(!cadet||!officer||!date||!start||!end){ showToast('Cadet, officer, date, start and end are all required'); return; }
+  const n = raWindowCount(cadet,officer,date,raEditId);
+  if(n >= 2 && !confirm(`This would be ride-along #${n+1} between ${cadet} and ${officer} within 30 days, which exceeds the program limit of two. Log it anyway?`)) return;
+  if(raEditId){ const e=raData.find(x=>x.id===raEditId); if(e) Object.assign(e,{cadet,officer,date,start,end,notes}); }
+  else { raData.push({ id:'ra_'+Math.random().toString(36).slice(2,9), cadet, officer, date, start, end, notes }); }
+  raSave(); raResetForm(); renderRaList();
+}
+function raFmtDate(d){ if(!d) return ''; const dt=new Date(d+'T00:00:00'); return isNaN(dt)?d:dt.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); }
+function raFmtTime(t){ if(!t) return ''; const [h,m]=t.split(':').map(Number); const ap=h>=12?'PM':'AM'; const hh=((h+11)%12)+1; return `${hh}:${String(m).padStart(2,'0')} ${ap}`; }
+function renderRaList(){
+  const host=document.getElementById('raList'); host.innerHTML='';
+  const q=(document.getElementById('raSearch').value||'').toLowerCase().trim();
+  let rows=raData.slice().sort((a,b)=>(b.date||'').localeCompare(a.date||'')||(b.start||'').localeCompare(a.start||''));
+  if(q) rows=rows.filter(r=>(r.cadet||'').toLowerCase().includes(q)||(r.officer||'').toLowerCase().includes(q));
+  if(!rows.length){ host.innerHTML='<p style="color:var(--text-muted);padding:24px;text-align:center">'+(raData.length?'No match.':'No ride-alongs logged yet.')+'</p>'; return; }
+  rows.forEach(r=>{
+    const over = raWindowCount(r.cadet,r.officer,r.date,r.id) >= 2;   // this entry sits in a 3+ cluster
+    const el=document.createElement('div'); el.className='ra-row'+(over?' over':'');
+    el.innerHTML =
+      `<div class="ra-main"><div class="ra-cadet">${escapeHtmlA(r.cadet)}${over?' <span class="ra-flag">over limit</span>':''}</div><div class="ra-officer">with ${escapeHtmlA(r.officer)}</div>${r.notes?`<div class="ra-notes">${escapeHtmlA(r.notes)}</div>`:''}</div>
+       <div class="ra-when"><div class="ra-date">${raFmtDate(r.date)}</div><div class="ra-time">${raFmtTime(r.start)} – ${raFmtTime(r.end)} <span class="ra-dur">${raDuration(r.start,r.end)}</span></div></div>
+       <div class="ra-actions"><button class="ra-edit" title="Edit">✎</button><button class="del" title="Delete">&times;</button></div>`;
+    el.querySelector('.ra-edit').addEventListener('click', ()=>raLoadForEdit(r.id));
+    el.querySelector('.del').addEventListener('click', ()=>{ if(confirm('Delete this ride-along entry?')){ raData=raData.filter(x=>x.id!==r.id); raSave(); renderRaList(); } });
+    host.appendChild(el);
+  });
+}
+function raLoadForEdit(id){
+  const e=raData.find(x=>x.id===id); if(!e) return;
+  raEditId=id;
+  document.getElementById('raCadet').value=e.cadet;
+  fillOfficerDropdown(e.officer);
+  document.getElementById('raDate').value=e.date;
+  document.getElementById('raStart').value=e.start;
+  document.getElementById('raEnd').value=e.end;
+  document.getElementById('raNotes').value=e.notes||'';
+  document.getElementById('raAdd').textContent='Update entry';
+  document.getElementById('raCancel').style.display='inline-flex';
+  raCheckRule();
+  document.getElementById('raCadet').scrollIntoView({behavior:'smooth',block:'center'});
+}
+function raSave(){ setRaStatus('saving'); clearTimeout(raSaveTimer); raSaveTimer=setTimeout(raFlush,500); }
+async function raFlush(){ clearTimeout(raSaveTimer); raSaveTimer=null; try{ await RPDRoster.ridealongs.save(raData); setRaStatus('synced'); }catch(e){ setRaStatus('saving'); showToast('Save failed'); } }
+function setRaStatus(s){ const p=document.getElementById('raPill'); p.className='status-pill '+s; document.getElementById('raPillText').textContent=s==='saving'?'Saving':'Synced'; }
+function raExportCSV(){
+  const head=['Cadet','Officer','Date','Start','End','Duration','Notes'];
+  const rows=raData.slice().sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+  const csv=[head].concat(rows.map(r=>[r.cadet,r.officer,r.date,raFmtTime(r.start),raFmtTime(r.end),raDuration(r.start,r.end),r.notes||'']))
+    .map(r=>r.map(c=>`"${String(c==null?'':c).replace(/"/g,'""')}"`).join(',')).join('\r\n');
+  const blob=new Blob([csv],{type:'text/csv'}); const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download='ride-along-log-'+new Date().toISOString().slice(0,10)+'.csv';
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url),1500);
+  showToast('CSV downloaded');
+}
+
 document.getElementById('goBtn').addEventListener('click', go);
 document.getElementById('pc1').addEventListener('keydown', e=>{ document.getElementById('lockErr').classList.remove('show'); if(e.key==='Enter') go(); });
 document.getElementById('pc2').addEventListener('keydown', e=>{ if(e.key==='Enter') go(); });
@@ -766,7 +1019,18 @@ document.getElementById('catAddBtn').addEventListener('click', addItem);
 document.getElementById('catBack').addEventListener('click', ()=>showView('hubView'));
 document.getElementById('recBack').addEventListener('click', ()=>showView('hubView'));
 document.getElementById('recSearch').addEventListener('input', renderRecords);
-window.addEventListener('beforeunload', ()=>{ if(dirty && saveTimer) flushSave(); if(catDirty && catSaveTimer) catFlush(); if(recSaveTimer) recFlush(); });
+document.getElementById('raBack').addEventListener('click', ()=>showView('hubView'));
+document.getElementById('raAdd').addEventListener('click', raAddOrUpdate);
+document.getElementById('raCancel').addEventListener('click', raResetForm);
+document.getElementById('raSearch').addEventListener('input', renderRaList);
+document.getElementById('raCsv').addEventListener('click', raExportCSV);
+document.getElementById('raManageOfficers').addEventListener('click', ()=>{ const p=document.getElementById('raOfficerPanel'); p.style.display = p.style.display==='none'?'block':'none'; });
+document.getElementById('raAddOfficer').addEventListener('click', addOfficer);
+document.getElementById('raNewOfficer').addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); addOfficer(); } });
+document.getElementById('raCadet').addEventListener('change', raCheckRule);
+document.getElementById('raOfficer').addEventListener('change', raCheckRule);
+document.getElementById('raDate').addEventListener('input', raCheckRule);
+window.addEventListener('beforeunload', ()=>{ if(dirty && saveTimer) flushSave(); if(catDirty && catSaveTimer) catFlush(); if(recSaveTimer) recFlush(); if(raSaveTimer) raFlush(); });
 
 // auto-resume from an existing advisor session (admin-only)
 (function(){

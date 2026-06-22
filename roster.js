@@ -335,9 +335,15 @@
     loadCatalog, saveCatalog, subscribeCatalog, getCatalog,
     getAlumni, defaultRoleLabel, rankRank, SQUAD_META, SEED,
     initials, displayName, flatNames, bySquad, squadLead, byRankSections,
-    // ── Cadet Records: a fully separate, independently-keyed store ──
+    // ── Cadet Records & Ride-Along Log: separate key, advisor passcode ──
     records: {
       connect: recordsConnect, setup: recordsSetup, get: recordsGet, save: recordsSave, isUnlocked: () => !!recordsKey
+    },
+    ridealongs: {
+      get: ridealongsGet, save: ridealongsSave
+    },
+    officers: {
+      get: officersGet, save: officersSave
     }
   };
 
@@ -382,5 +388,32 @@
     if (!recordsKey) throw new Error('records locked');
     const data = await keyEncrypt(JSON.stringify(obj), recordsKey);
     await db.ref(ROOT + '/records').set(data);
+  }
+  // Ride-Along Log — same advisor key as records, separate node (roster/ridealongs)
+  async function ridealongsGet() {
+    if (!recordsKey) return null;
+    const blob = await once('ridealongs');
+    if (!blob) return [];
+    try { return JSON.parse(await keyDecrypt(blob, recordsKey)); } catch (e) { return []; }
+  }
+  async function ridealongsSave(arr) {
+    if (!recordsKey) throw new Error('records locked');
+    const data = await keyEncrypt(JSON.stringify(arr), recordsKey);
+    await db.ref(ROOT + '/ridealongs').set(data);
+  }
+  // Approved officers list — wrapped under the SHARED roster key (like the
+  // roster itself), so cadet-facing pages (e.g. the ride-along request form)
+  // can read it with the cadet passcode. Written from /admin (advisor has the
+  // roster key too). Node: roster/officers.
+  async function officersGet() {
+    if (!rosterKey) return null;
+    const blob = await once('officers');
+    if (!blob) return [];
+    try { return JSON.parse(await keyDecrypt(blob, rosterKey)); } catch (e) { return []; }
+  }
+  async function officersSave(arr) {
+    if (!rosterKey) throw new Error('roster locked');
+    const data = await keyEncrypt(JSON.stringify(arr), rosterKey);
+    await db.ref(ROOT + '/officers').set(data);
   }
 })(window);

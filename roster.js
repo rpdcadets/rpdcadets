@@ -344,6 +344,9 @@
     },
     officers: {
       get: officersGet, save: officersSave
+    },
+    attendance: {
+      get: attendanceGet, saveSession: attendanceSaveSession
     }
   };
 
@@ -415,5 +418,26 @@
     if (!rosterKey) throw new Error('roster locked');
     const data = await keyEncrypt(JSON.stringify(arr), rosterKey);
     await db.ref(ROOT + '/officers').set(data);
+  }
+  // Weekly Attendance log — encrypted under the SHARED roster key (same model
+  // as the officers list), so the Trackers page (cadet passcode) can WRITE a
+  // session and /admin (advisor passcode) can READ them all. Lives under the
+  // already-permitted roster node (roster/attendance), so no extra Firebase
+  // rule is required. Stored as an object keyed by meeting date:
+  //   { 'YYYY-MM-DD': { date, dateFmt, submittedBy, roster,
+  //                     present:[], excused:[], unexcused:[], ts }, ... }
+  async function attendanceGet() {
+    if (!rosterKey) return null;
+    const blob = await once('attendance');
+    if (!blob) return {};
+    try { return JSON.parse(await keyDecrypt(blob, rosterKey)); } catch (e) { return {}; }
+  }
+  async function attendanceSaveSession(session) {
+    if (!rosterKey) throw new Error('roster locked');
+    const all = (await attendanceGet()) || {};
+    all[session.date] = session;                 // re-submitting a date overwrites it
+    const data = await keyEncrypt(JSON.stringify(all), rosterKey);
+    await db.ref(ROOT + '/attendance').set(data);
+    return all;
   }
 })(window);

@@ -287,7 +287,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
           <div class="status-pill" id="recPill"><span class="dot"></span><span id="recPillText">Synced</span></div>
           <input type="text" id="recSearch" placeholder="Search cadet…" style="flex:1;min-width:160px;background:var(--input-bg);border:1px solid var(--input-border);border-radius:9px;padding:10px 14px;color:var(--white);font-family:'Barlow',sans-serif;font-size:14px;outline:none">
         </div>
-        <div class="rec-warning">Program info only: certifications, dates, shirt size, radio number, email, phone. Keep home addresses, dates of birth, emergency contacts, and medical details out of this tool.</div>
+        <div class="rec-warning">Program info only: certifications, dates, shirt size, radio number, cadet and parent/guardian contact. Keep home addresses, dates of birth, and medical details out of this tool.</div>
         <div id="recRows"></div>
       </div>
     </div>
@@ -792,7 +792,7 @@ function renderRecords(){
 }
 function recFilledCount(rec){
   let n = 0;
-  ['radio','shirt','joinDate','email','phone','notes'].forEach(k => { if((rec[k]||'').toString().trim()) n++; });
+  ['radio','shirt','joinDate','email','phone','parentName','parentPhone','parentEmail','notes'].forEach(k => { if((rec[k]||'').toString().trim()) n++; });
   REC_CHECKS.forEach(([k]) => { if(rec[k]) n++; });
   return n;
 }
@@ -817,6 +817,11 @@ function recCard(p){
        <div class="rec-grid">
          <label class="rec-field"><span>Email</span><input type="text" data-k="email" value="${escapeHtmlA(rec.email||'')}" placeholder="cadet@example.com"></label>
          <label class="rec-field"><span>Phone</span><input type="text" data-k="phone" value="${escapeHtmlA(rec.phone||'')}" placeholder="(972) 555-0100"></label>
+       </div>
+       <div class="rec-grid3">
+         <label class="rec-field"><span>Parent / guardian name</span><input type="text" data-k="parentName" value="${escapeHtmlA(rec.parentName||'')}" placeholder="Full name"></label>
+         <label class="rec-field"><span>Parent phone</span><input type="text" data-k="parentPhone" value="${escapeHtmlA(rec.parentPhone||'')}" placeholder="(972) 555-0100"></label>
+         <label class="rec-field"><span>Parent email</span><input type="text" data-k="parentEmail" value="${escapeHtmlA(rec.parentEmail||'')}" placeholder="parent@example.com"></label>
        </div>
        <label class="rec-field"><span>Notes</span><textarea data-k="notes" rows="2" placeholder="Program notes">${escapeHtmlA(rec.notes||'')}</textarea></label>
      </div>`;

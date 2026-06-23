@@ -3,11 +3,11 @@
 
 const SITE = {
   name: 'Richardson Police',
-  unit: 'Public Safety Cadets — Unit #761',
+  unit: 'Public Safety Cadets — Unit #1078',
   logo: 'logo.png',
   email: 'advisors@rpdcadets.com',
-  instagram: 'https://www.instagram.com/richardsonpdexplorers',
-  copyright: '© 2026 Richardson Police Department Public Safety Cadets Unit #761',
+  instagram: 'https://www.instagram.com/richardsonpdcadets',
+  copyright: '© 2026 Richardson Police Department Public Safety Cadets Unit #1078',
   affiliation: 'Affiliated with the Public Safety Cadets national organization'
 };
 
@@ -88,7 +88,7 @@ function buildFooter() {
                 <img src="${SITE.logo}" alt="RPD Cadets">
                 <div class="footer-brand-text">
                   <span class="footer-brand-name">RPD Public Safety Cadets</span>
-                  <span class="footer-brand-sub">${SITE.name} Department — Unit #761</span>
+                  <span class="footer-brand-sub">${SITE.name} Department — Unit #1078</span>
                 </div>
               </div>
               <div class="footer-links">

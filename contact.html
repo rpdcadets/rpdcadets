@@ -61,13 +61,37 @@ nav.scrolled { background: rgba(15,26,48,0.97); box-shadow: 0 4px 30px rgba(0,0,
 .info-card { background: rgba(255,255,255,0.025); border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; padding: 36px 40px; text-align: center; opacity: 0; animation: fadeUp 0.6s ease 0.5s forwards; }
 .info-card p { font-weight: 300; font-size: 15px; line-height: 1.8; color: rgba(255,255,255,0.5); max-width: 520px; margin: 0 auto; }
 .info-card p strong { color: var(--white); font-weight: 500; }
+
+/* ===== Request Info form ===== */
+.form-card { background: rgba(255,255,255,0.025); border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; padding: 40px 40px 36px; margin-bottom: 32px; opacity: 0; animation: fadeUp 0.6s ease 0.45s forwards; }
+.form-card h2 { font-family: 'Bebas Neue', sans-serif; font-size: 30px; letter-spacing: 1px; text-align: center; margin-bottom: 10px; }
+.form-intro { font-weight: 300; font-size: 14px; line-height: 1.65; color: rgba(255,255,255,0.5); text-align: center; max-width: 480px; margin: 0 auto 30px; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+.form-field { display: flex; flex-direction: column; gap: 7px; }
+.form-field.full { grid-column: 1 / -1; }
+.form-field label { font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-muted); }
+.form-field label .req { color: var(--red); }
+.form-field input, .form-field textarea { width: 100%; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 13px 15px; color: var(--white); font-family: 'Barlow', sans-serif; font-size: 15px; transition: all 0.25s ease; }
+.form-field input::placeholder, .form-field textarea::placeholder { color: rgba(255,255,255,0.25); }
+.form-field input:focus, .form-field textarea:focus { outline: none; border-color: rgba(192,57,43,0.5); background: rgba(255,255,255,0.06); box-shadow: 0 0 0 3px rgba(192,57,43,0.1); }
+.form-field textarea { resize: vertical; min-height: 120px; line-height: 1.6; }
+.form-submit { width: 100%; margin-top: 8px; background: var(--red); color: var(--white); border: none; border-radius: 10px; padding: 16px; font-family: 'Barlow Condensed', sans-serif; font-size: 16px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; transition: all 0.3s ease; }
+.form-submit:hover { background: var(--red-glow); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(192,57,43,0.3); }
+.form-submit:disabled { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none; }
+.form-error { color: var(--red-glow); font-size: 13.5px; text-align: center; margin-top: 14px; min-height: 18px; }
+.form-success { text-align: center; padding: 20px 12px; }
+.form-success .check { width: 66px; height: 66px; border-radius: 50%; background: rgba(56,176,108,0.12); border: 1px solid rgba(56,176,108,0.4); color: #4ade80; display: flex; align-items: center; justify-content: center; margin: 0 auto 24px; }
+.form-success h2 { font-family: 'Bebas Neue', sans-serif; font-size: 36px; letter-spacing: 1px; margin-bottom: 16px; }
+.form-success p { font-weight: 300; font-size: 15px; line-height: 1.85; color: rgba(255,255,255,0.55); max-width: 500px; margin: 0 auto 16px; }
+.form-success p:last-child { margin-bottom: 0; }
+
 footer { background: var(--navy); border-top: 1px solid rgba(255,255,255,0.05); padding: 40px 0; position: relative; z-index: 1; }
 .footer-bottom { max-width: 1200px; margin: 0 auto; padding: 0 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; }
 .footer-copy { font-size: 12px; color: rgba(255,255,255,0.3); }
 .footer-back a { font-family: 'Barlow Condensed', sans-serif; font-size: 13px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-muted); text-decoration: none; transition: color 0.3s ease; }
 .footer-back a:hover { color: var(--white); }
 @media (max-width: 900px) { .nav-links { display: none; } .hamburger { display: flex; } }
-@media (max-width: 600px) { .contact-grid { grid-template-columns: 1fr; } .info-card { padding: 28px 24px; } .footer-bottom { flex-direction: column; text-align: center; } }
+@media (max-width: 600px) { .contact-grid { grid-template-columns: 1fr; } .info-card { padding: 28px 24px; } .form-card { padding: 28px 22px; } .form-row { grid-template-columns: 1fr; } .footer-bottom { flex-direction: column; text-align: center; } }
 </style>
 </head>
 <body>
@@ -80,7 +104,7 @@ footer { background: var(--navy); border-top: 1px solid rgba(255,255,255,0.05); 
     <div class="contact-header">
       <div class="section-label">Get in Touch</div>
       <h1 class="contact-title">Contact Us</h1>
-      <p class="contact-desc">Have questions about the Public Safety Cadets program? Interested in joining? Reach out to our advisors — we'd love to hear from you.</p>
+      <p class="contact-desc">Have questions about the Public Safety Cadets program? Interested in joining? Reach out to our advisors, we'd love to hear from you.</p>
     </div>
     <div class="contact-grid">
       <a href="mailto:advisors@rpdcadets.com" class="contact-card">
@@ -100,6 +124,51 @@ footer { background: var(--navy); border-top: 1px solid rgba(255,255,255,0.05); 
         <span class="card-hint">Follow us for updates</span>
       </a>
     </div>
+
+    <!-- Request Info form -->
+    <div class="form-card" id="formCard">
+      <h2>Send a Message</h2>
+      <p class="form-intro">Interested in joining or have a question? Send us a quick message using the form below and one of our advisors will get back to you.</p>
+      <div class="form-row">
+        <div class="form-field">
+          <label for="firstName">First Name <span class="req">*</span></label>
+          <input type="text" id="firstName" placeholder="First name" autocomplete="given-name">
+        </div>
+        <div class="form-field">
+          <label for="lastName">Last Name <span class="req">*</span></label>
+          <input type="text" id="lastName" placeholder="Last name" autocomplete="family-name">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-field">
+          <label for="email">Email Address <span class="req">*</span></label>
+          <input type="email" id="email" placeholder="you@example.com" autocomplete="email">
+        </div>
+        <div class="form-field">
+          <label for="phone">Phone Number</label>
+          <input type="tel" id="phone" placeholder="(000) 000-0000" autocomplete="tel">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-field full">
+          <label for="message">Message</label>
+          <textarea id="message" placeholder="Let us know what you'd like to ask about."></textarea>
+        </div>
+      </div>
+      <button class="form-submit" id="submitBtn" type="button">Send Message</button>
+      <div class="form-error" id="formError"></div>
+    </div>
+
+    <!-- Success screen (revealed after submit) -->
+    <div class="form-card form-success" id="successCard" style="display:none;">
+      <div class="check">
+        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <h2>Message Sent</h2>
+      <p>Thanks for reaching out. We've received your message and one of our advisors will get back to you soon.</p>
+      <p>Once we reply, we'll typically invite you to attend a few meetings first, so you can get a feel for the program and make sure it's the right fit for you before you apply.</p>
+    </div>
+
     <div class="info-card">
       <p>The Richardson Police Public Safety Cadets meet regularly at the <strong>Richardson Police Department</strong>.</p>
       <p style="margin-top:14px">For meeting schedules, event details, or application information, email our advisors and we'll get back to you shortly.</p>
@@ -108,6 +177,66 @@ footer { background: var(--navy); border-top: 1px solid rgba(255,255,255,0.05); 
 </div>
 
 <div id="site-footer" data-style="simple"></div>
+
+<script>
+// ====== CONFIG ======
+// Create a new form in your Formspark dashboard for contact messages, then paste
+// its endpoint below (looks like https://submit-form.com/XXXXXXXXX). Naming the
+// email field "email" lets you reply to the sender straight from your inbox.
+const FORMSPARK_ACTION = "https://submit-form.com/iFhWNExs4";
+
+function cval(id){ const el=document.getElementById(id); return el ? (el.value||'').trim() : ''; }
+
+async function submitContact(){
+  const first=cval('firstName'), last=cval('lastName'), email=cval('email'), phone=cval('phone'), message=cval('message');
+  const err=document.getElementById('formError');
+  err.textContent='';
+
+  if(!first || !last){ err.textContent='Please enter your first and last name.'; return; }
+  if(!email){ err.textContent='Please enter your email address.'; return; }
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ err.textContent='Please enter a valid email address.'; return; }
+
+  const btn=document.getElementById('submitBtn');
+  btn.disabled=true; btn.textContent='Sending\u2026';
+
+  const payload={
+    _subject: `New Contact Message \u2014 ${first} ${last}`,
+    "First Name": first,
+    "Last Name": last,
+    email: email,
+    "Phone": phone || "(not provided)",
+    "Message": message || "(no message)"
+  };
+
+  try{
+    const res=await fetch(FORMSPARK_ACTION,{
+      method:'POST',
+      headers:{ 'Content-Type':'application/json', 'Accept':'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if(res.ok){ showContactSuccess(); return; }
+    err.textContent='Something went wrong (error '+res.status+'). Please try again, or email us at advisors@rpdcadets.com.';
+  }catch(e){
+    err.textContent='Network error. Please try again, or email us at advisors@rpdcadets.com.';
+  }
+  btn.disabled=false; btn.textContent='Send Message';
+}
+
+function showContactSuccess(){
+  document.getElementById('formCard').style.display='none';
+  const g=document.querySelector('.contact-grid'); if(g) g.style.display='none';
+  const i=document.querySelector('.info-card'); if(i) i.style.display='none';
+  const s=document.getElementById('successCard');
+  s.style.display='block';
+  s.scrollIntoView({ behavior:'smooth', block:'center' });
+}
+
+document.getElementById('submitBtn').addEventListener('click', submitContact);
+['firstName','lastName','email','phone'].forEach(id=>{
+  const el=document.getElementById(id);
+  if(el) el.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); submitContact(); } });
+});
+</script>
 
 <script src="shared.js"></script>
 </body>

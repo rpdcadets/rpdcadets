@@ -122,6 +122,8 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
 .rec-field select{appearance:none;cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%238899b0' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:28px}
 .rec-field select option{background:var(--navy)}
 .rec-field input[type=date]{color-scheme:dark}
+.rec-age{background:rgba(255,255,255,0.03);border:1px solid var(--input-border);border-radius:8px;padding:9px 11px;color:var(--gold-light);font-family:'Barlow',sans-serif;font-size:13.5px;font-weight:600}
+.rec-age.empty{color:var(--text-muted);font-weight:400}
 .rec-compute{margin:14px 0 4px;font-size:12.5px;color:var(--text-muted)}
 .rec-compute b{color:var(--gold-light);font-weight:600}
 .rec-checks{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 2px}
@@ -392,7 +394,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
           <div class="status-pill" id="recPill"><span class="dot"></span><span id="recPillText">Synced</span></div>
           <input type="text" id="recSearch" placeholder="Search cadet…" style="flex:1;min-width:160px;background:var(--input-bg);border:1px solid var(--input-border);border-radius:9px;padding:10px 14px;color:var(--white);font-family:'Barlow',sans-serif;font-size:14px;outline:none">
         </div>
-        <div class="rec-warning">Program info only: certifications, dates, shirt size, radio number, cadet and parent/guardian contact. Keep home addresses, dates of birth, and medical details out of this tool.</div>
+        <div class="rec-warning">Program info: school, date of birth, certifications, dates, shirt size, radio number, cadet and parent/guardian contact. Records sit behind the advisor passcode, not per-cadet sign-in, so keep home addresses, Social Security numbers, and medical details out of this tool.</div>
         <div id="recRows"></div>
       </div>
     </div>
@@ -1697,6 +1699,16 @@ function timeIn(dateStr){
   if(y < 0) return '';
   return `${y} year${y!==1?'s':''}, ${m} month${m!==1?'s':''}, ${d} day${d!==1?'s':''}`;
 }
+function ageFrom(dateStr){
+  if(!dateStr) return null;
+  const b = new Date(dateStr + 'T00:00:00'); if(isNaN(b)) return null;
+  const now = new Date();
+  let age = now.getFullYear()-b.getFullYear();
+  const m = now.getMonth()-b.getMonth();
+  if(m < 0 || (m === 0 && now.getDate() < b.getDate())) age--;
+  if(age < 0 || age > 120) return null;
+  return age;
+}
 
 async function openRecords(){
   showView('recordsView');
@@ -1720,7 +1732,7 @@ function renderRecords(){
 }
 function recFilledCount(rec){
   let n = 0;
-  ['radio','shirt','joinDate','email','phone','parentName','parentPhone','parentEmail','notes'].forEach(k => { if((rec[k]||'').toString().trim()) n++; });
+  ['radio','shirt','joinDate','school','dob','email','phone','parentName','parentPhone','parentEmail','notes'].forEach(k => { if((rec[k]||'').toString().trim()) n++; });
   REC_CHECKS.forEach(([k]) => { if(rec[k]) n++; });
   return n;
 }
@@ -1740,6 +1752,11 @@ function recCard(p){
          <label class="rec-field"><span>Shirt size</span><select data-k="shirt">${shirtOpts}</select></label>
          <label class="rec-field"><span>Date of join</span><input type="date" data-k="joinDate" value="${escapeHtmlA(rec.joinDate||'')}"></label>
        </div>
+       <div class="rec-grid3">
+         <label class="rec-field"><span>School</span><input type="text" data-k="school" value="${escapeHtmlA(rec.school||'')}" placeholder="e.g. Berkner HS"></label>
+         <label class="rec-field"><span>Date of birth</span><input type="date" data-k="dob" value="${escapeHtmlA(rec.dob||'')}"></label>
+         <label class="rec-field"><span>Age</span><div class="rec-age${ageFrom(rec.dob)===null?' empty':''}" data-role="age">${ageFrom(rec.dob)===null?'—':ageFrom(rec.dob)+' yrs'}</div></label>
+       </div>
        <div class="rec-compute" data-role="compute">${recComputeText(rec)}</div>
        <div class="rec-checks">${checks}</div>
        <div class="rec-grid">
@@ -1758,6 +1775,7 @@ function recCard(p){
   wrap.querySelectorAll('input,textarea,select').forEach(el => el.addEventListener('input', () => {
     rec[el.dataset.k] = el.value; 
     if(el.dataset.k==='joinDate'){ const c=wrap.querySelector('[data-role="compute"]'); if(c) c.innerHTML = recComputeText(rec); }
+    if(el.dataset.k==='dob'){ const a=wrap.querySelector('[data-role="age"]'); if(a){ const yr=ageFrom(rec.dob); a.textContent = yr===null?'—':yr+' yrs'; a.classList.toggle('empty', yr===null); } }
     wrap.querySelector('.rec-filled').textContent = recFilledCount(rec)?recFilledCount(rec)+' filled':'empty';
     recSchedule();
   }));

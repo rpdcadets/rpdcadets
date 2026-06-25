@@ -86,10 +86,13 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
 .squad-dot.c-grey{background:var(--text-muted)}
 .row-wrap{margin-bottom:8px}
 .row-wrap .row{margin-bottom:0}
-.row-extra{display:grid;grid-template-columns:140px 1fr 1fr;gap:10px;padding:7px 12px 2px}
+.row-extra{display:grid;grid-template-columns:120px 140px 1fr 1fr;gap:10px;padding:7px 12px 2px;align-items:end}
 .row-extra input,.row-extra select{width:100%;background:var(--input-bg);border:1px solid var(--input-border);border-radius:8px;padding:8px 11px;color:var(--white);font-family:'Barlow',sans-serif;font-size:13px;outline:none}
 .row-extra input::placeholder{color:rgba(255,255,255,0.25)}
 .row-extra input:focus,.row-extra select:focus{border-color:var(--input-focus)}
+.row-extra input[type=date]{color-scheme:dark}
+.row-date{display:flex;flex-direction:column;gap:3px}
+.row-date span{font-family:'Barlow Condensed',sans-serif;font-size:9.5px;letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);padding-left:2px}
 .row-extra select{appearance:none;cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%238899b0' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 9px center;padding-right:26px}
 .row-extra select option{background:var(--navy)}
 .btn.ghost{margin-left:0;font-size:11px;padding:9px 12px}
@@ -124,6 +127,8 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
 .rec-field input[type=date]{color-scheme:dark}
 .rec-age{background:rgba(255,255,255,0.03);border:1px solid var(--input-border);border-radius:8px;padding:9px 11px;color:var(--gold-light);font-family:'Barlow',sans-serif;font-size:13.5px;font-weight:600}
 .rec-age.empty{color:var(--text-muted);font-weight:400}
+.rec-synced{font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--gold);margin-top:14px;display:flex;align-items:center;gap:7px}
+.rec-synced::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--gold);box-shadow:0 0 7px rgba(212,169,82,0.7)}
 .rec-compute{margin:14px 0 4px;font-size:12.5px;color:var(--text-muted)}
 .rec-compute b{color:var(--gold-light);font-weight:600}
 .rec-checks{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 2px}
@@ -393,6 +398,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
         <div class="bar">
           <div class="status-pill" id="recPill"><span class="dot"></span><span id="recPillText">Synced</span></div>
           <input type="text" id="recSearch" placeholder="Search cadet…" style="flex:1;min-width:160px;background:var(--input-bg);border:1px solid var(--input-border);border-radius:9px;padding:10px 14px;color:var(--white);font-family:'Barlow',sans-serif;font-size:14px;outline:none">
+          <button class="btn ghost" id="recImportBtn" title="One-time: prefill shirt size, qualifications, off-probation, and join date from the roster sheet">Import starter data</button>
         </div>
         <div class="rec-warning">Program info: school, date of birth, certifications, dates, shirt size, radio number, cadet and parent/guardian contact. Records sit behind the advisor passcode, not per-cadet sign-in, so keep home addresses, Social Security numbers, and medical details out of this tool.</div>
         <div id="recRows"></div>
@@ -721,6 +727,7 @@ function rowEl(p){
      </div>
      <div class="row-extra">
        <select data-i="${idx}" data-f="status">${statusOpts}</select>
+       <label class="row-date"><span>Joined</span><input type="date" value="${(p.joinDate||'')}" data-i="${idx}" data-f="joinDate"></label>
        <input type="text" value="${(p.title||'').replace(/"/g,'&quot;')}" data-i="${idx}" data-f="title" placeholder="Custom title (optional)">
        <input type="text" value="${(p.note||'').replace(/"/g,'&quot;')}" data-i="${idx}" data-f="note" placeholder="Note (optional)">
      </div>`;
@@ -733,6 +740,7 @@ function rowEl(p){
       if(f==='status' && v==='') delete data[i].status;
       else if(f==='title' && !v.trim()) delete data[i].title;
       else if(f==='note' && !v.trim()) delete data[i].note;
+      else if(f==='joinDate' && !v) delete data[i].joinDate;
       else data[i][f] = v;
       if(f==='squad' || f==='rank' || f==='status'){ scheduleSave(); renderRows(); }
       else scheduleSave();
@@ -767,17 +775,18 @@ function addPerson(){
   if(inputs.length) inputs[inputs.length-1].focus();
   scheduleSave();
 }
+function recMirror(state){ if(document.getElementById('recordsView').classList.contains('on')) setRecStatus(state); }
 function scheduleSave(){
   dirty = true;
-  setStatus('saving');
+  setStatus('saving'); recMirror('saving');
   clearTimeout(saveTimer);
   saveTimer = setTimeout(flushSave, 600);
 }
 async function flushSave(){
   clearTimeout(saveTimer); saveTimer = null;
   const payload = data.filter(p => p.open || (p.name||'').trim());
-  try { await RPDRoster.save(payload); dirty = false; setStatus('synced'); }
-  catch(e){ setStatus('saving'); showToast('Save failed — check connection'); }
+  try { await RPDRoster.save(payload); dirty = false; setStatus('synced'); recMirror('synced'); }
+  catch(e){ setStatus('saving'); recMirror('saving'); showToast('Save failed — check connection'); }
 }
 function setStatus(s){ const p=document.getElementById('pill'); p.className='status-pill '+s; document.getElementById('pillText').textContent = s==='saving'?'Saving':'Synced'; }
 function showToast(m){ const t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2200); }
@@ -1718,7 +1727,7 @@ async function openRecords(){
   try {
     let res = await RPDRoster.records.connect(adv);
     if(res.needsSetup){ await RPDRoster.records.setup(adv); res = { ok:true }; }
-    if(res.ok){ recData = (await RPDRoster.records.get()) || {}; renderRecords(); }
+    if(res.ok){ recData = (await RPDRoster.records.get()) || {}; migrateJoinDates(); renderRecords(); }
     else { host.innerHTML = '<p style="color:var(--red-glow);padding:24px;text-align:center">Could not unlock records. Re-open the admin page and try again.</p>'; }
   } catch(e){ host.innerHTML = '<p style="color:var(--red-glow);padding:24px;text-align:center">Could not reach the database. Check your connection.</p>'; }
 }
@@ -1732,7 +1741,7 @@ function renderRecords(){
 }
 function recFilledCount(rec){
   let n = 0;
-  ['radio','shirt','joinDate','school','dob','email','phone','parentName','parentPhone','parentEmail','notes'].forEach(k => { if((rec[k]||'').toString().trim()) n++; });
+  ['radio','shirt','school','dob','email','phone','parentName','parentPhone','parentEmail','notes'].forEach(k => { if((rec[k]||'').toString().trim()) n++; });
   REC_CHECKS.forEach(([k]) => { if(rec[k]) n++; });
   return n;
 }
@@ -1740,6 +1749,8 @@ function recCard(p){
   const wrap = document.createElement('div'); wrap.className='rec-card';
   const rec = recData[p.name] || (recData[p.name] = {});
   const shirtOpts = REC_SHIRT.map(s => `<option value="${s}" ${s===(rec.shirt||'')?'selected':''}>${s||'Shirt size…'}</option>`).join('');
+  const sqOpts = SQUADS.map(([v,l])=>`<option value="${v}" ${String(v)===String(p.squad)?'selected':''}>${l}</option>`).join('');
+  const rankOpts = RANKS.map(r=>`<option value="${r}" ${r===p.rank?'selected':''}>${r}</option>`).join('');
   const checks = REC_CHECKS.map(([k,l]) => `<button type="button" class="rec-check ${rec[k]?'on':''}" data-k="${k}"><span class="box">${rec[k]?'✓':''}</span>${l}</button>`).join('');
   wrap.innerHTML =
     `<div class="rec-head" data-act="toggle">
@@ -1747,17 +1758,22 @@ function recCard(p){
        <div class="rec-meta"><span class="rec-filled">${recFilledCount(rec)?recFilledCount(rec)+' filled':'empty'}</span> <svg class="rec-chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div>
      </div>
      <div class="rec-body" style="display:none">
+       <div class="rec-synced">Squad, rank, and join date stay in step with the Roster Editor.</div>
+       <div class="rec-grid3">
+         <label class="rec-field"><span>Squad</span><select data-r="squad">${sqOpts}</select></label>
+         <label class="rec-field"><span>Rank</span><select data-r="rank">${rankOpts}</select></label>
+         <label class="rec-field"><span>Date of join</span><input type="date" data-r="joinDate" value="${escapeHtmlA(p.joinDate||'')}"></label>
+       </div>
+       <div class="rec-compute" data-role="compute">${recComputeText(p)}</div>
        <div class="rec-grid3">
          <label class="rec-field"><span>Radio #</span><input type="text" data-k="radio" value="${escapeHtmlA(rec.radio||'')}" placeholder="e.g. 311"></label>
          <label class="rec-field"><span>Shirt size</span><select data-k="shirt">${shirtOpts}</select></label>
-         <label class="rec-field"><span>Date of join</span><input type="date" data-k="joinDate" value="${escapeHtmlA(rec.joinDate||'')}"></label>
-       </div>
-       <div class="rec-grid3">
          <label class="rec-field"><span>School</span><input type="text" data-k="school" value="${escapeHtmlA(rec.school||'')}" placeholder="e.g. Berkner HS"></label>
+       </div>
+       <div class="rec-grid">
          <label class="rec-field"><span>Date of birth</span><input type="date" data-k="dob" value="${escapeHtmlA(rec.dob||'')}"></label>
          <label class="rec-field"><span>Age</span><div class="rec-age${ageFrom(rec.dob)===null?' empty':''}" data-role="age">${ageFrom(rec.dob)===null?'—':ageFrom(rec.dob)+' yrs'}</div></label>
        </div>
-       <div class="rec-compute" data-role="compute">${recComputeText(rec)}</div>
        <div class="rec-checks">${checks}</div>
        <div class="rec-grid">
          <label class="rec-field"><span>Email</span><input type="text" data-k="email" value="${escapeHtmlA(rec.email||'')}" placeholder="cadet@example.com"></label>
@@ -1772,12 +1788,23 @@ function recCard(p){
      </div>`;
   const body = wrap.querySelector('.rec-body');
   wrap.querySelector('.rec-head').addEventListener('click', ()=>{ const open=body.style.display!=='none'; body.style.display=open?'none':'block'; wrap.classList.toggle('open', !open); });
-  wrap.querySelectorAll('input,textarea,select').forEach(el => el.addEventListener('input', () => {
-    rec[el.dataset.k] = el.value; 
-    if(el.dataset.k==='joinDate'){ const c=wrap.querySelector('[data-role="compute"]'); if(c) c.innerHTML = recComputeText(rec); }
+  // records-owned fields (private node)
+  wrap.querySelectorAll('input[data-k],textarea[data-k],select[data-k]').forEach(el => el.addEventListener('input', () => {
+    rec[el.dataset.k] = el.value;
     if(el.dataset.k==='dob'){ const a=wrap.querySelector('[data-role="age"]'); if(a){ const yr=ageFrom(rec.dob); a.textContent = yr===null?'—':yr+' yrs'; a.classList.toggle('empty', yr===null); } }
     wrap.querySelector('.rec-filled').textContent = recFilledCount(rec)?recFilledCount(rec)+' filled':'empty';
     recSchedule();
+  }));
+  // roster-owned fields (squad, rank, join date) — write straight to the shared roster
+  wrap.querySelectorAll('[data-r]').forEach(el => el.addEventListener('change', () => {
+    const entry = rosterEntryFor(p.name); if(!entry) return;
+    const f = el.dataset.r; let v = el.value;
+    if(f==='squad'){ entry.squad = (v==='leadership') ? 'leadership' : +v; }
+    else if(f==='joinDate'){ if(v) entry.joinDate = v; else delete entry.joinDate; }
+    else entry[f] = v;
+    if(f==='joinDate'){ const c=wrap.querySelector('[data-role="compute"]'); if(c) c.innerHTML = recComputeText(entry); }
+    if(f==='rank'){ const rk=wrap.querySelector('.rec-rank'); if(rk) rk.textContent = v; }
+    scheduleSave();
   }));
   wrap.querySelectorAll('.rec-check').forEach(btn => btn.addEventListener('click', () => {
     const k = btn.dataset.k; rec[k] = !rec[k];
@@ -1787,15 +1814,86 @@ function recCard(p){
   }));
   return wrap;
 }
-function recComputeText(rec){
-  if(!rec.joinDate) return 'Enter a join date to auto-calculate probation end and time in.';
-  const ends = addMonths(rec.joinDate, 6);
-  const tin = timeIn(rec.joinDate);
+function recComputeText(entry){
+  if(!entry || !entry.joinDate) return 'Enter a join date to auto-calculate probation end and time in.';
+  const ends = addMonths(entry.joinDate, 6);
+  const tin = timeIn(entry.joinDate);
   return `Probation ends <b>${ends}</b> &nbsp;·&nbsp; Time in: <b>${tin}</b>`;
+}
+function rosterEntryFor(name){ return (data||[]).find(e => e && e.name === name); }
+// One-time lift: any join date that was entered before squad/rank/join-date
+// became roster-owned still lives in the records node. Copy it up to the
+// matching roster entry so both tools read the same value. Self-healing:
+// once an entry has a join date, it is never re-copied.
+function migrateJoinDates(){
+  let moved = 0;
+  (data||[]).forEach(entry => {
+    const legacy = recData[entry.name] && recData[entry.name].joinDate;
+    if(legacy && !entry.joinDate){ entry.joinDate = legacy; moved++; }
+  });
+  if(moved) scheduleSave();
 }
 function recSchedule(){ setRecStatus('saving'); clearTimeout(recSaveTimer); recSaveTimer=setTimeout(recFlush,700); }
 async function recFlush(){ clearTimeout(recSaveTimer); recSaveTimer=null; try { await RPDRoster.records.save(recData); setRecStatus('synced'); } catch(e){ setRecStatus('saving'); showToast('Records save failed'); } }
 function setRecStatus(s){ const p=document.getElementById('recPill'); p.className='status-pill '+s; document.getElementById('recPillText').textContent = s==='saving'?'Saving':'Synced'; }
+
+/* ── ONE-TIME STARTER IMPORT (from the Google Sheet roster) ──
+   joinDate is roster-owned; shirt + the five qualification checks are
+   records-owned. Cadets are matched by exact name; names are never added
+   or changed. Fields are filled only when blank, so this is safe to re-run
+   and never clobbers anything entered by hand. Radio # and UAS were blank
+   in the sheet for everyone, so they are left untouched. ── */
+const STARTER = [
+  { name:'Daniel Hemmi',        joinDate:'2021-08-05', shirt:'M',  rideAlong:true,  competition:false, waivers:true,  uas:false, offProbation:true  },
+  { name:'Armando Rizvanovic',  joinDate:'2023-02-24', shirt:'L',  rideAlong:true,  competition:true,  waivers:true,  uas:false, offProbation:true  },
+  { name:'Hunter Huffman',      joinDate:'2023-08-18', shirt:'L',  rideAlong:true,  competition:false, waivers:true,  uas:false, offProbation:true  },
+  { name:'Mariah Diaz',         joinDate:'2023-08-18', shirt:'S',  rideAlong:true,  competition:false, waivers:true,  uas:false, offProbation:true  },
+  { name:'Khaled Khmaish',      joinDate:'2024-07-22', shirt:'M',  rideAlong:true,  competition:false, waivers:false, uas:false, offProbation:true  },
+  { name:'Atzyri Orozco',       joinDate:'2024-08-22', shirt:'M',  rideAlong:true,  competition:false, waivers:false, uas:false, offProbation:true  },
+  { name:'Rhiannon Harris',     joinDate:'2024-08-22', shirt:'S',  rideAlong:true,  competition:true,  waivers:true,  uas:false, offProbation:true  },
+  { name:'Taha Safi',           joinDate:'2025-01-16', shirt:'M',  rideAlong:true,  competition:false, waivers:true,  uas:false, offProbation:true  },
+  { name:'Sebastion Ross',      joinDate:'2025-02-06', shirt:'XS', rideAlong:true,  competition:true,  waivers:true,  uas:false, offProbation:true  },
+  { name:'Dimas Fredrik',       joinDate:'2025-02-27', shirt:'M',  rideAlong:true,  competition:true,  waivers:true,  uas:false, offProbation:true  },
+  { name:'Jonathan Nidam',      joinDate:'2025-03-20', shirt:'XL', rideAlong:true,  competition:true,  waivers:false, uas:false, offProbation:true  },
+  { name:'Scout StJohn',        joinDate:'2025-04-03', shirt:'M',  rideAlong:true,  competition:false, waivers:true,  uas:false, offProbation:true  },
+  { name:'Eric Velazquez',      joinDate:'2025-07-10', shirt:'S',  rideAlong:false, competition:false, waivers:false, uas:false, offProbation:true  },
+  { name:'Luke Veldhuizen',     joinDate:'2025-07-10', shirt:'L',  rideAlong:false, competition:true,  waivers:true,  uas:false, offProbation:true  },
+  { name:'Knox Giles',          joinDate:'2025-08-28', shirt:'L',  rideAlong:true,  competition:true,  waivers:true,  uas:false, offProbation:true  },
+  { name:'Naveah Lee Spell',    joinDate:'2025-09-25', shirt:'S',  rideAlong:false, competition:false, waivers:true,  uas:false, offProbation:true  },
+  { name:'Addison Wilham',      joinDate:'2026-04-30',              rideAlong:false, competition:false, waivers:true,  uas:false, offProbation:false }
+];
+const STARTER_CHECKS = ['rideAlong','competition','waivers','uas','offProbation'];
+
+async function importStarterData(){
+  if(!recData){ showToast('Records still loading, give it a second'); return; }
+  const matched = STARTER.filter(s => rosterEntryFor(s.name));
+  const missing = STARTER.filter(s => !rosterEntryFor(s.name)).map(s => s.name);
+  if(!matched.length){ showToast('No matching cadets found in the roster'); return; }
+  let msg = `Prefill ${matched.length} cadet${matched.length!==1?'s':''} with shirt size, qualifications, off-probation status, and join date from the roster sheet?\n\nOnly blank fields are filled. Names, ranks, and squads are left alone.`;
+  if(missing.length) msg += `\n\nNot in the current roster, so skipped: ${missing.join(', ')}.`;
+  if(!confirm(msg)) return;
+
+  let filled = 0;
+  STARTER.forEach(s => {
+    const entry = rosterEntryFor(s.name);
+    if(!entry) return;                                   // never add or rename
+    if(s.joinDate && !entry.joinDate){ entry.joinDate = s.joinDate; filled++; }   // roster-owned
+    const rec = recData[s.name] || (recData[s.name] = {});
+    if(s.shirt && !rec.shirt){ rec.shirt = s.shirt; filled++; }
+    STARTER_CHECKS.forEach(k => {
+      if(k in s && rec[k] === undefined){ rec[k] = s[k]; if(s[k]) filled++; }     // records-owned
+    });
+  });
+
+  // persist the roster node (join dates) and the records node (everything else)
+  try { setStatus('saving'); recMirror('saving'); await RPDRoster.save(data.filter(p => p.open || (p.name||'').trim())); dirty = false; setStatus('synced'); }
+  catch(e){ showToast('Roster save failed, check connection'); }
+  try { setRecStatus('saving'); await RPDRoster.records.save(recData); setRecStatus('synced'); }
+  catch(e){ setRecStatus('saving'); showToast('Records save failed'); }
+
+  renderRecords();
+  showToast(`Imported ${matched.length} cadets · ${filled} field${filled!==1?'s':''} filled`);
+}
 
 /* ── ATTENDANCE ROLL-UP (advisor passcode; reads shared-key attendance node) ── */
 let attData = null;    // { 'YYYY-MM-DD': {date,dateFmt,submittedBy,roster,present:[],excused:[],unexcused:[],ts} }
@@ -2102,6 +2200,7 @@ document.getElementById('catBack').addEventListener('click', ()=>showView('hubVi
 document.getElementById('uniBack').addEventListener('click', ()=>showView('hubView'));
 document.getElementById('trnBack').addEventListener('click', ()=>showView('hubView'));
 document.getElementById('recBack').addEventListener('click', ()=>showView('hubView'));
+document.getElementById('recImportBtn').addEventListener('click', importStarterData);
 document.getElementById('recSearch').addEventListener('input', renderRecords);
 document.getElementById('attBack').addEventListener('click', ()=>showView('hubView'));
 document.getElementById('attSearch').addEventListener('input', renderAttendance);

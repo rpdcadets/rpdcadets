@@ -277,6 +277,44 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
 .uni-del:hover{color:var(--red);background:rgba(192,57,43,0.1)}
 .uni-add{background:none;border:1px dashed var(--card-border);color:var(--text-muted);border-radius:8px;padding:9px 14px;font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;margin-top:12px}
 .uni-add:hover{color:var(--white);border-color:rgba(255,255,255,0.25)}
+/* TRAINING HUB */
+.trn-panel{background:var(--card-bg);border:1px solid var(--card-border);border-radius:14px;padding:18px 18px 6px;margin-bottom:18px}
+.trn-panel-head{font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--text-muted);margin-bottom:14px;display:flex;align-items:center;gap:10px}
+.trn-panel-head::after{content:'';flex:1;height:1px;background:var(--card-border)}
+.trn-settings{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.trn-f{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}
+.trn-f.wide{grid-column:1/-1}
+.trn-f>span{font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)}
+.trn-input,.trn-sel{background:var(--input-bg);border:1px solid var(--input-border);border-radius:9px;padding:10px 12px;color:var(--white);font-family:'Barlow',sans-serif;font-size:14px;outline:none;width:100%}
+.trn-input:focus,.trn-sel:focus{border-color:var(--input-focus)}
+.trn-sel{appearance:none;cursor:pointer}
+.trn-advchips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:6px}
+.trn-chip{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,0.04);border:1px solid var(--card-border);border-radius:20px;padding:6px 8px 6px 13px;font-size:13px}
+.trn-chip button{background:none;border:none;color:var(--text-muted);font-size:16px;line-height:1;cursor:pointer;padding:0 2px}
+.trn-chip button:hover{color:var(--red-glow)}
+.trn-advadd{display:flex;gap:8px;margin-top:4px}
+.trn-advadd .trn-input{flex:1}
+.trn-month{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:1.5px;color:var(--gold-light);margin:24px 0 10px;display:flex;align-items:center;gap:12px}
+.trn-month::after{content:'';flex:1;height:1px;background:var(--card-border)}
+.trn-mtg{background:var(--card-bg);border:1px solid var(--card-border);border-radius:12px;padding:14px;margin-bottom:10px;position:relative;overflow:hidden}
+.trn-mtg::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px}
+.trn-mtg.t::before{background:#3498db}.trn-mtg.c::before{background:var(--gold)}.trn-mtg.s::before{background:#8e44ad}.trn-mtg.o::before{background:var(--red);opacity:.6}
+.trn-mtg-top{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.trn-date{min-width:58px;text-align:center}
+.trn-date .d{font-family:'Bebas Neue',sans-serif;font-size:26px;line-height:1}
+.trn-date .w{font-family:'Barlow Condensed',sans-serif;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)}
+.trn-mtg-topic{flex:1}
+.trn-typesel{width:130px}
+.trn-mtg-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.trn-mtg.o .trn-mtg-grid{display:none}
+.trn-del{background:none;border:none;color:var(--text-muted);font-size:18px;cursor:pointer;padding:2px 6px;flex-shrink:0}
+.trn-del:hover{color:var(--red-glow)}
+.trn-feat{display:grid;grid-template-columns:90px 130px 1fr auto;gap:10px;align-items:start;padding:12px 0;border-top:1px solid var(--card-border)}
+.trn-feat .trn-fdesc{grid-column:2/4}
+.trn-addrow{margin:8px 0 16px}
+.trn-add{background:none;border:1px dashed var(--card-border);color:var(--text-muted);border-radius:8px;padding:9px 14px;font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:1px;text-transform:uppercase;cursor:pointer}
+.trn-add:hover{color:var(--white);border-color:rgba(255,255,255,0.25)}
+@media(max-width:640px){.trn-settings{grid-template-columns:1fr}.trn-mtg-grid{grid-template-columns:1fr}.trn-feat{grid-template-columns:1fr 1fr;}.trn-feat .trn-fdesc{grid-column:1/-1}}
 .uni-grouphead{font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--text-muted);margin:26px 0 12px;display:flex;align-items:center;gap:10px}
 .uni-grouphead::after{content:'';flex:1;height:1px;background:var(--card-border)}
 .uni-coupon{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;padding:10px 0;border-top:1px solid var(--card-border)}
@@ -459,11 +497,28 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
     </div>
   </div>
 
+  <!-- TRAINING HUB (advisor passcode; writes shared-key roster/training node) -->
+  <div class="view" id="trainingView">
+    <div class="page-header">
+      <div class="section-label">Training Hub</div>
+      <h1 class="section-title">Training Schedule</h1>
+      <p class="page-desc">Set each meeting topic, where it meets, and the two advisors teaching it. Edits here update the Training page. Changes save automatically.</p>
+    </div>
+    <div class="container">
+      <button class="back-link" id="trnBack"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Admin Console</button>
+      <div class="bar">
+        <div class="status-pill" id="trnPill"><span class="dot"></span><span id="trnPillText">Synced</span></div>
+        <span style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Edits sync to rpdcadets.com/training</span>
+      </div>
+      <div id="trnBody"></div>
+    </div>
+  </div>
+
 </div>
 
 <div class="toast" id="toast"></div>
 
-<script src="roster.js?v=13"></script>
+<script src="roster.js?v=14"></script>
 <script>
 console.log('[admin] Build v13 — attendance roll-up');
 const SESSION_KEY = 'rpd761_admin_auth';   // advisor-only; NOT shared with cadet pages
@@ -515,6 +570,13 @@ const TOOLS = [
     desc: 'Per-cadet roll-up from weekly attendance submissions: who shows up, who is slipping.',
     icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>',
     open: openAttendance
+  },
+  {
+    id: 'training',
+    name: 'Training Hub',
+    desc: 'Edit the weekly schedule: each meeting topic, where it meets, and the two advisors teaching it. Updates the Training page.',
+    icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 2v4M16 2v4M3 10h18"/><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M8 14h2M14 14h2M8 18h2M14 18h2"/></svg>',
+    open: openTraining
   },
   { id: 'more', name: 'More tools', desc: 'Additional admin tools will live here.', soon: true,
     icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>' }
@@ -1095,6 +1157,522 @@ async function uniFlush(){
 }
 function setUniStatus(s){ const p=document.getElementById('uniPill'); p.className='status-pill '+s; document.getElementById('uniPillText').textContent = s==='saving'?'Saving':'Synced'; }
 
+/* ── TRAINING HUB (advisor passcode; writes shared-key roster/training node) ──
+   Editor for the weekly Training schedule. Each meeting carries a topic, a
+   location, and the two advisors teaching it. Saves to Firebase under the
+   shared roster key (node roster/training); the Training page reads the same
+   node with the cadet passcode and renders the schedule. Firebase is wrapped
+   so a failed write never throws past the save handler. TRAINING_SEED mirrors
+   the schedule currently baked into training.html, used only until the first
+   save exists. ── */
+const TRAINING_SEED = {
+  "meta": {
+    "time": "6:00 PM – 9:00 PM",
+    "location": "Richardson PD",
+    "ptNote": "Optional PT: 5:45 PM (before) & 9:00 PM (after) — 15 minutes each"
+  },
+  "advisors": [
+    "Tony",
+    "Dimas",
+    "Knox",
+    "Jonathan",
+    "Talley"
+  ],
+  "meetings": [
+    {
+      "date": "2026-04-02",
+      "type": "t",
+      "topic": "Patrol Tactics / Combat Fitness Test",
+      "location": "Richardson PD",
+      "a1": "",
+      "a2": ""
+    },
+    {
+      "date": "2026-04-09",
+      "type": "t",
+      "topic": "Domestic Violence",
+      "location": "Richardson PD",
+      "a1": "",
+      "a2": ""
+    },
+    {
+      "date": "2026-04-16",
+      "type": "t",
+      "topic": "Robbery In Progress",
+      "location": "Richardson PD",
+      "a1": "",
+      "a2": ""
+    },
+    {
+      "date": "2026-04-23",
+      "type": "t",
+      "topic": "Robbery In Progress",
+      "location": "Richardson PD",
+      "a1": "",
+      "a2": ""
+    },
+    {
+      "date": "2026-04-30",
+      "type": "t",
+      "topic": "Domestic Violence",
+      "location": "Richardson PD",
+      "a1": "",
+      "a2": ""
+    },
+    {
+      "date": "2026-05-14",
+      "type": "t",
+      "topic": "Active Threat",
+      "location": "Richardson PD",
+      "a1": "",
+      "a2": ""
+    },
+    {
+      "date": "2026-05-21",
+      "type": "t",
+      "topic": "Active Threat",
+      "location": "Richardson PD",
+      "a1": "",
+      "a2": ""
+    },
+    {
+      "date": "2026-05-28",
+      "type": "o",
+      "topic": "No Meeting — First Week of Summer Break",
+      "location": "",
+      "a1": "",
+      "a2": ""
+    },
+    {
+      "date": "2026-06-04",
+      "type": "t",
+      "topic": "Bomb Threats",
+      "location": "Richardson PD",
+      "a1": "",
+      "a2": ""
+    },
+    {
+      "date": "2026-06-11",
+      "type": "t",
+      "topic": "SABA / Officer Down",
+      "location": "Richardson PD",
+      "a1": "",
+      "a2": ""
+    },
+    {
+      "date": "2026-06-18",
+      "type": "t",
+      "topic": "Suspicious Person",
+      "location": "Richardson PD",
+      "a1": "",
+      "a2": ""
+    },
+    {
+      "date": "2026-07-09",
+      "type": "t",
+      "topic": "Cadet Sergeant's Choice — TBD",
+      "location": "Richardson PD",
+      "a1": "",
+      "a2": ""
+    },
+    {
+      "date": "2026-07-16",
+      "type": "t",
+      "topic": "Report Writing / Interview Skills",
+      "location": "Richardson PD",
+      "a1": "",
+      "a2": ""
+    },
+    {
+      "date": "2026-07-30",
+      "type": "t",
+      "topic": "Searching People / Scenes",
+      "location": "Richardson PD",
+      "a1": "",
+      "a2": ""
+    },
+    {
+      "date": "2026-08-06",
+      "type": "t",
+      "topic": "Crash Investigation",
+      "location": "Richardson PD",
+      "a1": "",
+      "a2": ""
+    },
+    {
+      "date": "2026-08-13",
+      "type": "o",
+      "topic": "No Meeting — First Week of School",
+      "location": "",
+      "a1": "",
+      "a2": ""
+    },
+    {
+      "date": "2026-08-27",
+      "type": "t",
+      "topic": "White Collar Crime",
+      "location": "Richardson PD",
+      "a1": "",
+      "a2": ""
+    },
+    {
+      "date": "2026-09-03",
+      "type": "t",
+      "topic": "Burglary in Progress",
+      "location": "Richardson PD",
+      "a1": "",
+      "a2": ""
+    },
+    {
+      "date": "2026-09-10",
+      "type": "t",
+      "topic": "Cadet Sergeant's Choice — TBD",
+      "location": "Richardson PD",
+      "a1": "",
+      "a2": ""
+    },
+    {
+      "date": "2026-09-17",
+      "type": "t",
+      "topic": "Penal Code Assaultive Crimes",
+      "location": "Richardson PD",
+      "a1": "",
+      "a2": ""
+    },
+    {
+      "date": "2026-09-24",
+      "type": "t",
+      "topic": "Gangs",
+      "location": "Richardson PD",
+      "a1": "",
+      "a2": ""
+    },
+    {
+      "date": "2026-10-01",
+      "type": "t",
+      "topic": "Suspicious Person",
+      "location": "Richardson PD",
+      "a1": "",
+      "a2": ""
+    },
+    {
+      "date": "2026-10-08",
+      "type": "t",
+      "topic": "Misdemeanor Traffic Stops",
+      "location": "Richardson PD",
+      "a1": "",
+      "a2": ""
+    },
+    {
+      "date": "2026-10-15",
+      "type": "t",
+      "topic": "Felony Traffic Stops",
+      "location": "Richardson PD",
+      "a1": "",
+      "a2": ""
+    },
+    {
+      "date": "2026-10-22",
+      "type": "t",
+      "topic": "Intoxicated Driver",
+      "location": "Richardson PD",
+      "a1": "",
+      "a2": ""
+    },
+    {
+      "date": "2026-10-29",
+      "type": "t",
+      "topic": "Unknown Call Type",
+      "location": "Richardson PD",
+      "a1": "",
+      "a2": ""
+    },
+    {
+      "date": "2026-11-05",
+      "type": "t",
+      "topic": "Building Searches",
+      "location": "Richardson PD",
+      "a1": "",
+      "a2": ""
+    },
+    {
+      "date": "2026-11-12",
+      "type": "t",
+      "topic": "Patrol Tactics / Radio Comm",
+      "location": "Richardson PD",
+      "a1": "",
+      "a2": ""
+    },
+    {
+      "date": "2026-11-19",
+      "type": "t",
+      "topic": "Robbery In Progress",
+      "location": "Richardson PD",
+      "a1": "",
+      "a2": ""
+    },
+    {
+      "date": "2026-11-26",
+      "type": "o",
+      "topic": "No Meeting — Thanksgiving",
+      "location": "",
+      "a1": "",
+      "a2": ""
+    },
+    {
+      "date": "2026-12-03",
+      "type": "t",
+      "topic": "Domestic Violence",
+      "location": "Richardson PD",
+      "a1": "",
+      "a2": ""
+    },
+    {
+      "date": "2026-12-10",
+      "type": "t",
+      "topic": "Crime Scene",
+      "location": "Richardson PD",
+      "a1": "",
+      "a2": ""
+    },
+    {
+      "date": "2026-12-17",
+      "type": "t",
+      "topic": "Active Threat",
+      "location": "Richardson PD",
+      "a1": "",
+      "a2": ""
+    },
+    {
+      "date": "2026-12-24",
+      "type": "o",
+      "topic": "No Meeting — Christmas",
+      "location": "",
+      "a1": "",
+      "a2": ""
+    }
+  ],
+  "featured": [
+    {
+      "date": "2026-05-07",
+      "type": "s",
+      "title": "Annual Banquet",
+      "desc": "End-of-year awards banquet. No regular training this week."
+    },
+    {
+      "date": "2026-05-30",
+      "type": "c",
+      "title": "Central Texas Public Safety Cadet Competition",
+      "desc": "Team 1 deployment."
+    },
+    {
+      "date": "2026-05-30",
+      "type": "c",
+      "title": "Allen Overnight Competition",
+      "desc": "Team 2 deployment. Overnight event."
+    },
+    {
+      "date": "2026-06-25",
+      "type": "s",
+      "title": "Ride Along Academy",
+      "desc": "Ride-along preparation and certification training."
+    },
+    {
+      "date": "2026-07-02",
+      "type": "s",
+      "title": "Ride Along Academy (Cont.)",
+      "desc": "Continuation of ride-along certification training."
+    },
+    {
+      "date": "2026-07-23",
+      "type": "c",
+      "title": "Intra-Post Competition",
+      "desc": "Internal unit competition — squads compete against each other."
+    },
+    {
+      "date": "2026-08-20",
+      "type": "s",
+      "title": "Fun Day",
+      "desc": "Team building and recreational activities."
+    }
+  ]
+};
+
+const TRN_TYPES = [['t','Training'],['c','Competition'],['s','Special Event'],['o','No Meeting']];
+const TRN_FEAT_TYPES = [['s','Special Event'],['c','Competition']];
+const TRN_MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const TRN_DOW = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+let trnData = null, trnDirty = false, trnSaveTimer = null;
+
+function trnParse(d){ const p=(d||'').split('-'); return p.length===3 ? {y:+p[0],m:+p[1],day:+p[2],date:new Date(+p[0],+p[1]-1,+p[2])} : null; }
+
+function normalizeTrn(t){
+  t = t || {};
+  t.meta = t.meta || {};
+  t.meta.time = t.meta.time || TRAINING_SEED.meta.time;
+  t.meta.location = t.meta.location || TRAINING_SEED.meta.location;
+  t.meta.ptNote = t.meta.ptNote || '';
+  t.advisors = Array.isArray(t.advisors) ? t.advisors : [];
+  t.meetings = Array.isArray(t.meetings) ? t.meetings : [];
+  t.featured = Array.isArray(t.featured) ? t.featured : [];
+  return t;
+}
+
+async function openTraining(){
+  showView('trainingView');
+  document.getElementById('trnBody').innerHTML = '<p style="color:var(--text-muted);padding:20px 4px">Loading…</p>';
+  let t = null;
+  try { t = await RPDRoster.training.get(); } catch(e){ t = null; }   // never let Firebase block the editor
+  trnData = t ? normalizeTrn(t) : JSON.parse(JSON.stringify(TRAINING_SEED));
+  renderTraining();
+  setTrnStatus('synced');
+}
+
+function trnAdvSel(value){
+  const adv = trnData.advisors.slice();
+  if(value && adv.indexOf(value) < 0) adv.push(value);   // keep a name selectable even if dropped from the list
+  let o = `<option value=""${!value?' selected':''}>—</option>`;
+  o += adv.map(a => `<option value="${escapeHtmlA(a)}"${a===value?' selected':''}>${escapeHtmlA(a)}</option>`).join('');
+  return o;
+}
+
+function trnMtgRow(m, i){
+  const p = trnParse(m.date);
+  const dd = p ? p.day : '';
+  const dw = p ? TRN_DOW[p.date.getDay()] : '';
+  const typeSel = TRN_TYPES.map(([v,l]) => `<option value="${v}"${m.type===v?' selected':''}>${l}</option>`).join('');
+  return `<div class="trn-mtg ${m.type}" data-mt="${i}">
+    <div class="trn-mtg-top">
+      <div class="trn-date"><div class="d">${dd}</div><div class="w">${dw}</div></div>
+      <input class="trn-input trn-mtg-topic" data-mf="topic" value="${escapeHtmlA(m.topic||'')}" placeholder="Meeting topic">
+      <select class="trn-sel trn-typesel" data-mf="type">${typeSel}</select>
+      <button class="trn-del" data-mtdel="${i}" type="button" title="Remove meeting">&times;</button>
+    </div>
+    <div class="trn-mtg-grid">
+      <label class="trn-f"><span>Date</span><input class="trn-input" type="date" data-mf="date" value="${escapeHtmlA(m.date||'')}"></label>
+      <label class="trn-f"><span>Location</span><input class="trn-input" data-mf="location" value="${escapeHtmlA(m.location||'')}" placeholder="Richardson PD"></label>
+      <div></div>
+      <label class="trn-f"><span>Advisor 1</span><select class="trn-sel" data-mf="a1">${trnAdvSel(m.a1)}</select></label>
+      <label class="trn-f"><span>Advisor 2</span><select class="trn-sel" data-mf="a2">${trnAdvSel(m.a2)}</select></label>
+      <div></div>
+    </div>
+  </div>`;
+}
+
+function trnFeatRow(f, i){
+  const featSel = TRN_FEAT_TYPES.map(([v,l]) => `<option value="${v}"${f.type===v?' selected':''}>${l}</option>`).join('');
+  return `<div class="trn-feat" data-ft="${i}">
+    <label class="trn-f"><span>Date</span><input class="trn-input" type="date" data-ff="date" value="${escapeHtmlA(f.date||'')}"></label>
+    <label class="trn-f"><span>Type</span><select class="trn-sel" data-ff="type">${featSel}</select></label>
+    <label class="trn-f trn-fdesc"><span>Title</span><input class="trn-input" data-ff="title" value="${escapeHtmlA(f.title||'')}" placeholder="Event name"></label>
+    <button class="trn-del" data-ftdel="${i}" type="button" title="Remove">&times;</button>
+    <label class="trn-f" style="grid-column:1/-1"><span>Description</span><input class="trn-input" data-ff="desc" value="${escapeHtmlA(f.desc||'')}" placeholder="Short description"></label>
+  </div>`;
+}
+
+function renderTraining(){
+  const adv = trnData.advisors;
+  let html = `
+  <div class="trn-panel">
+    <div class="trn-panel-head">Schedule settings</div>
+    <div class="trn-settings">
+      <label class="trn-f"><span>Default meeting time</span><input class="trn-input" data-meta="time" value="${escapeHtmlA(trnData.meta.time)}" placeholder="6:00 PM – 9:00 PM"></label>
+      <label class="trn-f"><span>Default location</span><input class="trn-input" data-meta="location" value="${escapeHtmlA(trnData.meta.location)}" placeholder="Richardson PD"></label>
+      <label class="trn-f wide"><span>Banner note (PT, etc.)</span><input class="trn-input" data-meta="ptNote" value="${escapeHtmlA(trnData.meta.ptNote)}" placeholder="Optional note shown under the schedule banner"></label>
+    </div>
+  </div>
+  <div class="trn-panel">
+    <div class="trn-panel-head">Advisors</div>
+    <div class="trn-advchips">${ adv.length ? adv.map((a,i)=>`<span class="trn-chip">${escapeHtmlA(a)}<button data-advdel="${i}" type="button" title="Remove">&times;</button></span>`).join('') : '<span style="color:var(--text-muted);font-size:13px">No advisors yet. Add the people who teach, then pick two per meeting.</span>' }</div>
+    <div class="trn-advadd"><input class="trn-input" id="trnNewAdv" placeholder="Add advisor name"><button class="trn-add" id="trnAddAdv" type="button">Add</button></div>
+  </div>`;
+
+  const entries = [];
+  trnData.meetings.forEach((m,i)=>entries.push({kind:'m',idx:i,date:m.date||''}));
+  trnData.featured.forEach((f,i)=>entries.push({kind:'f',idx:i,date:f.date||''}));
+  entries.sort((a,b)=> (a.date<b.date?-1:a.date>b.date?1:0));
+
+  let curMonth = null;
+  entries.forEach(e=>{
+    const p = trnParse(e.date);
+    const mk = p ? (p.y+'-'+p.m) : 'undated';
+    if(mk !== curMonth){
+      curMonth = mk;
+      const label = p ? `${TRN_MONTHS[p.m-1]} <span style="font-size:13px;color:var(--text-muted);letter-spacing:2px">${p.y}</span>` : 'Undated';
+      html += `<div class="trn-month">${label}</div>`;
+    }
+    html += e.kind==='m' ? trnMtgRow(trnData.meetings[e.idx], e.idx) : trnFeatRow(trnData.featured[e.idx], e.idx);
+  });
+
+  html += `<div class="trn-addrow"><button class="trn-add" id="trnAddMtg" type="button">+ Add meeting</button> <button class="trn-add" id="trnAddFeat" type="button">+ Add special date</button></div>`;
+
+  document.getElementById('trnBody').innerHTML = html;
+  bindTraining();
+}
+
+function trnNextDate(){
+  const ds = trnData.meetings.map(m=>m.date).filter(Boolean).sort();
+  if(!ds.length) return '';
+  const last = trnParse(ds[ds.length-1]); if(!last) return '';
+  const nx = new Date(last.y, last.m-1, last.day+7);
+  const mm = String(nx.getMonth()+1).padStart(2,'0'), dd = String(nx.getDate()).padStart(2,'0');
+  return nx.getFullYear()+'-'+mm+'-'+dd;
+}
+
+function bindTraining(){
+  const body = document.getElementById('trnBody');
+  body.querySelectorAll('[data-meta]').forEach(el => el.addEventListener('input', ()=>{ trnData.meta[el.dataset.meta] = el.value; trnSchedule(); }));
+
+  body.querySelectorAll('[data-mf]').forEach(el => {
+    const mt = +el.closest('[data-mt]').dataset.mt, f = el.dataset.mf;
+    const ev = (el.tagName==='SELECT' || el.type==='date') ? 'change' : 'input';
+    el.addEventListener(ev, ()=>{
+      trnData.meetings[mt][f] = el.value;
+      if(f==='type' || f==='date'){ renderTraining(); }   // type recolors / toggles fields; date regroups
+      trnSchedule();
+    });
+  });
+
+  body.querySelectorAll('[data-ff]').forEach(el => {
+    const ft = +el.closest('[data-ft]').dataset.ft, f = el.dataset.ff;
+    const ev = (el.tagName==='SELECT' || el.type==='date') ? 'change' : 'input';
+    el.addEventListener(ev, ()=>{
+      trnData.featured[ft][f] = el.value;
+      if(f==='type' || f==='date'){ renderTraining(); }
+      trnSchedule();
+    });
+  });
+
+  body.querySelectorAll('[data-mtdel]').forEach(el => el.addEventListener('click', ()=>{ trnData.meetings.splice(+el.dataset.mtdel,1); renderTraining(); trnSchedule(); }));
+  body.querySelectorAll('[data-ftdel]').forEach(el => el.addEventListener('click', ()=>{ trnData.featured.splice(+el.dataset.ftdel,1); renderTraining(); trnSchedule(); }));
+  body.querySelectorAll('[data-advdel]').forEach(el => el.addEventListener('click', ()=>{ trnData.advisors.splice(+el.dataset.advdel,1); renderTraining(); trnSchedule(); }));
+
+  const addAdv = ()=>{ const inp = document.getElementById('trnNewAdv'); const v = (inp.value||'').trim(); if(!v) return; if(trnData.advisors.indexOf(v)<0) trnData.advisors.push(v); renderTraining(); trnSchedule(); };
+  document.getElementById('trnAddAdv').addEventListener('click', addAdv);
+  document.getElementById('trnNewAdv').addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); addAdv(); } });
+
+  document.getElementById('trnAddMtg').addEventListener('click', ()=>{ trnData.meetings.push({date:trnNextDate(),type:'t',topic:'',location:trnData.meta.location||'',a1:'',a2:''}); renderTraining(); trnSchedule(); });
+  document.getElementById('trnAddFeat').addEventListener('click', ()=>{ trnData.featured.push({date:trnNextDate(),type:'s',title:'',desc:''}); renderTraining(); trnSchedule(); });
+}
+
+function trnClean(t){
+  const c = JSON.parse(JSON.stringify(t));
+  c.meetings = (c.meetings||[]).filter(m => (m.date||'').trim() || (m.topic||'').trim());
+  c.featured = (c.featured||[]).filter(f => (f.date||'').trim() || (f.title||'').trim());
+  const byDate = (a,b)=> ((a.date||'')<(b.date||'')?-1:(a.date||'')>(b.date||'')?1:0);
+  c.meetings.sort(byDate); c.featured.sort(byDate);
+  return c;
+}
+
+function trnSchedule(){ trnDirty = true; setTrnStatus('saving'); clearTimeout(trnSaveTimer); trnSaveTimer = setTimeout(trnFlush, 600); }
+async function trnFlush(){
+  clearTimeout(trnSaveTimer); trnSaveTimer = null;
+  try { await RPDRoster.training.save(trnClean(trnData)); trnDirty = false; setTrnStatus('synced'); }
+  catch(e){ setTrnStatus('saving'); showToast('Save failed — check connection'); }
+}
+function setTrnStatus(s){ const p=document.getElementById('trnPill'); p.className='status-pill '+s; document.getElementById('trnPillText').textContent = s==='saving'?'Saving':'Synced'; }
+
+
 /* ── CADET RECORDS (separate passphrase, separate node/key) ── */
 let recData = null;
 let recSaveTimer = null;
@@ -1504,6 +2082,7 @@ document.getElementById('rosterBack').addEventListener('click', ()=>showView('hu
 document.getElementById('catAddBtn').addEventListener('click', addItem);
 document.getElementById('catBack').addEventListener('click', ()=>showView('hubView'));
 document.getElementById('uniBack').addEventListener('click', ()=>showView('hubView'));
+document.getElementById('trnBack').addEventListener('click', ()=>showView('hubView'));
 document.getElementById('recBack').addEventListener('click', ()=>showView('hubView'));
 document.getElementById('recSearch').addEventListener('input', renderRecords);
 document.getElementById('attBack').addEventListener('click', ()=>showView('hubView'));
@@ -1520,7 +2099,7 @@ document.getElementById('raNewOfficer').addEventListener('keydown', e=>{ if(e.ke
 document.getElementById('raCadet').addEventListener('change', raCheckRule);
 document.getElementById('raOfficer').addEventListener('change', raCheckRule);
 document.getElementById('raDate').addEventListener('input', raCheckRule);
-window.addEventListener('beforeunload', ()=>{ if(dirty && saveTimer) flushSave(); if(catDirty && catSaveTimer) catFlush(); if(recSaveTimer) recFlush(); if(raSaveTimer) raFlush(); });
+window.addEventListener('beforeunload', ()=>{ if(dirty && saveTimer) flushSave(); if(catDirty && catSaveTimer) catFlush(); if(recSaveTimer) recFlush(); if(raSaveTimer) raFlush(); if(trnDirty && trnSaveTimer) trnFlush(); });
 
 // auto-resume from an existing advisor session (admin-only)
 (function(){

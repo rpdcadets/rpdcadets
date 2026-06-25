@@ -353,6 +353,12 @@
     // (advisor passcode). Same model as the officers list.
     uniforms: {
       get: uniformsGet, save: uniformsSave
+    },
+    // ── Training Hub: shared roster key, node roster/training ──
+    // Read by the Training page (cadet passcode), written from /admin
+    // (advisor passcode). Same model as the uniforms node.
+    training: {
+      get: trainingGet, save: trainingSave
     }
   };
 
@@ -463,5 +469,23 @@
     if (!rosterKey) throw new Error('roster locked');
     const data = await keyEncrypt(JSON.stringify(obj), rosterKey);
     await db.ref(ROOT + '/uniforms').set(data);
+  }
+
+  // Training Hub — encrypted under the SHARED roster key, node roster/training.
+  // The Training page reads it with the cadet passcode and renders the weekly
+  // schedule; /admin writes it with the advisor passcode (advisor holds the
+  // roster key too). Lives under the already-permitted roster node, so no extra
+  // Firebase rule is required. Returns null when nothing has been saved yet, so
+  // the page can fall back to its built-in schedule.
+  async function trainingGet() {
+    if (!rosterKey) return null;
+    const blob = await once('training');
+    if (!blob) return null;
+    try { return JSON.parse(await keyDecrypt(blob, rosterKey)); } catch (e) { return null; }
+  }
+  async function trainingSave(obj) {
+    if (!rosterKey) throw new Error('roster locked');
+    const data = await keyEncrypt(JSON.stringify(obj), rosterKey);
+    await db.ref(ROOT + '/training').set(data);
   }
 })(window);

@@ -106,6 +106,8 @@ footer{background:var(--navy);border-top:1px solid rgba(255,255,255,0.05);paddin
 .ev-i{flex:1}
 .ev-topic{font-weight:500;font-size:14px;margin-bottom:1px}
 .ev-time{font-size:11px;color:var(--text-muted)}
+.ev-where{font-size:11px;color:var(--text-muted);margin-top:3px;line-height:1.45}
+.ev-where b{color:rgba(255,255,255,0.62);font-weight:600}
 .ev-tag{font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;padding:3px 10px;border-radius:20px;flex-shrink:0}
 .tag-t{background:rgba(52,152,219,0.12);color:var(--blue)}.tag-c{background:rgba(212,169,82,0.12);color:var(--gold)}.tag-s{background:rgba(142,68,173,0.12);color:var(--purple)}.tag-o{background:rgba(220,38,38,0.1);color:var(--red-glow)}
 .ev-feat{padding:20px;background:var(--card-bg);border:1px solid var(--card-border);border-radius:14px;margin-bottom:6px;position:relative;overflow:hidden;transition:all .3s}
@@ -206,6 +208,100 @@ footer{background:var(--navy);border-top:1px solid rgba(255,255,255,0.05);paddin
 </div><!-- end training-content -->
 
 
+<script src="roster.js?v=14"></script>
+<script>
+/* Training schedule overlay: when an advisor has saved a schedule in /admin
+   (Firebase node roster/training), render it here in place of the baked-in
+   schedule. Read with the cadet passcode, exactly like the Uniforms page.
+   Firebase never blocks the page: any failure leaves the built-in schedule. */
+(function(){
+  var MON_FULL=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  var MON3=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var MON3L=['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
+  var DOW3=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  var DOWF=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  var TLABEL={t:'Training',c:'Competition',s:'Special Event',o:'No Meeting'};
+  function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+  function parse(d){var p=(d||'').split('-');return p.length===3?{y:+p[0],m:+p[1],day:+p[2],date:new Date(+p[0],+p[1]-1,+p[2])}:null;}
+
+  function mtgRow(m,meta){
+    var p=parse(m.date), day=p?p.day:'', dow=p?DOW3[p.date.getDay()]:'';
+    var typ=m.type||'t';
+    var timeText = typ==='o' ? '\u2014' : (meta.time||'');
+    var where='';
+    if(typ!=='o'){
+      var advs=[m.a1,m.a2].filter(Boolean);
+      var parts=[];
+      if(m.location) parts.push(esc(m.location));
+      if(advs.length) parts.push('<b>'+advs.map(esc).join(' &amp; ')+'</b>');
+      if(parts.length) where='<div class="ev-where">'+parts.join(' &middot; ')+'</div>';
+    }
+    return '<div class="ev '+typ+'" data-date="'+esc(m.date)+'"><div class="ev-d"><div class="ev-day">'+day+'</div><div class="ev-dow">'+dow+'</div></div><div class="ev-div"></div><div class="ev-i"><div class="ev-topic">'+esc(m.topic)+'</div><div class="ev-time">'+timeText+'</div>'+where+'</div><span class="ev-tag tag-'+typ+'">'+(TLABEL[typ]||'')+'</span></div>';
+  }
+  function featRow(f){
+    var p=parse(f.date), typ=(f.type==='c')?'c':'s';
+    var mo=p?MON3[p.m-1]:'', day=p?p.day:'', dw=p?DOWF[p.date.getDay()]:'';
+    return '<div class="ev-feat '+typ+'" data-date="'+esc(f.date)+'"><div class="feat-top"><div class="feat-date"><span class="feat-mo">'+mo+'</span><span class="feat-day">'+day+'</span><span class="feat-dow">'+dw+'</span></div><span class="ev-tag tag-'+typ+'">'+(TLABEL[typ]||'')+'</span></div><div class="feat-title">'+esc(f.title)+'</div><div class="feat-desc">'+esc(f.desc)+'</div></div>';
+  }
+
+  function buildSchedule(d){
+    var meta=d.meta||{};
+    var time=meta.time||'6:00 PM \u2013 9:00 PM';
+    var loc=meta.location||'Richardson PD';
+    var entries=[];
+    (d.meetings||[]).forEach(function(m){entries.push({k:'m',date:m.date||'',o:m});});
+    (d.featured||[]).forEach(function(f){entries.push({k:'f',date:f.date||'',o:f});});
+    entries.sort(function(a,b){return a.date<b.date?-1:a.date>b.date?1:0;});
+
+    // months present, in order
+    var seen={}, order=[];
+    entries.forEach(function(e){var p=parse(e.date); if(!p)return; var id=MON3L[p.m-1]; if(!seen[id]){seen[id]=true; order.push({id:id,m:p.m,y:p.y});}});
+
+    var nav=order.map(function(o){return '<a href="#'+o.id+'" class="month-jump">'+MON3[o.m-1]+'</a>';}).join('');
+
+    var html='<div class="info-banner"><div class="info-banner-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div class="info-banner-text"><div class="info-banner-main">Every Thursday &middot; '+esc(time)+' &middot; '+esc(loc)+'</div>'+(meta.ptNote?'<div class="info-banner-sub">'+esc(meta.ptNote)+'</div>':'')+'</div></div>';
+    html+='<div class="month-nav-bar" id="monthNav">'+nav+'</div>';
+    html+='<div class="legend"><div class="legend-item"><div class="legend-dot training"></div>Training</div><div class="legend-item"><div class="legend-dot competition"></div>Competition</div><div class="legend-item"><div class="legend-dot special"></div>Special Event</div><div class="legend-item"><div class="legend-dot off"></div>No Meeting</div></div>';
+
+    var curId=null;
+    entries.forEach(function(e){
+      var p=parse(e.date); var id=p?MON3L[p.m-1]:'undated';
+      if(id!==curId){
+        if(curId!==null) html+='</div>';
+        curId=id;
+        var name=p?MON_FULL[p.m-1]:'Undated', yr=p?p.y:'';
+        html+='<div class="month-section" id="'+id+'"><div class="month-header"><span class="month-name">'+name+'</span><div class="month-line"></div><span class="month-year">'+yr+'</span></div>';
+      }
+      html+= e.k==='m' ? mtgRow(e.o,meta) : featRow(e.o);
+    });
+    if(curId!==null) html+='</div>';
+    return html;
+  }
+
+  function initSchedule(){
+    var today=new Date();today.setHours(0,0,0,0);
+    document.querySelectorAll('#panelSchedule [data-date]').forEach(function(el){var d=new Date(el.dataset.date+'T12:00:00');var diff=d-today;if(diff<0)el.classList.add('is-past');else if(diff<864e5){el.classList.add('is-today');var tt=el.querySelector('.ev-topic')||el.querySelector('.feat-title');if(tt){var dot=document.createElement('span');dot.style.cssText='width:6px;height:6px;border-radius:50%;background:#c0392b;animation:pulse 2s ease infinite;margin-left:8px;display:inline-block';tt.appendChild(dot);}}});
+    var sects=document.querySelectorAll('#panelSchedule .month-section');var navs=document.querySelectorAll('#panelSchedule .month-jump');
+    var obs=new IntersectionObserver(function(entries){entries.forEach(function(e){if(e.isIntersecting){navs.forEach(function(l){l.classList.remove('active')});var a=document.querySelector('.month-jump[href="#'+e.target.id+'"]');if(a)a.classList.add('active');}});},{threshold:0.3,rootMargin:'-100px 0px -60% 0px'});
+    sects.forEach(function(s){obs.observe(s);});
+    document.querySelectorAll('#panelSchedule .month-jump').forEach(function(l){l.addEventListener('click',function(e){e.preventDefault();var tgt=document.querySelector(l.getAttribute('href'));if(!tgt)return;var y=tgt.getBoundingClientRect().top+window.pageYOffset-90;window.scrollTo({top:y,behavior:'smooth'});});});
+  }
+
+  window.rpdApplySchedule = async function(pass){
+    try{
+      if(typeof RPDRoster==='undefined' || !pass) return;
+      var res = await RPDRoster.connect({passcode:pass, role:'cadet'});
+      if(!res || !res.ok) return;
+      var d = await RPDRoster.training.get();
+      if(!d || !Array.isArray(d.meetings) || !d.meetings.length) return;  // nothing saved: keep built-in schedule
+      var panel = document.getElementById('panelSchedule');
+      if(!panel) return;
+      panel.innerHTML = buildSchedule(d);
+      initSchedule();
+    }catch(e){ /* Firebase never blocks the page */ }
+  };
+})();
+</script>
 <script>
 // Encrypted content decryption
 (function(){
@@ -280,6 +376,7 @@ footer{background:var(--navy);border-top:1px solid rgba(255,255,255,0.05);paddin
       var obs=new IntersectionObserver(function(entries){entries.forEach(function(e){if(e.isIntersecting){navs.forEach(function(l){l.classList.remove('active')});var a=document.querySelector('.month-jump[href="#'+e.target.id+'"]');if(a)a.classList.add('active')}})},{threshold:0.3,rootMargin:'-100px 0px -60% 0px'});
       sects.forEach(function(s){obs.observe(s)});
       document.querySelectorAll('.month-jump').forEach(function(l){l.addEventListener('click',function(e){e.preventDefault();var t=document.querySelector(l.getAttribute('href'));var y=t.getBoundingClientRect().top+window.pageYOffset-90;window.scrollTo({top:y,behavior:'smooth'})})});
+      if(window.rpdApplySchedule) window.rpdApplySchedule(sessionStorage.getItem(SESSION_KEY));
   
     } else {
       error.classList.add('show');
@@ -316,6 +413,7 @@ footer{background:var(--navy);border-top:1px solid rgba(255,255,255,0.05);paddin
       var obs=new IntersectionObserver(function(entries){entries.forEach(function(e){if(e.isIntersecting){navs.forEach(function(l){l.classList.remove('active')});var a=document.querySelector('.month-jump[href="#'+e.target.id+'"]');if(a)a.classList.add('active')}})},{threshold:0.3,rootMargin:'-100px 0px -60% 0px'});
       sects.forEach(function(s){obs.observe(s)});
       document.querySelectorAll('.month-jump').forEach(function(l){l.addEventListener('click',function(e){e.preventDefault();var t=document.querySelector(l.getAttribute('href'));var y=t.getBoundingClientRect().top+window.pageYOffset-90;window.scrollTo({top:y,behavior:'smooth'})})});
+      if(window.rpdApplySchedule) window.rpdApplySchedule(sessionStorage.getItem(SESSION_KEY));
   
     }
   }

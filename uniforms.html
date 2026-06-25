@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Uniforms — Richardson Police Public Safety Cadets</title>
+<meta name="description" content="The Richardson Public Safety Cadets uniform standard. Class A, B, C, and PT, what each one includes, and where to buy every piece so every cadet looks the same.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@300;400;500;600;700&family=Barlow+Condensed:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
+<style>
+/* ════════════════════════════════════════════════════════════
+   RPD PUBLIC SAFETY CADETS — UNIFORM LOOKBOOK
+   The content on this page is now edited from the Admin Console
+   (rpdcadets.com/admin → Uniform Standards). Future quartermasters
+   change pieces, prices, buy links, images, and coupon codes there,
+   with no need to touch this file. The DEFAULT_UNIFORMS block far
+   below is only the starting point / offline fallback.
+   ════════════════════════════════════════════════════════════ */
+
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --ink:#0b1422; --navy-deep:#0f1a30; --navy:#1a2744; --navy-2:#16243f;
+  --red:#c0392b; --red-glow:#e74c3c;
+  --gold:#c9a24b; --gold-soft:#e3c98c;
+  --white:#fff; --text:#eef1f6; --muted:#8a98ad;
+  --line:rgba(255,255,255,0.08); --line-soft:rgba(255,255,255,0.05);
+  --card:rgba(255,255,255,0.025); --card-border:rgba(255,255,255,0.07);
+}
+html{scroll-behavior:smooth}
+body{font-family:'Barlow',sans-serif;background:var(--ink);color:var(--text);-webkit-font-smoothing:antialiased;min-height:100vh;overflow-x:hidden}
+.container{max-width:1140px;margin:0 auto;padding:0 28px}
+a{color:inherit}
+
+/* ─── shared nav (from shared.js) ─── */
+nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(11,20,34,0.78);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid var(--line-soft);transition:all .4s}
+nav.scrolled{background:rgba(11,20,34,0.97);box-shadow:0 4px 30px rgba(0,0,0,0.35)}
+.nav-inner{max-width:1200px;margin:0 auto;padding:0 28px;display:flex;align-items:center;justify-content:space-between;height:72px}
+.nav-brand{display:flex;align-items:center;gap:14px;text-decoration:none;color:var(--white)}
+.nav-brand img{width:44px;height:44px;border-radius:50%;border:2px solid rgba(255,255,255,0.15)}
+.nav-brand-text{display:flex;flex-direction:column;line-height:1.15}
+.nav-brand-dept{font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:11px;letter-spacing:2.5px;text-transform:uppercase;color:var(--gold)}
+.nav-brand-unit{font-family:'Barlow Condensed',sans-serif;font-weight:400;font-size:13px;letter-spacing:1px;color:var(--muted)}
+.nav-links{display:flex;align-items:center;gap:8px;list-style:none}
+.nav-links a{text-decoration:none;color:rgba(255,255,255,0.7);font-family:'Barlow Condensed',sans-serif;font-weight:500;font-size:14px;letter-spacing:1.5px;text-transform:uppercase;padding:8px 16px;border-radius:6px;transition:all .3s;position:relative}
+.nav-links a:hover,.nav-links a.active{color:var(--white);background:rgba(255,255,255,0.08)}
+.nav-links a.active::after{content:'';position:absolute;bottom:2px;left:50%;transform:translateX(-50%);width:16px;height:2px;background:var(--red);border-radius:2px}
+.hamburger{display:none;flex-direction:column;gap:5px;cursor:pointer;padding:8px;background:none;border:none}
+.hamburger span{width:24px;height:2px;background:var(--white);border-radius:2px}
+.mobile-menu{display:none;position:fixed;top:72px;left:0;right:0;background:rgba(11,20,34,0.98);backdrop-filter:blur(20px);padding:24px;border-bottom:1px solid var(--line-soft);z-index:999}
+.mobile-menu.open{display:block}
+.mobile-menu a{display:block;padding:14px 0;color:rgba(255,255,255,0.7);text-decoration:none;font-family:'Barlow Condensed',sans-serif;font-weight:500;font-size:16px;letter-spacing:2px;text-transform:uppercase;border-bottom:1px solid var(--line-soft)}
+.mobile-menu a:last-child{border-bottom:none}
+
+/* ─── shared footer (from shared.js, full style) ─── */
+footer{background:var(--navy-deep);border-top:1px solid var(--line-soft);padding:48px 0 40px;margin-top:40px}
+.footer-inner{display:flex;justify-content:space-between;align-items:flex-start;gap:32px;flex-wrap:wrap;margin-bottom:32px}
+.footer-brand{display:flex;align-items:center;gap:14px}
+.footer-brand img{width:48px;height:48px;border-radius:50%;border:2px solid rgba(255,255,255,0.12)}
+.footer-brand-text{display:flex;flex-direction:column;line-height:1.3}
+.footer-brand-name{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:1.5px}
+.footer-brand-sub{font-size:12px;color:var(--muted)}
+.footer-links{display:flex;gap:20px;flex-wrap:wrap}
+.footer-links a{font-family:'Barlow Condensed',sans-serif;font-size:13px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);text-decoration:none;transition:color .3s}
+.footer-links a:hover{color:var(--white)}
+.footer-social{display:flex;gap:12px}
+.footer-social a{width:38px;height:38px;border-radius:50%;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;color:var(--muted);transition:all .3s}
+.footer-social a:hover{color:var(--white);border-color:var(--gold)}
+.footer-bottom{max-width:1200px;margin:0 auto;padding:0 28px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;border-top:1px solid var(--line-soft);padding-top:24px}
+.footer-copy{font-size:12px;color:rgba(255,255,255,0.32)}
+.footer-aff{font-size:12px;color:rgba(255,255,255,0.32)}
+
+/* ════ LOCK ════ */
+.lock-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:96px 24px 60px;position:relative}
+.lock-bg{position:fixed;inset:0;z-index:0;background:#0b1422}
+.lock-bg img{width:100%;height:100%;object-fit:cover;opacity:.18;filter:grayscale(.5)}
+.lock-bg::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 40%,rgba(11,20,34,0.7) 0%,rgba(11,20,34,0.98) 70%)}
+.lock-card{position:relative;z-index:1;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:20px;padding:60px 48px;max-width:440px;width:100%;text-align:center;backdrop-filter:blur(10px);box-shadow:0 30px 80px rgba(0,0,0,0.4);animation:cardIn .6s ease forwards}
+@keyframes cardIn{from{opacity:0;transform:translateY(20px) scale(0.98)}to{opacity:1;transform:translateY(0) scale(1)}}
+.lock-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--red),var(--gold),var(--red));border-radius:20px 20px 0 0}
+.lock-icon{width:72px;height:72px;margin:0 auto 28px;background:rgba(192,57,43,0.1);border:1px solid rgba(192,57,43,0.2);border-radius:50%;display:flex;align-items:center;justify-content:center}
+.lock-icon svg{color:var(--red)}
+.lock-title{font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:2px;margin-bottom:8px}
+.lock-subtitle{font-weight:300;font-size:14px;color:var(--muted);margin-bottom:36px;line-height:1.6}
+.lock-input{width:100%;padding:16px 20px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:var(--white);font-family:'Barlow',sans-serif;font-size:16px;letter-spacing:4px;text-align:center;outline:none;transition:all .3s}
+.lock-input::placeholder{letter-spacing:1px;color:rgba(255,255,255,0.25);font-size:14px}
+.lock-input:focus{border-color:rgba(192,57,43,0.5);background:rgba(255,255,255,0.06);box-shadow:0 0 20px rgba(192,57,43,0.1)}
+.lock-btn{width:100%;padding:16px;background:var(--red);color:var(--white);border:none;border-radius:10px;font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:15px;letter-spacing:2.5px;text-transform:uppercase;cursor:pointer;transition:all .35s;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 4px 20px rgba(192,57,43,0.3);margin-top:20px}
+.lock-btn:hover{background:var(--red-glow);transform:translateY(-2px)}
+.lock-error{margin-top:16px;font-size:13px;color:var(--red-glow);opacity:0;transition:opacity .3s;height:20px}
+.lock-error.show{opacity:1}
+.lock-home{margin-top:32px}
+.lock-home a{font-family:'Barlow Condensed',sans-serif;font-size:13px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+@keyframes shake{0%,100%{transform:translateX(0)}15%{transform:translateX(-8px)}30%{transform:translateX(8px)}45%{transform:translateX(-6px)}60%{transform:translateX(6px)}75%{transform:translateX(-3px)}90%{transform:translateX(3px)}}
+
+.uni-shell{display:none}
+.uni-shell.on{display:block;animation:fadeIn .6s ease}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+
+/* ════ HERO ════ */
+.hero{position:relative;min-height:100vh;display:flex;align-items:center;overflow:hidden}
+.hero-bg{position:absolute;inset:0;z-index:0;background:#0b1422}
+.hero-bg img{width:100%;height:100%;object-fit:cover;opacity:.32;filter:grayscale(.4) contrast(1.05)}
+.hero-bg::after{content:'';position:absolute;inset:0;background:
+  linear-gradient(180deg,rgba(11,20,34,0.55) 0%,rgba(11,20,34,0.35) 40%,rgba(11,20,34,0.92) 100%),
+  radial-gradient(ellipse 70% 80% at 30% 30%,rgba(11,20,34,0.2),rgba(11,20,34,0.85))}
+.hero-grid{position:absolute;inset:0;z-index:0;background-image:linear-gradient(rgba(255,255,255,0.018) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.018) 1px,transparent 1px);background-size:64px 64px;mask-image:radial-gradient(ellipse 60% 60% at 50% 45%,#000,transparent 80%)}
+.hero-inner{position:relative;z-index:2;width:100%;padding:120px 0 80px}
+.hero-eyebrow{font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:13px;letter-spacing:5px;text-transform:uppercase;color:var(--gold);display:flex;align-items:center;gap:14px;margin-bottom:30px}
+.hero-eyebrow::before{content:'';width:40px;height:1px;background:var(--gold)}
+.hero-title{line-height:.92;margin-bottom:28px}
+.hero-the{display:block;font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:500;font-size:clamp(34px,6vw,68px);color:var(--gold-soft);letter-spacing:.5px;margin-bottom:-6px}
+.hero-word{display:block;font-family:'Bebas Neue',sans-serif;font-size:clamp(64px,16vw,180px);letter-spacing:clamp(4px,1.4vw,16px);color:var(--white);text-shadow:0 2px 40px rgba(0,0,0,.5)}
+.hero-sub{font-family:'Cormorant Garamond',serif;font-weight:400;font-size:clamp(18px,2.4vw,25px);color:rgba(255,255,255,0.78);max-width:540px;line-height:1.5;margin-bottom:40px}
+.hero-sub em{font-style:italic;color:var(--gold-soft)}
+.hero-classes{display:flex;gap:0;align-items:stretch;border:1px solid var(--line);border-radius:12px;overflow:hidden;max-width:520px;backdrop-filter:blur(4px);background:rgba(11,20,34,0.3)}
+.hero-class{flex:1;padding:18px 20px;text-decoration:none;transition:background .3s;border-right:1px solid var(--line)}
+.hero-class:last-child{border-right:none}
+.hero-class:hover{background:rgba(201,162,75,0.08)}
+.hero-class .hc-letter{font-family:'Bebas Neue',sans-serif;font-size:30px;letter-spacing:2px;color:var(--gold);line-height:1}
+.hero-class .hc-name{font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-top:4px}
+.scroll-cue{position:absolute;bottom:28px;left:50%;transform:translateX(-50%);z-index:2;font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:8px}
+.scroll-cue span{width:1px;height:36px;background:linear-gradient(var(--gold),transparent);animation:cue 2.4s ease-in-out infinite}
+@keyframes cue{0%,100%{opacity:.3;transform:scaleY(.6)}50%{opacity:1;transform:scaleY(1)}}
+
+/* ════ AUTHORITY / INTRO ════ */
+.creed{padding:90px 0 30px;text-align:center}
+.creed-rule{width:1px;height:48px;background:linear-gradient(var(--gold),transparent);margin:0 auto 28px}
+.creed p{font-family:'Cormorant Garamond',serif;font-size:clamp(20px,3vw,30px);font-weight:400;line-height:1.5;max-width:780px;margin:0 auto;color:rgba(255,255,255,0.86)}
+.creed p em{font-style:italic;color:var(--gold-soft)}
+.creed-cite{font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:2.5px;text-transform:uppercase;color:var(--muted);margin-top:26px}
+
+/* ════ LOOK SPREAD ════ */
+.looks{padding:40px 0 20px}
+.look{position:relative;padding:70px 0;border-top:1px solid var(--line-soft)}
+.look-grid{display:grid;grid-template-columns:0.92fr 1.08fr;gap:56px;align-items:center}
+.look.reverse .look-grid{grid-template-columns:1.08fr 0.92fr}
+.look.reverse .look-figure{order:2}
+.look-figure{position:relative;border-radius:14px;overflow:hidden;aspect-ratio:5/6;background:linear-gradient(160deg,var(--navy) 0%,var(--navy-deep) 100%);border:1px solid var(--line);box-shadow:0 30px 70px rgba(0,0,0,0.4)}
+.look-figure img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:var(--navy-deep)}
+.plate{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:30px}
+.plate::before{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.02) 1px,transparent 1px);background-size:38px 38px;mask-image:radial-gradient(ellipse 70% 70% at 50% 50%,#000,transparent)}
+.plate img{width:74px;height:74px;opacity:.85;margin-bottom:14px;position:relative}
+.plate-letter{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:600;font-size:clamp(120px,18vw,210px);line-height:.8;color:transparent;-webkit-text-stroke:1.2px rgba(201,162,75,0.45);position:relative}
+.plate-cap{font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-top:10px;position:relative}
+.fig-tag{position:absolute;top:18px;left:18px;z-index:3;font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--white);background:rgba(11,20,34,0.7);border:1px solid var(--line);padding:6px 12px;border-radius:20px;backdrop-filter:blur(6px)}
+.look-spec{position:relative}
+.look-letter{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:600;font-size:clamp(72px,9vw,120px);line-height:.8;color:transparent;-webkit-text-stroke:1px rgba(201,162,75,0.4);position:absolute;top:-46px;right:0;pointer-events:none;user-select:none}
+.look-kicker{font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:4px;text-transform:uppercase;color:var(--red-glow);margin-bottom:8px}
+.look-name{font-family:'Bebas Neue',sans-serif;font-size:clamp(40px,5vw,60px);letter-spacing:1.5px;line-height:1;margin-bottom:4px}
+.look-kind{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:23px;color:var(--gold-soft);margin-bottom:18px}
+.split-rule{height:2px;width:140px;margin-bottom:20px;background:linear-gradient(90deg,var(--red) 0 50%,var(--navy) 50% 100%)}
+.look-worn{font-size:14.5px;color:rgba(255,255,255,0.6);line-height:1.6;margin-bottom:30px;max-width:440px}
+.look-worn b{color:var(--text);font-weight:600}
+.pieces-head{font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:2.5px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;display:flex;align-items:center;gap:10px}
+.pieces-head::after{content:'';flex:1;height:1px;background:var(--line-soft)}
+.piece{display:flex;align-items:center;gap:16px;padding:15px 0;border-bottom:1px solid var(--line-soft)}
+.piece:last-child{border-bottom:none}
+.piece-main{flex:1;min-width:0}
+.piece-name{font-size:15.5px;font-weight:600;color:var(--text);letter-spacing:.2px}
+.piece-detail{font-size:13px;color:var(--muted);line-height:1.45;margin-top:2px}
+.piece-side{display:flex;align-items:center;gap:12px;flex-shrink:0}
+.piece-price{font-family:'Barlow Condensed',sans-serif;font-size:15px;letter-spacing:.5px;color:var(--gold-soft);white-space:nowrap}
+.tag-issued{font-family:'Barlow Condensed',sans-serif;font-size:10.5px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--gold);background:rgba(201,162,75,0.1);border:1px solid rgba(201,162,75,0.25);padding:5px 11px;border-radius:20px;white-space:nowrap}
+.tag-rig{font-family:'Barlow Condensed',sans-serif;font-size:10.5px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);background:rgba(255,255,255,0.03);border:1px solid var(--line);padding:5px 11px;border-radius:20px;white-space:nowrap;text-decoration:none;transition:all .25s}
+.tag-rig:hover{color:var(--white);border-color:var(--gold)}
+.buy{display:inline-flex;align-items:center;gap:7px;font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink);background:var(--gold);padding:8px 16px;border-radius:7px;text-decoration:none;transition:all .25s;white-space:nowrap}
+.buy:hover{background:var(--gold-soft);transform:translateY(-1px);box-shadow:0 6px 18px rgba(201,162,75,0.25)}
+.buy svg{width:13px;height:13px}
+
+/* ════ THE RIG ════ */
+.rig{padding:80px 0;border-top:1px solid var(--line-soft);position:relative}
+.section-open{text-align:center;margin-bottom:50px}
+.section-open .so-kicker{font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:4px;text-transform:uppercase;color:var(--red-glow);margin-bottom:14px}
+.section-open .so-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(38px,6vw,58px);letter-spacing:2px;line-height:1}
+.section-open .so-title em{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:500;letter-spacing:0;color:var(--gold-soft);text-transform:none}
+.section-open .so-sub{font-family:'Cormorant Garamond',serif;font-size:19px;color:rgba(255,255,255,0.6);max-width:560px;margin:16px auto 0;line-height:1.5}
+.rig-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
+.rig-card{background:var(--card);border:1px solid var(--card-border);border-radius:12px;padding:20px 22px;transition:all .3s;display:flex;flex-direction:column;gap:6px;min-height:120px}
+.rig-card:hover{background:rgba(255,255,255,0.04);border-color:var(--line);transform:translateY(-3px)}
+.rig-card .rc-name{font-size:15.5px;font-weight:600}
+.rig-card .rc-detail{font-size:13px;color:var(--muted);line-height:1.5;flex:1}
+.rig-card .rc-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:6px}
+
+/* ════ COUPONS ════ */
+.perks{padding:80px 0;border-top:1px solid var(--line-soft)}
+.perks-wrap{background:linear-gradient(150deg,rgba(201,162,75,0.07),rgba(11,20,34,0.2));border:1px solid rgba(201,162,75,0.2);border-radius:18px;padding:48px clamp(28px,5vw,56px);position:relative;overflow:hidden}
+.perks-wrap::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent)}
+.perks-head{display:flex;align-items:baseline;justify-content:space-between;gap:20px;flex-wrap:wrap;margin-bottom:8px}
+.perks-head h2{font-family:'Bebas Neue',sans-serif;font-size:clamp(30px,4vw,44px);letter-spacing:1.5px}
+.perks-head .ph-note{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:18px;color:var(--gold-soft)}
+.perks-sub{font-size:14.5px;color:rgba(255,255,255,0.6);max-width:620px;line-height:1.6;margin-bottom:34px}
+.coupon-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+.coupon{background:rgba(11,20,34,0.5);border:1px solid var(--line);border-radius:14px;padding:24px;position:relative;transition:all .3s}
+.coupon:hover{border-color:rgba(201,162,75,0.35)}
+.coupon-vendor{font-family:'Barlow Condensed',sans-serif;font-size:13px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:14px}
+.coupon-code{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.coupon-code .code{font-family:'Bebas Neue',sans-serif;font-size:30px;letter-spacing:3px;color:var(--gold-soft)}
+.copy-btn{background:rgba(255,255,255,0.05);border:1px solid var(--line);color:var(--muted);border-radius:7px;padding:7px 9px;cursor:pointer;transition:all .25s;display:flex;align-items:center;justify-content:center}
+.copy-btn:hover{color:var(--white);border-color:var(--gold)}
+.copy-btn svg{width:14px;height:14px}
+.copy-btn.copied{color:var(--gold);border-color:var(--gold)}
+.coupon-detail{font-size:13.5px;color:rgba(255,255,255,0.6);line-height:1.5}
+.coupon-detail a{color:var(--gold-soft);text-decoration:none;border-bottom:1px solid rgba(201,162,75,0.3)}
+.coupon-empty{text-align:center;padding:36px 24px;color:var(--muted);font-size:15px;line-height:1.6;border:1px dashed var(--line);border-radius:14px}
+.coupon-empty b{color:var(--text);font-weight:600;display:block;font-family:'Cormorant Garamond',serif;font-style:italic;font-size:21px;margin-bottom:6px}
+
+/* ════ FINISHING ════ */
+.finishing{padding:80px 0;border-top:1px solid var(--line-soft)}
+.finish-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:0;border:1px solid var(--line-soft);border-radius:14px;overflow:hidden}
+.finish-item{padding:30px 28px;border-right:1px solid var(--line-soft);border-bottom:1px solid var(--line-soft)}
+.finish-item .fi-label{font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:2.5px;text-transform:uppercase;color:var(--gold);margin-bottom:12px}
+.finish-item .fi-text{font-size:14px;color:rgba(255,255,255,0.7);line-height:1.6}
+
+/* ════ FOOT NOTE ════ */
+.standard-note{padding:50px 0 70px;text-align:center}
+.standard-note p{font-size:13.5px;color:var(--muted);max-width:680px;margin:0 auto;line-height:1.7}
+.standard-note a{color:var(--gold-soft);text-decoration:none;border-bottom:1px solid rgba(201,162,75,0.3)}
+
+.reveal{opacity:0;transform:translateY(26px);transition:opacity .8s ease,transform .8s ease}
+.reveal.in{opacity:1;transform:none}
+
+@media(max-width:900px){
+  .nav-links{display:none}.hamburger{display:flex}
+  .look-grid,.look.reverse .look-grid{grid-template-columns:1fr;gap:34px}
+  .look.reverse .look-figure{order:0}
+  .look-letter{display:none}
+  .look-figure{aspect-ratio:5/6;max-width:440px;margin:0 auto;width:100%}
+}
+@media(max-width:560px){
+  .container{padding:0 20px}
+  .hero-classes{flex-wrap:wrap}.hero-class{flex:1 1 40%;border-bottom:1px solid var(--line)}
+  .piece{flex-wrap:wrap;gap:10px}.piece-side{width:100%;justify-content:flex-start}
+  .finish-item{border-right:none}
+}
+@media(prefers-reduced-motion:reduce){
+  .reveal{opacity:1;transform:none;transition:none}
+  .scroll-cue span{animation:none}
+}
+</style>
+</head>
+<body>
+
+<div id="site-nav"></div>
+
+<!-- ════════ LOCK ════════ -->
+<div class="lock-screen" id="lockScreen">
+  <div class="lock-bg"><img src="photo_hallway.jpg" alt=""></div>
+  <div class="lock-card">
+    <div class="lock-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+    <h2 class="lock-title">Cadets Only</h2>
+    <p class="lock-subtitle">The uniform standard is for unit members.<br>Enter your unit passcode to continue.</p>
+    <input type="password" class="lock-input" id="passcodeInput" placeholder="Enter passcode" autocomplete="off" autofocus>
+    <button class="lock-btn" id="unlockBtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>Unlock</button>
+    <div class="lock-error" id="lockError">Incorrect passcode. Please try again.</div>
+    <div class="lock-home"><a href="members.html"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Back to Members</a></div>
+  </div>
+</div>
+
+<!-- ════════ LOOKBOOK (revealed after unlock) ════════ -->
+<div class="uni-shell" id="uniShell">
+
+  <header class="hero">
+    <div class="hero-bg"><img src="photo_hallway.jpg" alt=""></div>
+    <div class="hero-grid"></div>
+    <div class="hero-inner">
+      <div class="container">
+        <div class="hero-eyebrow">Richardson Police · Public Safety Cadets</div>
+        <h1 class="hero-title">
+          <span class="hero-the">The</span>
+          <span class="hero-word">Uniform</span>
+        </h1>
+        <p class="hero-sub">One standard, worn the same by every cadet. <em>From the dress uniform to the polo to PT,</em> and exactly where to find every piece.</p>
+        <div class="hero-classes">
+          <a class="hero-class" href="#class-a"><div class="hc-letter">A</div><div class="hc-name">Dress</div></a>
+          <a class="hero-class" href="#class-b"><div class="hc-letter">B</div><div class="hc-name">Duty</div></a>
+          <a class="hero-class" href="#class-c"><div class="hc-letter">C</div><div class="hc-name">Polo</div></a>
+          <a class="hero-class" href="#class-d"><div class="hc-letter">D</div><div class="hc-name">Shirt</div></a>
+          <a class="hero-class" href="#pt"><div class="hc-letter">PT</div><div class="hc-name">Training</div></a>
+        </div>
+      </div>
+    </div>
+    <div class="scroll-cue">Scroll<span></span></div>
+  </header>
+
+  <section class="creed">
+    <div class="container">
+      <div class="creed-rule reveal"></div>
+      <p class="reveal">Cadet uniforms are distinctly different from those issued to sworn officers. Personal appearance and wear of the uniform follow department policy. <em>The standards below may be modified by appendix; where an appendix conflicts, the appendix controls.</em></p>
+      <div class="creed-cite reveal">From the Cadet General Orders · Uniform Appendix</div>
+    </div>
+  </section>
+
+  <main class="looks" id="looksMount"></main>
+
+  <section class="rig" id="the-rig">
+    <div class="container">
+      <div class="section-open reveal">
+        <div class="so-kicker">Worn With A, B, C &amp; D</div>
+        <h2 class="so-title">The <em>Rig</em></h2>
+        <p class="so-sub">The duty belt is built the same way on every cadet. Most of it is issued by the unit; a few pieces you provide yourself.</p>
+      </div>
+      <div class="rig-grid" id="rigMount"></div>
+    </div>
+  </section>
+
+  <section class="perks" id="discounts">
+    <div class="container">
+      <div class="perks-wrap reveal">
+        <div class="perks-head">
+          <h2>Cadet Discounts</h2>
+          <span class="ph-note">show your status, save on gear</span>
+        </div>
+        <p class="perks-sub">When a vendor offers a discount to Richardson cadets, the code lives here. Tap a code to copy it, then use it at checkout on that vendor's site.</p>
+        <div class="coupon-grid" id="couponMount"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="finishing" id="finishing">
+    <div class="container">
+      <div class="section-open reveal">
+        <div class="so-kicker">The Details</div>
+        <h2 class="so-title">Finishing the <em>Look</em></h2>
+        <p class="so-sub">The uniform is only half of it. These hold to department standard at every meeting and event.</p>
+      </div>
+      <div class="finish-grid reveal" id="finishMount"></div>
+    </div>
+  </section>
+
+  <section class="standard-note">
+    <div class="container">
+      <p class="reveal">Issued vs. purchased status and placement of patches, badges, and award bars follow the quartermaster list and the uniform appendix. Questions on sizing or fit go to your squad sergeant or the quartermaster. Email <a href="mailto:advisors@rpdcadets.com">advisors@rpdcadets.com</a>.</p>
+    </div>
+  </section>
+
+  <div id="site-footer" data-style="full"></div>
+</div>
+
+<script src="roster.js?v=13"></script>
+<script>
+/* ══════════════════════════════════════════════════════════════════
+   DEFAULT_UNIFORMS — starting point and offline fallback only.
+   The live, editable copy lives in the Admin Console under
+   "Uniform Standards" and is stored in Firebase. This page reads that
+   copy after you unlock; if Firebase has nothing yet (or is briefly
+   unreachable), it falls back to this so the page always renders.
+   ══════════════════════════════════════════════════════════════════ */
+const DEFAULT_UNIFORMS = {
+  looks: [
+    {
+      id: 'class-a', letter: 'A', name: 'Class A', kind: 'The Dress Uniform',
+      worn: 'The sharpest the unit looks. Worn for <b>ceremonies, formal inspection, competition openings, and official visits.</b>',
+      image: 'uniform_class_a.jpg',
+      pieces: [
+        { name: 'Long-Sleeve Gray Shirt', detail: 'Pressed and buttoned, worn with the tie.', issued: true, price: '', url: '' },
+        { name: 'Black Necktie', detail: 'Solid black, conservative knot.', issued: false, price: '', url: '' },
+        { name: 'Black Dress Trousers', detail: 'Plain black, no cargo pockets.', issued: false, price: '', url: '' },
+        { name: 'Silver Nameplate', detail: 'Last name, worn above the right pocket.', issued: false, price: '', url: '' },
+        { name: 'Award & Ribbon Bar', detail: 'Earned awards, above the left pocket.', issued: true, price: '', url: '' },
+        { name: 'Shoulder Patches & Insignia', detail: 'Placed per the uniform appendix.', issued: true, price: '', url: '' },
+        { name: 'Polishable Boots', detail: 'Solid black, mirror shine.', issued: false, price: '', url: '' },
+        { name: 'The Duty Belt', detail: 'Built per the rig below.', issued: true, price: '', url: '', rig: true }
+      ]
+    },
+    {
+      id: 'class-b', letter: 'B', name: 'Class B', kind: 'The Duty Uniform',
+      worn: 'The working uniform. Worn for <b>weekly meetings, training nights, ride-alongs, and most events.</b> If a day does not say otherwise, it is a Class B day.',
+      image: 'uniform_class_b.jpg',
+      pieces: [
+        { name: 'Short-Sleeve Gray Shirt', detail: 'Standard duty shirt, no tie.', issued: true, price: '', url: '' },
+        { name: 'Navy BDU Pants', detail: 'Tactical cargo cut.', issued: false, price: '', url: '' },
+        { name: 'Silver Nameplate', detail: 'Last name, above the right pocket.', issued: false, price: '', url: '' },
+        { name: 'Shoulder Patches & Insignia', detail: 'Placed per the uniform appendix.', issued: true, price: '', url: '' },
+        { name: 'Polishable Boots', detail: 'Solid black, kept polished.', issued: false, price: '', url: '' },
+        { name: 'The Duty Belt', detail: 'Built per the rig below.', issued: true, price: '', url: '', rig: true }
+      ]
+    },
+    {
+      id: 'class-c', letter: 'C', name: 'Class C', kind: 'The Polo',
+      worn: 'A clean, simple standard. Worn for <b>community details, lighter-duty days, and casual events.</b>',
+      image: 'uniform_class_c.jpg',
+      pieces: [
+        { name: 'Black Program Polo', detail: 'Embroidered cadet polo.', issued: false, price: '', url: '' },
+        { name: 'Navy BDU Pants', detail: 'Same trousers as Class B.', issued: false, price: '', url: '' },
+        { name: 'Polishable Boots', detail: 'Solid black.', issued: false, price: '', url: '' },
+        { name: 'The Duty Belt', detail: 'Built per the rig below.', issued: true, price: '', url: '', rig: true }
+      ]
+    },
+    {
+      id: 'class-d', letter: 'D', name: 'Class D', kind: 'Shirt & BDU',
+      worn: 'The field standard. Worn for <b>hands-on training, hot-weather days, and physical scenarios.</b>',
+      image: 'uniform_class_d.jpg',
+      pieces: [
+        { name: 'Navy Program T-Shirt', detail: 'Cadet tee with the chest emblem.', issued: false, price: '', url: '' },
+        { name: 'Navy BDU Pants', detail: 'Same trousers as Class B and C.', issued: false, price: '', url: '' },
+        { name: 'Polishable Boots', detail: 'Solid black.', issued: false, price: '', url: '' },
+        { name: 'The Duty Belt', detail: 'Built per the rig below.', issued: true, price: '', url: '', rig: true }
+      ]
+    },
+    {
+      id: 'pt', letter: 'PT', kicker: 'Physical Training', name: 'PT Uniform', kind: 'Physical Training',
+      worn: 'Worn for <b>PT, fitness testing, and conditioning.</b> No duty belt. Light, simple, and the same on everyone.',
+      image: 'uniform_pt.jpg',
+      pieces: [
+        { name: 'Navy Program T-Shirt', detail: 'Same cadet tee as Class D.', issued: false, price: '', url: '' },
+        { name: 'Navy Athletic Shorts', detail: 'Plain navy athletic cut.', issued: false, price: '', url: '' },
+        { name: 'Black Athletic Shoes', detail: 'Solid black, with black socks.', issued: false, price: '', url: '' }
+      ]
+    }
+  ],
+  rig: [
+    { name: 'Inner Belt', detail: 'Velcro base belt, worn through the loops.', issued: true, url: '' },
+    { name: 'Outer Belt', detail: 'Duty belt that carries the gear.', issued: true, url: '' },
+    { name: 'Belt Keepers (x4)', detail: 'Lock the outer belt to the inner.', issued: true, url: '' },
+    { name: 'Training Handgun + Holster', detail: 'Inert blue training replica.', issued: true, url: '' },
+    { name: 'Training Taser + Holster', detail: 'Inert blue training replica.', issued: true, url: '' },
+    { name: 'Handcuff Pouch', detail: 'Carries the cuffs on the belt.', issued: true, url: '' },
+    { name: 'Handcuffs & Key', detail: 'Standard chain or hinged cuffs.', issued: false, url: '' },
+    { name: 'Flashlight', detail: 'Belt-carried, per the appearance standard.', issued: false, url: '' }
+  ],
+  coupons: [],
+  finishing: [
+    { label: 'Hair', text: 'Neat and off the collar. Natural colors. Long hair secured back.' },
+    { label: 'Face', text: 'Clean-shaven or neatly trimmed to department standard.' },
+    { label: 'Hands', text: 'Clean, trimmed nails. No distracting jewelry or watches.' },
+    { label: 'Boots', text: 'Polished to a shine before every meeting and event.' }
+  ]
+};
+
+const PLATE_LOGO = 'logo_transparent.png';
+const SESSION_KEY = 'rpd761_auth';      // shared cadet session (same as Members/Trackers)
+const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function pieceRow(p){
+  let side = '';
+  if(p.rig){
+    side = `<a class="tag-rig" href="#the-rig">The Rig ↓</a>`;
+  } else if(p.issued){
+    side = `<span class="tag-issued">Issued</span>`;
+  } else {
+    if(p.price) side += `<span class="piece-price">${esc(p.price)}</span>`;
+    if(p.url)   side += `<a class="buy" href="${esc(p.url)}" target="_blank" rel="noopener">Buy
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M7 17L17 7M9 7h8v8"/></svg></a>`;
+  }
+  const detail = p.detail ? `<div class="piece-detail">${esc(p.detail)}</div>` : '';
+  return `<div class="piece"><div class="piece-main"><div class="piece-name">${esc(p.name)}</div>${detail}</div>
+    <div class="piece-side">${side}</div></div>`;
+}
+
+function renderLooks(U){
+  document.getElementById('looksMount').innerHTML = (U.looks||[]).map((L, i) => {
+    const reverse = i % 2 === 1;
+    const kicker = L.kicker || ('Class ' + L.letter);
+    const figure = L.image
+      ? `<img src="${esc(L.image)}" alt="${esc(L.name)} uniform, ${esc(L.kind)}">`
+      : `<div class="plate"><img src="${PLATE_LOGO}" alt=""><div class="plate-letter">${esc(L.letter)}</div><div class="plate-cap">${esc(L.name)} · ${esc(L.kind)}</div></div>`;
+    return `<section class="look ${reverse ? 'reverse' : ''} reveal" id="${esc(L.id)}">
+      <div class="container"><div class="look-grid">
+        <div class="look-figure"><span class="fig-tag">${esc(L.name)}</span>${figure}</div>
+        <div class="look-spec">
+          <div class="look-letter">${esc(L.letter)}</div>
+          <div class="look-kicker">${esc(kicker)}</div>
+          <h2 class="look-name">${esc(L.name)}</h2>
+          <div class="look-kind">${esc(L.kind)}</div>
+          <div class="split-rule"></div>
+          <p class="look-worn">${L.worn||''}</p>
+          <div class="pieces-head">The Pieces</div>
+          ${(L.pieces||[]).map(pieceRow).join('')}
+        </div>
+      </div></div>
+    </section>`;
+  }).join('');
+}
+
+function renderRig(U){
+  document.getElementById('rigMount').innerHTML = (U.rig||[]).map(r => {
+    let foot = r.issued ? `<span class="tag-issued">Issued</span>`
+      : (r.url ? `<a class="buy" href="${esc(r.url)}" target="_blank" rel="noopener">Buy
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M7 17L17 7M9 7h8v8"/></svg></a>`
+              : `<span class="tag-rig" style="cursor:default">Cadet provides</span>`);
+    return `<div class="rig-card reveal">
+      <div class="rc-name">${esc(r.name)}</div>
+      <div class="rc-detail">${esc(r.detail)}</div>
+      <div class="rc-foot">${foot}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderCoupons(U){
+  const mount = document.getElementById('couponMount');
+  const coupons = U.coupons || [];
+  if(!coupons.length){
+    mount.innerHTML = `<div class="coupon-empty" style="grid-column:1/-1"><b>No codes just yet.</b>When a vendor offers a Richardson cadet discount, it will show up right here.</div>`;
+    return;
+  }
+  mount.innerHTML = coupons.map((c) => {
+    const link = c.url ? ` <a href="${esc(c.url)}" target="_blank" rel="noopener">${esc(c.vendor)}</a>.` : '';
+    return `<div class="coupon">
+      <div class="coupon-vendor">${esc(c.vendor)}</div>
+      <div class="coupon-code">
+        <span class="code">${esc(c.code)}</span>
+        <button class="copy-btn" data-code="${esc(c.code)}" aria-label="Copy code">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        </button>
+      </div>
+      <div class="coupon-detail">${esc(c.detail)}${link}</div>
+    </div>`;
+  }).join('');
+  mount.querySelectorAll('.copy-btn').forEach(btn => btn.addEventListener('click', () => {
+    navigator.clipboard?.writeText(btn.dataset.code).then(() => {
+      btn.classList.add('copied');
+      btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg>`;
+      setTimeout(() => {
+        btn.classList.remove('copied');
+        btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
+      }, 1600);
+    });
+  }));
+}
+
+function renderFinishing(U){
+  document.getElementById('finishMount').innerHTML = (U.finishing||[]).map(f =>
+    `<div class="finish-item"><div class="fi-label">${esc(f.label)}</div><div class="fi-text">${esc(f.text)}</div></div>`
+  ).join('');
+}
+
+function renderAll(U){
+  renderLooks(U); renderRig(U); renderCoupons(U); renderFinishing(U);
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } });
+  }, { threshold: 0.12, rootMargin: '0px 0px -8% 0px' });
+  document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+}
+
+/* ── unlock + load ──────────────────────────────────────────────── */
+(function(){
+  const lock  = document.getElementById('lockScreen');
+  const shell = document.getElementById('uniShell');
+  const input = document.getElementById('passcodeInput');
+  const error = document.getElementById('lockError');
+  let opened = false;
+
+  async function loadAndShow(){
+    if(opened) return;
+    opened = true;
+    let U = null;
+    try { U = await RPDRoster.uniforms.get(); } catch(e){ U = null; }   // Firebase never blocks the page
+    renderAll(U || DEFAULT_UNIFORMS);
+    lock.style.display = 'none';
+    shell.classList.add('on');
+    if(typeof buildNav === 'function') buildNav();
+    if(typeof buildFooter === 'function') buildFooter();
+  }
+
+  async function tryPass(pass){
+    const entered = String(pass||'').trim().toLowerCase();
+    if(!entered) return false;
+    try {
+      const res = await RPDRoster.connect({ passcode: entered, role: 'cadet' });
+      if(res && res.ok){
+        sessionStorage.setItem(SESSION_KEY, entered);
+        await loadAndShow();
+        return true;
+      }
+    } catch(e){}
+    return false;
+  }
+
+  async function unlock(){
+    if(await tryPass(input.value)) return;
+    error.classList.add('show');
+    input.value = ''; input.focus();
+    const c = document.querySelector('.lock-card');
+    c.style.animation = 'none'; c.offsetHeight; c.style.animation = 'shake .5s ease';
+  }
+
+  document.getElementById('unlockBtn').addEventListener('click', unlock);
+  input.addEventListener('keydown', e => { if(e.key === 'Enter') unlock(); error.classList.remove('show'); });
+
+  // Auto-unlock if the cadet already signed in on Members/Training/Trackers.
+  const saved = sessionStorage.getItem(SESSION_KEY);
+  if(saved) tryPass(saved);
+})();
+</script>
+<script src="shared.js"></script>
+</body>
+</html>

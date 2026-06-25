@@ -347,6 +347,12 @@
     },
     attendance: {
       get: attendanceGet, saveSession: attendanceSaveSession
+    },
+    // ── Uniform Standards: shared roster key, node roster/uniforms ──
+    // Read by the Uniforms page (cadet passcode), written from /admin
+    // (advisor passcode). Same model as the officers list.
+    uniforms: {
+      get: uniformsGet, save: uniformsSave
     }
   };
 
@@ -439,5 +445,23 @@
     const data = await keyEncrypt(JSON.stringify(all), rosterKey);
     await db.ref(ROOT + '/attendance').set(data);
     return all;
+  }
+
+  // Uniform Standards — encrypted under the SHARED roster key, node
+  // roster/uniforms. The Uniforms page reads it with the cadet passcode;
+  // /admin writes it with the advisor passcode (advisor holds the roster
+  // key too). Lives under the already-permitted roster node, so no extra
+  // Firebase rule is required. Returns null when nothing has been saved
+  // yet, so the page can fall back to its built-in default.
+  async function uniformsGet() {
+    if (!rosterKey) return null;
+    const blob = await once('uniforms');
+    if (!blob) return null;
+    try { return JSON.parse(await keyDecrypt(blob, rosterKey)); } catch (e) { return null; }
+  }
+  async function uniformsSave(obj) {
+    if (!rosterKey) throw new Error('roster locked');
+    const data = await keyEncrypt(JSON.stringify(obj), rosterKey);
+    await db.ref(ROOT + '/uniforms').set(data);
   }
 })(window);

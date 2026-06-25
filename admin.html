@@ -253,6 +253,37 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
 .cat-add-size:hover{color:var(--white);border-color:rgba(255,255,255,0.2)}
 .cat-size-note{font-size:11px;color:var(--text-muted);font-weight:400;letter-spacing:0;text-transform:none}
 @media(max-width:640px){.cat-main{grid-template-columns:1fr 36px;grid-auto-rows:auto}.cat-main select,.cat-onhand{grid-column:1 / -1}}
+
+/* ── Uniform Standards editor ── */
+.uni-sec{background:var(--card-bg);border:1px solid var(--card-border);border-radius:14px;padding:22px;margin-bottom:16px}
+.uni-sec-head{display:flex;align-items:center;gap:12px;margin-bottom:6px}
+.uni-sec-badge{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:1px;color:var(--gold);min-width:34px;text-align:center}
+.uni-sec-title{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:16px;letter-spacing:1px}
+.uni-sec-kind{font-size:12px;color:var(--text-muted);letter-spacing:.5px}
+.uni-img-field{display:flex;align-items:center;gap:10px;margin:12px 0 16px}
+.uni-img-field label{font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted);white-space:nowrap}
+.uni-img-field input{flex:1;background:var(--input-bg);border:1px solid var(--input-border);border-radius:8px;padding:9px 12px;color:var(--white);font-family:'Barlow',sans-serif;font-size:13px;outline:none}
+.uni-img-field input:focus{border-color:var(--input-focus,rgba(212,169,82,0.5))}
+.uni-piece{display:grid;grid-template-columns:1.1fr 1.4fr auto;gap:8px;align-items:start;padding:10px 0;border-top:1px solid var(--card-border)}
+.uni-piece input{width:100%;background:var(--input-bg);border:1px solid var(--input-border);border-radius:8px;padding:9px 11px;color:var(--white);font-family:'Barlow',sans-serif;font-size:13px;outline:none}
+.uni-piece input:focus{border-color:var(--input-focus,rgba(212,169,82,0.5))}
+.uni-piece .uni-buyrow{grid-column:1 / 3;display:flex;gap:8px}
+.uni-piece .uni-buyrow .uni-price{max-width:90px}
+.uni-piece-ctl{display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+.uni-toggle{font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;padding:8px 12px;border-radius:8px;cursor:pointer;border:1px solid var(--input-border);background:var(--input-bg);color:var(--text-muted);white-space:nowrap;min-width:104px;text-align:center}
+.uni-toggle.issued{background:rgba(212,169,82,0.14);border-color:rgba(212,169,82,0.35);color:var(--gold)}
+.uni-toggle.buy{background:rgba(255,255,255,0.04);color:var(--white)}
+.uni-del{background:none;border:none;color:var(--text-muted);font-size:20px;line-height:1;cursor:pointer;padding:4px 8px;border-radius:6px}
+.uni-del:hover{color:var(--red);background:rgba(192,57,43,0.1)}
+.uni-add{background:none;border:1px dashed var(--card-border);color:var(--text-muted);border-radius:8px;padding:9px 14px;font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;margin-top:12px}
+.uni-add:hover{color:var(--white);border-color:rgba(255,255,255,0.25)}
+.uni-grouphead{font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--text-muted);margin:26px 0 12px;display:flex;align-items:center;gap:10px}
+.uni-grouphead::after{content:'';flex:1;height:1px;background:var(--card-border)}
+.uni-coupon{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;padding:10px 0;border-top:1px solid var(--card-border)}
+.uni-coupon input{width:100%;background:var(--input-bg);border:1px solid var(--input-border);border-radius:8px;padding:9px 11px;color:var(--white);font-family:'Barlow',sans-serif;font-size:13px;outline:none}
+.uni-coupon input:focus{border-color:var(--input-focus,rgba(212,169,82,0.5))}
+.uni-coupon .uni-wide{grid-column:1 / 3}
+@media(max-width:680px){.uni-piece{grid-template-columns:1fr auto}.uni-piece .uni-buyrow{grid-column:1 / -1}.uni-coupon{grid-template-columns:1fr auto}.uni-coupon .uni-wide{grid-column:1 / -1}}
 </style>
 </head>
 <body>
@@ -411,11 +442,28 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
     </div>
   </div>
 
+  <!-- UNIFORM STANDARDS (advisor passcode; writes shared-key roster/uniforms node) -->
+  <div class="view" id="uniformsView">
+    <div class="page-header">
+      <div class="section-label">Quartermaster Toolbox</div>
+      <h1 class="section-title">Uniform Standards</h1>
+      <p class="page-desc">What every cadet wears, and where to buy each piece. Edits here update the Uniforms page in the member resources. Changes save automatically.</p>
+    </div>
+    <div class="container">
+      <button class="back-link" id="uniBack"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Admin Console</button>
+      <div class="bar">
+        <div class="status-pill" id="uniPill"><span class="dot"></span><span id="uniPillText">Synced</span></div>
+        <span style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Edits sync to rpdcadets.com/uniforms</span>
+      </div>
+      <div id="uniBody"></div>
+    </div>
+  </div>
+
 </div>
 
 <div class="toast" id="toast"></div>
 
-<script src="roster.js?v=12"></script>
+<script src="roster.js?v=13"></script>
 <script>
 console.log('[admin] Build v13 — attendance roll-up');
 const SESSION_KEY = 'rpd761_admin_auth';   // advisor-only; NOT shared with cadet pages
@@ -439,6 +487,13 @@ const TOOLS = [
     desc: 'Define gear items, types, and on-hand counts. The Quartermaster page issues from this list.',
     icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7h-4V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/><path d="M10 5h4v2h-4z"/></svg>',
     open: openCatalog
+  },
+  {
+    id: 'uniforms',
+    name: 'Uniform Standards',
+    desc: 'Edit every uniform piece, price, buy link, image, and cadet discount code. Updates the Uniforms page in the member resources.',
+    icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.38 3.46L16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z"/></svg>',
+    open: openUniforms
   },
   {
     id: 'records',
@@ -808,6 +863,237 @@ async function catFlush(){
   catch(e){ setCatStatus('saving'); showToast('Save failed — check connection'); }
 }
 function setCatStatus(s){ const p=document.getElementById('catPill'); p.className='status-pill '+s; document.getElementById('catPillText').textContent = s==='saving'?'Saving':'Synced'; }
+
+/* ── UNIFORM STANDARDS (advisor passcode; writes shared-key roster/uniforms) ──
+   Future quartermasters edit every piece, price, buy link, image, and discount
+   code here. Saves to Firebase under the shared roster key; the Uniforms page
+   reads the same node. The four looks (A, B, C, PT) are fixed sections — their
+   contents are fully editable. Firebase is wrapped so a failed write never
+   throws past the save handler. UNI_SEED matches DEFAULT_UNIFORMS in
+   uniforms.html, used only until the first save exists. */
+const UNI_SEED = {
+  looks: [
+    { id:'class-a', letter:'A', name:'Class A', kind:'The Dress Uniform',
+      worn:'The sharpest the unit looks. Worn for <b>ceremonies, formal inspection, competition openings, and official visits.</b>', image:'uniform_class_a.jpg',
+      pieces:[
+        { name:'Long-Sleeve Gray Shirt', detail:'Pressed and buttoned, worn with the tie.', issued:true, price:'', url:'' },
+        { name:'Black Necktie', detail:'Solid black, conservative knot.', issued:false, price:'', url:'' },
+        { name:'Black Dress Trousers', detail:'Plain black, no cargo pockets.', issued:false, price:'', url:'' },
+        { name:'Silver Nameplate', detail:'Last name, worn above the right pocket.', issued:false, price:'', url:'' },
+        { name:'Award & Ribbon Bar', detail:'Earned awards, above the left pocket.', issued:true, price:'', url:'' },
+        { name:'Shoulder Patches & Insignia', detail:'Placed per the uniform appendix.', issued:true, price:'', url:'' },
+        { name:'Polishable Boots', detail:'Solid black, mirror shine.', issued:false, price:'', url:'' },
+        { name:'The Duty Belt', detail:'Built per the rig below.', issued:true, price:'', url:'', rig:true }
+      ] },
+    { id:'class-b', letter:'B', name:'Class B', kind:'The Duty Uniform',
+      worn:'The working uniform. Worn for <b>weekly meetings, training nights, ride-alongs, and most events.</b> If a day does not say otherwise, it is a Class B day.', image:'uniform_class_b.jpg',
+      pieces:[
+        { name:'Short-Sleeve Gray Shirt', detail:'Standard duty shirt, no tie.', issued:true, price:'', url:'' },
+        { name:'Navy BDU Pants', detail:'Tactical cargo cut.', issued:false, price:'', url:'' },
+        { name:'Silver Nameplate', detail:'Last name, above the right pocket.', issued:false, price:'', url:'' },
+        { name:'Shoulder Patches & Insignia', detail:'Placed per the uniform appendix.', issued:true, price:'', url:'' },
+        { name:'Polishable Boots', detail:'Solid black, kept polished.', issued:false, price:'', url:'' },
+        { name:'The Duty Belt', detail:'Built per the rig below.', issued:true, price:'', url:'', rig:true }
+      ] },
+    { id:'class-c', letter:'C', name:'Class C', kind:'The Polo',
+      worn:'A clean, simple standard. Worn for <b>community details, lighter-duty days, and casual events.</b>', image:'uniform_class_c.jpg',
+      pieces:[
+        { name:'Black Program Polo', detail:'Embroidered cadet polo.', issued:false, price:'', url:'' },
+        { name:'Navy BDU Pants', detail:'Same trousers as Class B.', issued:false, price:'', url:'' },
+        { name:'Polishable Boots', detail:'Solid black.', issued:false, price:'', url:'' },
+        { name:'The Duty Belt', detail:'Built per the rig below.', issued:true, price:'', url:'', rig:true }
+      ] },
+    { id:'class-d', letter:'D', name:'Class D', kind:'Shirt & BDU',
+      worn:'The field standard. Worn for <b>hands-on training, hot-weather days, and physical scenarios.</b>', image:'uniform_class_d.jpg',
+      pieces:[
+        { name:'Navy Program T-Shirt', detail:'Cadet tee with the chest emblem.', issued:false, price:'', url:'' },
+        { name:'Navy BDU Pants', detail:'Same trousers as Class B and C.', issued:false, price:'', url:'' },
+        { name:'Polishable Boots', detail:'Solid black.', issued:false, price:'', url:'' },
+        { name:'The Duty Belt', detail:'Built per the rig below.', issued:true, price:'', url:'', rig:true }
+      ] },
+    { id:'pt', letter:'PT', kicker:'Physical Training', name:'PT Uniform', kind:'Physical Training',
+      worn:'Worn for <b>PT, fitness testing, and conditioning.</b> No duty belt. Light, simple, and the same on everyone.', image:'uniform_pt.jpg',
+      pieces:[
+        { name:'Navy Program T-Shirt', detail:'Same cadet tee as Class D.', issued:false, price:'', url:'' },
+        { name:'Navy Athletic Shorts', detail:'Plain navy athletic cut.', issued:false, price:'', url:'' },
+        { name:'Black Athletic Shoes', detail:'Solid black, with black socks.', issued:false, price:'', url:'' }
+      ] }
+  ],
+  rig: [
+    { name:'Inner Belt', detail:'Velcro base belt, worn through the loops.', issued:true, url:'' },
+    { name:'Outer Belt', detail:'Duty belt that carries the gear.', issued:true, url:'' },
+    { name:'Belt Keepers (x4)', detail:'Lock the outer belt to the inner.', issued:true, url:'' },
+    { name:'Training Handgun + Holster', detail:'Inert blue training replica.', issued:true, url:'' },
+    { name:'Training Taser + Holster', detail:'Inert blue training replica.', issued:true, url:'' },
+    { name:'Handcuff Pouch', detail:'Carries the cuffs on the belt.', issued:true, url:'' },
+    { name:'Handcuffs & Key', detail:'Standard chain or hinged cuffs.', issued:false, url:'' },
+    { name:'Flashlight', detail:'Belt-carried, per the appearance standard.', issued:false, url:'' }
+  ],
+  coupons: [],
+  finishing: [
+    { label:'Hair', text:'Neat and off the collar. Natural colors. Long hair secured back.' },
+    { label:'Face', text:'Clean-shaven or neatly trimmed to department standard.' },
+    { label:'Hands', text:'Clean, trimmed nails. No distracting jewelry or watches.' },
+    { label:'Boots', text:'Polished to a shine before every meeting and event.' }
+  ]
+};
+
+let uniData = null, uniDirty = false, uniSaveTimer = null;
+
+async function openUniforms(){
+  showView('uniformsView');
+  document.getElementById('uniBody').innerHTML = '<p style="color:var(--text-muted);padding:20px 4px">Loading…</p>';
+  let u = null;
+  try { u = await RPDRoster.uniforms.get(); } catch(e){ u = null; }   // never let Firebase block the editor
+  uniData = u ? normalizeUni(u) : JSON.parse(JSON.stringify(UNI_SEED));
+  renderUniforms();
+  setUniStatus('synced');
+}
+
+function normalizeUni(u){
+  u = u || {};
+  u.looks = Array.isArray(u.looks) ? u.looks : [];
+  u.rig = Array.isArray(u.rig) ? u.rig : [];
+  u.coupons = Array.isArray(u.coupons) ? u.coupons : [];
+  u.finishing = Array.isArray(u.finishing) ? u.finishing : [];
+  u.looks.forEach(L => { L.pieces = Array.isArray(L.pieces) ? L.pieces : []; });
+  return u;
+}
+
+function uniPieceEditor(p, pi){
+  const issued = !!p.issued, isRig = !!p.rig;
+  const ctl = isRig
+    ? `<span class="uni-toggle" style="cursor:default">→ The Rig</span>`
+    : `<button class="uni-toggle ${issued?'issued':'buy'}" data-act="toggle" type="button">${issued?'Issued':'Cadet buys'}</button>`;
+  const buyRow = (!issued && !isRig)
+    ? `<div class="uni-buyrow"><input class="uni-price" type="text" data-f="price" value="${escapeHtmlA(p.price||'')}" placeholder="$ price">
+         <input type="text" data-f="url" value="${escapeHtmlA(p.url||'')}" placeholder="Where to buy (link)"></div>`
+    : '';
+  return `<div class="uni-piece" data-piece="${pi}">
+    <input type="text" data-f="name" value="${escapeHtmlA(p.name||'')}" placeholder="Piece name">
+    <input type="text" data-f="detail" value="${escapeHtmlA(p.detail||'')}" placeholder="Short detail">
+    <div class="uni-piece-ctl">${ctl}<button class="uni-del" data-act="del" type="button" title="Remove">&times;</button></div>
+    ${buyRow}
+  </div>`;
+}
+
+function uniRigEditor(r, ri){
+  const issued = !!r.issued;
+  const buyRow = !issued
+    ? `<div class="uni-buyrow"><input type="text" data-f="url" value="${escapeHtmlA(r.url||'')}" placeholder="Where to buy (link)"></div>`
+    : '';
+  return `<div class="uni-piece" data-rig="${ri}">
+    <input type="text" data-f="name" value="${escapeHtmlA(r.name||'')}" placeholder="Piece name">
+    <input type="text" data-f="detail" value="${escapeHtmlA(r.detail||'')}" placeholder="Short detail">
+    <div class="uni-piece-ctl"><button class="uni-toggle ${issued?'issued':'buy'}" data-act="toggle" type="button">${issued?'Issued':'Cadet buys'}</button><button class="uni-del" data-act="del" type="button" title="Remove">&times;</button></div>
+    ${buyRow}
+  </div>`;
+}
+
+function uniCouponEditor(c, ci){
+  return `<div class="uni-coupon" data-coupon="${ci}">
+    <input type="text" data-f="vendor" value="${escapeHtmlA(c.vendor||'')}" placeholder="Vendor name">
+    <input type="text" data-f="code" value="${escapeHtmlA(c.code||'')}" placeholder="CODE">
+    <button class="uni-del" data-act="del" type="button" title="Remove">&times;</button>
+    <input class="uni-wide" type="text" data-f="detail" value="${escapeHtmlA(c.detail||'')}" placeholder="What the discount is (e.g. 15% off duty gear)">
+    <input class="uni-wide" type="text" data-f="url" value="${escapeHtmlA(c.url||'')}" placeholder="Vendor link (optional)">
+  </div>`;
+}
+
+function uniFinEditor(f, fi){
+  return `<div class="uni-coupon" data-fin="${fi}">
+    <input type="text" data-f="label" value="${escapeHtmlA(f.label||'')}" placeholder="Label">
+    <input type="text" data-f="text" value="${escapeHtmlA(f.text||'')}" placeholder="Standard text">
+    <button class="uni-del" data-act="del" type="button" title="Remove">&times;</button>
+  </div>`;
+}
+
+function renderUniforms(){
+  const body = document.getElementById('uniBody');
+  let html = '';
+  uniData.looks.forEach((L, li) => {
+    html += `<div class="uni-sec" data-look="${li}">
+      <div class="uni-sec-head"><span class="uni-sec-badge">${escapeHtmlA(L.letter)}</span>
+        <span class="uni-sec-title">${escapeHtmlA(L.name)}</span>
+        <span class="uni-sec-kind">${escapeHtmlA(L.kind)}</span></div>
+      <div class="uni-img-field"><label>Image URL</label>
+        <input type="text" data-f="image" value="${escapeHtmlA(L.image||'')}" placeholder="Optional photo URL — leave blank for the monogram plate"></div>
+      ${L.pieces.map(uniPieceEditor).join('')}
+      <button class="uni-add" data-add="piece" type="button">+ Add piece</button>
+    </div>`;
+  });
+  html += `<div class="uni-grouphead">The Rig — Duty Belt</div>
+    <div class="uni-sec">
+      ${uniData.rig.map(uniRigEditor).join('')}
+      <button class="uni-add" data-add="rig" type="button">+ Add rig piece</button>
+    </div>`;
+  html += `<div class="uni-grouphead">Cadet Discount Codes</div>
+    <div class="uni-sec">
+      ${uniData.coupons.length ? uniData.coupons.map(uniCouponEditor).join('') : '<p style="color:var(--text-muted);font-size:13px;padding:4px 2px 2px">No codes yet. Add one when a vendor offers a Richardson cadet discount.</p>'}
+      <button class="uni-add" data-add="coupon" type="button">+ Add code</button>
+    </div>`;
+  html += `<div class="uni-grouphead">Finishing the Look</div>
+    <div class="uni-sec">
+      ${uniData.finishing.map(uniFinEditor).join('')}
+      <button class="uni-add" data-add="fin" type="button">+ Add item</button>
+    </div>`;
+  body.innerHTML = html;
+  bindUniforms();
+}
+
+function uniCtx(el){
+  const ctx = {};
+  const lookEl = el.closest('[data-look]');
+  const pieceEl = el.closest('[data-piece]');
+  const rigEl = el.closest('[data-rig]');
+  const coupEl = el.closest('[data-coupon]');
+  const finEl = el.closest('[data-fin]');
+  if(lookEl) ctx.look = uniData.looks[+lookEl.dataset.look];
+  if(pieceEl && ctx.look){ ctx.coll = ctx.look.pieces; ctx.idx = +pieceEl.dataset.piece; ctx.piece = ctx.coll[ctx.idx]; }
+  else if(rigEl){ ctx.coll = uniData.rig; ctx.idx = +rigEl.dataset.rig; ctx.piece = ctx.coll[ctx.idx]; }
+  else if(coupEl){ ctx.coll = uniData.coupons; ctx.idx = +coupEl.dataset.coupon; ctx.obj = ctx.coll[ctx.idx]; }
+  else if(finEl){ ctx.coll = uniData.finishing; ctx.idx = +finEl.dataset.fin; ctx.obj = ctx.coll[ctx.idx]; }
+  return ctx;
+}
+
+function bindUniforms(){
+  const body = document.getElementById('uniBody');
+  // text edits mutate the model and schedule a save without re-rendering (keeps focus)
+  body.querySelectorAll('input[data-f]').forEach(el => {
+    el.addEventListener('input', () => {
+      const f = el.dataset.f, ctx = uniCtx(el);
+      if(f === 'image' && ctx.look && !ctx.piece){ ctx.look.image = el.value; }
+      else { const t = ctx.piece || ctx.obj; if(t) t[f] = el.value; }
+      uniSchedule();
+    });
+  });
+  // structural changes re-render
+  body.querySelectorAll('[data-act="toggle"]').forEach(el => {
+    if(el.tagName !== 'BUTTON') return;
+    el.addEventListener('click', () => { const ctx = uniCtx(el); if(ctx.piece) ctx.piece.issued = !ctx.piece.issued; renderUniforms(); uniSchedule(); });
+  });
+  body.querySelectorAll('[data-act="del"]').forEach(el => {
+    el.addEventListener('click', () => { const ctx = uniCtx(el); if(ctx.coll && ctx.idx != null) ctx.coll.splice(ctx.idx, 1); renderUniforms(); uniSchedule(); });
+  });
+  body.querySelectorAll('.uni-add').forEach(el => {
+    el.addEventListener('click', () => {
+      const kind = el.dataset.add;
+      if(kind === 'piece'){ const lookEl = el.closest('[data-look]'); uniData.looks[+lookEl.dataset.look].pieces.push({ name:'', detail:'', issued:false, price:'', url:'' }); }
+      else if(kind === 'rig'){ uniData.rig.push({ name:'', detail:'', issued:false, url:'' }); }
+      else if(kind === 'coupon'){ uniData.coupons.push({ vendor:'', code:'', detail:'', url:'' }); }
+      else if(kind === 'fin'){ uniData.finishing.push({ label:'', text:'' }); }
+      renderUniforms(); uniSchedule();
+    });
+  });
+}
+
+function uniSchedule(){ uniDirty = true; setUniStatus('saving'); clearTimeout(uniSaveTimer); uniSaveTimer = setTimeout(uniFlush, 600); }
+async function uniFlush(){
+  clearTimeout(uniSaveTimer); uniSaveTimer = null;
+  try { await RPDRoster.uniforms.save(uniData); uniDirty = false; setUniStatus('synced'); }
+  catch(e){ setUniStatus('saving'); showToast('Save failed — check connection'); }
+}
+function setUniStatus(s){ const p=document.getElementById('uniPill'); p.className='status-pill '+s; document.getElementById('uniPillText').textContent = s==='saving'?'Saving':'Synced'; }
 
 /* ── CADET RECORDS (separate passphrase, separate node/key) ── */
 let recData = null;
@@ -1217,6 +1503,7 @@ document.getElementById('syncMembersBtn').addEventListener('click', syncMembersD
 document.getElementById('rosterBack').addEventListener('click', ()=>showView('hubView'));
 document.getElementById('catAddBtn').addEventListener('click', addItem);
 document.getElementById('catBack').addEventListener('click', ()=>showView('hubView'));
+document.getElementById('uniBack').addEventListener('click', ()=>showView('hubView'));
 document.getElementById('recBack').addEventListener('click', ()=>showView('hubView'));
 document.getElementById('recSearch').addEventListener('input', renderRecords);
 document.getElementById('attBack').addEventListener('click', ()=>showView('hubView'));

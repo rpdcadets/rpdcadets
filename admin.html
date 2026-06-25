@@ -398,7 +398,6 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
         <div class="bar">
           <div class="status-pill" id="recPill"><span class="dot"></span><span id="recPillText">Synced</span></div>
           <input type="text" id="recSearch" placeholder="Search cadet…" style="flex:1;min-width:160px;background:var(--input-bg);border:1px solid var(--input-border);border-radius:9px;padding:10px 14px;color:var(--white);font-family:'Barlow',sans-serif;font-size:14px;outline:none">
-          <button class="btn ghost" id="recImportBtn" title="One-time: prefill shirt size, qualifications, off-probation, and join date from the roster sheet">Import starter data</button>
         </div>
         <div class="rec-warning">Program info: school, date of birth, certifications, dates, shirt size, radio number, cadet and parent/guardian contact. Records sit behind the advisor passcode, not per-cadet sign-in, so keep home addresses, Social Security numbers, and medical details out of this tool.</div>
         <div id="recRows"></div>
@@ -1837,64 +1836,6 @@ function recSchedule(){ setRecStatus('saving'); clearTimeout(recSaveTimer); recS
 async function recFlush(){ clearTimeout(recSaveTimer); recSaveTimer=null; try { await RPDRoster.records.save(recData); setRecStatus('synced'); } catch(e){ setRecStatus('saving'); showToast('Records save failed'); } }
 function setRecStatus(s){ const p=document.getElementById('recPill'); p.className='status-pill '+s; document.getElementById('recPillText').textContent = s==='saving'?'Saving':'Synced'; }
 
-/* ── ONE-TIME STARTER IMPORT (from the Google Sheet roster) ──
-   joinDate is roster-owned; shirt + the five qualification checks are
-   records-owned. Cadets are matched by exact name; names are never added
-   or changed. Fields are filled only when blank, so this is safe to re-run
-   and never clobbers anything entered by hand. Radio # and UAS were blank
-   in the sheet for everyone, so they are left untouched. ── */
-const STARTER = [
-  { name:'Daniel Hemmi',        joinDate:'2021-08-05', shirt:'M',  rideAlong:true,  competition:false, waivers:true,  uas:false, offProbation:true  },
-  { name:'Armando Rizvanovic',  joinDate:'2023-02-24', shirt:'L',  rideAlong:true,  competition:true,  waivers:true,  uas:false, offProbation:true  },
-  { name:'Hunter Huffman',      joinDate:'2023-08-18', shirt:'L',  rideAlong:true,  competition:false, waivers:true,  uas:false, offProbation:true  },
-  { name:'Mariah Diaz',         joinDate:'2023-08-18', shirt:'S',  rideAlong:true,  competition:false, waivers:true,  uas:false, offProbation:true  },
-  { name:'Khaled Khmaish',      joinDate:'2024-07-22', shirt:'M',  rideAlong:true,  competition:false, waivers:false, uas:false, offProbation:true  },
-  { name:'Atzyri Orozco',       joinDate:'2024-08-22', shirt:'M',  rideAlong:true,  competition:false, waivers:false, uas:false, offProbation:true  },
-  { name:'Rhiannon Harris',     joinDate:'2024-08-22', shirt:'S',  rideAlong:true,  competition:true,  waivers:true,  uas:false, offProbation:true  },
-  { name:'Taha Safi',           joinDate:'2025-01-16', shirt:'M',  rideAlong:true,  competition:false, waivers:true,  uas:false, offProbation:true  },
-  { name:'Sebastion Ross',      joinDate:'2025-02-06', shirt:'XS', rideAlong:true,  competition:true,  waivers:true,  uas:false, offProbation:true  },
-  { name:'Dimas Fredrik',       joinDate:'2025-02-27', shirt:'M',  rideAlong:true,  competition:true,  waivers:true,  uas:false, offProbation:true  },
-  { name:'Jonathan Nidam',      joinDate:'2025-03-20', shirt:'XL', rideAlong:true,  competition:true,  waivers:false, uas:false, offProbation:true  },
-  { name:'Scout StJohn',        joinDate:'2025-04-03', shirt:'M',  rideAlong:true,  competition:false, waivers:true,  uas:false, offProbation:true  },
-  { name:'Eric Velazquez',      joinDate:'2025-07-10', shirt:'S',  rideAlong:false, competition:false, waivers:false, uas:false, offProbation:true  },
-  { name:'Luke Veldhuizen',     joinDate:'2025-07-10', shirt:'L',  rideAlong:false, competition:true,  waivers:true,  uas:false, offProbation:true  },
-  { name:'Knox Giles',          joinDate:'2025-08-28', shirt:'L',  rideAlong:true,  competition:true,  waivers:true,  uas:false, offProbation:true  },
-  { name:'Naveah Lee Spell',    joinDate:'2025-09-25', shirt:'S',  rideAlong:false, competition:false, waivers:true,  uas:false, offProbation:true  },
-  { name:'Addison Wilham',      joinDate:'2026-04-30',              rideAlong:false, competition:false, waivers:true,  uas:false, offProbation:false }
-];
-const STARTER_CHECKS = ['rideAlong','competition','waivers','uas','offProbation'];
-
-async function importStarterData(){
-  if(!recData){ showToast('Records still loading, give it a second'); return; }
-  const matched = STARTER.filter(s => rosterEntryFor(s.name));
-  const missing = STARTER.filter(s => !rosterEntryFor(s.name)).map(s => s.name);
-  if(!matched.length){ showToast('No matching cadets found in the roster'); return; }
-  let msg = `Prefill ${matched.length} cadet${matched.length!==1?'s':''} with shirt size, qualifications, off-probation status, and join date from the roster sheet?\n\nOnly blank fields are filled. Names, ranks, and squads are left alone.`;
-  if(missing.length) msg += `\n\nNot in the current roster, so skipped: ${missing.join(', ')}.`;
-  if(!confirm(msg)) return;
-
-  let filled = 0;
-  STARTER.forEach(s => {
-    const entry = rosterEntryFor(s.name);
-    if(!entry) return;                                   // never add or rename
-    if(s.joinDate && !entry.joinDate){ entry.joinDate = s.joinDate; filled++; }   // roster-owned
-    const rec = recData[s.name] || (recData[s.name] = {});
-    if(s.shirt && !rec.shirt){ rec.shirt = s.shirt; filled++; }
-    STARTER_CHECKS.forEach(k => {
-      if(k in s && rec[k] === undefined){ rec[k] = s[k]; if(s[k]) filled++; }     // records-owned
-    });
-  });
-
-  // persist the roster node (join dates) and the records node (everything else)
-  try { setStatus('saving'); recMirror('saving'); await RPDRoster.save(data.filter(p => p.open || (p.name||'').trim())); dirty = false; setStatus('synced'); }
-  catch(e){ showToast('Roster save failed, check connection'); }
-  try { setRecStatus('saving'); await RPDRoster.records.save(recData); setRecStatus('synced'); }
-  catch(e){ setRecStatus('saving'); showToast('Records save failed'); }
-
-  renderRecords();
-  showToast(`Imported ${matched.length} cadets · ${filled} field${filled!==1?'s':''} filled`);
-}
-
 /* ── ATTENDANCE ROLL-UP (advisor passcode; reads shared-key attendance node) ── */
 let attData = null;    // { 'YYYY-MM-DD': {date,dateFmt,submittedBy,roster,present:[],excused:[],unexcused:[],ts} }
 
@@ -2200,7 +2141,6 @@ document.getElementById('catBack').addEventListener('click', ()=>showView('hubVi
 document.getElementById('uniBack').addEventListener('click', ()=>showView('hubView'));
 document.getElementById('trnBack').addEventListener('click', ()=>showView('hubView'));
 document.getElementById('recBack').addEventListener('click', ()=>showView('hubView'));
-document.getElementById('recImportBtn').addEventListener('click', importStarterData);
 document.getElementById('recSearch').addEventListener('input', renderRecords);
 document.getElementById('attBack').addEventListener('click', ()=>showView('hubView'));
 document.getElementById('attSearch').addEventListener('input', renderAttendance);

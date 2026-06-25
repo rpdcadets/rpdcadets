@@ -138,8 +138,9 @@ footer{background:var(--navy-deep);border-top:1px solid var(--line-soft);padding
 .look-grid{display:grid;grid-template-columns:0.92fr 1.08fr;gap:56px;align-items:center}
 .look.reverse .look-grid{grid-template-columns:1.08fr 0.92fr}
 .look.reverse .look-figure{order:2}
-.look-figure{position:relative;border-radius:14px;overflow:hidden;aspect-ratio:5/6;background:linear-gradient(160deg,var(--navy) 0%,var(--navy-deep) 100%);border:1px solid var(--line);box-shadow:0 30px 70px rgba(0,0,0,0.4)}
-.look-figure img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:var(--navy-deep)}
+.look-figure{position:relative;border-radius:14px;overflow:hidden;background:linear-gradient(160deg,var(--navy) 0%,var(--navy-deep) 100%);border:1px solid var(--line);box-shadow:0 30px 70px rgba(0,0,0,0.4)}
+.look-figure.is-plate{aspect-ratio:5/6}
+.look-figure img{display:block;width:100%;height:auto}
 .plate{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:30px}
 .plate::before{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.02) 1px,transparent 1px);background-size:38px 38px;mask-image:radial-gradient(ellipse 70% 70% at 50% 50%,#000,transparent)}
 .plate img{width:74px;height:74px;opacity:.85;margin-bottom:14px;position:relative}
@@ -227,7 +228,7 @@ footer{background:var(--navy-deep);border-top:1px solid var(--line-soft);padding
   .look-grid,.look.reverse .look-grid{grid-template-columns:1fr;gap:34px}
   .look.reverse .look-figure{order:0}
   .look-letter{display:none}
-  .look-figure{aspect-ratio:5/6;max-width:440px;margin:0 auto;width:100%}
+  .look-figure{max-width:440px;margin:0 auto;width:100%}
 }
 @media(max-width:560px){
   .container{padding:0 20px}
@@ -459,7 +460,7 @@ function renderLooks(U){
       : `<div class="plate"><img src="${PLATE_LOGO}" alt=""><div class="plate-letter">${esc(L.letter)}</div><div class="plate-cap">${esc(L.name)} · ${esc(L.kind)}</div></div>`;
     return `<section class="look ${reverse ? 'reverse' : ''} reveal" id="${esc(L.id)}">
       <div class="container"><div class="look-grid">
-        <div class="look-figure"><span class="fig-tag">${esc(L.name)}</span>${figure}</div>
+        <div class="look-figure${L.image ? '' : ' is-plate'}"><span class="fig-tag">${esc(L.name)}</span>${figure}</div>
         <div class="look-spec">
           <div class="look-letter">${esc(L.letter)}</div>
           <div class="look-kicker">${esc(kicker)}</div>

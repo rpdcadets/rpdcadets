@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- admin.html  |  Build v25  |  updated 2026-07-01  |  pairs with roster.js v21  |  Missing weeks can be marked "No meeting" (intentional skip): clears the flag, excluded from attendance counts -->
+<!-- admin.html  |  Build v27  |  updated 2026-07-01  |  pairs with roster.js v21  |  Display errors no longer mislabeled as database errors (logged to console); adding or moving a session onto a no-meeting week now replaces the marker; em dash removed from a toast -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -528,7 +528,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
     <button class="lock-btn" id="goBtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg><span id="goLabel">Unlock</span></button>
     <div class="lock-error" id="lockErr">Incorrect passcode.</div>
     <div class="lock-home"><a href="index.html">← Return to Home</a></div>
-    <div style="margin-top:16px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v25</div>
+    <div style="margin-top:16px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v27</div>
   </div>
 </div>
 
@@ -558,7 +558,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
       <button class="back-link" id="rosterBack"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Admin Console</button>
       <div class="bar">
         <div class="status-pill" id="pill"><span class="dot"></span><span id="pillText">Synced</span></div>
-        <span style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v25</span>
+        <span style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v27</span>
         <button class="btn ghost" id="syncMembersBtn" title="One-time: pull titles and alumni from the Members page into the shared roster">Sync members data</button>
         <button class="btn add" id="addBtn">+ Add Person</button>
       </div>
@@ -771,7 +771,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
 
 <script src="roster.js?v=21"></script>
 <script>
-console.log('[admin] Build v25');
+console.log('[admin] Build v27');
 const SESSION_KEY = 'rpd761_admin_auth';   // advisor-only; NOT shared with cadet pages
 const TIER_KEY = 'rpd761_admin_tier';      // 'full' (golden) or 'ltd' (limited advisor)
 const LIMITED_TOOLS = ['records','ridealongs','donations'];
@@ -2171,11 +2171,18 @@ async function openAttendance(){
       if (raw === null) { attEventNames = ATT_EVENT_SEED.slice(); try { await RPDRoster.eventNames.save(attEventNames); } catch(e){} }
       else attEventNames = raw;
     } catch(e){ attEventNames = []; }
+  } catch(e){
+    console.error('Attendance load failed:', e);
+    host.innerHTML = '<p class="att-empty">Could not reach the database. Check your connection and try again.</p>';
+    return;
+  }
+  try {
     renderAttendance();
     renderEventNames();
     renderEventsEditor();
   } catch(e){
-    host.innerHTML = '<p class="att-empty">Could not reach the database. Check your connection and try again.</p>';
+    console.error('Attendance render failed:', e);
+    host.innerHTML = '<p class="att-empty">The data loaded, but the page hit a display error. Open the browser console (View, Developer, JavaScript Console) and send Claude a screenshot of the red error.</p>';
   }
 }
 
@@ -2194,14 +2201,15 @@ function attFmtDate(d){ if(!d) return ''; const dt=new Date(d+'T12:00:00'); retu
 function attRateClass(rate){ if(rate===null) return 'none'; if(rate>=85) return 'good'; if(rate>=70) return 'mid'; return 'low'; }
 function attBarColor(c){ return c==='good'?'var(--green)':c==='mid'?'var(--gold-light)':c==='low'?'#f87171':'rgba(255,255,255,0.15)'; }
 
-function attThursdayOf(iso){ const d=new Date(iso+'T12:00:00'); d.setDate(d.getDate()+(4-d.getDay())); return localIso(d); }
+function attLocalIso(d){ const p=n=>String(n).padStart(2,'0'); return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate()); }
+function attThursdayOf(iso){ const d=new Date(iso+'T12:00:00'); d.setDate(d.getDate()+(4-d.getDay())); return attLocalIso(d); }
 function attMissingWeeks(sessions){
   if(!sessions || sessions.length<2) return [];
   const covered=new Set(sessions.map(s=>attThursdayOf(s.date)));
   const sorted=[...covered].sort();
   let d=new Date(sorted[0]+'T12:00:00'); const end=new Date(sorted[sorted.length-1]+'T12:00:00');
   const out=[];
-  while(d<=end){ const iso=localIso(d); if(!covered.has(iso)) out.push(iso); d.setDate(d.getDate()+7); if(out.length>520) break; }
+  while(d<=end){ const iso=attLocalIso(d); if(!covered.has(iso)) out.push(iso); d.setDate(d.getDate()+7); if(out.length>520) break; }
   return out;
 }
 function renderAttendance(){
@@ -2410,7 +2418,8 @@ function openAddSession(prefill){
 async function attCreateSession(){
   const date=document.getElementById('attNewDate').value;
   if(!date){ showToast('Pick a date'); return; }
-  if(attData[date]){ showToast('A session already exists on '+attFmtDate(date)+' \u2014 edit it instead'); return; }
+  const existing=attData[date];
+  if(existing && !existing.noMeeting){ showToast('A session already exists on '+attFmtDate(date)+'. Edit it in the Session Log instead.'); return; }
   const by=(document.getElementById('attNewBy').value||'').trim() || 'Added in admin';
   const present=[],excused=[],unexcused=[];
   document.querySelectorAll('#attNewCadets .att-cs-row').forEach(r=>{
@@ -2420,8 +2429,8 @@ async function attCreateSession(){
   if(!present.length && !excused.length && !unexcused.length){ if(!confirm('No cadets are marked. Add an empty session anyway?')) return; }
   const session={ date, dateFmt:new Date(date+'T12:00:00').toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'}), submittedBy:by, roster:RPDRoster.activeSorted().length, present, excused, unexcused, ts:Date.now() };
   attData[date]=session;
-  try{ await RPDRoster.attendance.saveAll(attData); const w=document.getElementById('attNewWrap'); w.innerHTML=''; w.dataset.open=''; renderAttendance(); document.getElementById('attLogWrap').classList.add('open'); showToast('Session added for '+attFmtDate(date)); }
-  catch(e){ delete attData[date]; showToast('Could not save. Try again.'); }
+  try{ await RPDRoster.attendance.saveAll(attData); const w=document.getElementById('attNewWrap'); w.innerHTML=''; w.dataset.open=''; renderAttendance(); document.getElementById('attLogWrap').classList.add('open'); showToast(existing ? 'Session added for '+attFmtDate(date)+', replacing the no-meeting marker' : 'Session added for '+attFmtDate(date)); }
+  catch(e){ if(existing) attData[date]=existing; else delete attData[date]; showToast('Could not save. Try again.'); }
 }
 function buildSessionCadetEditor(item, date){
   const host=item.querySelector('.att-le-cadets'); if(!host || host.dataset.built) return;
@@ -2459,12 +2468,13 @@ async function attMoveSession(oldDate, newDate){
   newDate=(newDate||'').trim();
   if(!newDate){ showToast('Pick a valid date'); return; }
   if(newDate===oldDate){ showToast('That is already the date'); return; }
-  if(attData[newDate]){ showToast('A session already exists on '+attFmtDate(newDate)); return; }
+  const target=attData[newDate];
+  if(target && !target.noMeeting){ showToast('A session already exists on '+attFmtDate(newDate)); return; }
   const s=attData[oldDate]; if(!s) return;
   const moved=Object.assign({}, s, { date:newDate, dateFmt:new Date(newDate+'T12:00:00').toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'}) });
   attData[newDate]=moved; delete attData[oldDate];
-  try{ await RPDRoster.attendance.saveAll(attData); renderAttendance(); document.getElementById('attLogWrap').classList.add('open'); showToast('Session moved to '+attFmtDate(newDate)); }
-  catch(e){ attData[oldDate]=s; delete attData[newDate]; showToast('Could not save. Try again.'); }
+  try{ await RPDRoster.attendance.saveAll(attData); renderAttendance(); document.getElementById('attLogWrap').classList.add('open'); showToast(target ? 'Session moved to '+attFmtDate(newDate)+', replacing the no-meeting marker' : 'Session moved to '+attFmtDate(newDate)); }
+  catch(e){ attData[oldDate]=s; if(target) attData[newDate]=target; else delete attData[newDate]; showToast('Could not save. Try again.'); }
 }
 async function attDeleteSession(date){
   const s=attData[date]; if(!s) return;

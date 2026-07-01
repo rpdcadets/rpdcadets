@@ -1,4 +1,4 @@
-# attendance-reminder.yml  |  Build v1  |  2026-07-01
+# attendance-reminder.yml  |  Build v2  |  2026-07-01  |  Node 24 (silences the deprecation warning)
 # Thursday 10 PM (Richardson time) check: if this week's meeting has no
 # attendance submitted and no "No meeting" marker, email a nudge via Formspark.
 #
@@ -42,7 +42,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
       - name: Check this week's attendance
         env:
           CADET_PASSCODE: ${{ secrets.CADET_PASSCODE }}

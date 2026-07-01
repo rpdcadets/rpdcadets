@@ -1,4 +1,4 @@
-/* roster.js  |  VERSION 18  |  updated 2026-07-01  |  shared attendance+hours roll-up (attendance.rollup) for /admin and Trackers Current Attendance */
+/* roster.js  |  VERSION 19  |  updated 2026-07-01  |  limited advisor passcode (role ltd): opens only Records, Ride-Along, Donations */
 /* ═══════════════════════════════════════════════════════════════════════
    RPD CADETS — SHARED ROSTER ENGINE
    One encrypted roster in Firebase, read by members, trackers, and
@@ -154,10 +154,11 @@
      role: 'cadet' (members/trackers) or 'qm' (quartermaster)
      Returns needsSetup:true if no roster exists yet in Firebase.
      ────────────────────────────────────────────────────────────── */
+  function wrapRoleName(role){ return (role === 'qm' || role === 'advisor' || role === 'ltd') ? role : 'cadet'; }
   async function connect(opts) {
     ensureFirebase();
     role = opts.role;
-    const wrapPath = 'wrap/' + (role === 'qm' ? 'qm' : role === 'advisor' ? 'advisor' : 'cadet');
+    const wrapPath = 'wrap/' + wrapRoleName(role);
     const wrapped = await once(wrapPath);
     if (!wrapped) {
       // Either brand-new (no roster at all) or this role hasn't been linked.
@@ -219,8 +220,7 @@
     if (!rosterKey) throw new Error('not unlocked');
     const keyB64 = arrToB64(rosterKey);
     const wrapped = await pwEncrypt(keyB64, targetPass);
-    const name = targetRole === 'qm' ? 'qm' : targetRole === 'advisor' ? 'advisor' : 'cadet';
-    await db.ref(ROOT + '/wrap/' + name).set(wrapped);
+    await db.ref(ROOT + '/wrap/' + wrapRoleName(targetRole)).set(wrapped);
   }
 
   async function save(arr) {
@@ -343,6 +343,9 @@
     ridealongs: {
       get: ridealongsGet, save: ridealongsSave
     },
+    access: {
+      setLimited: accessSetLimited, clearLimited: accessClearLimited, hasLimited: accessHasLimited
+    },
     officers: {
       get: officersGet, save: officersSave
     },
@@ -390,15 +393,27 @@
   async function recordsConnect(passphrase) {
     ensureFirebase();
     const wrap = await once('recordsWrap');
+    let keyB64 = wrap ? await pwDecrypt(wrap, passphrase) : null;
+    if (!keyB64) {
+      const ltdWrap = await once('recordsWrapLtd');   // limited advisor passcode
+      if (ltdWrap) keyB64 = await pwDecrypt(ltdWrap, passphrase);
+    }
+    if (keyB64) { recordsKey = b64ToArr(keyB64); return { ok: true }; }
     if (!wrap) {
       const dataExists = await once('records');
       return { ok: false, needsSetup: !dataExists, needsLink: !!dataExists };
     }
-    const keyB64 = await pwDecrypt(wrap, passphrase);
-    if (!keyB64) return { ok: false, badPass: true };
-    recordsKey = b64ToArr(keyB64);
-    return { ok: true };
+    return { ok: false, badPass: true };
   }
+  // Grant/revoke a limited advisor passcode: wraps the SAME records key under it
+  // (node recordsWrapLtd). Pair with linkRole('ltd', pass) so the limited passcode
+  // can also read the roster (cadet names) for the Records/Ride-Along pickers.
+  async function recordsGrantLtd(pass) {
+    if (!recordsKey) throw new Error('records locked');
+    const wrap = await pwEncrypt(arrToB64(recordsKey), pass);
+    await db.ref(ROOT + '/recordsWrapLtd').set(wrap);
+  }
+  async function recordsRevokeLtd() { await db.ref(ROOT + '/recordsWrapLtd').remove(); }
   async function recordsSetup(passphrase) {
     ensureFirebase();
     recordsKey = crypto.getRandomValues(new Uint8Array(32));
@@ -603,4 +618,19 @@
                totalHours: Math.round((weeklyHours+eventHours)*100)/100 };
     });
   }
+  // ── Limited advisor access: one extra passcode that opens ONLY Cadet Records,
+  //    Ride-Along, and Donations. It gets the same roster + records keys (so those
+  //    tools work), and /admin hides every other tool for it. UI-scoped, not a hard
+  //    cryptographic wall, which is all that's needed here (advisors, not attackers).
+  async function accessSetLimited(pass) {
+    if (!rosterKey) throw new Error('not unlocked');
+    if (!recordsKey) throw new Error('records locked');
+    await linkRole('ltd', pass);
+    await recordsGrantLtd(pass);
+  }
+  async function accessClearLimited() {
+    await db.ref(ROOT + '/wrap/ltd').remove();
+    await recordsRevokeLtd();
+  }
+  async function accessHasLimited() { return !!(await once('wrap/ltd')); }
 })(window);

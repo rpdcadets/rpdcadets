@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- admin.html  |  Build v19  |  updated 2026-07-01  |  pairs with roster.js v18  |  Uniform Standards editor can now edit each class's 'Worn for' description (saved to Firebase) -->
+<!-- admin.html  |  Build v20  |  updated 2026-07-01  |  pairs with roster.js v19  |  limited advisor passcode + Advisor Access tool: opens only Records, Ride-Along, Donations -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -73,6 +73,21 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
 /* ROSTER TOOL */
 .back-link{display:inline-flex;align-items:center;gap:8px;background:none;border:none;color:var(--text-muted);font-family:'Barlow Condensed',sans-serif;font-size:13px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;margin-bottom:18px}
 .back-link:hover{color:var(--white)}
+.acc-status{font-family:'Barlow Condensed',sans-serif;font-size:13px;letter-spacing:0.5px;margin-bottom:18px}
+.acc-on{color:var(--green)} .acc-off{color:var(--text-muted)}
+.acc-field{margin-bottom:14px;max-width:420px}
+.acc-field label{display:block;font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px}
+.acc-field input{width:100%;background:var(--input-bg);border:1px solid var(--input-border);border-radius:9px;padding:11px 14px;color:var(--white);font-family:'Barlow',sans-serif;font-size:15px;outline:none}
+.acc-field input:focus{border-color:var(--input-focus,rgba(212,169,82,0.5))}
+.acc-actions{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.acc-save,.acc-remove{font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:1.5px;text-transform:uppercase;padding:11px 20px;border-radius:9px;cursor:pointer;border:1px solid}
+.acc-save{background:var(--gold);border-color:var(--gold);color:#1a2036;font-weight:600}
+.acc-save:hover{filter:brightness(1.08)}
+.acc-remove{background:none;border-color:rgba(220,38,38,0.4);color:#f87171}
+.acc-remove:hover{background:rgba(220,38,38,0.1)}
+.acc-msg{font-size:13px;min-height:18px;margin-bottom:14px}
+.acc-msg.ok{color:var(--green)} .acc-msg.err{color:#f87171}
+.acc-note{max-width:520px;font-size:12.5px;line-height:1.6;color:var(--text-muted);background:var(--card-bg);border:1px solid var(--card-border);border-radius:10px;padding:14px 16px}
 .bar{display:flex;align-items:center;gap:12px;margin-bottom:18px;flex-wrap:wrap}
 .status-pill{display:inline-flex;align-items:center;gap:7px;font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted);padding:8px 13px;border:1px solid var(--card-border);border-radius:9px}
 .status-pill .dot{width:8px;height:8px;border-radius:50%;background:var(--text-muted)}
@@ -459,7 +474,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
     <button class="lock-btn" id="goBtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg><span id="goLabel">Unlock</span></button>
     <div class="lock-error" id="lockErr">Incorrect passcode.</div>
     <div class="lock-home"><a href="index.html">← Return to Home</a></div>
-    <div style="margin-top:16px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v19</div>
+    <div style="margin-top:16px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v20</div>
   </div>
 </div>
 
@@ -489,7 +504,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
       <button class="back-link" id="rosterBack"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Admin Console</button>
       <div class="bar">
         <div class="status-pill" id="pill"><span class="dot"></span><span id="pillText">Synced</span></div>
-        <span style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v19</span>
+        <span style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v20</span>
         <button class="btn ghost" id="syncMembersBtn" title="One-time: pull titles and alumni from the Members page into the shared roster">Sync members data</button>
         <button class="btn add" id="addBtn">+ Add Person</button>
       </div>
@@ -669,14 +684,40 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
     </div>
   </div>
 
+  <!-- ADVISOR ACCESS (full advisor only): manage the limited passcode -->
+  <div class="view" id="accessView">
+    <div class="page-header">
+      <div class="section-label">Advisor Access</div>
+      <h1 class="section-title">Advisor Access</h1>
+      <p class="page-desc">Create a limited passcode for advisors who only need Cadet Records, Ride-Along, and Donations. Signing in with it shows just those three tools and hides everything else.</p>
+    </div>
+    <div class="container">
+      <button class="back-link" id="accBack"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Admin Console</button>
+      <div class="acc-status" id="accStatus"></div>
+      <div class="acc-field">
+        <label for="accPass">Limited passcode</label>
+        <input type="text" id="accPass" placeholder="Choose a passcode for limited advisors" autocomplete="off">
+      </div>
+      <div class="acc-actions">
+        <button class="acc-save" id="accSave" onclick="saveLimited()">Save passcode</button>
+        <button class="acc-remove" id="accRemove" onclick="removeLimited()">Remove access</button>
+      </div>
+      <div class="acc-msg" id="accMsg"></div>
+      <div class="acc-note">Give this only to advisors you trust with cadet records and donation details. It uses the same encryption as your advisor passcode; it just controls which tools appear. To change it, save a new one. To turn it off, remove access.</div>
+    </div>
+  </div>
+
 </div>
 
 <div class="toast" id="toast"></div>
 
-<script src="roster.js?v=18"></script>
+<script src="roster.js?v=19"></script>
 <script>
-console.log('[admin] Build v19');
+console.log('[admin] Build v20');
 const SESSION_KEY = 'rpd761_admin_auth';   // advisor-only; NOT shared with cadet pages
+const TIER_KEY = 'rpd761_admin_tier';      // 'full' (golden) or 'ltd' (limited advisor)
+const LIMITED_TOOLS = ['records','ridealongs','donations'];
+let TIER = 'full';
 const RANKS = ['Captain','Lt.','Sgt.','Cadet','Probationary'];
 const SQUADS = [['leadership','Leadership'],[1,'Squad 1'],[2,'Squad 2'],[3,'Squad 3'],[4,'Squad 4 (Admin)']];
 
@@ -740,6 +781,13 @@ const TOOLS = [
     icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 2v4M16 2v4M3 10h18"/><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M8 14h2M14 14h2M8 18h2M14 18h2"/></svg>',
     open: openTraining
   },
+  {
+    id: 'access',
+    name: 'Advisor Access',
+    desc: 'Create a limited passcode that opens only Cadet Records, Ride-Along, and Donations.',
+    icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15.5 7.5 2.3 2.3a1 1 0 0 0 1.4 0l2.1-2.1a1 1 0 0 0 0-1.4L19 4"/><path d="m21 2-9.6 9.6"/><circle cx="7.5" cy="15.5" r="5.5"/></svg>',
+    open: openAccess
+  },
   { id: 'more', name: 'More tools', desc: 'Additional admin tools will live here.', soon: true,
     icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>' }
 ];
@@ -778,12 +826,12 @@ async function go(){
       if(!r.ok){ showErr('That existing passcode did not work.'); btn.disabled = false; return; }
       await RPDRoster.linkRole('advisor', pc1);
       const a = await RPDRoster.connect({ passcode: pc1, role: 'advisor' });
-      if(a.ok){ sessionStorage.setItem(SESSION_KEY, pc1); enterApp(); showToast('Advisor access established'); return; }
+      if(a.ok){ TIER='full'; sessionStorage.setItem(SESSION_KEY, pc1); sessionStorage.setItem(TIER_KEY,'full'); enterApp(); showToast('Advisor access established'); return; }
       showErr('Could not establish advisor access.'); btn.disabled = false; return;
     }
 
     const res = await RPDRoster.connect({ passcode: pc1, role: 'advisor' });
-    if(res.ok){ sessionStorage.setItem(SESSION_KEY, pc1); enterApp(); return; }
+    if(res.ok){ TIER='full'; sessionStorage.setItem(SESSION_KEY, pc1); sessionStorage.setItem(TIER_KEY,'full'); enterApp(); return; }
     if(res.needsSetup){ showErr('The shared roster has not been set up yet.'); btn.disabled = false; return; }
     if(res.needsLink){
       // first time this advisor passcode is used: bootstrap from an existing passcode
@@ -795,6 +843,9 @@ async function go(){
       document.getElementById('goLabel').textContent = 'Establish access';
       pc2el.focus(); btn.disabled = false; return;
     }
+    // not the advisor passcode — try the limited advisor passcode
+    const ltd = await RPDRoster.connect({ passcode: pc1, role: 'ltd' });
+    if(ltd.ok){ TIER='ltd'; sessionStorage.setItem(SESSION_KEY, pc1); sessionStorage.setItem(TIER_KEY,'ltd'); enterApp(); return; }
     showErr('Incorrect advisor passcode.'); btn.disabled = false;
   } catch(e){ showErr('Could not reach the database. Check your connection.'); btn.disabled = false; }
 }
@@ -828,7 +879,8 @@ function enterApp(){
 /* ── HUB ── */
 function buildHub(){
   const grid = document.getElementById('toolGrid'); grid.innerHTML='';
-  TOOLS.forEach(t => {
+  const tools = (TIER === 'ltd') ? TOOLS.filter(t => LIMITED_TOOLS.includes(t.id)) : TOOLS;
+  tools.forEach(t => {
     const el = document.createElement(t.soon ? 'div' : 'button');
     el.className = 'tool-card' + (t.soon ? ' soon' : '');
     el.innerHTML = (t.soon ? '<span class="soon-tag">Soon</span>' : '') +
@@ -838,9 +890,42 @@ function buildHub(){
   });
 }
 function showView(id){
+  if(TIER==='ltd' && !['hubView','recordsView','ridealongsView','donationsView'].includes(id)) id='hubView';
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('on'));
   document.getElementById(id).classList.add('on');
   window.scrollTo(0,0);
+}
+function openAccess(){ if(TIER==='ltd') return; showView('accessView'); refreshAccStatus(); const m=document.getElementById('accMsg'); if(m){ m.textContent=''; m.className='acc-msg'; } }
+async function refreshAccStatus(){
+  const el=document.getElementById('accStatus'), rm=document.getElementById('accRemove');
+  try{
+    const has = await RPDRoster.access.hasLimited();
+    el.innerHTML = has ? '<span class="acc-on">\u25CF A limited passcode is active.</span>' : '<span class="acc-off">\u25CB No limited passcode is set.</span>';
+    if(rm) rm.style.display = has ? '' : 'none';
+  }catch(e){ el.textContent=''; }
+}
+async function saveLimited(){
+  const inp=document.getElementById('accPass'), msg=document.getElementById('accMsg');
+  const pass=(inp.value||'').trim();
+  if(pass.length<6){ msg.textContent='Use at least 6 characters.'; msg.className='acc-msg err'; return; }
+  const golden=sessionStorage.getItem(SESSION_KEY);
+  if(pass===golden){ msg.textContent='That is your full advisor passcode. Choose a different one.'; msg.className='acc-msg err'; return; }
+  const btn=document.getElementById('accSave'); btn.disabled=true; msg.textContent='Saving\u2026'; msg.className='acc-msg';
+  try{
+    let rc=await RPDRoster.records.connect(golden);
+    if(!rc.ok && rc.needsSetup) rc=await RPDRoster.records.setup(golden);
+    if(!rc.ok) throw new Error('records');
+    await RPDRoster.access.setLimited(pass);
+    inp.value=''; msg.textContent='Saved. Advisors can sign in with this passcode now.'; msg.className='acc-msg ok';
+    refreshAccStatus();
+  }catch(e){ msg.textContent='Could not save. Make sure you are signed in as the full advisor and try again.'; msg.className='acc-msg err'; }
+  btn.disabled=false;
+}
+async function removeLimited(){
+  if(!confirm('Remove the limited passcode? Advisors using it will lose access until you set a new one.')) return;
+  const msg=document.getElementById('accMsg');
+  try{ await RPDRoster.access.clearLimited(); msg.textContent='Removed.'; msg.className='acc-msg ok'; refreshAccStatus(); }
+  catch(e){ msg.textContent='Could not remove. Try again.'; msg.className='acc-msg err'; }
 }
 function openRoster(){ showView('rosterView'); renderRows(); }
 
@@ -2563,6 +2648,7 @@ document.getElementById('catBack').addEventListener('click', ()=>showView('hubVi
 document.getElementById('uniBack').addEventListener('click', ()=>showView('hubView'));
 document.getElementById('trnBack').addEventListener('click', ()=>showView('hubView'));
 document.getElementById('recBack').addEventListener('click', ()=>showView('hubView'));
+document.getElementById('accBack').addEventListener('click', ()=>showView('hubView'));
 document.getElementById('recSearch').addEventListener('input', renderRecords);
 document.getElementById('attBack').addEventListener('click', ()=>showView('hubView'));
 document.getElementById('attSearch').addEventListener('input', renderAttendance);
@@ -2586,7 +2672,8 @@ window.addEventListener('beforeunload', ()=>{ if(dirty && saveTimer) flushSave()
 (function(){
   const saved = sessionStorage.getItem(SESSION_KEY);
   if(!saved) return;
-  RPDRoster.connect({ passcode: saved, role:'advisor' }).then(res=>{ if(res.ok) enterApp(); }).catch(()=>{});
+  const role = sessionStorage.getItem(TIER_KEY) === 'ltd' ? 'ltd' : 'advisor';
+  RPDRoster.connect({ passcode: saved, role }).then(res=>{ if(res.ok){ TIER = role==='ltd'?'ltd':'full'; enterApp(); } }).catch(()=>{});
 })();
 </script>
 <script src="shared.js"></script>

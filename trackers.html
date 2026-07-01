@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- trackers.html  |  Build v15  |  updated 2026-07-01  |  pairs with roster.js v21  |  Current Attendance ignores no-meeting markers (skipped weeks); cache-buster sync -->
+<!-- trackers.html  |  Build v16  |  updated 2026-07-01  |  pairs with roster.js v21  |  Weekly attendance warns before replacing an already-submitted date; database save failures now alert the submitter (email still sends); Captain initials fixed -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -436,7 +436,7 @@ footer { background: var(--navy); border-top: 1px solid rgba(255,255,255,0.05); 
         Return to Home
       </a>
     </div>
-    <div style="margin-top:20px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v15</div>
+    <div style="margin-top:20px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v16</div>
   </div>
 </div>
 
@@ -972,7 +972,9 @@ async function handleEventSubmit() {
         comments: comments, ts: Date.now()
       });
     }
-  } catch (e) { /* never block the Formspark submission on a sync error */ }
+  } catch (e) {
+    alert('Heads up: your email will still send, but saving to the hours database failed (connection issue). These hours will not show in Current Attendance until an advisor logs them in the admin console.');
+  }
 
   form.submit();
 }
@@ -980,7 +982,7 @@ async function handleEventSubmit() {
 // ═══════ ATTENDANCE FORM ═══════
 const attState = {};
 let allNames = [];
-function initials(name){ return name.replace(/^(Lt\.|Sgt\.)\s*/,'').split(' ').map(p=>p[0]).join('').toUpperCase().slice(0,2); }
+function initials(name){ return name.replace(/^(Capt\.|Captain|Lt\.|Sgt\.)\s*/,'').split(' ').map(p=>p[0]).join('').toUpperCase().slice(0,2); }
 function nk(name){ return name.toLowerCase().replace(/[^a-z]/g,'_'); }
 
 function buildRoster() {
@@ -1075,6 +1077,22 @@ async function handleAttSubmit() {
     }
   }
 
+  // Guard against silently replacing a session already recorded for this date.
+  // A "no meeting" marker on this date is overwritten without asking: real data wins.
+  try {
+    if (window.RPDRoster && RPDRoster.attendance) {
+      const existingAll = (await RPDRoster.attendance.get()) || {};
+      const prior = existingAll[dateVal];
+      if (prior && !prior.noMeeting) {
+        const who = prior.submittedBy ? ' by ' + prior.submittedBy : '';
+        if(!confirm('Attendance for '+formatted+' was already submitted'+who+'.\n\nSubmitting again will replace that record in the database. The earlier email is unaffected.\n\nOK to replace it, or Cancel to keep the earlier record.')){
+          err.textContent='Kept the earlier record. Nothing was submitted.';
+          return;
+        }
+      }
+    }
+  } catch(e){ /* if the check cannot run, do not block submission */ }
+
   // Build clean present / excused / unexcused lists for a readable email
   const present=[], excused=[], unexcused=[];
   allNames.forEach(name => {
@@ -1119,7 +1137,9 @@ async function handleAttSubmit() {
         ts: Date.now()
       });
     }
-  } catch (e) { /* never block the Formspark submission on a sync error */ }
+  } catch (e) {
+    alert('Heads up: your email will still send, but saving to the attendance database failed (connection issue). This session will not show in Attendance and Hours until an advisor adds it in the admin console.');
+  }
 
   document.getElementById('attRealForm').submit();
 }

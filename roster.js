@@ -1,4 +1,4 @@
-/* roster.js  |  VERSION 15  |  updated 2026-07-01  |  added Donation Tracking (roster/donations) */
+/* roster.js  |  VERSION 17  |  updated 2026-07-01  |  added curated Event name list (roster/eventNames) */
 /* ═══════════════════════════════════════════════════════════════════════
    RPD CADETS — SHARED ROSTER ENGINE
    One encrypted roster in Firebase, read by members, trackers, and
@@ -364,6 +364,17 @@
     // Donation Tracking: separate advisor records key, node roster/donations
     donations: {
       get: donationsGet, save: donationsSave
+    },
+    // Event / Activity hours: shared roster key, node roster/events. The Trackers
+    // page appends a record per submission (cadet passcode); /admin reads them all
+    // (advisor passcode) for the Attendance & Hours roll-up. Same model as attendance.
+    events: {
+      get: eventsGet, add: eventsAdd, save: eventsSave
+    },
+    // Curated Event/Activity names (roster/eventNames), shared roster key. Managed
+    // from /admin (advisor), read by the Trackers Event form (cadet) for the picker.
+    eventNames: {
+      get: eventNamesGet, save: eventNamesSave
     }
   };
 
@@ -508,5 +519,43 @@
     if (!recordsKey) throw new Error('records locked');
     const data = await keyEncrypt(JSON.stringify(obj), recordsKey);
     await db.ref(ROOT + '/donations').set(data);
+  }
+  // Event / Activity hours (roster/events), encrypted under the SHARED roster key
+  // like attendance and officers, so the Trackers page (cadet passcode) can append
+  // and /admin (advisor passcode) can read. Stored as an array of records:
+  //   { id, cadet, date:'YYYY-MM-DD', event, start:'HH:MM', end:'HH:MM', hours, comments, ts }
+  async function eventsGet() {
+    if (!rosterKey) return null;
+    const blob = await once('events');
+    if (!blob) return [];
+    try { return JSON.parse(await keyDecrypt(blob, rosterKey)); } catch (e) { return []; }
+  }
+  async function eventsAdd(rec) {
+    if (!rosterKey) throw new Error('roster locked');
+    const all = (await eventsGet()) || [];
+    rec.id = rec.id || ('ev_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6));
+    all.push(rec);
+    const data = await keyEncrypt(JSON.stringify(all), rosterKey);
+    await db.ref(ROOT + '/events').set(data);
+    return all;
+  }
+  async function eventsSave(arr) {
+    if (!rosterKey) throw new Error('roster locked');
+    const data = await keyEncrypt(JSON.stringify(arr), rosterKey);
+    await db.ref(ROOT + '/events').set(data);
+  }
+  // Curated Event/Activity name list (roster/eventNames), shared roster key.
+  // Returns null when unset so /admin can seed it. Cadet Trackers reads it to
+  // build the Event Name picker; /admin writes it from the Event Names manager.
+  async function eventNamesGet() {
+    if (!rosterKey) return null;
+    const blob = await once('eventNames');
+    if (!blob) return null;
+    try { return JSON.parse(await keyDecrypt(blob, rosterKey)); } catch (e) { return null; }
+  }
+  async function eventNamesSave(arr) {
+    if (!rosterKey) throw new Error('roster locked');
+    const data = await keyEncrypt(JSON.stringify(arr), rosterKey);
+    await db.ref(ROOT + '/eventNames').set(data);
   }
 })(window);

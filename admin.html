@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- admin.html  |  Build v15  |  updated 2026-07-01  |  pairs with roster.js v15  |  attendance roll-up name-match fix (leadership was not counting) -->
+<!-- admin.html  |  Build v17  |  updated 2026-07-01  |  pairs with roster.js v17  |  Event Names manager for the Trackers event picker -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -213,6 +213,53 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
 .att-log-nums{font-family:'Barlow Condensed',sans-serif;font-size:13px;letter-spacing:0.5px;text-align:right;white-space:nowrap}
 .att-log-nums .cp{color:var(--green)}.att-log-nums .ce{color:var(--gold-light)}.att-log-nums .cu{color:#f87171}
 @media(max-width:680px){.att-stats{grid-template-columns:1fr 1fr}}
+.att-range{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.att-range-lbl{font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)}
+.att-range input[type=date]{background:var(--input-bg);border:1px solid var(--input-border);border-radius:9px;padding:8px 11px;color:var(--white);font-family:'Barlow',sans-serif;font-size:13px;outline:none;color-scheme:dark}
+.att-range input[type=date]:focus{border-color:var(--input-focus)}
+.att-range-to{color:var(--text-muted);font-size:12px}
+.att-range-btn{padding:7px 12px}
+.att-range-btn.on{color:var(--white);border-color:rgba(212,169,82,0.5);background:rgba(212,169,82,0.08)}
+.att-item{background:var(--card-bg);border:1px solid var(--card-border);border-radius:11px;margin-bottom:8px;overflow:hidden}
+.att-item.watch{border-color:rgba(220,38,38,0.4)}
+.att-item .att-row{border:none;background:none;border-radius:0;margin:0;cursor:pointer}
+.att-item.open .att-row{background:rgba(255,255,255,0.02)}
+.att-hours{font-family:'Barlow Condensed',sans-serif;font-size:13px;letter-spacing:0.5px;color:var(--gold-light);margin-top:3px}
+.att-detail{display:none;padding:2px 16px 16px;border-top:1px solid var(--card-border)}
+.att-item.open .att-detail{display:block}
+.att-d-hours{display:flex;gap:12px;flex-wrap:wrap;margin:14px 0}
+.att-d-hours > div{flex:1;min-width:100px;background:rgba(255,255,255,0.02);border:1px solid var(--card-border);border-radius:9px;padding:10px 12px;display:flex;flex-direction:column;gap:2px}
+.att-d-hours span{font-family:'Barlow Condensed',sans-serif;font-size:10px;letter-spacing:1.2px;text-transform:uppercase;color:var(--text-muted)}
+.att-d-hours b{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:1px}
+.att-d-hours small{font-size:11px;color:var(--text-muted)}
+.att-d-hours .tot b{color:var(--gold)}
+.att-d-cols{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.att-d-col{min-width:0}
+.att-d-h{font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px}
+.att-d-row{display:flex;align-items:center;gap:8px;padding:6px 0;border-top:1px solid rgba(255,255,255,0.04);font-size:13px}
+.att-d-date{color:var(--text-muted);width:92px;flex-shrink:0}
+.att-d-ev{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.att-d-hrs{color:var(--gold-light);white-space:nowrap}
+.att-d-empty{color:var(--text-muted);font-size:12.5px;padding:8px 0}
+.att-status{font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:1px;text-transform:uppercase;padding:2px 8px;border-radius:5px;margin-left:auto}
+.att-status.present{color:var(--green);background:rgba(39,174,96,0.12)}
+.att-status.excused{color:var(--gold-light);background:rgba(217,119,6,0.14)}
+.att-status.unexcused{color:#f87171;background:rgba(220,38,38,0.12)}
+.att-status.none{color:var(--text-muted);background:rgba(255,255,255,0.05)}
+@media(max-width:680px){.att-d-cols{grid-template-columns:1fr}}
+.att-names-wrap{margin-top:22px}
+.att-names-wrap .att-log-toggle svg{transition:transform .2s}
+.att-names-wrap.open .att-log-toggle svg{transform:rotate(180deg)}
+.att-names-body{display:none;margin-top:12px}
+.att-names-wrap.open .att-names-body{display:block}
+.att-names-note{font-size:12.5px;color:var(--text-muted);margin-bottom:12px;line-height:1.5}
+.att-names-add{display:flex;gap:8px;margin-bottom:14px}
+.att-names-add input{flex:1;min-width:0;background:var(--input-bg);border:1px solid var(--input-border);border-radius:9px;padding:9px 12px;color:var(--white);font-family:'Barlow',sans-serif;font-size:14px;outline:none}
+.att-names-add input:focus{border-color:var(--input-focus)}
+.att-names-chips{display:flex;flex-wrap:wrap;gap:8px}
+.att-name-chip{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,0.04);border:1px solid var(--card-border);border-radius:20px;padding:6px 8px 6px 14px;font-size:13px}
+.att-name-del{background:none;border:none;color:var(--text-muted);font-size:16px;line-height:1;cursor:pointer;padding:0 2px}
+.att-name-del:hover{color:var(--red-glow)}
 .c-red{background:var(--red)}.c-yellow{background:#f1c40f}.c-blue{background:#3498db}.c-green{background:var(--green)}.c-gold{background:var(--gold)}
 .row{display:grid;grid-template-columns:1fr 130px 150px 40px;gap:10px;align-items:center;background:var(--card-bg);border:1px solid var(--card-border);border-radius:10px;padding:10px 12px;margin-bottom:8px}
 .row input,.row select{width:100%;background:var(--input-bg);border:1px solid var(--input-border);border-radius:8px;padding:10px 12px;color:var(--white);font-family:'Barlow',sans-serif;font-size:14px;outline:none}
@@ -407,7 +454,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
     <button class="lock-btn" id="goBtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg><span id="goLabel">Unlock</span></button>
     <div class="lock-error" id="lockErr">Incorrect passcode.</div>
     <div class="lock-home"><a href="index.html">← Return to Home</a></div>
-    <div style="margin-top:16px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v15 · attendance name-match fix</div>
+    <div style="margin-top:16px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v17 · event names manager</div>
   </div>
 </div>
 
@@ -437,7 +484,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
       <button class="back-link" id="rosterBack"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Admin Console</button>
       <div class="bar">
         <div class="status-pill" id="pill"><span class="dot"></span><span id="pillText">Synced</span></div>
-        <span style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v15</span>
+        <span style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v17</span>
         <button class="btn ghost" id="syncMembersBtn" title="One-time: pull titles and alumni from the Members page into the shared roster">Sync members data</button>
         <button class="btn add" id="addBtn">+ Add Person</button>
       </div>
@@ -539,18 +586,28 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
   <div class="view" id="attendanceView">
     <div class="page-header">
       <div class="section-label">Attendance</div>
-      <h1 class="section-title">Attendance Roll-Up</h1>
-      <p class="page-desc">Built automatically from weekly attendance submissions. Cadets slipping on attendance rise to the top.</p>
+      <h1 class="section-title">Attendance &amp; Hours</h1>
+      <p class="page-desc">Attendance and service hours per cadet, from weekly meetings (3 hrs each) and logged events. Click a cadet for the full breakdown. Filter by date range.</p>
     </div>
     <div class="container">
       <button class="back-link" id="attBack"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Admin Console</button>
       <div id="attApp">
+        <div class="att-range" id="attRange">
+          <span class="att-range-lbl">Range</span>
+          <input type="date" id="attFrom" aria-label="From date">
+          <span class="att-range-to">to</span>
+          <input type="date" id="attTo" aria-label="To date">
+          <button class="btn ghost att-range-btn on" data-range="all">All time</button>
+          <button class="btn ghost att-range-btn" data-range="month">This month</button>
+          <button class="btn ghost att-range-btn" data-range="school">School year</button>
+        </div>
         <div class="att-stats" id="attStats"></div>
         <div class="bar">
           <input type="text" id="attSearch" placeholder="Search cadet…" style="flex:1;min-width:160px;background:var(--input-bg);border:1px solid var(--input-border);border-radius:9px;padding:10px 14px;color:var(--white);font-family:'Barlow',sans-serif;font-size:14px;outline:none">
           <button class="btn ghost" id="attCsv">Export CSV</button>
         </div>
         <div id="attRows"></div>
+        <div class="att-names-wrap" id="attNamesWrap"></div>
         <div class="att-log-wrap" id="attLogWrap"></div>
       </div>
     </div>
@@ -611,9 +668,9 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
 
 <div class="toast" id="toast"></div>
 
-<script src="roster.js?v=15"></script>
+<script src="roster.js?v=17"></script>
 <script>
-console.log('[admin] Build v15 — attendance name-match fix');
+console.log('[admin] Build v17 — event names manager');
 const SESSION_KEY = 'rpd761_admin_auth';   // advisor-only; NOT shared with cadet pages
 const RANKS = ['Captain','Lt.','Sgt.','Cadet','Probationary'];
 const SQUADS = [['leadership','Leadership'],[1,'Squad 1'],[2,'Squad 2'],[3,'Squad 3'],[4,'Squad 4 (Admin)']];
@@ -666,8 +723,8 @@ const TOOLS = [
   },
   {
     id: 'attendance',
-    name: 'Attendance',
-    desc: 'Per-cadet roll-up from weekly attendance submissions: who shows up, who is slipping.',
+    name: 'Attendance & Hours',
+    desc: 'Per-cadet attendance and service hours from weekly meetings and events. Click a cadet for the full breakdown; filter by date range.',
     icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>',
     open: openAttendance
   },
@@ -1931,6 +1988,22 @@ function setRecStatus(s){ const p=document.getElementById('recPill'); p.classNam
 
 /* ── ATTENDANCE ROLL-UP (advisor passcode; reads shared-key attendance node) ── */
 let attData = null;    // { 'YYYY-MM-DD': {date,dateFmt,submittedBy,roster,present:[],excused:[],unexcused:[],ts} }
+let attEvents = [];    // [{id,cadet,date,event,start,end,hours,comments,ts}]
+let attEventNames = [];
+const ATT_EVENT_SEED = ['Allen Midnight Madness','Bomb City','Central Texas PSC','John Sartain','PSC Nationals','Richardson 10-33','Space City','TLEEAA'];
+function attFromVal(){ const el=document.getElementById('attFrom'); return el ? el.value : ''; }
+function attToVal(){ const el=document.getElementById('attTo'); return el ? el.value : ''; }
+function attInRange(d){ const f=attFromVal(), t=attToVal(); d=d||''; if(f && d<f) return false; if(t && d>t) return false; return true; }
+function attSetPreset(name){ document.querySelectorAll('.att-range-btn').forEach(b=>b.classList.toggle('on', b.dataset.range===name)); }
+function attApplyPreset(which){
+  const from=document.getElementById('attFrom'), to=document.getElementById('attTo');
+  const pad=n=>String(n).padStart(2,'0'); const localIso=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+  const today=new Date();
+  if(which==='all'){ from.value=''; to.value=''; }
+  else if(which==='month'){ from.value=localIso(new Date(today.getFullYear(),today.getMonth(),1)); to.value=localIso(today); }
+  else if(which==='school'){ const startY = today.getMonth()>=7 ? today.getFullYear() : today.getFullYear()-1; from.value=startY+'-08-01'; to.value=(startY+1)+'-07-31'; }
+  attSetPreset(which); renderAttendance();
+}
 
 async function openAttendance(){
   showView('attendanceView');
@@ -1940,7 +2013,14 @@ async function openAttendance(){
   host.innerHTML = '<p class="att-empty">Loading…</p>';
   try {
     attData = (await RPDRoster.attendance.get()) || {};
+    try { attEvents = (await RPDRoster.events.get()) || []; } catch(e){ attEvents = []; }
+    try {
+      const raw = await RPDRoster.eventNames.get();
+      if (raw === null) { attEventNames = ATT_EVENT_SEED.slice(); try { await RPDRoster.eventNames.save(attEventNames); } catch(e){} }
+      else attEventNames = raw;
+    } catch(e){ attEventNames = []; }
     renderAttendance();
+    renderEventNames();
   } catch(e){
     host.innerHTML = '<p class="att-empty">Could not reach the database. Check your connection and try again.</p>';
   }
@@ -1960,16 +2040,19 @@ function attInList(list, name){ const t = attStripRank(name); return (list||[]).
 // session's three buckets is treated as "not recorded that day" (e.g. joined
 // later) and left out of their own denominator.
 function attAggregate(){
-  const sessions = attSessions();
+  const sessions = attSessions().filter(s=>attInRange(s.date));   // ascending, in range
+  const events = (attEvents||[]).filter(e=>attInRange(e.date));
   const cadets = RPDRoster.activeSorted();
   return cadets.map(p => {
     const name = p.name;
     let present=0, excused=0, unexcused=0, lastPresent=null, streak=0, streakBroken=false;
-    // chronological for lastPresent
+    const meetings = [];
     sessions.forEach(s => {
-      if(attInList(s.present,name)) { present++; lastPresent=s.date; }
-      else if(attInList(s.excused,name)) excused++;
-      else if(attInList(s.unexcused,name)) unexcused++;
+      let status='none';
+      if(attInList(s.present,name)) { present++; lastPresent=s.date; status='present'; }
+      else if(attInList(s.excused,name)) { excused++; status='excused'; }
+      else if(attInList(s.unexcused,name)) { unexcused++; status='unexcused'; }
+      meetings.push({ date:s.date, status });
     });
     // streak: walk most-recent-first over sessions the cadet was recorded in
     for(let i=sessions.length-1;i>=0 && !streakBroken;i--){
@@ -1977,10 +2060,17 @@ function attAggregate(){
       if(attInList(s.present,name)) streakBroken=true;
       else if(attInList(s.excused,name)||attInList(s.unexcused,name)) streak++;
     }
+    // this cadet's events (prefix-insensitive name match), oldest first
+    const myEvents = events.filter(e=>attStripRank(e.cadet)===attStripRank(name))
+                           .slice().sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+    const eventHours = Math.round(myEvents.reduce((a,e)=>a+(Number(e.hours)||0),0)*100)/100;
+    const weeklyHours = present*3;
     const recorded = present+excused+unexcused;
     const rate = recorded ? Math.round((present/recorded)*100) : null;
     const watch = unexcused>=2 || (rate!==null && recorded>=3 && rate<60) || streak>=2;
-    return { p, name, present, excused, unexcused, recorded, rate, lastPresent, streak, watch };
+    return { p, name, present, excused, unexcused, recorded, rate, lastPresent, streak, watch,
+             meetings, events:myEvents, weeklyHours, eventHours,
+             totalHours: Math.round((weeklyHours+eventHours)*100)/100 };
   });
 }
 
@@ -1990,28 +2080,29 @@ function attBarColor(c){ return c==='good'?'var(--green)':c==='mid'?'var(--gold-
 
 function renderAttendance(){
   const host = document.getElementById('attRows');
-  const sessions = attSessions();
   const statHost = document.getElementById('attStats');
+  const logWrap = document.getElementById('attLogWrap');
+  const allSessions = attSessions();
+  const sessions = allSessions.filter(s=>attInRange(s.date));
 
-  if(!sessions.length){
+  if(!allSessions.length && !(attEvents||[]).length){
     statHost.innerHTML='';
-    host.innerHTML = '<p class="att-empty">No attendance has been submitted yet.<br>This roll-up fills in automatically as weekly attendance is taken on the Trackers page.</p>';
-    document.getElementById('attLogWrap').innerHTML='';
+    host.innerHTML = '<p class="att-empty">No attendance or event hours have been logged yet.<br>This fills in automatically as weekly attendance and event hours are submitted on the Trackers page.</p>';
+    logWrap.innerHTML='';
     return;
   }
 
-  const agg = attAggregate();
-  // unit-wide rate from all cadet-sessions
+  const agg = attAggregate();   // already range-aware
   let tp=0, tr=0; agg.forEach(a=>{ tp+=a.present; tr+=a.recorded; });
   const unitRate = tr ? Math.round((tp/tr)*100) : 0;
   const flagged = agg.filter(a=>a.watch).length;
+  const totalHrs = Math.round(agg.reduce((a,x)=>a+x.totalHours,0)*10)/10;
   statHost.innerHTML =
-    `<div class="att-stat"><div class="num">${sessions.length}</div><div class="lbl">Sessions logged</div></div>
+    `<div class="att-stat"><div class="num">${sessions.length}</div><div class="lbl">Meetings in range</div></div>
      <div class="att-stat"><div class="num" style="color:${attBarColor(attRateClass(unitRate))}">${unitRate}%</div><div class="lbl">Overall attendance</div></div>
-     <div class="att-stat"><div class="num">${agg.length}</div><div class="lbl">Cadets tracked</div></div>
+     <div class="att-stat"><div class="num">${totalHrs}</div><div class="lbl">Total hours</div></div>
      <div class="att-stat ${flagged?'flag':''}"><div class="num">${flagged}</div><div class="lbl">Needs attention</div></div>`;
 
-  // worst attendance first: most unexcused, then most total absences, then lowest rate
   const q=(document.getElementById('attSearch').value||'').toLowerCase().trim();
   let rows = agg.slice().sort((a,b)=>
     b.unexcused-a.unexcused ||
@@ -2021,47 +2112,96 @@ function renderAttendance(){
   if(q) rows = rows.filter(r=>r.name.toLowerCase().includes(q));
 
   host.innerHTML='';
-  if(!rows.length){ host.innerHTML='<p class="att-empty">No cadet matches.</p>'; }
+  if(!rows.length){ host.innerHTML='<p class="att-empty">No cadet matches the current search or range.</p>'; }
   rows.forEach(r=>{
     const rc = attRateClass(r.rate);
-    const el = document.createElement('div'); el.className='att-row'+(r.watch?' watch':'');
-    const sub = r.lastPresent ? `Last present ${attFmtDate(r.lastPresent)}` : (r.recorded?'Not present in any logged session':'Not yet recorded');
+    const item = document.createElement('div'); item.className='att-item'+(r.watch?' watch':'');
+    const sub = r.lastPresent ? `Last present ${attFmtDate(r.lastPresent)}` : (r.recorded?'No meetings attended in range':(r.events.length?'Events only, no meetings':'Not yet recorded'));
     const streakBadge = r.streak>=2 ? `<span class="att-streak">${r.streak} absences in a row</span>` : '';
     const barPct = r.recorded ? Math.round((r.present/r.recorded)*100) : 0;
-    el.innerHTML =
-      `<div class="att-id">
-         <div class="att-name"><span class="att-rank">${r.p.rank}</span>${escapeHtmlA(r.name)}${streakBadge}</div>
-         <div class="att-sub">${sub}</div>
-         <div class="att-bar"><i style="width:${barPct}%;background:${attBarColor(rc)}"></i></div>
+    item.innerHTML =
+      `<div class="att-row">
+         <div class="att-id">
+           <div class="att-name"><span class="att-rank">${r.p.rank}</span>${escapeHtmlA(r.name)}${streakBadge}</div>
+           <div class="att-sub">${sub}</div>
+           <div class="att-bar"><i style="width:${barPct}%;background:${attBarColor(rc)}"></i></div>
+         </div>
+         <div class="att-right">
+           <div class="att-rate ${rc}">${r.rate===null?'—':r.rate+'%'}</div>
+           <div class="att-counts"><span class="cp"><b>${r.present}</b> P</span> · <span class="ce"><b>${r.excused}</b> E</span> · <span class="cu"><b>${r.unexcused}</b> U</span></div>
+           <div class="att-hours">${r.totalHours} hrs</div>
+         </div>
        </div>
-       <div class="att-right">
-         <div class="att-rate ${rc}">${r.rate===null?'—':r.rate+'%'}</div>
-         <div class="att-counts"><span class="cp"><b>${r.present}</b> P</span> · <span class="ce"><b>${r.excused}</b> E</span> · <span class="cu"><b>${r.unexcused}</b> U</span></div>
-       </div>`;
-    host.appendChild(el);
+       <div class="att-detail">${attDetailHtml(r)}</div>`;
+    item.querySelector('.att-row').addEventListener('click', ()=> item.classList.toggle('open'));
+    host.appendChild(item);
   });
 
-  // per-session log (collapsible)
-  const logWrap = document.getElementById('attLogWrap');
   const recent = sessions.slice().reverse();
-  logWrap.innerHTML =
-    `<button class="att-log-toggle" id="attLogToggle">Session log (${sessions.length}) <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></button>
-     <div class="att-log-list">${recent.map(s=>
-       `<div class="att-log-row">
-          <div><div class="att-log-date">${attFmtDate(s.date)}</div><div class="att-log-by">Submitted by ${escapeHtmlA(s.submittedBy||'—')}</div></div>
-          <div class="att-log-nums"><span class="cp">${(s.present||[]).length} P</span> · <span class="ce">${(s.excused||[]).length} E</span> · <span class="cu">${(s.unexcused||[]).length} U</span></div>
-        </div>`).join('')}</div>`;
-  document.getElementById('attLogToggle').addEventListener('click', ()=>logWrap.classList.toggle('open'));
+  if(recent.length){
+    logWrap.innerHTML =
+      `<button class="att-log-toggle" id="attLogToggle">Session log (${sessions.length}) <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></button>
+       <div class="att-log-list">${recent.map(s=>
+         `<div class="att-log-row">
+            <div><div class="att-log-date">${attFmtDate(s.date)}</div><div class="att-log-by">Submitted by ${escapeHtmlA(s.submittedBy||'—')}</div></div>
+            <div class="att-log-nums"><span class="cp">${(s.present||[]).length} P</span> · <span class="ce">${(s.excused||[]).length} E</span> · <span class="cu">${(s.unexcused||[]).length} U</span></div>
+          </div>`).join('')}</div>`;
+    document.getElementById('attLogToggle').addEventListener('click', ()=>logWrap.classList.toggle('open'));
+  } else { logWrap.innerHTML=''; }
+}
+
+function attDetailHtml(r){
+  const meetings = r.meetings.slice().reverse();
+  const mRows = meetings.length ? meetings.map(m=>{
+    const cls = m.status==='present'?'present':m.status==='excused'?'excused':m.status==='unexcused'?'unexcused':'none';
+    const lbl = m.status==='present'?'Present':m.status==='excused'?'Excused':m.status==='unexcused'?'Unexcused':'Not recorded';
+    return `<div class="att-d-row"><span class="att-d-date">${attFmtDate(m.date)}</span><span class="att-status ${cls}">${lbl}</span></div>`;
+  }).join('') : '<div class="att-d-empty">No meetings in this range.</div>';
+  const evRows = r.events.length ? r.events.slice().reverse().map(e=>
+    `<div class="att-d-row"><span class="att-d-date">${attFmtDate(e.date)}</span><span class="att-d-ev">${escapeHtmlA(e.event||'Event')}</span><span class="att-d-hrs">${Number(e.hours)||0} hrs</span></div>`
+  ).join('') : '<div class="att-d-empty">No events in this range.</div>';
+  return `<div class="att-d-hours">
+      <div><span>Weekly</span><b>${r.weeklyHours}</b><small>${r.present} present &times; 3 hrs</small></div>
+      <div><span>Events</span><b>${r.eventHours}</b><small>${r.events.length} logged</small></div>
+      <div class="tot"><span>Total hours</span><b>${r.totalHours}</b></div>
+    </div>
+    <div class="att-d-cols">
+      <div class="att-d-col"><div class="att-d-h">Meetings</div>${mRows}</div>
+      <div class="att-d-col"><div class="att-d-h">Events</div>${evRows}</div>
+    </div>`;
+}
+
+function renderEventNames(){
+  const wrap=document.getElementById('attNamesWrap'); if(!wrap) return;
+  const list=attEventNames||[];
+  wrap.innerHTML =
+    `<button class="att-log-toggle" id="attNamesToggle">Event names (${list.length}) <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></button>
+     <div class="att-names-body">
+       <p class="att-names-note">These appear as options on the Trackers Event form. Cadets can also pick "Other" to type one that is not listed.</p>
+       <div class="att-names-add"><input type="text" id="attNameInput" placeholder="Add an event name, e.g. Spring Car Wash"><button class="btn add" id="attNameAdd">Add</button></div>
+       <div class="att-names-chips">${ list.length ? list.map((n,i)=>`<span class="att-name-chip">${escapeHtmlA(n)}<button class="att-name-del" data-i="${i}" title="Remove">&times;</button></span>`).join('') : '<span class="att-d-empty">No event names yet. Add some so cadets can pick them.</span>' }</div>
+     </div>`;
+  document.getElementById('attNamesToggle').addEventListener('click', ()=> wrap.classList.toggle('open'));
+  const inp=document.getElementById('attNameInput');
+  const add=()=>{ const v=inp.value.trim(); if(!v) return; if(attEventNames.some(x=>x.toLowerCase()===v.toLowerCase())){ showToast('That name is already in the list'); return; } attEventNames.push(v); attEventNames.sort((a,b)=>a.localeCompare(b)); commitEventNames(); };
+  document.getElementById('attNameAdd').addEventListener('click', add);
+  inp.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); add(); } });
+  wrap.querySelectorAll('.att-name-del').forEach(b=> b.addEventListener('click', ()=>{ attEventNames.splice(+b.dataset.i,1); commitEventNames(); }));
+}
+function commitEventNames(){
+  renderEventNames();
+  const w=document.getElementById('attNamesWrap'); if(w) w.classList.add('open');
+  RPDRoster.eventNames.save(attEventNames).then(()=>showToast('Event names saved')).catch(()=>showToast('Save failed'));
 }
 
 function attExportCSV(){
   const agg = attAggregate();
-  const head=['Cadet','Rank','Sessions Recorded','Present','Excused','Unexcused','Attendance Rate','Last Present','Absence Streak'];
+  const head=['Cadet','Rank','Meetings Recorded','Present','Excused','Unexcused','Attendance Rate','Weekly Hours','Event Hours','Total Hours','Last Present','Absence Streak'];
   const rows = agg.slice().sort((a,b)=>b.unexcused-a.unexcused || (b.excused+b.unexcused)-(a.excused+a.unexcused) || a.name.localeCompare(b.name));
-  const csv=[head].concat(rows.map(r=>[r.name,r.p.rank,r.recorded,r.present,r.excused,r.unexcused,r.rate===null?'n/a':r.rate+'%',r.lastPresent?attFmtDate(r.lastPresent):'never',r.streak]))
+  const csv=[head].concat(rows.map(r=>[r.name,r.p.rank,r.recorded,r.present,r.excused,r.unexcused,r.rate===null?'n/a':r.rate+'%',r.weeklyHours,r.eventHours,r.totalHours,r.lastPresent?attFmtDate(r.lastPresent):'never',r.streak]))
     .map(r=>r.map(c=>`"${String(c==null?'':c).replace(/"/g,'""')}"`).join(',')).join('\r\n');
   const blob=new Blob([csv],{type:'text/csv'}); const url=URL.createObjectURL(blob);
-  const a=document.createElement('a'); a.href=url; a.download='attendance-rollup-'+new Date().toISOString().slice(0,10)+'.csv';
+  const a=document.createElement('a'); a.href=url; a.download='attendance-hours-'+new Date().toISOString().slice(0,10)+'.csv';
   document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url),1500);
   showToast('CSV downloaded');
 }
@@ -2456,6 +2596,8 @@ document.getElementById('recSearch').addEventListener('input', renderRecords);
 document.getElementById('attBack').addEventListener('click', ()=>showView('hubView'));
 document.getElementById('attSearch').addEventListener('input', renderAttendance);
 document.getElementById('attCsv').addEventListener('click', attExportCSV);
+document.querySelectorAll('.att-range-btn').forEach(b=> b.addEventListener('click', ()=> attApplyPreset(b.dataset.range)));
+['attFrom','attTo'].forEach(id=>{ const el=document.getElementById(id); if(el) el.addEventListener('change', ()=>{ attSetPreset(null); renderAttendance(); }); });
 document.getElementById('raBack').addEventListener('click', ()=>showView('hubView'));
 document.getElementById('raAdd').addEventListener('click', raAddOrUpdate);
 document.getElementById('raCancel').addEventListener('click', raResetForm);

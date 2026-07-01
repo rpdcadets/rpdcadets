@@ -1,4 +1,4 @@
-/* roster.js  |  VERSION 17  |  updated 2026-07-01  |  added curated Event name list (roster/eventNames) */
+/* roster.js  |  VERSION 18  |  updated 2026-07-01  |  shared attendance+hours roll-up (attendance.rollup) for /admin and Trackers Current Attendance */
 /* ═══════════════════════════════════════════════════════════════════════
    RPD CADETS — SHARED ROSTER ENGINE
    One encrypted roster in Firebase, read by members, trackers, and
@@ -347,7 +347,7 @@
       get: officersGet, save: officersSave
     },
     attendance: {
-      get: attendanceGet, saveSession: attendanceSaveSession
+      get: attendanceGet, saveSession: attendanceSaveSession, rollup: attRollup
     },
     // ── Uniform Standards: shared roster key, node roster/uniforms ──
     // Read by the Uniforms page (cadet passcode), written from /admin
@@ -557,5 +557,50 @@
     if (!rosterKey) throw new Error('roster locked');
     const data = await keyEncrypt(JSON.stringify(arr), rosterKey);
     await db.ref(ROOT + '/eventNames').set(data);
+  }
+  // ── Attendance + hours roll-up (shared by /admin and the Trackers "Current
+  //    Attendance" tab so both show identical numbers). Pure over the passed data.
+  //    Weekly meeting = 3 hours. Names are matched prefix-insensitively: attendance
+  //    and event records store displayName() (rank-prefixed for leadership) while the
+  //    roster key is the raw name, so stripping the prefix on both sides keeps
+  //    leadership counted. If a NEW rank prefix is added to displayName(), extend
+  //    attStripRank's regex here (single source of truth for this logic).
+  const ATT_WEEKLY_HOURS = 3;
+  function attStripRank(n){ return String(n==null?'':n).replace(/^(Capt\.|Captain|Lt\.|Sgt\.)\s+/,'').trim(); }
+  function attInList(list, name){ const t = attStripRank(name); return (list||[]).some(x => attStripRank(x) === t); }
+  function attInRange(d, from, to){ d=d||''; if(from && d<from) return false; if(to && d>to) return false; return true; }
+  function attRollup(opts){
+    opts = opts || {};
+    const attData = opts.attData || {};
+    const from = opts.from || '', to = opts.to || '';
+    const sessions = Object.values(attData).sort((a,b)=>(a.date||'').localeCompare(b.date||'')).filter(s=>attInRange(s.date, from, to));
+    const events = (opts.events||[]).filter(e=>attInRange(e.date, from, to));
+    const cadets = activeSorted();
+    return cadets.map(p => {
+      const name = p.name;
+      let present=0, excused=0, unexcused=0, lastPresent=null, streak=0, streakBroken=false;
+      const meetings = [];
+      sessions.forEach(s => {
+        let status='none';
+        if(attInList(s.present,name)) { present++; lastPresent=s.date; status='present'; }
+        else if(attInList(s.excused,name)) { excused++; status='excused'; }
+        else if(attInList(s.unexcused,name)) { unexcused++; status='unexcused'; }
+        meetings.push({ date:s.date, status });
+      });
+      for(let i=sessions.length-1;i>=0 && !streakBroken;i--){
+        const s=sessions[i];
+        if(attInList(s.present,name)) streakBroken=true;
+        else if(attInList(s.excused,name)||attInList(s.unexcused,name)) streak++;
+      }
+      const myEvents = events.filter(e=>attStripRank(e.cadet)===attStripRank(name)).slice().sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+      const eventHours = Math.round(myEvents.reduce((a,e)=>a+(Number(e.hours)||0),0)*100)/100;
+      const weeklyHours = present*ATT_WEEKLY_HOURS;
+      const recorded = present+excused+unexcused;
+      const rate = recorded ? Math.round((present/recorded)*100) : null;
+      const watch = unexcused>=2 || (rate!==null && recorded>=3 && rate<60) || streak>=2;
+      return { p, name, present, excused, unexcused, recorded, rate, lastPresent, streak, watch,
+               meetings, events:myEvents, weeklyHours, eventHours,
+               totalHours: Math.round((weeklyHours+eventHours)*100)/100 };
+    });
   }
 })(window);

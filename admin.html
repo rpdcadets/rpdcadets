@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- admin.html  |  Build v17  |  updated 2026-07-01  |  pairs with roster.js v17  |  Event Names manager for the Trackers event picker -->
+<!-- admin.html  |  Build v18  |  updated 2026-07-01  |  pairs with roster.js v18  |  attendance roll-up now uses the shared roster.js engine; visible stamps are version-only -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -454,7 +454,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
     <button class="lock-btn" id="goBtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg><span id="goLabel">Unlock</span></button>
     <div class="lock-error" id="lockErr">Incorrect passcode.</div>
     <div class="lock-home"><a href="index.html">← Return to Home</a></div>
-    <div style="margin-top:16px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v17 · event names manager</div>
+    <div style="margin-top:16px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v18</div>
   </div>
 </div>
 
@@ -484,7 +484,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
       <button class="back-link" id="rosterBack"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Admin Console</button>
       <div class="bar">
         <div class="status-pill" id="pill"><span class="dot"></span><span id="pillText">Synced</span></div>
-        <span style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v17</span>
+        <span style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v18</span>
         <button class="btn ghost" id="syncMembersBtn" title="One-time: pull titles and alumni from the Members page into the shared roster">Sync members data</button>
         <button class="btn add" id="addBtn">+ Add Person</button>
       </div>
@@ -668,9 +668,9 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
 
 <div class="toast" id="toast"></div>
 
-<script src="roster.js?v=17"></script>
+<script src="roster.js?v=18"></script>
 <script>
-console.log('[admin] Build v17 — event names manager');
+console.log('[admin] Build v18');
 const SESSION_KEY = 'rpd761_admin_auth';   // advisor-only; NOT shared with cadet pages
 const RANKS = ['Captain','Lt.','Sgt.','Cadet','Probationary'];
 const SQUADS = [['leadership','Leadership'],[1,'Squad 1'],[2,'Squad 2'],[3,'Squad 3'],[4,'Squad 4 (Admin)']];
@@ -2030,48 +2030,11 @@ function attSessions(){
   return Object.values(attData||{}).sort((a,b)=>(a.date||'').localeCompare(b.date||''));
 }
 
-// Names are stored by the Trackers form via displayName(), which prefixes rank
-// for leadership (e.g. "Sgt. Armando Rizvanovic"), while the roster key is the
-// raw name ("Armando Rizvanovic"). Match prefix-insensitively so leadership is
-// counted, and so already-stored sessions roll up correctly with no re-entry.
-function attStripRank(n){ return String(n==null?'':n).replace(/^(Capt\.|Captain|Lt\.|Sgt\.)\s+/,'').trim(); }
-function attInList(list, name){ const t = attStripRank(name); return (list||[]).some(x => attStripRank(x) === t); }
-// Per-cadet tally across every logged session. A cadet not listed in any of a
-// session's three buckets is treated as "not recorded that day" (e.g. joined
-// later) and left out of their own denominator.
+// Per-cadet attendance + hours roll-up. The logic lives in roster.js
+// (RPDRoster.attendance.rollup) so /admin and the Trackers "Current Attendance"
+// tab always compute the exact same numbers from one source.
 function attAggregate(){
-  const sessions = attSessions().filter(s=>attInRange(s.date));   // ascending, in range
-  const events = (attEvents||[]).filter(e=>attInRange(e.date));
-  const cadets = RPDRoster.activeSorted();
-  return cadets.map(p => {
-    const name = p.name;
-    let present=0, excused=0, unexcused=0, lastPresent=null, streak=0, streakBroken=false;
-    const meetings = [];
-    sessions.forEach(s => {
-      let status='none';
-      if(attInList(s.present,name)) { present++; lastPresent=s.date; status='present'; }
-      else if(attInList(s.excused,name)) { excused++; status='excused'; }
-      else if(attInList(s.unexcused,name)) { unexcused++; status='unexcused'; }
-      meetings.push({ date:s.date, status });
-    });
-    // streak: walk most-recent-first over sessions the cadet was recorded in
-    for(let i=sessions.length-1;i>=0 && !streakBroken;i--){
-      const s=sessions[i];
-      if(attInList(s.present,name)) streakBroken=true;
-      else if(attInList(s.excused,name)||attInList(s.unexcused,name)) streak++;
-    }
-    // this cadet's events (prefix-insensitive name match), oldest first
-    const myEvents = events.filter(e=>attStripRank(e.cadet)===attStripRank(name))
-                           .slice().sort((a,b)=>(a.date||'').localeCompare(b.date||''));
-    const eventHours = Math.round(myEvents.reduce((a,e)=>a+(Number(e.hours)||0),0)*100)/100;
-    const weeklyHours = present*3;
-    const recorded = present+excused+unexcused;
-    const rate = recorded ? Math.round((present/recorded)*100) : null;
-    const watch = unexcused>=2 || (rate!==null && recorded>=3 && rate<60) || streak>=2;
-    return { p, name, present, excused, unexcused, recorded, rate, lastPresent, streak, watch,
-             meetings, events:myEvents, weeklyHours, eventHours,
-             totalHours: Math.round((weeklyHours+eventHours)*100)/100 };
-  });
+  return RPDRoster.attendance.rollup({ attData, events: attEvents, from: attFromVal(), to: attToVal() });
 }
 
 function attFmtDate(d){ if(!d) return ''; const dt=new Date(d+'T12:00:00'); return isNaN(dt)?d:dt.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); }

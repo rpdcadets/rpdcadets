@@ -359,6 +359,10 @@
     // (advisor passcode). Same model as the uniforms node.
     training: {
       get: trainingGet, save: trainingSave
+    },
+    // Donation Tracking: separate advisor records key, node roster/donations
+    donations: {
+      get: donationsGet, save: donationsSave
     }
   };
 
@@ -487,5 +491,21 @@
     if (!rosterKey) throw new Error('roster locked');
     const data = await keyEncrypt(JSON.stringify(obj), rosterKey);
     await db.ref(ROOT + '/training').set(data);
+  }
+  // Donation Tracking, encrypted under the ADVISOR records key, node
+  // roster/donations. Same key as Cadet Records and Ride-Along, so the advisor
+  // passcode opens all three; the cadet/qm passcodes never get this key. Lives
+  // under the already-permitted roster node, so no extra Firebase rule is
+  // required. Returns null when nothing has been saved yet.
+  async function donationsGet() {
+    if (!recordsKey) return null;
+    const blob = await once('donations');
+    if (!blob) return null;
+    try { return JSON.parse(await keyDecrypt(blob, recordsKey)); } catch (e) { return null; }
+  }
+  async function donationsSave(obj) {
+    if (!recordsKey) throw new Error('records locked');
+    const data = await keyEncrypt(JSON.stringify(obj), recordsKey);
+    await db.ref(ROOT + '/donations').set(data);
   }
 })(window);

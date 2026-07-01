@@ -329,6 +329,66 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
 .uni-coupon input:focus{border-color:var(--input-focus,rgba(212,169,82,0.5))}
 .uni-coupon .uni-wide{grid-column:1 / 3}
 @media(max-width:680px){.uni-piece{grid-template-columns:1fr auto}.uni-piece .uni-buyrow{grid-column:1 / -1}.uni-coupon{grid-template-columns:1fr auto}.uni-coupon .uni-wide{grid-column:1 / -1}}
+/* DONATION TRACKING */
+.don-tabs{display:flex;gap:6px;margin-left:auto;flex-wrap:wrap}
+.don-tab{background:rgba(255,255,255,0.03);border:1px solid var(--card-border);color:var(--text-muted);font-family:'Barlow Condensed',sans-serif;font-size:13px;letter-spacing:1.2px;text-transform:uppercase;padding:8px 14px;border-radius:9px;cursor:pointer}
+.don-tab:hover{color:var(--white)}
+.don-tab.on{color:var(--white);border-color:rgba(212,169,82,0.5);background:rgba(212,169,82,0.08)}
+.don-panel{display:none}.don-panel.on{display:block}
+.don-summary{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px}
+.don-stat{flex:1;min-width:120px;background:var(--card-bg);border:1px solid var(--card-border);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:4px}
+.don-stat span{font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)}
+.don-stat b{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:1px}
+.don-stat.big b{font-size:32px}
+.don-stat b.pos,.don-c.amt.pos{color:var(--green)}
+.don-stat b.neg,.don-c.amt.neg{color:var(--red-glow)}
+.don-block{background:var(--card-bg);border:1px solid var(--card-border);border-radius:14px;padding:16px;margin-bottom:18px}
+.don-block-head{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px}
+.don-mut{color:var(--text-muted);font-weight:400;text-transform:none;letter-spacing:0}
+.don-row{display:flex;align-items:center;gap:10px;padding:9px 4px;border-top:1px solid var(--card-border)}
+.don-row.sub{padding:7px 4px}
+.don-c{font-size:14px}
+.don-c.date{width:96px;flex-shrink:0;color:var(--text-muted);font-size:13px}
+.don-c.grow{flex:1;min-width:0}
+.don-sub{font-size:12px;color:var(--text-muted);margin-top:2px}
+.don-c.amt{width:100px;text-align:right;font-variant-numeric:tabular-nums;font-weight:600;flex-shrink:0}
+.don-c.rcpt{width:96px;flex-shrink:0;text-align:right;white-space:nowrap}
+.don-rcpt-link{color:var(--gold);text-decoration:none;font-size:13px;border-bottom:1px solid rgba(197,165,90,0.4)}
+.don-relabel,.don-attach{cursor:pointer;color:var(--text-muted);font-size:12px}
+.don-relabel{margin-left:6px}
+.don-attach{border:1px dashed var(--input-border);border-radius:7px;padding:3px 8px}
+.don-relabel input,.don-attach input,.don-filebtn input{display:none}
+.don-x{background:none;border:none;color:var(--text-muted);font-size:20px;line-height:1;cursor:pointer;flex-shrink:0;width:24px}
+.don-x:hover{color:var(--red-glow)}
+.don-empty{color:var(--text-muted);text-align:center;padding:18px;font-size:14px}
+.don-empty.sm{padding:10px;font-size:13px}
+.don-err{color:var(--red-glow);text-align:center;padding:18px}
+.don-addform{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:12px;padding-top:12px;border-top:1px dashed var(--card-border)}
+.don-addform.sub{margin-top:8px}
+.don-addform input[type=date],.don-addform input[type=text],.don-addform input[type=number]{background:var(--input-bg);border:1px solid var(--input-border);border-radius:8px;padding:9px 11px;color:var(--white);font-family:'Barlow',sans-serif;font-size:13px;outline:none}
+.don-addform input:focus{border-color:var(--input-focus)}
+.don-addform input[type=text]{flex:1;min-width:110px}
+.don-addform input.amt-in{width:96px;flex:none;text-align:right}
+.don-addform input.grow-in{flex:2}
+.don-addform.solo{border-top:none;padding-top:0;margin-top:0;margin-bottom:18px}
+.don-filebtn{display:inline-flex;align-items:center;gap:6px;background:var(--input-bg);border:1px solid var(--input-border);border-radius:8px;padding:9px 11px;color:var(--text-muted);font-size:13px;cursor:pointer;white-space:nowrap}
+.don-filebtn.has{color:var(--gold);border-color:rgba(197,165,90,0.4)}
+.don-vendor{background:var(--card-bg);border:1px solid var(--card-border);border-radius:14px;padding:16px;margin-bottom:16px}
+.don-vendor-head{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.don-vendor-name{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:1px}
+.don-vendor-total{margin-left:auto;font-weight:700;color:var(--gold);font-variant-numeric:tabular-nums}
+.don-card{background:rgba(255,255,255,0.02);border:1px solid var(--card-border);border-radius:11px;padding:13px;margin-bottom:10px}
+.don-card-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.don-card-meta{font-size:13px}
+.don-card-face{font-weight:700}
+.don-card-bal{margin-left:auto;font-weight:700;font-variant-numeric:tabular-nums;color:var(--green)}
+.don-card-bal.zero{color:var(--text-muted)}
+.don-secret{display:flex;align-items:center;gap:8px;margin:9px 0}
+.don-reveal{display:inline-flex;align-items:center;gap:9px;background:rgba(0,0,0,0.25);border:1px solid var(--input-border);border-radius:8px;padding:8px 12px;color:var(--text-muted);font-family:'Barlow',sans-serif;font-size:13px;letter-spacing:1px;cursor:pointer}
+.don-reveal:hover{color:var(--white)}
+.don-reveal.on{color:var(--gold);border-color:rgba(197,165,90,0.4)}
+.don-reveal .real{letter-spacing:0.5px}
+@media(max-width:640px){.don-row{flex-wrap:wrap}.don-c.date{width:100%}.don-c.rcpt,.don-c.amt{width:auto;margin-left:auto}}
 </style>
 </head>
 <body>
@@ -346,7 +406,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
     <button class="lock-btn" id="goBtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg><span id="goLabel">Unlock</span></button>
     <div class="lock-error" id="lockErr">Incorrect passcode.</div>
     <div class="lock-home"><a href="index.html">← Return to Home</a></div>
-    <div style="margin-top:16px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v13 · attendance roll-up</div>
+    <div style="margin-top:16px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v14 · donation tracking</div>
   </div>
 </div>
 
@@ -376,7 +436,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
       <button class="back-link" id="rosterBack"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Admin Console</button>
       <div class="bar">
         <div class="status-pill" id="pill"><span class="dot"></span><span id="pillText">Synced</span></div>
-        <span style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v13</span>
+        <span style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v14</span>
         <button class="btn ghost" id="syncMembersBtn" title="One-time: pull titles and alumni from the Members page into the shared roster">Sync members data</button>
         <button class="btn add" id="addBtn">+ Add Person</button>
       </div>
@@ -445,6 +505,31 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
           <button class="btn ghost" id="raCsv">Export CSV</button>
         </div>
         <div id="raList"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DONATION TRACKING (advisor records key; node roster/donations) -->
+  <div class="view" id="donationsView">
+    <div class="page-header">
+      <div class="section-label">Donation Tracking</div>
+      <h1 class="section-title">Donation Tracking</h1>
+      <p class="page-desc">Money, gift cards, and in-kind gifts. Encrypted under the advisor passcode, the same tier as Cadet Records. Every expense takes a receipt.</p>
+    </div>
+    <div class="container">
+      <button class="back-link" id="donBack"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Admin Console</button>
+      <div id="donApp">
+        <div class="bar">
+          <div class="status-pill" id="donPill"><span class="dot"></span><span id="donPillText">Synced</span></div>
+          <div class="don-tabs">
+            <button class="don-tab on" data-tab="money">Monetary</button>
+            <button class="don-tab" data-tab="cards">Gift Cards</button>
+            <button class="don-tab" data-tab="inkind">In-Kind</button>
+          </div>
+        </div>
+        <div class="don-panel on" id="donMoney"></div>
+        <div class="don-panel" id="donCards"></div>
+        <div class="don-panel" id="donInkind"></div>
       </div>
     </div>
   </div>
@@ -525,9 +610,9 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
 
 <div class="toast" id="toast"></div>
 
-<script src="roster.js?v=14"></script>
+<script src="roster.js?v=15"></script>
 <script>
-console.log('[admin] Build v13 — attendance roll-up');
+console.log('[admin] Build v14 — donation tracking');
 const SESSION_KEY = 'rpd761_admin_auth';   // advisor-only; NOT shared with cadet pages
 const RANKS = ['Captain','Lt.','Sgt.','Cadet','Probationary'];
 const SQUADS = [['leadership','Leadership'],[1,'Squad 1'],[2,'Squad 2'],[3,'Squad 3'],[4,'Squad 4 (Admin)']];
@@ -570,6 +655,13 @@ const TOOLS = [
     desc: 'Record which cadet rode with which officer, the date, and start and end times.',
     icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 17h-2v-6l2-5h9l4 5h3a1 1 0 0 1 1 1v5h-2"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/></svg>',
     open: openRideAlongs
+  },
+  {
+    id: 'donations',
+    name: 'Donation Tracking',
+    desc: 'Money, gift cards by vendor with per-card balances, and in-kind items. Advisor tier, receipt on every expense.',
+    icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1v22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>',
+    open: openDonations
   },
   {
     id: 'attendance',
@@ -2130,6 +2222,218 @@ function raExportCSV(){
   showToast('CSV downloaded');
 }
 
+/* ═══════════════ DONATION TRACKING (advisor records key; node roster/donations) ═══════════════ */
+let donData = null;
+let donSaveTimer = null;
+const donId  = p => p + '_' + Math.random().toString(36).slice(2, 9);
+const donNum = v => { const n = parseFloat(v); return isNaN(n) ? 0 : n; };
+const fmtUSD = v => { const n = donNum(v); const s = n < 0 ? '-' : ''; return s + '$' + Math.abs(Math.round(n * 100) / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); };
+function donFmtDate(d){ if(!d) return ''; const dt = new Date(d + 'T00:00:00'); return isNaN(dt) ? d : dt.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); }
+function trimName(n){ return n.length > 16 ? n.slice(0,13) + '…' : n; }
+
+function donNormalize(o){
+  o = o || {};
+  o.monetary = o.monetary || {};
+  o.monetary.income   = Array.isArray(o.monetary.income)   ? o.monetary.income   : [];
+  o.monetary.expenses = Array.isArray(o.monetary.expenses) ? o.monetary.expenses : [];
+  o.vendors = Array.isArray(o.vendors) ? o.vendors : [];
+  o.vendors.forEach(v => { v.cards = Array.isArray(v.cards) ? v.cards : []; v.cards.forEach(c => { c.expenses = Array.isArray(c.expenses) ? c.expenses : []; }); });
+  o.inkind = Array.isArray(o.inkind) ? o.inkind : [];
+  return o;
+}
+
+async function openDonations(){
+  showView('donationsView');
+  const m = document.getElementById('donMoney'); if(m) m.innerHTML = '<p class="don-empty">Unlocking…</p>';
+  const adv = sessionStorage.getItem(SESSION_KEY);
+  try {
+    let res = await RPDRoster.records.connect(adv);
+    if(res.needsSetup){ await RPDRoster.records.setup(adv); res = { ok:true }; }
+    if(!res.ok){ document.getElementById('donMoney').innerHTML = '<p class="don-err">Could not unlock. Re-open the admin page and try again.</p>'; return; }
+    donData = donNormalize(await RPDRoster.donations.get());
+    renderDon();
+  } catch(e){
+    document.getElementById('donMoney').innerHTML = '<p class="don-err">Could not reach the database. Check your connection.</p>';
+  }
+}
+function renderDon(){ renderDonMoney(); renderDonCards(); renderDonInkind(); }
+
+function donReceiptCell(r, act, extra){
+  extra = extra || '';
+  if(r.receipt){
+    return `<div class="don-c rcpt"><a href="${r.receipt}" target="_blank" rel="noopener" class="don-rcpt-link">View</a><label class="don-relabel" title="Replace receipt"><input type="file" accept="image/*,application/pdf" data-act="${act}" data-id="${r.id}" ${extra}>↻</label></div>`;
+  }
+  return `<div class="don-c rcpt"><label class="don-attach"><input type="file" accept="image/*,application/pdf" data-act="${act}" data-id="${r.id}" ${extra}>+ Receipt</label></div>`;
+}
+
+/* ---- Monetary ---- */
+function renderDonMoney(){
+  const host = document.getElementById('donMoney'); if(!host) return;
+  const inc = donData.monetary.income, exp = donData.monetary.expenses;
+  const sIn = inc.reduce((a,r)=>a+donNum(r.amount),0);
+  const sEx = exp.reduce((a,r)=>a+donNum(r.amount),0);
+  const incRows = inc.slice().sort((a,b)=>(b.date||'').localeCompare(a.date||'')).map(r=>
+    `<div class="don-row"><div class="don-c date">${donFmtDate(r.date)}</div><div class="don-c grow">${escapeHtmlA(r.from)||'<span class="don-mut">—</span>'}${r.note?`<div class="don-sub">${escapeHtmlA(r.note)}</div>`:''}</div><div class="don-c amt pos">${fmtUSD(r.amount)}</div><button class="don-x" data-act="mon-inc-del" data-id="${r.id}" title="Delete">&times;</button></div>`
+  ).join('') || '<p class="don-empty">No donations logged yet.</p>';
+  const expRows = exp.slice().sort((a,b)=>(b.date||'').localeCompare(a.date||'')).map(r=>
+    `<div class="don-row"><div class="don-c date">${donFmtDate(r.date)}</div><div class="don-c grow">${escapeHtmlA(r.desc)||'<span class="don-mut">—</span>'}</div>${donReceiptCell(r,'mon-exp-file')}<div class="don-c amt neg">−${fmtUSD(Math.abs(donNum(r.amount)))}</div><button class="don-x" data-act="mon-exp-del" data-id="${r.id}" title="Delete">&times;</button></div>`
+  ).join('') || '<p class="don-empty">No expenses yet.</p>';
+  host.innerHTML =
+    `<div class="don-summary"><div class="don-stat"><span>Donated in</span><b class="pos">${fmtUSD(sIn)}</b></div><div class="don-stat"><span>Spent</span><b class="neg">${fmtUSD(sEx)}</b></div><div class="don-stat big"><span>Balance</span><b>${fmtUSD(sIn-sEx)}</b></div></div>
+     <div class="don-block"><div class="don-block-head">Donations in <span class="don-mut">checks, cash, fundraising</span></div>${incRows}
+       <div class="don-addform" data-form="mon-inc"><input type="date" data-f="date"><input type="text" data-f="from" placeholder="From (donor)"><input type="text" data-f="note" placeholder="Note (optional)"><input type="number" step="0.01" min="0" data-f="amount" placeholder="0.00" class="amt-in"><button class="btn add" data-act="mon-inc-add">Add</button></div>
+     </div>
+     <div class="don-block"><div class="don-block-head">Expenses <span class="don-mut">spent from the monetary pot</span></div>${expRows}
+       <div class="don-addform" data-form="mon-exp"><input type="date" data-f="date"><input type="text" data-f="desc" placeholder="What it was for"><label class="don-filebtn"><input type="file" accept="image/*,application/pdf" data-f="receipt"><span>Receipt</span></label><input type="number" step="0.01" min="0" data-f="amount" placeholder="0.00" class="amt-in"><button class="btn add" data-act="mon-exp-add">Add</button></div>
+     </div>`;
+}
+
+/* ---- Gift cards ---- */
+function cardBalance(c){ return donNum(c.amount) - c.expenses.reduce((a,e)=>a+donNum(e.amount),0); }
+function vendorTotal(v){ return v.cards.reduce((a,c)=>a+cardBalance(c),0); }
+
+function renderDonCards(){
+  const host = document.getElementById('donCards'); if(!host) return;
+  const vendors = donData.vendors;
+  const grand = vendors.reduce((a,v)=>a+vendorTotal(v),0);
+  let html = `<div class="don-summary"><div class="don-stat big"><span>All gift cards available</span><b>${fmtUSD(grand)}</b></div></div>
+    <div class="don-addform solo" data-form="ven"><input type="text" data-f="name" placeholder="Add a vendor, e.g. Target, Walmart, Academy"><button class="btn add" data-act="ven-add">Add vendor</button></div>`;
+  if(!vendors.length){ host.innerHTML = html + '<p class="don-empty">No vendors yet. Add one above to start tracking gift cards.</p>'; return; }
+  vendors.forEach(v=>{
+    const cardsHtml = v.cards.map(c=>donCardBlock(v,c)).join('') || '<p class="don-empty sm">No cards for this vendor yet.</p>';
+    html += `<div class="don-vendor">
+      <div class="don-vendor-head"><div class="don-vendor-name">${escapeHtmlA(v.name)}</div><div class="don-vendor-total">${fmtUSD(vendorTotal(v))} <span class="don-mut">available</span></div><button class="don-x" data-act="ven-del" data-id="${v.id}" title="Remove vendor">&times;</button></div>
+      ${cardsHtml}
+      <div class="don-addform card" data-form="card" data-ven="${v.id}"><input type="date" data-f="date"><input type="text" data-f="from" placeholder="From (donor)"><input type="text" data-f="number" placeholder="Card number"><input type="text" data-f="pin" placeholder="PIN"><input type="number" step="0.01" min="0" data-f="amount" placeholder="0.00" class="amt-in"><button class="btn add" data-act="card-add" data-ven="${v.id}">Add card</button></div>
+    </div>`;
+  });
+  host.innerHTML = html;
+}
+
+function donCardBlock(v,c){
+  const bal = cardBalance(c);
+  const exp = c.expenses.slice().sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  const expRows = exp.map(e=>
+    `<div class="don-row sub"><div class="don-c date">${donFmtDate(e.date)}</div><div class="don-c grow">${escapeHtmlA(e.desc)||'<span class="don-mut">—</span>'}</div>${donReceiptCell(e,'cexp-file',`data-ven="${v.id}" data-card="${c.id}"`)}<div class="don-c amt neg">−${fmtUSD(Math.abs(donNum(e.amount)))}</div><button class="don-x" data-act="cexp-del" data-ven="${v.id}" data-card="${c.id}" data-id="${e.id}" title="Delete">&times;</button></div>`
+  ).join('');
+  return `<div class="don-card">
+    <div class="don-card-top">
+      <div class="don-card-meta"><span class="don-card-face">${fmtUSD(c.amount)}</span> loaded${c.from?` · <span class="don-mut">from ${escapeHtmlA(c.from)}</span>`:''}${c.date?` · <span class="don-mut">${donFmtDate(c.date)}</span>`:''}</div>
+      <div class="don-card-bal ${bal<=0?'zero':''}">${fmtUSD(bal)} left</div>
+    </div>
+    <div class="don-secret">
+      <button class="don-reveal" data-act="card-reveal"><span class="masked">•••• •••• ••••  ·  PIN ••••</span><span class="real" style="display:none">${escapeHtmlA(c.number)||'no number'} &nbsp;·&nbsp; PIN ${escapeHtmlA(c.pin)||'—'}</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+      <button class="don-x" data-act="card-del" data-ven="${v.id}" data-id="${c.id}" title="Remove card">&times;</button>
+    </div>
+    ${expRows}
+    <div class="don-addform sub" data-form="cexp" data-ven="${v.id}" data-card="${c.id}"><input type="date" data-f="date"><input type="text" data-f="desc" placeholder="What it was for"><label class="don-filebtn"><input type="file" accept="image/*,application/pdf" data-f="receipt"><span>Receipt</span></label><input type="number" step="0.01" min="0" data-f="amount" placeholder="0.00" class="amt-in"><button class="btn add" data-act="cexp-add" data-ven="${v.id}" data-card="${c.id}">Add</button></div>
+  </div>`;
+}
+
+/* ---- In-kind ---- */
+function renderDonInkind(){
+  const host = document.getElementById('donInkind'); if(!host) return;
+  const items = donData.inkind;
+  const total = items.reduce((a,r)=>a+donNum(r.value),0);
+  const rows = items.slice().sort((a,b)=>(b.date||'').localeCompare(a.date||'')).map(r=>
+    `<div class="don-row"><div class="don-c date">${donFmtDate(r.date)}</div><div class="don-c grow">${escapeHtmlA(r.item)||'<span class="don-mut">—</span>'}${r.from?`<div class="don-sub">from ${escapeHtmlA(r.from)}</div>`:''}</div><div class="don-c amt">${r.value?fmtUSD(r.value):'<span class="don-mut">—</span>'}</div><button class="don-x" data-act="ink-del" data-id="${r.id}" title="Delete">&times;</button></div>`
+  ).join('') || '<p class="don-empty">No in-kind gifts logged yet.</p>';
+  host.innerHTML =
+    `<div class="don-summary"><div class="don-stat big"><span>Total in-kind value received</span><b>${fmtUSD(total)}</b></div></div>
+     <div class="don-block">${rows}
+       <div class="don-addform" data-form="ink"><input type="date" data-f="date"><input type="text" data-f="from" placeholder="Who gave it"><input type="text" data-f="item" placeholder="Item" class="grow-in"><input type="number" step="0.01" min="0" data-f="value" placeholder="Value" class="amt-in"><button class="btn add" data-act="ink-add">Add</button></div>
+     </div>`;
+}
+
+/* ---- form read, upload, save ---- */
+function donReadForm(btn){
+  const form = btn.closest('[data-form]');
+  const out = {};
+  form.querySelectorAll('[data-f]').forEach(el=>{
+    if(el.type==='file') out[el.dataset.f] = (el.files && el.files[0]) ? el.files[0] : null;
+    else out[el.dataset.f] = el.value.trim();
+  });
+  return { form, out };
+}
+async function donUploadReceipt(file){
+  const fd = new FormData();
+  fd.append('UPLOADCARE_PUB_KEY','9754e896dc17179bd184');
+  fd.append('UPLOADCARE_STORE','1');
+  fd.append('file', file, file.name);
+  const up = await fetch('https://upload.uploadcare.com/base/', { method:'POST', body: fd });
+  const j = await up.json();
+  if(j && j.file) return { url:`https://5t97mttm8f.ucarecd.net/${j.file}/`, name:file.name };
+  throw new Error('upload failed');
+}
+function setDonStatus(s){ const p=document.getElementById('donPill'); if(!p) return; p.className='status-pill '+s; document.getElementById('donPillText').textContent = s==='saving'?'Saving':'Synced'; }
+function donSave(){ setDonStatus('saving'); clearTimeout(donSaveTimer); donSaveTimer=setTimeout(donFlush,500); }
+async function donFlush(){ clearTimeout(donSaveTimer); donSaveTimer=null; try{ await RPDRoster.donations.save(donData); setDonStatus('synced'); }catch(e){ setDonStatus('saving'); showToast('Save failed'); } }
+function donCommit(panel){ if(panel==='money') renderDonMoney(); else if(panel==='cards') renderDonCards(); else if(panel==='inkind') renderDonInkind(); donSave(); }
+
+/* ---- add handlers ---- */
+async function donAddMonInc(btn){ const {out}=donReadForm(btn); if(!out.amount && !out.from) return; donData.monetary.income.push({ id:donId('inc'), date:out.date, from:out.from, note:out.note, amount:donNum(out.amount) }); donCommit('money'); }
+async function donAddMonExp(btn){
+  const {out}=donReadForm(btn); if(!out.amount && !out.desc) return;
+  const rec={ id:donId('exp'), date:out.date, desc:out.desc, amount:donNum(out.amount) };
+  if(out.receipt){ setDonStatus('saving'); try{ const up=await donUploadReceipt(out.receipt); rec.receipt=up.url; rec.receiptName=up.name; }catch(e){ showToast('Receipt upload failed, expense saved without it'); } }
+  donData.monetary.expenses.push(rec); donCommit('money');
+}
+async function donAddVendor(btn){ const {out}=donReadForm(btn); if(!out.name) return; if(donData.vendors.some(v=>v.name.toLowerCase()===out.name.toLowerCase())){ showToast('That vendor already exists'); return; } donData.vendors.push({ id:donId('ven'), name:out.name, cards:[] }); donCommit('cards'); }
+async function donAddCard(btn){ const v=donData.vendors.find(x=>x.id===btn.dataset.ven); if(!v) return; const {out}=donReadForm(btn); if(!out.amount && !out.number) return; v.cards.push({ id:donId('card'), date:out.date, from:out.from, number:out.number, pin:out.pin, amount:donNum(out.amount), expenses:[] }); donCommit('cards'); }
+async function donAddCardExp(btn){
+  const v=donData.vendors.find(x=>x.id===btn.dataset.ven); const c=v&&v.cards.find(x=>x.id===btn.dataset.card); if(!c) return;
+  const {out}=donReadForm(btn); if(!out.amount && !out.desc) return;
+  const rec={ id:donId('exp'), date:out.date, desc:out.desc, amount:donNum(out.amount) };
+  if(out.receipt){ setDonStatus('saving'); try{ const up=await donUploadReceipt(out.receipt); rec.receipt=up.url; rec.receiptName=up.name; }catch(e){ showToast('Receipt upload failed, expense saved without it'); } }
+  c.expenses.push(rec); donCommit('cards');
+}
+async function donAddInkind(btn){ const {out}=donReadForm(btn); if(!out.item && !out.from) return; donData.inkind.push({ id:donId('ink'), date:out.date, from:out.from, item:out.item, value:donNum(out.value) }); donCommit('inkind'); }
+
+/* ---- delegated events ---- */
+function donSwitchTab(name){
+  document.querySelectorAll('#donApp .don-tab').forEach(t=>t.classList.toggle('on', t.dataset.tab===name));
+  const map={money:'donMoney',cards:'donCards',inkind:'donInkind'};
+  document.querySelectorAll('#donApp .don-panel').forEach(p=>p.classList.remove('on'));
+  document.getElementById(map[name]).classList.add('on');
+}
+async function donClick(e){
+  const tab = e.target.closest('.don-tab'); if(tab){ donSwitchTab(tab.dataset.tab); return; }
+  const reveal = e.target.closest('[data-act="card-reveal"]');
+  if(reveal){ const mk=reveal.querySelector('.masked'), rl=reveal.querySelector('.real'); const showing=mk.style.display!=='none'; mk.style.display=showing?'none':''; rl.style.display=showing?'':'none'; reveal.classList.toggle('on',showing); return; }
+  const btn = e.target.closest('[data-act]'); if(!btn) return;
+  const a = btn.dataset.act;
+  if(a==='mon-inc-add') return donAddMonInc(btn);
+  if(a==='mon-exp-add') return donAddMonExp(btn);
+  if(a==='mon-inc-del'){ donData.monetary.income = donData.monetary.income.filter(x=>x.id!==btn.dataset.id); donCommit('money'); return; }
+  if(a==='mon-exp-del'){ if(confirm('Delete this expense?')){ donData.monetary.expenses = donData.monetary.expenses.filter(x=>x.id!==btn.dataset.id); donCommit('money'); } return; }
+  if(a==='ven-add') return donAddVendor(btn);
+  if(a==='ven-del'){ const v=donData.vendors.find(x=>x.id===btn.dataset.id); if(v && confirm(`Remove ${v.name} and all its cards?`)){ donData.vendors=donData.vendors.filter(x=>x.id!==btn.dataset.id); donCommit('cards'); } return; }
+  if(a==='card-add') return donAddCard(btn);
+  if(a==='card-del'){ if(confirm('Remove this card and its expense history?')){ const v=donData.vendors.find(x=>x.id===btn.dataset.ven); if(v){ v.cards=v.cards.filter(x=>x.id!==btn.dataset.id); donCommit('cards'); } } return; }
+  if(a==='cexp-add') return donAddCardExp(btn);
+  if(a==='cexp-del'){ if(confirm('Delete this expense?')){ const v=donData.vendors.find(x=>x.id===btn.dataset.ven); const c=v&&v.cards.find(x=>x.id===btn.dataset.card); if(c){ c.expenses=c.expenses.filter(x=>x.id!==btn.dataset.id); donCommit('cards'); } } return; }
+  if(a==='ink-add') return donAddInkind(btn);
+  if(a==='ink-del'){ donData.inkind=donData.inkind.filter(x=>x.id!==btn.dataset.id); donCommit('inkind'); return; }
+}
+async function donChange(e){
+  const inp = e.target; if(inp.type!=='file') return;
+  if(inp.dataset.f==='receipt'){ const lbl=inp.closest('.don-filebtn'); if(lbl){ lbl.querySelector('span').textContent = inp.files[0]?trimName(inp.files[0].name):'Receipt'; lbl.classList.toggle('has', !!inp.files[0]); } return; }
+  const a = inp.dataset.act;
+  if(a==='mon-exp-file' || a==='cexp-file'){
+    const file = inp.files[0]; if(!file) return;
+    setDonStatus('saving');
+    try{
+      const up = await donUploadReceipt(file);
+      if(a==='mon-exp-file'){ const r=donData.monetary.expenses.find(x=>x.id===inp.dataset.id); if(r){ r.receipt=up.url; r.receiptName=up.name; } donCommit('money'); }
+      else { const v=donData.vendors.find(x=>x.id===inp.dataset.ven); const c=v&&v.cards.find(x=>x.id===inp.dataset.card); const r=c&&c.expenses.find(x=>x.id===inp.dataset.id); if(r){ r.receipt=up.url; r.receiptName=up.name; } donCommit('cards'); }
+      showToast('Receipt attached');
+    }catch(err){ setDonStatus('synced'); showToast('Receipt upload failed'); }
+  }
+}
+document.getElementById('donBack').addEventListener('click', ()=>showView('hubView'));
+document.getElementById('donApp').addEventListener('click', donClick);
+document.getElementById('donApp').addEventListener('change', donChange);
+
 document.getElementById('goBtn').addEventListener('click', go);
 document.getElementById('pc1').addEventListener('keydown', e=>{ document.getElementById('lockErr').classList.remove('show'); if(e.key==='Enter') go(); });
 document.getElementById('pc2').addEventListener('keydown', e=>{ if(e.key==='Enter') go(); });
@@ -2156,7 +2460,7 @@ document.getElementById('raNewOfficer').addEventListener('keydown', e=>{ if(e.ke
 document.getElementById('raCadet').addEventListener('change', raCheckRule);
 document.getElementById('raOfficer').addEventListener('change', raCheckRule);
 document.getElementById('raDate').addEventListener('input', raCheckRule);
-window.addEventListener('beforeunload', ()=>{ if(dirty && saveTimer) flushSave(); if(catDirty && catSaveTimer) catFlush(); if(recSaveTimer) recFlush(); if(raSaveTimer) raFlush(); if(trnDirty && trnSaveTimer) trnFlush(); });
+window.addEventListener('beforeunload', ()=>{ if(dirty && saveTimer) flushSave(); if(catDirty && catSaveTimer) catFlush(); if(recSaveTimer) recFlush(); if(raSaveTimer) raFlush(); if(trnDirty && trnSaveTimer) trnFlush(); if(donSaveTimer) donFlush(); });
 
 // auto-resume from an existing advisor session (admin-only)
 (function(){

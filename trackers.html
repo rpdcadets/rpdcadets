@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- trackers.html  |  Build v10  |  updated 2026-07-01  |  pairs with roster.js v18  |  Current Attendance: per-cadet printable hours statement (Print / Save as PDF) for the selected date range -->
+<!-- trackers.html  |  Build v11  |  updated 2026-07-01  |  pairs with roster.js v18  |  Current Attendance hours statement now downloads a real PDF (jsPDF, lazy-loaded) instead of a print window -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -436,7 +436,7 @@ footer { background: var(--navy); border-top: 1px solid rgba(255,255,255,0.05); 
         Return to Home
       </a>
     </div>
-    <div style="margin-top:20px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v10</div>
+    <div style="margin-top:20px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v11</div>
   </div>
 </div>
 
@@ -669,7 +669,7 @@ function caDetailHtml(r){
     return '<div class="ca-d-row"><span class="ca-d-date">'+caFmtDate(m.date)+'</span><span class="ca-status '+cls+'">'+lbl+'</span></div>';
   }).join(''):'<div class="ca-d-empty">No meetings in this range.</div>';
   const eRows=r.events.length?r.events.slice().reverse().map(e=>'<div class="ca-d-row"><span class="ca-d-date">'+caFmtDate(e.date)+'</span><span class="ca-d-ev">'+caEsc(e.event||'Event')+'</span><span class="ca-d-hrs">'+(Number(e.hours)||0)+' hrs</span></div>').join(''):'<div class="ca-d-empty">No events in this range.</div>';
-  return '<div class="ca-print-row"><button type="button" class="ca-print"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>Print / Save as PDF</button></div>'+
+  return '<div class="ca-print-row"><button type="button" class="ca-print"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></svg>Download PDF</button></div>'+
     '<div class="ca-d-hours">'+
       '<div><span>Weekly</span><b>'+r.weeklyHours+'</b><small>'+r.present+' present \u00d7 3 hrs</small></div>'+
       '<div><span>Events</span><b>'+r.eventHours+'</b><small>'+r.events.length+' logged</small></div>'+
@@ -677,73 +677,134 @@ function caDetailHtml(r){
     '</div>'+
     '<div class="ca-d-cols"><div class="ca-d-col"><div class="ca-d-h">Meetings</div>'+mRows+'</div><div class="ca-d-col"><div class="ca-d-h">Events</div>'+eRows+'</div></div>';
 }
+let caPdfLibPromise;
+function caEnsurePdfLib(){
+  if(window.jspdf && window.jspdf.jsPDF && window.jspdf.jsPDF.API && window.jspdf.jsPDF.API.autoTable) return Promise.resolve();
+  if(caPdfLibPromise) return caPdfLibPromise;
+  function load(src){ return new Promise((res,rej)=>{ const s=document.createElement('script'); s.src=src; s.onload=res; s.onerror=()=>rej(new Error(src)); document.head.appendChild(s); }); }
+  caPdfLibPromise = load('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js')
+    .then(()=>load('https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js'));
+  return caPdfLibPromise;
+}
+let caLogoCache;
+function caLoadLogo(){
+  if(caLogoCache!==undefined) return Promise.resolve(caLogoCache);
+  return new Promise(res=>{
+    const img=new Image();
+    img.onload=()=>{ try{
+      const c=document.createElement('canvas'); c.width=img.naturalWidth; c.height=img.naturalHeight;
+      c.getContext('2d').drawImage(img,0,0);
+      const h=52, w=Math.round(img.naturalWidth*(h/img.naturalHeight));
+      caLogoCache={dataURL:c.toDataURL('image/png'),w:w,h:h}; res(caLogoCache);
+    }catch(e){ caLogoCache=null; res(null); } };
+    img.onerror=()=>{ caLogoCache=null; res(null); };
+    img.src=location.origin+'/logo.png';
+  });
+}
 function caPrintCadet(r, from, to){
-  const fmt = d => caFmtDate(d);
-  const fmtH = n => { n = Math.round((Number(n)||0)*10)/10; return (n%1===0)? String(n) : n.toFixed(1); };
-  const today = new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+  return caEnsurePdfLib().then(async ()=>{
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({unit:'pt', format:'letter'});
+    let logo=null; try{ logo=await caLoadLogo(); }catch(e){ logo=null; }
+    caRenderHoursPdf(doc, r, from, to, logo);
+    const iso=new Date().toISOString().slice(0,10);
+    const safe=String(r.name||'cadet').replace(/[^\w \-]/g,'').trim();
+    doc.save('Service Hours - '+safe+' - '+iso+'.pdf');
+  }).catch(()=>{ alert('Could not create the PDF. Check your connection and try again.'); });
+}
+function caRenderHoursPdf(doc, r, from, to, logo){
+  const NAVY=[27,42,74], GOLD=[138,109,47], GRAY=[110,110,120];
+  const PW=doc.internal.pageSize.getWidth(), M=48, RIGHT=PW-M;
+  const fmt=d=>caFmtDate(d);
+  const fmtH=n=>{ n=Math.round((Number(n)||0)*10)/10; return (n%1===0)?String(n):n.toFixed(1); };
+  const today=new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
   let period;
-  if(from && to) period = fmt(from)+' to '+fmt(to);
-  else if(from) period = 'From '+fmt(from);
-  else if(to) period = 'Through '+fmt(to);
-  else period = 'All recorded dates';
-  const name = (r.p && r.p.rank ? r.p.rank+' ' : '') + r.name;
-  const present = r.meetings.filter(m=>m.status==='present');
-  const mRows = present.length
-    ? present.slice().sort((a,b)=>(a.date||'').localeCompare(b.date||'')).map(m=>'<tr><td>'+fmt(m.date)+'</td><td>Weekly meeting</td><td class="h">'+fmtH(3)+'</td></tr>').join('')
-    : '<tr><td colspan="3" class="none">No weekly meetings attended in this period.</td></tr>';
-  const evs = r.events.slice().sort((a,b)=>(a.date||'').localeCompare(b.date||''));
-  const eRows = evs.length
-    ? evs.map(e=>'<tr><td>'+fmt(e.date)+'</td><td>'+caEsc(e.event||'Event')+'</td><td class="h">'+fmtH(e.hours)+'</td></tr>').join('')
-    : '<tr><td colspan="3" class="none">No events attended in this period.</td></tr>';
-  const logo = location.origin + '/logo.png';
-  const doc =
-'<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>Service Hours \u2014 '+caEsc(name)+'</title>'+
-'<style>'+
-'@page{margin:0.6in}'+
-'*{box-sizing:border-box}'+
-'body{font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;color:#1a2036;margin:0;font-size:12.5px;line-height:1.55}'+
-'.head{display:flex;align-items:center;gap:16px;border-bottom:3px solid #1B2A4A;padding-bottom:14px}'+
-'.head img{height:62px;width:auto}'+
-'.head .org{font-size:19px;font-weight:700;letter-spacing:0.5px;color:#1B2A4A;line-height:1.15}'+
-'.head .org small{display:block;font-size:12px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#8a6d2f;margin-top:2px}'+
-'.head .addr{margin-left:auto;text-align:right;font-size:11px;color:#555;line-height:1.5}'+
-'h1{font-size:17px;letter-spacing:1px;text-transform:uppercase;color:#1B2A4A;margin:22px 0 4px}'+
-'.meta{margin:14px 0 20px;font-size:12.5px}'+
-'.meta div{margin:3px 0}.meta b{display:inline-block;width:78px;color:#555;font-weight:600}'+
-'.sum{display:flex;gap:10px;margin:0 0 20px}'+
-'.sum div{flex:1;border:1px solid #d8dbe4;border-radius:8px;padding:11px 13px}'+
-'.sum .n{font-size:22px;font-weight:700;color:#1B2A4A}'+
-'.sum .l{font-size:10.5px;letter-spacing:1px;text-transform:uppercase;color:#777;margin-top:2px}'+
-'.sum .tot{border-color:#c5a55a;background:#fbf6ea}.sum .tot .n{color:#8a6d2f}'+
-'h2{font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:#1B2A4A;margin:18px 0 7px;border-bottom:1px solid #e2e4ec;padding-bottom:5px}'+
-'table{width:100%;border-collapse:collapse;font-size:12px}'+
-'th{text-align:left;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:#888;padding:5px 8px;border-bottom:1px solid #e2e4ec}'+
-'td{padding:6px 8px;border-bottom:1px solid #f0f1f5}'+
-'td.h,th.h{text-align:right;white-space:nowrap;width:64px}'+
-'td.none{color:#888;font-style:italic;text-align:center;padding:12px}'+
-'.cert{margin:26px 0 0;padding:16px 18px;background:#f6f7fa;border-left:3px solid #1B2A4A;border-radius:4px;font-size:12px;line-height:1.65}'+
-'.foot{margin-top:26px;padding-top:12px;border-top:1px solid #e2e4ec;font-size:10.5px;color:#777;text-align:center;line-height:1.6}'+
-'</style></head><body>'+
-'<div class="head"><img src="'+logo+'" alt="" onerror="this.style.display=\'none\'">'+
-'<div class="org">Richardson Police Department<small>Public Safety Cadets</small></div>'+
-'<div class="addr">200 N. Greenville Ave<br>Richardson, TX 75081<br>(972) 744-4801</div></div>'+
-'<h1>Statement of Service Hours</h1>'+
-'<div class="meta"><div><b>Name:</b> '+caEsc(name)+'</div><div><b>Period:</b> '+period+'</div><div><b>Issued:</b> '+today+'</div></div>'+
-'<div class="sum">'+
-'<div><div class="n">'+fmtH(r.weeklyHours)+'</div><div class="l">Meeting Hours</div></div>'+
-'<div><div class="n">'+fmtH(r.eventHours)+'</div><div class="l">Event Hours</div></div>'+
-'<div class="tot"><div class="n">'+fmtH(r.totalHours)+'</div><div class="l">Total Hours</div></div></div>'+
-'<h2>Weekly Meetings Attended ('+present.length+')</h2>'+
-'<table><thead><tr><th>Date</th><th>Detail</th><th class="h">Hours</th></tr></thead><tbody>'+mRows+'</tbody></table>'+
-'<h2>Events Attended ('+evs.length+')</h2>'+
-'<table><thead><tr><th>Date</th><th>Event</th><th class="h">Hours</th></tr></thead><tbody>'+eRows+'</tbody></table>'+
-'<div class="cert">This statement certifies that the attendance and service hours recorded above are accurate as of '+today+', according to the official records of the Richardson Police Department Public Safety Cadets. If additional verification is required, please contact the program advisors at <b>advisors@rpdcadets.com</b>.</div>'+
-'<div class="foot">Richardson Police Department Public Safety Cadets &nbsp;\u00b7&nbsp; advisors@rpdcadets.com &nbsp;\u00b7&nbsp; rpdcadets.com</div>'+
-'<scr'+'ipt>window.onload=function(){setTimeout(function(){window.focus();window.print();},300);};window.onafterprint=function(){window.close();};<\/scr'+'ipt>'+
-'</body></html>';
-  const w = window.open('', '_blank');
-  if(!w){ alert('Please allow pop-ups for rpdcadets.com to print the hours statement.'); return; }
-  w.document.open(); w.document.write(doc); w.document.close();
+  if(from&&to) period=fmt(from)+' to '+fmt(to);
+  else if(from) period='From '+fmt(from);
+  else if(to) period='Through '+fmt(to);
+  else period='All recorded dates';
+  const name=(r.p&&r.p.rank?r.p.rank+' ':'')+r.name;
+
+  let y=52, textX=M;
+  if(logo && logo.dataURL){ try{ doc.addImage(logo.dataURL,'PNG',M,y-4,logo.w,logo.h); textX=M+logo.w+14; }catch(e){} }
+  doc.setFont('helvetica','bold'); doc.setFontSize(15); doc.setTextColor(NAVY[0],NAVY[1],NAVY[2]);
+  doc.text('Richardson Police Department', textX, y+16);
+  doc.setFontSize(9); doc.setTextColor(GOLD[0],GOLD[1],GOLD[2]);
+  doc.text('PUBLIC SAFETY CADETS', textX, y+31, {charSpace:1.6});
+  doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(GRAY[0],GRAY[1],GRAY[2]);
+  doc.text('200 N. Greenville Ave', RIGHT, y+6, {align:'right'});
+  doc.text('Richardson, TX 75081', RIGHT, y+18, {align:'right'});
+  doc.text('(972) 744-4801', RIGHT, y+30, {align:'right'});
+  y+=58;
+  doc.setDrawColor(NAVY[0],NAVY[1],NAVY[2]); doc.setLineWidth(2.5); doc.line(M,y,RIGHT,y);
+  y+=28;
+
+  doc.setFont('helvetica','bold'); doc.setFontSize(15); doc.setTextColor(NAVY[0],NAVY[1],NAVY[2]);
+  doc.text('STATEMENT OF SERVICE HOURS', M, y, {charSpace:1});
+  y+=22;
+
+  doc.setFontSize(10.5);
+  [['Name:',name],['Period:',period],['Issued:',today]].forEach(row=>{
+    doc.setFont('helvetica','bold'); doc.setTextColor(GRAY[0],GRAY[1],GRAY[2]); doc.text(row[0], M, y);
+    doc.setFont('helvetica','normal'); doc.setTextColor(30,32,54); doc.text(String(row[1]), M+60, y);
+    y+=15;
+  });
+  y+=10;
+
+  const gap=12, bw=(RIGHT-M-2*gap)/3, bh=52;
+  [['Meeting Hours',fmtH(r.weeklyHours),false],['Event Hours',fmtH(r.eventHours),false],['Total Hours',fmtH(r.totalHours),true]].forEach((b,i)=>{
+    const bx=M+i*(bw+gap);
+    if(b[2]){ doc.setFillColor(251,246,234); doc.setDrawColor(197,165,90); } else { doc.setFillColor(255,255,255); doc.setDrawColor(216,219,228); }
+    doc.setLineWidth(1); doc.roundedRect(bx,y,bw,bh,6,6,'FD');
+    doc.setFont('helvetica','bold'); doc.setFontSize(20); doc.setTextColor(b[2]?GOLD[0]:NAVY[0],b[2]?GOLD[1]:NAVY[1],b[2]?GOLD[2]:NAVY[2]);
+    doc.text(String(b[1]), bx+12, y+28);
+    doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(GRAY[0],GRAY[1],GRAY[2]);
+    doc.text(b[0].toUpperCase(), bx+12, y+43, {charSpace:0.4});
+  });
+  y+=bh+26;
+
+  const present=r.meetings.filter(m=>m.status==='present').slice().sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+  doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(NAVY[0],NAVY[1],NAVY[2]);
+  doc.text('WEEKLY MEETINGS ATTENDED ('+present.length+')', M, y, {charSpace:0.4});
+  doc.autoTable({
+    startY:y+10, margin:{left:M,right:M},
+    head:[['Date','Detail','Hours']],
+    body: present.length? present.map(m=>[fmt(m.date),'Weekly meeting',fmtH(3)])
+      : [[{content:'No weekly meetings attended in this period.',colSpan:3,styles:{halign:'center',textColor:[136,136,136],fontStyle:'italic'}}]],
+    theme:'plain',
+    styles:{fontSize:10,cellPadding:{top:5,bottom:5,left:8,right:8},textColor:[40,42,60],lineColor:[240,241,245],lineWidth:{bottom:0.5}},
+    headStyles:{fontSize:8,textColor:[136,136,136],fontStyle:'bold',lineColor:[226,228,236],lineWidth:{bottom:1}},
+    columnStyles:{2:{halign:'right',cellWidth:66}}
+  });
+  y=doc.lastAutoTable.finalY+22;
+
+  const evs=r.events.slice().sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+  doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(NAVY[0],NAVY[1],NAVY[2]);
+  doc.text('EVENTS ATTENDED ('+evs.length+')', M, y, {charSpace:0.4});
+  doc.autoTable({
+    startY:y+10, margin:{left:M,right:M},
+    head:[['Date','Event','Hours']],
+    body: evs.length? evs.map(e=>[fmt(e.date),(e.event||'Event'),fmtH(e.hours)])
+      : [[{content:'No events attended in this period.',colSpan:3,styles:{halign:'center',textColor:[136,136,136],fontStyle:'italic'}}]],
+    theme:'plain',
+    styles:{fontSize:10,cellPadding:{top:5,bottom:5,left:8,right:8},textColor:[40,42,60],lineColor:[240,241,245],lineWidth:{bottom:0.5}},
+    headStyles:{fontSize:8,textColor:[136,136,136],fontStyle:'bold',lineColor:[226,228,236],lineWidth:{bottom:1}},
+    columnStyles:{2:{halign:'right',cellWidth:66}}
+  });
+  y=doc.lastAutoTable.finalY+26;
+
+  const certText='This statement certifies that the attendance and service hours recorded above are accurate as of '+today+', according to the official records of the Richardson Police Department Public Safety Cadets. If additional verification is required, please contact the program advisors at advisors@rpdcadets.com.';
+  doc.setFont('helvetica','normal'); doc.setFontSize(10);
+  const lines=doc.splitTextToSize(certText, RIGHT-M-28);
+  const boxH=lines.length*14+22;
+  if(y+boxH>752){ doc.addPage(); y=52; }
+  doc.setFillColor(246,247,250); doc.roundedRect(M,y,RIGHT-M,boxH,4,4,'F');
+  doc.setFillColor(NAVY[0],NAVY[1],NAVY[2]); doc.rect(M,y,3,boxH,'F');
+  doc.setTextColor(40,42,60); doc.text(lines, M+16, y+18);
+  y+=boxH+22;
+
+  doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(GRAY[0],GRAY[1],GRAY[2]);
+  doc.text('Richardson Police Department Public Safety Cadets   \u00b7   advisors@rpdcadets.com   \u00b7   rpdcadets.com', PW/2, Math.min(y+2,780), {align:'center'});
 }
 
 

@@ -1,3 +1,4 @@
+/* roster.js  |  VERSION 15  |  updated 2026-07-01  |  added Donation Tracking (roster/donations) */
 /* ═══════════════════════════════════════════════════════════════════════
    RPD CADETS — SHARED ROSTER ENGINE
    One encrypted roster in Firebase, read by members, trackers, and

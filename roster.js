@@ -1,4 +1,4 @@
-/* roster.js  |  VERSION 19  |  updated 2026-07-01  |  limited advisor passcode (role ltd): opens only Records, Ride-Along, Donations */
+/* roster.js  |  VERSION 20  |  updated 2026-07-01  |  attendance.saveAll for admin session date-correct + delete */
 /* ═══════════════════════════════════════════════════════════════════════
    RPD CADETS — SHARED ROSTER ENGINE
    One encrypted roster in Firebase, read by members, trackers, and
@@ -350,7 +350,7 @@
       get: officersGet, save: officersSave
     },
     attendance: {
-      get: attendanceGet, saveSession: attendanceSaveSession, rollup: attRollup
+      get: attendanceGet, saveSession: attendanceSaveSession, saveAll: attendanceSaveAll, rollup: attRollup
     },
     // ── Uniform Standards: shared roster key, node roster/uniforms ──
     // Read by the Uniforms page (cadet passcode), written from /admin
@@ -482,6 +482,14 @@
     const data = await keyEncrypt(JSON.stringify(all), rosterKey);
     await db.ref(ROOT + '/attendance').set(data);
     return all;
+  }
+  // Overwrite the whole attendance map — used by /admin to correct a session's
+  // date (re-key) or delete a session outright.
+  async function attendanceSaveAll(map) {
+    if (!rosterKey) throw new Error('roster locked');
+    const data = await keyEncrypt(JSON.stringify(map || {}), rosterKey);
+    await db.ref(ROOT + '/attendance').set(data);
+    return map;
   }
 
   // Uniform Standards — encrypted under the SHARED roster key, node

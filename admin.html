@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- admin.html  |  Build v20  |  updated 2026-07-01  |  pairs with roster.js v19  |  limited advisor passcode + Advisor Access tool: opens only Records, Ride-Along, Donations -->
+<!-- admin.html  |  Build v22  |  updated 2026-07-01  |  pairs with roster.js v20  |  Attendance session editor now includes per-cadet status editing (present/excused/unexcused/not recorded) -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -222,6 +222,42 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
 .att-log-wrap.open .att-log-toggle svg{transform:rotate(180deg)}
 .att-log-list{display:none;margin-top:12px}
 .att-log-wrap.open .att-log-list{display:block}
+.att-log-row{grid-template-columns:1fr auto auto}
+.att-log-edit{background:none;border:1px solid var(--card-border);color:var(--text-muted);font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:1px;text-transform:uppercase;padding:6px 12px;border-radius:8px;cursor:pointer}
+.att-log-edit:hover{color:var(--white);border-color:var(--gold)}
+.att-log-item.editing .att-log-edit{color:var(--gold);border-color:var(--gold)}
+.att-le-panel{display:none;flex-direction:column;gap:14px;background:rgba(255,255,255,0.02);border:1px solid var(--card-border);border-top:none;border-radius:0 0 10px 10px;padding:14px 15px;margin:-7px 0 7px}
+.att-le-top{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap}
+.att-le-h{font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px}
+.att-le-cadets{display:grid;grid-template-columns:1fr 1fr;gap:6px 20px;max-height:320px;overflow:auto;margin-bottom:12px}
+.att-cs-row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.att-cs-name{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.att-cs-seg{display:flex;gap:3px;flex-shrink:0}
+.att-cs-btn{width:27px;height:26px;border-radius:6px;border:1px solid var(--card-border);background:rgba(255,255,255,0.02);color:var(--text-muted);font-family:'Barlow Condensed',sans-serif;font-size:12px;cursor:pointer;padding:0}
+.att-cs-btn.on.present{background:var(--green);border-color:var(--green);color:#0a0f1a}
+.att-cs-btn.on.excused{background:var(--gold-light);border-color:var(--gold-light);color:#1a2036}
+.att-cs-btn.on.unexcused{background:#f87171;border-color:#f87171;color:#1a2036}
+.att-cs-btn.on.none{background:rgba(255,255,255,0.16);color:var(--white);border-color:rgba(255,255,255,0.3)}
+.att-le-savec{align-self:flex-start;background:var(--gold);border:1px solid var(--gold);color:#1a2036;font-weight:600;font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:1px;text-transform:uppercase;padding:9px 16px;border-radius:8px;cursor:pointer}
+@media(max-width:600px){.att-le-cadets{grid-template-columns:1fr}}
+.att-log-item.editing .att-le-panel{display:flex}
+.att-le-field label{display:block;font-family:'Barlow Condensed',sans-serif;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);margin-bottom:5px}
+.att-le-field input{background:var(--input-bg);border:1px solid var(--input-border);border-radius:8px;padding:8px 11px;color:var(--white);font-family:'Barlow',sans-serif;font-size:13px;outline:none;color-scheme:dark}
+.att-le-save,.att-le-del{font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:1px;text-transform:uppercase;padding:9px 14px;border-radius:8px;cursor:pointer;border:1px solid}
+.att-le-save{background:var(--gold);border-color:var(--gold);color:#1a2036;font-weight:600}
+.att-le-del{background:none;border-color:rgba(220,38,38,0.4);color:#f87171}
+.att-le-del:hover{background:rgba(220,38,38,0.1)}
+.att-ev-item{background:var(--card-bg);border:1px solid var(--card-border);border-radius:10px;padding:12px 14px;margin-bottom:8px}
+.att-ev-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
+.att-ev-f label{display:block;font-family:'Barlow Condensed',sans-serif;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);margin-bottom:5px}
+.att-ev-f input,.att-ev-f select{width:100%;background:var(--input-bg);border:1px solid var(--input-border);border-radius:8px;padding:8px 10px;color:var(--white);font-family:'Barlow',sans-serif;font-size:13px;outline:none;color-scheme:dark}
+.att-ev-f input[readonly]{color:var(--gold-light);background:rgba(255,255,255,0.02)}
+.att-ev-actions{display:flex;gap:10px;margin-top:10px}
+.att-ev-save,.att-ev-del{font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:1px;text-transform:uppercase;padding:9px 16px;border-radius:8px;cursor:pointer;border:1px solid}
+.att-ev-save{background:var(--gold);border-color:var(--gold);color:#1a2036;font-weight:600}
+.att-ev-del{background:none;border-color:rgba(220,38,38,0.4);color:#f87171}
+.att-ev-del:hover{background:rgba(220,38,38,0.1)}
+@media(max-width:720px){.att-ev-grid{grid-template-columns:1fr 1fr}}
 .att-log-row{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;background:var(--card-bg);border:1px solid var(--card-border);border-radius:10px;padding:11px 15px;margin-bottom:7px}
 .att-log-date{font-size:13.5px;font-weight:600}
 .att-log-by{font-size:12px;color:var(--text-muted);margin-top:2px}
@@ -474,7 +510,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
     <button class="lock-btn" id="goBtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg><span id="goLabel">Unlock</span></button>
     <div class="lock-error" id="lockErr">Incorrect passcode.</div>
     <div class="lock-home"><a href="index.html">← Return to Home</a></div>
-    <div style="margin-top:16px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v20</div>
+    <div style="margin-top:16px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v22</div>
   </div>
 </div>
 
@@ -504,7 +540,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
       <button class="back-link" id="rosterBack"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Admin Console</button>
       <div class="bar">
         <div class="status-pill" id="pill"><span class="dot"></span><span id="pillText">Synced</span></div>
-        <span style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v20</span>
+        <span style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v22</span>
         <button class="btn ghost" id="syncMembersBtn" title="One-time: pull titles and alumni from the Members page into the shared roster">Sync members data</button>
         <button class="btn add" id="addBtn">+ Add Person</button>
       </div>
@@ -629,6 +665,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
         <div id="attRows"></div>
         <div class="att-names-wrap" id="attNamesWrap"></div>
         <div class="att-log-wrap" id="attLogWrap"></div>
+        <div class="att-log-wrap" id="attEventsWrap"></div>
       </div>
     </div>
   </div>
@@ -711,9 +748,9 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
 
 <div class="toast" id="toast"></div>
 
-<script src="roster.js?v=19"></script>
+<script src="roster.js?v=20"></script>
 <script>
-console.log('[admin] Build v20');
+console.log('[admin] Build v22');
 const SESSION_KEY = 'rpd761_admin_auth';   // advisor-only; NOT shared with cadet pages
 const TIER_KEY = 'rpd761_admin_tier';      // 'full' (golden) or 'ltd' (limited advisor)
 const LIMITED_TOOLS = ['records','ridealongs','donations'];
@@ -2107,6 +2144,7 @@ async function openAttendance(){
   try {
     attData = (await RPDRoster.attendance.get()) || {};
     try { attEvents = (await RPDRoster.events.get()) || []; } catch(e){ attEvents = []; }
+    attEvents.forEach(e=>{ if(!e.id) e.id='ev_'+Math.random().toString(36).slice(2,9); });
     try {
       const raw = await RPDRoster.eventNames.get();
       if (raw === null) { attEventNames = ATT_EVENT_SEED.slice(); try { await RPDRoster.eventNames.save(attEventNames); } catch(e){} }
@@ -2114,6 +2152,7 @@ async function openAttendance(){
     } catch(e){ attEventNames = []; }
     renderAttendance();
     renderEventNames();
+    renderEventsEditor();
   } catch(e){
     host.innerHTML = '<p class="att-empty">Could not reach the database. Check your connection and try again.</p>';
   }
@@ -2198,11 +2237,33 @@ function renderAttendance(){
     logWrap.innerHTML =
       `<button class="att-log-toggle" id="attLogToggle">Session log (${sessions.length}) <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></button>
        <div class="att-log-list">${recent.map(s=>
-         `<div class="att-log-row">
-            <div><div class="att-log-date">${attFmtDate(s.date)}</div><div class="att-log-by">Submitted by ${escapeHtmlA(s.submittedBy||'—')}</div></div>
-            <div class="att-log-nums"><span class="cp">${(s.present||[]).length} P</span> · <span class="ce">${(s.excused||[]).length} E</span> · <span class="cu">${(s.unexcused||[]).length} U</span></div>
+         `<div class="att-log-item" data-date="${s.date}">
+            <div class="att-log-row">
+              <div><div class="att-log-date">${attFmtDate(s.date)}</div><div class="att-log-by">Submitted by ${escapeHtmlA(s.submittedBy||'—')}</div></div>
+              <div class="att-log-nums"><span class="cp">${(s.present||[]).length} P</span> · <span class="ce">${(s.excused||[]).length} E</span> · <span class="cu">${(s.unexcused||[]).length} U</span></div>
+              <button class="att-log-edit" type="button">Edit</button>
+            </div>
+            <div class="att-le-panel">
+              <div class="att-le-top">
+                <div class="att-le-field"><label>Meeting date</label><input type="date" class="att-le-date" value="${s.date}"></div>
+                <button class="att-le-save" type="button">Save date</button>
+                <button class="att-le-del" type="button">Delete session</button>
+              </div>
+              <div>
+                <div class="att-le-h">Mark who was present, excused, unexcused, or not recorded</div>
+                <div class="att-le-cadets"></div>
+                <button class="att-le-savec" type="button">Save attendance changes</button>
+              </div>
+            </div>
           </div>`).join('')}</div>`;
     document.getElementById('attLogToggle').addEventListener('click', ()=>logWrap.classList.toggle('open'));
+    logWrap.querySelectorAll('.att-log-item').forEach(item=>{
+      const oldDate=item.dataset.date;
+      item.querySelector('.att-log-edit').addEventListener('click', ()=>{ item.classList.toggle('editing'); if(item.classList.contains('editing')) buildSessionCadetEditor(item, oldDate); });
+      item.querySelector('.att-le-save').addEventListener('click', ()=> attMoveSession(oldDate, item.querySelector('.att-le-date').value));
+      item.querySelector('.att-le-del').addEventListener('click', ()=> attDeleteSession(oldDate));
+      item.querySelector('.att-le-savec').addEventListener('click', ()=> attSaveSessionStatuses(oldDate, item));
+    });
   } else { logWrap.innerHTML=''; }
 }
 
@@ -2250,6 +2311,116 @@ function commitEventNames(){
   RPDRoster.eventNames.save(attEventNames).then(()=>showToast('Event names saved')).catch(()=>showToast('Save failed'));
 }
 
+function buildSessionCadetEditor(item, date){
+  const host=item.querySelector('.att-le-cadets'); if(!host || host.dataset.built) return;
+  host.dataset.built='1';
+  const s=attData[date]; if(!s) return;
+  const present=(s.present||[]), excused=(s.excused||[]), unexcused=(s.unexcused||[]);
+  const statusOf=dn=> present.includes(dn)?'present':excused.includes(dn)?'excused':unexcused.includes(dn)?'unexcused':'';
+  const rosterNames=RPDRoster.activeSorted().map(p=>RPDRoster.displayName(p));
+  const extras=[];
+  [].concat(present,excused,unexcused).forEach(n=>{ if(!rosterNames.includes(n) && !extras.includes(n)) extras.push(n); });
+  const all=rosterNames.concat(extras);
+  host.innerHTML=all.map(name=>{
+    const cur=statusOf(name);
+    const btn=(v,lbl)=>`<button type="button" class="att-cs-btn ${v}${cur===v?' on':''}" data-v="${v}">${lbl}</button>`;
+    return `<div class="att-cs-row" data-name="${escapeHtmlA(name)}"><span class="att-cs-name" title="${escapeHtmlA(name)}">${escapeHtmlA(name)}</span><div class="att-cs-seg">${btn('present','P')}${btn('excused','E')}${btn('unexcused','U')}${btn('','\u2014')}</div></div>`;
+  }).join('');
+  host.querySelectorAll('.att-cs-row').forEach(row=>{
+    row.querySelectorAll('.att-cs-btn').forEach(b=> b.addEventListener('click', ()=>{ row.querySelectorAll('.att-cs-btn').forEach(x=>x.classList.remove('on')); b.classList.add('on'); }));
+  });
+}
+async function attSaveSessionStatuses(date, item){
+  const s=attData[date]; if(!s) return;
+  const host=item.querySelector('.att-le-cadets'); if(!host || !host.dataset.built){ showToast('Open the editor first'); return; }
+  const present=[], excused=[], unexcused=[];
+  host.querySelectorAll('.att-cs-row').forEach(row=>{
+    const name=row.dataset.name, on=row.querySelector('.att-cs-btn.on'), v=on?on.dataset.v:'';
+    if(v==='present') present.push(name); else if(v==='excused') excused.push(name); else if(v==='unexcused') unexcused.push(name);
+  });
+  const prev={present:s.present,excused:s.excused,unexcused:s.unexcused};
+  attData[date]=Object.assign({}, s, { present, excused, unexcused });
+  try{ await RPDRoster.attendance.saveAll(attData); renderAttendance(); document.getElementById('attLogWrap').classList.add('open'); showToast('Attendance updated'); }
+  catch(e){ attData[date]=Object.assign({}, s, prev); showToast('Could not save. Try again.'); }
+}
+async function attMoveSession(oldDate, newDate){
+  newDate=(newDate||'').trim();
+  if(!newDate){ showToast('Pick a valid date'); return; }
+  if(newDate===oldDate){ showToast('That is already the date'); return; }
+  if(attData[newDate]){ showToast('A session already exists on '+attFmtDate(newDate)); return; }
+  const s=attData[oldDate]; if(!s) return;
+  const moved=Object.assign({}, s, { date:newDate, dateFmt:new Date(newDate+'T12:00:00').toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'}) });
+  attData[newDate]=moved; delete attData[oldDate];
+  try{ await RPDRoster.attendance.saveAll(attData); renderAttendance(); document.getElementById('attLogWrap').classList.add('open'); showToast('Session moved to '+attFmtDate(newDate)); }
+  catch(e){ attData[oldDate]=s; delete attData[newDate]; showToast('Could not save. Try again.'); }
+}
+async function attDeleteSession(date){
+  const s=attData[date]; if(!s) return;
+  if(!confirm('Delete the '+attFmtDate(date)+' session? This removes it from attendance and hours for everyone in it.')) return;
+  delete attData[date];
+  try{ await RPDRoster.attendance.saveAll(attData); renderAttendance(); document.getElementById('attLogWrap').classList.add('open'); showToast('Session deleted'); }
+  catch(e){ attData[date]=s; showToast('Could not delete. Try again.'); }
+}
+function attCadetOptions(sel){
+  const names=RPDRoster.activeSorted().map(p=>RPDRoster.displayName(p));
+  if(sel && !names.includes(sel)) names.unshift(sel);
+  return names.map(n=>`<option value="${escapeHtmlA(n)}"${n===sel?' selected':''}>${escapeHtmlA(n)}</option>`).join('');
+}
+function attEvHours(start,end){
+  if(!start||!end) return null;
+  const a=start.split(':').map(Number), b=end.split(':').map(Number);
+  let mins=(b[0]*60+b[1])-(a[0]*60+a[1]); if(mins<0) mins+=1440;
+  return Math.round((mins/60)*100)/100;
+}
+function renderEventsEditor(){
+  const wrap=document.getElementById('attEventsWrap'); if(!wrap) return;
+  const evs=(attEvents||[]).slice().sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  wrap.innerHTML =
+    `<button class="att-log-toggle" id="attEvToggle">Logged events (${evs.length}) <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></button>
+     <div class="att-log-list">
+       <p class="att-names-note">Fix a wrong date, cadet, event name, or time on any logged event, or delete it. Changes update the hours roll-up.</p>
+       ${ evs.length ? evs.map(e=>`
+         <div class="att-ev-item" data-id="${escapeHtmlA(e.id||'')}">
+           <div class="att-ev-grid">
+             <div class="att-ev-f"><label>Date</label><input type="date" class="ev-date" value="${e.date||''}"></div>
+             <div class="att-ev-f"><label>Cadet</label><select class="ev-cadet">${attCadetOptions(e.cadet||'')}</select></div>
+             <div class="att-ev-f"><label>Event</label><input type="text" class="ev-event" value="${escapeHtmlA(e.event||'')}" list="attEvNamesList"></div>
+             <div class="att-ev-f"><label>Start</label><input type="time" class="ev-start" value="${e.start||''}"></div>
+             <div class="att-ev-f"><label>End</label><input type="time" class="ev-end" value="${e.end||''}"></div>
+             <div class="att-ev-f"><label>Hours</label><input type="text" class="ev-hours" value="${Number(e.hours)||0}"></div>
+           </div>
+           <div class="att-ev-actions"><button class="att-ev-save" type="button">Save</button><button class="att-ev-del" type="button">Delete</button></div>
+         </div>`).join('') : '<div class="att-d-empty">No events logged yet.</div>' }
+       <datalist id="attEvNamesList">${(attEventNames||[]).map(n=>`<option value="${escapeHtmlA(n)}"></option>`).join('')}</datalist>
+     </div>`;
+  document.getElementById('attEvToggle').addEventListener('click', ()=> wrap.classList.toggle('open'));
+  wrap.querySelectorAll('.att-ev-item').forEach(item=>{
+    const id=item.dataset.id;
+    const start=item.querySelector('.ev-start'), end=item.querySelector('.ev-end'), hours=item.querySelector('.ev-hours');
+    const recalc=()=>{ const h=attEvHours(start.value,end.value); if(h!==null) hours.value=h; };
+    start.addEventListener('change', recalc); end.addEventListener('change', recalc);
+    item.querySelector('.att-ev-save').addEventListener('click', ()=> attSaveEvent(id, item));
+    item.querySelector('.att-ev-del').addEventListener('click', ()=> attDeleteEvent(id));
+  });
+}
+async function attSaveEvent(id, item){
+  const idx=attEvents.findIndex(e=>String(e.id)===String(id)); if(idx<0) return;
+  const g=sel=>item.querySelector(sel);
+  const date=g('.ev-date').value; if(!date){ showToast('Pick a date'); return; }
+  const start=g('.ev-start').value, end=g('.ev-end').value;
+  let hours=parseFloat(g('.ev-hours').value); if(isNaN(hours)){ const h=attEvHours(start,end); hours=h==null?0:h; }
+  attEvents[idx]=Object.assign({}, attEvents[idx], { date, cadet:g('.ev-cadet').value, event:g('.ev-event').value.trim(), start, end, hours });
+  try{ await RPDRoster.events.save(attEvents); renderAttendance(); renderEventsEditor(); document.getElementById('attEventsWrap').classList.add('open'); showToast('Event updated'); }
+  catch(e){ showToast('Could not save. Try again.'); }
+}
+async function attDeleteEvent(id){
+  const idx=attEvents.findIndex(e=>String(e.id)===String(id)); if(idx<0) return;
+  const e=attEvents[idx];
+  if(!confirm('Delete this event ('+(e.event||'event')+' on '+attFmtDate(e.date)+')? It will be removed from the hours roll-up.')) return;
+  const removed=attEvents.splice(idx,1)[0];
+  try{ await RPDRoster.events.save(attEvents); renderAttendance(); renderEventsEditor(); document.getElementById('attEventsWrap').classList.add('open'); showToast('Event deleted'); }
+  catch(err){ attEvents.splice(idx,0,removed); showToast('Could not delete. Try again.'); }
+}
 function attExportCSV(){
   const agg = attAggregate();
   const head=['Cadet','Rank','Meetings Recorded','Present','Excused','Unexcused','Attendance Rate','Weekly Hours','Event Hours','Total Hours','Last Present','Absence Streak'];

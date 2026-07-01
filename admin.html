@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- admin.html  |  Build v14  |  updated 2026-07-01  |  pairs with roster.js v15  |  added Donation Tracking -->
+<!-- admin.html  |  Build v15  |  updated 2026-07-01  |  pairs with roster.js v15  |  attendance roll-up name-match fix (leadership was not counting) -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -407,7 +407,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
     <button class="lock-btn" id="goBtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg><span id="goLabel">Unlock</span></button>
     <div class="lock-error" id="lockErr">Incorrect passcode.</div>
     <div class="lock-home"><a href="index.html">← Return to Home</a></div>
-    <div style="margin-top:16px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v14 · donation tracking</div>
+    <div style="margin-top:16px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v15 · attendance name-match fix</div>
   </div>
 </div>
 
@@ -437,7 +437,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
       <button class="back-link" id="rosterBack"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Admin Console</button>
       <div class="bar">
         <div class="status-pill" id="pill"><span class="dot"></span><span id="pillText">Synced</span></div>
-        <span style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v14</span>
+        <span style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v15</span>
         <button class="btn ghost" id="syncMembersBtn" title="One-time: pull titles and alumni from the Members page into the shared roster">Sync members data</button>
         <button class="btn add" id="addBtn">+ Add Person</button>
       </div>
@@ -613,7 +613,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
 
 <script src="roster.js?v=15"></script>
 <script>
-console.log('[admin] Build v14 — donation tracking');
+console.log('[admin] Build v15 — attendance name-match fix');
 const SESSION_KEY = 'rpd761_admin_auth';   // advisor-only; NOT shared with cadet pages
 const RANKS = ['Captain','Lt.','Sgt.','Cadet','Probationary'];
 const SQUADS = [['leadership','Leadership'],[1,'Squad 1'],[2,'Squad 2'],[3,'Squad 3'],[4,'Squad 4 (Admin)']];
@@ -1950,6 +1950,12 @@ function attSessions(){
   return Object.values(attData||{}).sort((a,b)=>(a.date||'').localeCompare(b.date||''));
 }
 
+// Names are stored by the Trackers form via displayName(), which prefixes rank
+// for leadership (e.g. "Sgt. Armando Rizvanovic"), while the roster key is the
+// raw name ("Armando Rizvanovic"). Match prefix-insensitively so leadership is
+// counted, and so already-stored sessions roll up correctly with no re-entry.
+function attStripRank(n){ return String(n==null?'':n).replace(/^(Capt\.|Captain|Lt\.|Sgt\.)\s+/,'').trim(); }
+function attInList(list, name){ const t = attStripRank(name); return (list||[]).some(x => attStripRank(x) === t); }
 // Per-cadet tally across every logged session. A cadet not listed in any of a
 // session's three buckets is treated as "not recorded that day" (e.g. joined
 // later) and left out of their own denominator.
@@ -1961,15 +1967,15 @@ function attAggregate(){
     let present=0, excused=0, unexcused=0, lastPresent=null, streak=0, streakBroken=false;
     // chronological for lastPresent
     sessions.forEach(s => {
-      if((s.present||[]).includes(name)) { present++; lastPresent=s.date; }
-      else if((s.excused||[]).includes(name)) excused++;
-      else if((s.unexcused||[]).includes(name)) unexcused++;
+      if(attInList(s.present,name)) { present++; lastPresent=s.date; }
+      else if(attInList(s.excused,name)) excused++;
+      else if(attInList(s.unexcused,name)) unexcused++;
     });
     // streak: walk most-recent-first over sessions the cadet was recorded in
     for(let i=sessions.length-1;i>=0 && !streakBroken;i--){
       const s=sessions[i];
-      if((s.present||[]).includes(name)) streakBroken=true;
-      else if((s.excused||[]).includes(name)||(s.unexcused||[]).includes(name)) streak++;
+      if(attInList(s.present,name)) streakBroken=true;
+      else if(attInList(s.excused,name)||attInList(s.unexcused,name)) streak++;
     }
     const recorded = present+excused+unexcused;
     const rate = recorded ? Math.round((present/recorded)*100) : null;

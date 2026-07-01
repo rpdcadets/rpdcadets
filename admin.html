@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- admin.html  |  Build v22  |  updated 2026-07-01  |  pairs with roster.js v20  |  Attendance session editor now includes per-cadet status editing (present/excused/unexcused/not recorded) -->
+<!-- admin.html  |  Build v25  |  updated 2026-07-01  |  pairs with roster.js v21  |  Missing weeks can be marked "No meeting" (intentional skip): clears the flag, excluded from attendance counts -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -240,6 +240,24 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
 .att-cs-btn.on.none{background:rgba(255,255,255,0.16);color:var(--white);border-color:rgba(255,255,255,0.3)}
 .att-le-savec{align-self:flex-start;background:var(--gold);border:1px solid var(--gold);color:#1a2036;font-weight:600;font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:1px;text-transform:uppercase;padding:9px 16px;border-radius:8px;cursor:pointer}
 @media(max-width:600px){.att-le-cadets{grid-template-columns:1fr}}
+.att-new-panel{background:rgba(255,255,255,0.02);border:1px solid var(--card-border);border-radius:12px;padding:16px;margin-bottom:18px;display:flex;flex-direction:column;gap:14px}
+.att-new-actions{display:flex;gap:10px}
+.att-new-cancel{background:none;border:1px solid var(--card-border);color:var(--text-muted);font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:1px;text-transform:uppercase;padding:9px 16px;border-radius:8px;cursor:pointer}
+.att-new-cancel:hover{color:var(--white)}
+.att-gap{background:rgba(217,119,6,0.08);border:1px solid rgba(217,119,6,0.3);border-radius:12px;padding:14px 16px;margin-bottom:18px}
+.att-gap-h{display:flex;align-items:center;gap:8px;font-family:'Barlow Condensed',sans-serif;font-size:13px;letter-spacing:1px;text-transform:uppercase;color:#e6a23c;font-weight:600}
+.att-gap-h svg{width:16px;height:16px}
+.att-gap-sub{font-size:12.5px;color:var(--text-muted);margin:6px 0 10px}
+.att-gap-list{display:flex;flex-wrap:wrap;gap:8px}
+.att-gap-chip{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,0.03);border:1px solid var(--card-border);border-radius:8px;padding:6px 8px 6px 12px;font-size:13px}
+.att-gap-add{background:#d97706;border:none;color:#1a2036;font-family:'Barlow Condensed',sans-serif;font-size:10px;letter-spacing:0.5px;text-transform:uppercase;font-weight:600;padding:4px 9px;border-radius:6px;cursor:pointer}
+.att-gap-add:hover{filter:brightness(1.1)}
+.att-gap-none{background:none;border:1px solid var(--card-border);color:var(--text-muted);font-family:'Barlow Condensed',sans-serif;font-size:10px;letter-spacing:0.5px;text-transform:uppercase;padding:4px 9px;border-radius:6px;cursor:pointer}
+.att-gap-none:hover{color:var(--white);border-color:var(--text-muted)}
+.att-log-item.nomeet{opacity:0.72}
+.att-log-nums.nm{color:var(--text-muted);font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:1.5px;text-transform:uppercase}
+.att-nm-remove{background:none;border:1px solid var(--card-border);color:var(--text-muted);font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:1px;text-transform:uppercase;padding:6px 12px;border-radius:8px;cursor:pointer}
+.att-nm-remove:hover{color:#f87171;border-color:rgba(220,38,38,0.4)}
 .att-log-item.editing .att-le-panel{display:flex}
 .att-le-field label{display:block;font-family:'Barlow Condensed',sans-serif;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);margin-bottom:5px}
 .att-le-field input{background:var(--input-bg);border:1px solid var(--input-border);border-radius:8px;padding:8px 11px;color:var(--white);font-family:'Barlow',sans-serif;font-size:13px;outline:none;color-scheme:dark}
@@ -510,7 +528,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
     <button class="lock-btn" id="goBtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg><span id="goLabel">Unlock</span></button>
     <div class="lock-error" id="lockErr">Incorrect passcode.</div>
     <div class="lock-home"><a href="index.html">← Return to Home</a></div>
-    <div style="margin-top:16px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v22</div>
+    <div style="margin-top:16px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v25</div>
   </div>
 </div>
 
@@ -540,7 +558,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
       <button class="back-link" id="rosterBack"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Admin Console</button>
       <div class="bar">
         <div class="status-pill" id="pill"><span class="dot"></span><span id="pillText">Synced</span></div>
-        <span style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v22</span>
+        <span style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v25</span>
         <button class="btn ghost" id="syncMembersBtn" title="One-time: pull titles and alumni from the Members page into the shared roster">Sync members data</button>
         <button class="btn add" id="addBtn">+ Add Person</button>
       </div>
@@ -658,10 +676,13 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
           <button class="btn ghost att-range-btn" data-range="school">School year</button>
         </div>
         <div class="att-stats" id="attStats"></div>
+        <div id="attGaps"></div>
         <div class="bar">
           <input type="text" id="attSearch" placeholder="Search cadet…" style="flex:1;min-width:160px;background:var(--input-bg);border:1px solid var(--input-border);border-radius:9px;padding:10px 14px;color:var(--white);font-family:'Barlow',sans-serif;font-size:14px;outline:none">
+          <button class="btn add" id="attAddSession">+ Add session</button>
           <button class="btn ghost" id="attCsv">Export CSV</button>
         </div>
+        <div id="attNewWrap"></div>
         <div id="attRows"></div>
         <div class="att-names-wrap" id="attNamesWrap"></div>
         <div class="att-log-wrap" id="attLogWrap"></div>
@@ -748,9 +769,9 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
 
 <div class="toast" id="toast"></div>
 
-<script src="roster.js?v=20"></script>
+<script src="roster.js?v=21"></script>
 <script>
-console.log('[admin] Build v22');
+console.log('[admin] Build v25');
 const SESSION_KEY = 'rpd761_admin_auth';   // advisor-only; NOT shared with cadet pages
 const TIER_KEY = 'rpd761_admin_tier';      // 'full' (golden) or 'ltd' (limited advisor)
 const LIMITED_TOOLS = ['records','ridealongs','donations'];
@@ -2173,6 +2194,16 @@ function attFmtDate(d){ if(!d) return ''; const dt=new Date(d+'T12:00:00'); retu
 function attRateClass(rate){ if(rate===null) return 'none'; if(rate>=85) return 'good'; if(rate>=70) return 'mid'; return 'low'; }
 function attBarColor(c){ return c==='good'?'var(--green)':c==='mid'?'var(--gold-light)':c==='low'?'#f87171':'rgba(255,255,255,0.15)'; }
 
+function attThursdayOf(iso){ const d=new Date(iso+'T12:00:00'); d.setDate(d.getDate()+(4-d.getDay())); return localIso(d); }
+function attMissingWeeks(sessions){
+  if(!sessions || sessions.length<2) return [];
+  const covered=new Set(sessions.map(s=>attThursdayOf(s.date)));
+  const sorted=[...covered].sort();
+  let d=new Date(sorted[0]+'T12:00:00'); const end=new Date(sorted[sorted.length-1]+'T12:00:00');
+  const out=[];
+  while(d<=end){ const iso=localIso(d); if(!covered.has(iso)) out.push(iso); d.setDate(d.getDate()+7); if(out.length>520) break; }
+  return out;
+}
 function renderAttendance(){
   const host = document.getElementById('attRows');
   const statHost = document.getElementById('attStats');
@@ -2193,10 +2224,25 @@ function renderAttendance(){
   const flagged = agg.filter(a=>a.watch).length;
   const totalHrs = Math.round(agg.reduce((a,x)=>a+x.totalHours,0)*10)/10;
   statHost.innerHTML =
-    `<div class="att-stat"><div class="num">${sessions.length}</div><div class="lbl">Meetings in range</div></div>
+    `<div class="att-stat"><div class="num">${sessions.filter(s=>!s.noMeeting).length}</div><div class="lbl">Meetings in range</div></div>
      <div class="att-stat"><div class="num" style="color:${attBarColor(attRateClass(unitRate))}">${unitRate}%</div><div class="lbl">Overall attendance</div></div>
      <div class="att-stat"><div class="num">${totalHrs}</div><div class="lbl">Total hours</div></div>
      <div class="att-stat ${flagged?'flag':''}"><div class="num">${flagged}</div><div class="lbl">Needs attention</div></div>`;
+
+  const gaps = attMissingWeeks(sessions);
+  const gapHost = document.getElementById('attGaps');
+  if(gapHost){
+    if(gaps.length){
+      gapHost.innerHTML =
+        `<div class="att-gap">
+           <div class="att-gap-h"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/></svg>Missing week${gaps.length>1?'s':''} (${gaps.length})</div>
+           <div class="att-gap-sub">No attendance recorded for ${gaps.length>1?'these Thursdays':'this Thursday'} between the first and most recent recorded meeting:</div>
+           <div class="att-gap-list">${gaps.map(iso=>`<span class="att-gap-chip">${attFmtDate(iso)}<button class="att-gap-add" data-d="${iso}" type="button">Add</button><button class="att-gap-none" data-d="${iso}" type="button">No meeting</button></span>`).join('')}</div>
+         </div>`;
+      gapHost.querySelectorAll('.att-gap-add').forEach(b=> b.addEventListener('click', ()=> openAddSession(b.dataset.d)));
+      gapHost.querySelectorAll('.att-gap-none').forEach(b=> b.addEventListener('click', ()=> attMarkNoMeeting(b.dataset.d)));
+    } else gapHost.innerHTML='';
+  }
 
   const q=(document.getElementById('attSearch').value||'').toLowerCase().trim();
   let rows = agg.slice().sort((a,b)=>
@@ -2235,8 +2281,16 @@ function renderAttendance(){
   const recent = sessions.slice().reverse();
   if(recent.length){
     logWrap.innerHTML =
-      `<button class="att-log-toggle" id="attLogToggle">Session log (${sessions.length}) <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></button>
-       <div class="att-log-list">${recent.map(s=>
+      `<button class="att-log-toggle" id="attLogToggle">Session log (${sessions.filter(s=>!s.noMeeting).length}) <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></button>
+       <div class="att-log-list">${recent.map(s=> s.noMeeting ?
+         `<div class="att-log-item nomeet" data-date="${s.date}">
+            <div class="att-log-row">
+              <div><div class="att-log-date">${attFmtDate(s.date)}</div><div class="att-log-by">No meeting this week</div></div>
+              <div class="att-log-nums nm">Skipped</div>
+              <button class="att-nm-remove" type="button">Remove</button>
+            </div>
+          </div>`
+         :
          `<div class="att-log-item" data-date="${s.date}">
             <div class="att-log-row">
               <div><div class="att-log-date">${attFmtDate(s.date)}</div><div class="att-log-by">Submitted by ${escapeHtmlA(s.submittedBy||'—')}</div></div>
@@ -2259,6 +2313,14 @@ function renderAttendance(){
     document.getElementById('attLogToggle').addEventListener('click', ()=>logWrap.classList.toggle('open'));
     logWrap.querySelectorAll('.att-log-item').forEach(item=>{
       const oldDate=item.dataset.date;
+      if(item.classList.contains('nomeet')){
+        item.querySelector('.att-nm-remove').addEventListener('click', async ()=>{
+          const s=attData[oldDate]; delete attData[oldDate];
+          try{ await RPDRoster.attendance.saveAll(attData); renderAttendance(); showToast('No-meeting marker removed'); }
+          catch(e){ attData[oldDate]=s; showToast('Could not save. Try again.'); }
+        });
+        return;
+      }
       item.querySelector('.att-log-edit').addEventListener('click', ()=>{ item.classList.toggle('editing'); if(item.classList.contains('editing')) buildSessionCadetEditor(item, oldDate); });
       item.querySelector('.att-le-save').addEventListener('click', ()=> attMoveSession(oldDate, item.querySelector('.att-le-date').value));
       item.querySelector('.att-le-del').addEventListener('click', ()=> attDeleteSession(oldDate));
@@ -2311,6 +2373,56 @@ function commitEventNames(){
   RPDRoster.eventNames.save(attEventNames).then(()=>showToast('Event names saved')).catch(()=>showToast('Save failed'));
 }
 
+async function attMarkNoMeeting(date){
+  if(!date) return;
+  if(attData[date]){ showToast('A session already exists on '+attFmtDate(date)); return; }
+  const s={ date, dateFmt:new Date(date+'T12:00:00').toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'}), noMeeting:true, submittedBy:'No meeting', present:[], excused:[], unexcused:[], ts:Date.now() };
+  attData[date]=s;
+  try{ await RPDRoster.attendance.saveAll(attData); renderAttendance(); showToast('Marked no meeting for '+attFmtDate(date)); }
+  catch(e){ delete attData[date]; showToast('Could not save. Try again.'); }
+}
+function openAddSession(prefill){
+  const wrap=document.getElementById('attNewWrap');
+  const date=(typeof prefill==='string' && prefill) ? prefill : null;
+  if(wrap.dataset.open && !date){ wrap.innerHTML=''; wrap.dataset.open=''; return; }
+  wrap.dataset.open='1';
+  const rosterNames=RPDRoster.activeSorted().map(p=>RPDRoster.displayName(p));
+  const today=date || new Date().toISOString().slice(0,10);
+  if(date) wrap.scrollIntoView({behavior:'smooth',block:'nearest'});
+  const row=name=>`<div class="att-cs-row" data-name="${escapeHtmlA(name)}"><span class="att-cs-name" title="${escapeHtmlA(name)}">${escapeHtmlA(name)}</span><div class="att-cs-seg"><button type="button" class="att-cs-btn present" data-v="present">P</button><button type="button" class="att-cs-btn excused" data-v="excused">E</button><button type="button" class="att-cs-btn unexcused" data-v="unexcused">U</button><button type="button" class="att-cs-btn none on" data-v="">\u2014</button></div></div>`;
+  wrap.innerHTML =
+    `<div class="att-new-panel">
+       <div class="att-le-top">
+         <div class="att-le-field"><label>Meeting date</label><input type="date" id="attNewDate" value="${today}"></div>
+         <div class="att-le-field"><label>Submitted by</label><input type="text" id="attNewBy" placeholder="Your name" style="min-width:170px"></div>
+       </div>
+       <div>
+         <div class="att-le-h">Mark who was present, excused, unexcused, or not recorded</div>
+         <div class="att-le-cadets" id="attNewCadets">${rosterNames.map(row).join('')}</div>
+         <div class="att-new-actions"><button class="att-le-savec" id="attNewSave" type="button">Add session</button><button class="att-new-cancel" id="attNewCancel" type="button">Cancel</button></div>
+       </div>
+     </div>`;
+  wrap.querySelectorAll('.att-cs-row').forEach(r=> r.querySelectorAll('.att-cs-btn').forEach(b=> b.addEventListener('click', ()=>{ r.querySelectorAll('.att-cs-btn').forEach(x=>x.classList.remove('on')); b.classList.add('on'); })));
+  document.getElementById('attNewSave').addEventListener('click', attCreateSession);
+  document.getElementById('attNewCancel').addEventListener('click', ()=>{ wrap.innerHTML=''; wrap.dataset.open=''; });
+  wrap.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+async function attCreateSession(){
+  const date=document.getElementById('attNewDate').value;
+  if(!date){ showToast('Pick a date'); return; }
+  if(attData[date]){ showToast('A session already exists on '+attFmtDate(date)+' \u2014 edit it instead'); return; }
+  const by=(document.getElementById('attNewBy').value||'').trim() || 'Added in admin';
+  const present=[],excused=[],unexcused=[];
+  document.querySelectorAll('#attNewCadets .att-cs-row').forEach(r=>{
+    const name=r.dataset.name, on=r.querySelector('.att-cs-btn.on'), v=on?on.dataset.v:'';
+    if(v==='present') present.push(name); else if(v==='excused') excused.push(name); else if(v==='unexcused') unexcused.push(name);
+  });
+  if(!present.length && !excused.length && !unexcused.length){ if(!confirm('No cadets are marked. Add an empty session anyway?')) return; }
+  const session={ date, dateFmt:new Date(date+'T12:00:00').toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'}), submittedBy:by, roster:RPDRoster.activeSorted().length, present, excused, unexcused, ts:Date.now() };
+  attData[date]=session;
+  try{ await RPDRoster.attendance.saveAll(attData); const w=document.getElementById('attNewWrap'); w.innerHTML=''; w.dataset.open=''; renderAttendance(); document.getElementById('attLogWrap').classList.add('open'); showToast('Session added for '+attFmtDate(date)); }
+  catch(e){ delete attData[date]; showToast('Could not save. Try again.'); }
+}
 function buildSessionCadetEditor(item, date){
   const host=item.querySelector('.att-le-cadets'); if(!host || host.dataset.built) return;
   host.dataset.built='1';
@@ -2824,6 +2936,7 @@ document.getElementById('recSearch').addEventListener('input', renderRecords);
 document.getElementById('attBack').addEventListener('click', ()=>showView('hubView'));
 document.getElementById('attSearch').addEventListener('input', renderAttendance);
 document.getElementById('attCsv').addEventListener('click', attExportCSV);
+document.getElementById('attAddSession').addEventListener('click', openAddSession);
 document.querySelectorAll('.att-range-btn').forEach(b=> b.addEventListener('click', ()=> attApplyPreset(b.dataset.range)));
 ['attFrom','attTo'].forEach(id=>{ const el=document.getElementById(id); if(el) el.addEventListener('change', ()=>{ attSetPreset(null); renderAttendance(); }); });
 document.getElementById('raBack').addEventListener('click', ()=>showView('hubView'));

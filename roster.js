@@ -1,4 +1,4 @@
-/* roster.js  |  VERSION 20  |  updated 2026-07-01  |  attendance.saveAll for admin session date-correct + delete */
+/* roster.js  |  VERSION 21  |  updated 2026-07-01  |  roll-up ignores no-meeting markers (intentional skipped weeks) */
 /* ═══════════════════════════════════════════════════════════════════════
    RPD CADETS — SHARED ROSTER ENGINE
    One encrypted roster in Firebase, read by members, trackers, and
@@ -596,7 +596,7 @@
     opts = opts || {};
     const attData = opts.attData || {};
     const from = opts.from || '', to = opts.to || '';
-    const sessions = Object.values(attData).sort((a,b)=>(a.date||'').localeCompare(b.date||'')).filter(s=>attInRange(s.date, from, to));
+    const sessions = Object.values(attData).sort((a,b)=>(a.date||'').localeCompare(b.date||'')).filter(s=>attInRange(s.date, from, to) && !s.noMeeting);
     const events = (opts.events||[]).filter(e=>attInRange(e.date, from, to));
     const cadets = activeSorted();
     return cadets.map(p => {

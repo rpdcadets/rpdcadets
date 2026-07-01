@@ -1,1 +1,52 @@
+# attendance-reminder.yml  |  Build v1  |  2026-07-01
+# Thursday 10 PM (Richardson time) check: if this week's meeting has no
+# attendance submitted and no "No meeting" marker, email a nudge via Formspark.
+#
+# File location in the repo: .github/workflows/attendance-reminder.yml
+# Companion script:          scripts/check-attendance.mjs
+#
+# Required repo secrets (Settings, Secrets and variables, Actions):
+#   CADET_PASSCODE        the Trackers unlock passcode
+#   FORMSPARK_REMINDER_ID the Formspark form id for the reminder email
+#
+# Why two cron lines: GitHub cron runs on UTC. 10 PM in Richardson is
+# 03:00 UTC during daylight time and 04:00 UTC during standard time.
+# Both fire every Friday UTC (= Thursday night local); the script checks
+# the local clock and exactly one of the two proceeds, so this stays
+# correct year-round without touching it at time changes.
 
+name: Weekly attendance reminder
+
+on:
+  schedule:
+    - cron: '0 3 * * 5'   # 10 PM CDT Thursday
+    - cron: '0 4 * * 5'   # 10 PM CST Thursday
+  workflow_dispatch:       # manual run button for testing
+    inputs:
+      force:
+        description: 'Skip the Thursday-10PM time gate (still only emails if the week is missing)'
+        type: boolean
+        default: true
+      send_test:
+        description: 'Send a test email even if attendance IS recorded'
+        type: boolean
+        default: false
+
+permissions: {}
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Check this week's attendance
+        env:
+          CADET_PASSCODE: ${{ secrets.CADET_PASSCODE }}
+          FORMSPARK_REMINDER_ID: ${{ secrets.FORMSPARK_REMINDER_ID }}
+          FORCE: ${{ inputs.force }}
+          SEND_TEST: ${{ inputs.send_test }}
+        run: node scripts/check-attendance.mjs

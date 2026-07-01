@@ -1,4 +1,4 @@
-// check-attendance.mjs  |  Build v1  |  2026-07-01
+// check-attendance.mjs  |  Build v2  |  2026-07-01  |  clean field names + email subject for the custom Formspark template
 // Runs in GitHub Actions (see .github/workflows/attendance-reminder.yml).
 // Reads the encrypted attendance log from Firebase exactly the way the site
 // does, checks whether THIS week's Thursday meeting has been recorded (a real
@@ -80,15 +80,18 @@ async function dbGet(path) {
 }
 
 async function sendReminder(missingIso, isTest) {
+  // Field names below are referenced by the custom email template in the
+  // Formspark dashboard ({{data.missingDate}} etc). If you rename one here,
+  // rename it in the template too. Keys starting with _ are Formspark
+  // controls and never appear in the email body.
   const res = await fetch(`https://submit-form.com/${FORM_ID}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
     body: JSON.stringify({
-      'Reminder': (isTest ? '[TEST] ' : '') +
-        'Weekly attendance has not been submitted for ' + fmt(missingIso) + '.',
-      'Missing meeting date': fmt(missingIso),
-      'Submit it here': TRACKERS_URL,
-      'Note': 'If there was no meeting this week, an advisor can mark "No meeting" in the admin console (Attendance and Hours) to clear this.',
+      missingDate: fmt(missingIso),
+      link: TRACKERS_URL,
+      note: 'If there was no meeting this week, an advisor can mark "No meeting" in the admin console (Attendance and Hours) to clear this reminder.',
+      '_email.subject': (isTest ? '[TEST] ' : '') + 'Missing weekly attendance for ' + fmt(missingIso),
     }),
   });
   if (!res.ok) throw new Error(`Formspark send failed (${res.status})`);

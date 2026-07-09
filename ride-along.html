@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- ride-along.html | Build v2 | 07/09/26 | on-screen and Print/Save PDF headers converted to the eyebrow letterhead. -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -41,29 +42,22 @@
     box-shadow:var(--shadow); position:relative;
   }
 
-  /* HEADER */
-  .hdr{position:relative;}
-  .hdr .redbar{height:11px; background:var(--red);}
-  .hdr .navybar{
-    background:var(--navy); padding:18px 40px 16px 150px; position:relative; min-height:150px;
-    display:flex; flex-direction:column; justify-content:center;
-  }
-  .hdr .navybar::after{
-    content:''; position:absolute; left:0; right:0; bottom:0; height:3px; background:var(--gold);
-  }
-  .hdr .logo{
-    position:absolute; left:30px; top:50%; transform:translateY(-50%);
-    width:108px; height:108px; object-fit:contain;
+  /* HEADER — eyebrow letterhead (white, no banner) */
+  .hdr{position:relative; padding:34px 40px 0 40px;}
+  .hdr .lh{display:flex; align-items:center; gap:14px;}
+  .hdr .logo{width:96px; height:96px; object-fit:contain; flex-shrink:0;}
+  .hdr .lh-text{flex:1; min-width:0;}
+  .hdr .eyebrow{
+    color:var(--bluegray); font-family:'Barlow',sans-serif; font-weight:700;
+    font-size:11px; letter-spacing:3px; text-transform:uppercase;
   }
   .hdr h1{
-    font-family:'Barlow Condensed',sans-serif; color:#fff; font-weight:700;
-    font-size:38px; letter-spacing:1px; line-height:1; text-transform:uppercase;
+    font-family:'Barlow Condensed',sans-serif; color:var(--navy); font-weight:700;
+    font-size:34px; letter-spacing:.5px; line-height:1.15; text-transform:uppercase;
   }
-  .hdr .dept{
-    color:var(--gold); font-family:'Barlow Condensed',sans-serif; font-weight:600;
-    font-size:16px; letter-spacing:1px; text-transform:uppercase; margin-top:3px;
-  }
-  .hdr .sep{height:1px; background:rgba(255,255,255,.35); margin:9px 0 7px; width:78%;}
+  .hdr .rule{display:flex; height:2px; margin:4px 0 6px;}
+  .hdr .rule .r-red{flex:1; background:var(--red);}
+  .hdr .rule .r-navy{flex:1; background:var(--navy);}
   .hdr .sublabel{
     color:var(--bluegray); font-size:12px; letter-spacing:2px; text-transform:uppercase;
     font-weight:500;
@@ -229,7 +223,9 @@
     .fld-date,.fld-sup,.fld-from,.fld-div{width:100%;}
     .fld-on{width:150px;}
     input.sig-input{width:100%;}
-    .hdr h1{font-size:30px;}
+    .hdr h1{font-size:26px;}
+    .hdr .logo{width:72px; height:72px;}
+    .hdr{padding:24px 24px 0 24px;}
   }
 
   /* LOCK SCREEN */
@@ -299,15 +295,16 @@
 </div>
 
 <div class="sheet" id="sheet">
-  <!-- HEADER -->
+  <!-- HEADER — eyebrow letterhead -->
   <div class="hdr">
-    <div class="redbar"></div>
-    <div class="navybar">
+    <div class="lh">
       <img class="logo" id="logoImg" alt="RPD Public Safety Cadets">
-      <h1>Public Safety Cadets</h1>
-      <div class="dept">Richardson Police Department</div>
-      <div class="sep"></div>
-      <div class="sublabel">Ride-Along Request Form</div>
+      <div class="lh-text">
+        <div class="eyebrow">Richardson Police Department</div>
+        <h1>Public Safety Cadets</h1>
+        <div class="rule"><div class="r-red"></div><div class="r-navy"></div></div>
+        <div class="sublabel">Ride-Along Request Form</div>
+      </div>
     </div>
   </div>
 
@@ -415,6 +412,7 @@
   </div>
 </div>
 
+<div style="max-width:816px;margin:6px auto 0;text-align:left;font-size:10px;color:rgba(255,255,255,0.35);padding:0 4px">Build v2</div>
 </div><!-- end appContent -->
 
 <script>
@@ -536,20 +534,18 @@ function buildPDF(v){
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({unit:'pt', format:'letter'});
   const W = 612;
-  // Header bands
-  doc.setFillColor(196,30,58); doc.rect(0,0,W,8,'F');          // red
-  doc.setFillColor(27,42,74); doc.rect(0,8,W,115,'F');         // navy
-  doc.setFillColor(197,165,90); doc.rect(0,121,W,2,'F');       // gold line
-  // Logo
-  try{ doc.addImage("data:image/png;base64,"+LOGO_B64,'PNG',18,18,96,96); }catch(e){}
-  // Header text
-  doc.setTextColor(255,255,255); doc.setFont('helvetica','bold'); doc.setFontSize(26);
-  doc.text("PUBLIC SAFETY CADETS",130,52);
-  doc.setTextColor(197,165,90); doc.setFontSize(12);
-  doc.text("RICHARDSON POLICE DEPARTMENT",130,70);
-  doc.setDrawColor(255,255,255); doc.setLineWidth(0.5); doc.line(130,80,W-40,80);
-  doc.setTextColor(122,139,160); doc.setFont('helvetica','normal'); doc.setFontSize(10);
-  doc.text("RIDE-ALONG REQUEST FORM",130,96);
+  // Header — eyebrow letterhead (white, no banner)
+  try{ doc.addImage("data:image/png;base64,"+LOGO_B64,'PNG',55,30,96,96); }catch(e){}
+  const tx = 165;
+  doc.setTextColor(122,139,160); doc.setFont('helvetica','bold'); doc.setFontSize(8.5);
+  doc.text("RICHARDSON POLICE DEPARTMENT", tx, 56, {charSpace:2.2});
+  doc.setTextColor(27,42,74); doc.setFontSize(25);
+  doc.text("PUBLIC SAFETY CADETS", tx, 82);
+  const rMid = tx + (W-55-tx)/2;
+  doc.setDrawColor(196,30,58); doc.setLineWidth(1.5); doc.line(tx,92,rMid,92);
+  doc.setDrawColor(27,42,74); doc.line(rMid,92,W-55,92);
+  doc.setTextColor(122,139,160); doc.setFont('helvetica','normal'); doc.setFontSize(9);
+  doc.text("RIDE-ALONG REQUEST FORM", tx, 106);
 
   // Body
   let y = 165;

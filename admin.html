@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- admin.html  |  Build v28  |  updated 2026-07-08  |  pairs with roster.js v22  |  Advisor Access now also manages a Sergeant passcode for the read-only /sgt page; Unit # removed from the page title and hub label -->
+<!-- admin.html  |  Build v29  |  updated 2026-07-08  |  pairs with roster.js v23  |  New Pending Approvals tool (reviews record edits and ride-alongs proposed from /sgt, with a count badge on the hub tile); Cadet Records now shows the sergeant notes board read-along with delete; Sergeant passcode manager from v28 unchanged -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -85,6 +85,44 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
 .acc-save:hover{filter:brightness(1.08)}
 .acc-remove{background:none;border-color:rgba(220,38,38,0.4);color:#f87171}
 .acc-remove:hover{background:rgba(220,38,38,0.1)}
+
+/* PENDING APPROVALS */
+.tool-badge{position:absolute;top:16px;right:16px;min-width:24px;height:24px;padding:0 7px;border-radius:12px;background:var(--red);color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;box-shadow:0 0 12px rgba(192,57,43,0.5)}
+.apr-card{background:var(--card-bg);border:1px solid rgba(217,119,6,0.35);border-radius:12px;padding:16px;margin-bottom:10px}
+.apr-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.apr-kind{font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--amber);border:1px solid rgba(217,119,6,0.45);border-radius:5px;padding:2px 9px}
+.apr-cadet{font-size:15px;font-weight:600}
+.apr-by{margin-left:auto;font-size:12px;color:var(--text-muted)}
+.apr-change{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13.5px;padding:5px 0;border-top:1px solid rgba(255,255,255,0.04)}
+.apr-change .lbl{font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);width:130px;flex-shrink:0}
+.apr-change .old{color:var(--text-muted);text-decoration:line-through}
+.apr-change .arw{color:var(--text-muted)}
+.apr-change .new{color:var(--gold-light);font-weight:600}
+.apr-stale{font-size:11.5px;color:#f3b4b4;background:rgba(220,38,38,0.08);border:1px solid rgba(220,38,38,0.3);border-radius:6px;padding:4px 9px;margin-top:8px;display:inline-block}
+.apr-actions{display:flex;gap:10px;margin-top:12px}
+.apr-approve{background:var(--green);border:1px solid var(--green);color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;padding:10px 18px;border-radius:9px;cursor:pointer}
+.apr-approve:hover{filter:brightness(1.1)}
+.apr-reject{background:none;border:1px solid rgba(220,38,38,0.4);color:#f87171;font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;padding:10px 18px;border-radius:9px;cursor:pointer}
+.apr-reject:hover{background:rgba(220,38,38,0.1)}
+.apr-approve:disabled,.apr-reject:disabled{opacity:.5;cursor:wait}
+
+/* SGT NOTES (read-along inside Cadet Records) */
+.recnotes{background:var(--card-bg);border:1px solid var(--card-border);border-radius:12px;margin-bottom:18px;overflow:hidden}
+.recnotes-head{display:flex;align-items:center;gap:10px;padding:13px 16px;cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--gold)}
+.recnotes-head:hover{background:rgba(255,255,255,0.02)}
+.recnotes-head svg{margin-left:auto;transition:transform .2s;color:var(--text-muted)}
+.recnotes.open .recnotes-head svg{transform:rotate(180deg)}
+.recnotes-body{display:none;padding:4px 16px 14px;border-top:1px solid var(--card-border)}
+.recnotes.open .recnotes-body{display:block}
+.recnote{padding:10px 0;border-top:1px solid rgba(255,255,255,0.04)}
+.recnote:first-child{border-top:none}
+.recnote-top{display:flex;align-items:center;gap:10px;margin-bottom:4px}
+.recnote-name{font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--gold)}
+.recnote-when{font-size:11.5px;color:var(--text-muted)}
+.recnote-del{margin-left:auto;background:none;border:1px solid var(--card-border);color:var(--text-muted);width:24px;height:24px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1}
+.recnote-del:hover{color:#f87171;border-color:rgba(220,38,38,0.4)}
+.recnote-text{font-size:13.5px;line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere}
+.recnotes-empty{color:var(--text-muted);font-size:12.5px;padding:10px 0}
 .acc-msg{font-size:13px;min-height:18px;margin-bottom:14px}
 .acc-msg.ok{color:var(--green)} .acc-msg.err{color:#f87171}
 .acc-note{max-width:520px;font-size:12.5px;line-height:1.6;color:var(--text-muted);background:var(--card-bg);border:1px solid var(--card-border);border-radius:10px;padding:14px 16px}
@@ -528,7 +566,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
     <button class="lock-btn" id="goBtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg><span id="goLabel">Unlock</span></button>
     <div class="lock-error" id="lockErr">Incorrect passcode.</div>
     <div class="lock-home"><a href="index.html">← Return to Home</a></div>
-    <div style="margin-top:16px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v28</div>
+    <div style="margin-top:16px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v29</div>
   </div>
 </div>
 
@@ -558,7 +596,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
       <button class="back-link" id="rosterBack"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Admin Console</button>
       <div class="bar">
         <div class="status-pill" id="pill"><span class="dot"></span><span id="pillText">Synced</span></div>
-        <span style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v28</span>
+        <span style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v29</span>
         <button class="btn ghost" id="syncMembersBtn" title="One-time: pull titles and alumni from the Members page into the shared roster">Sync members data</button>
         <button class="btn add" id="addBtn">+ Add Person</button>
       </div>
@@ -582,6 +620,10 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
           <input type="text" id="recSearch" placeholder="Search cadet…" style="flex:1;min-width:160px;background:var(--input-bg);border:1px solid var(--input-border);border-radius:9px;padding:10px 14px;color:var(--white);font-family:'Barlow',sans-serif;font-size:14px;outline:none">
         </div>
         <div class="rec-warning">Program info: school, date of birth, certifications, dates, shirt size, radio number, cadet and parent/guardian contact. Records sit behind the advisor passcode, not per-cadet sign-in, so keep home addresses, Social Security numbers, and medical details out of this tool.</div>
+        <div class="recnotes" id="recNotesWrap" style="display:none">
+          <div class="recnotes-head" id="recNotesHead">Sergeant Notes <span id="recNotesCount" style="color:var(--text-muted)"></span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div>
+          <div class="recnotes-body" id="recNotesBody"></div>
+        </div>
         <div id="recRows"></div>
       </div>
     </div>
@@ -628,6 +670,19 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
         </div>
         <div id="raList"></div>
       </div>
+    </div>
+  </div>
+
+  <!-- PENDING APPROVALS (full advisor only; reads roster/pending proposed from /sgt) -->
+  <div class="view" id="approvalsView">
+    <div class="page-header">
+      <div class="section-label">Pending Approvals</div>
+      <h1 class="section-title">Pending Approvals</h1>
+      <p class="page-desc">Edits and ride-alongs proposed from the /sgt page. Nothing here is live; Approve applies it, Reject discards it.</p>
+    </div>
+    <div class="container">
+      <button class="back-link" id="aprBack"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Admin Console</button>
+      <div id="aprList"></div>
     </div>
   </div>
 
@@ -783,9 +838,9 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
 
 <div class="toast" id="toast"></div>
 
-<script src="roster.js?v=22"></script>
+<script src="roster.js?v=23"></script>
 <script>
-console.log('[admin] Build v28');
+console.log('[admin] Build v29');
 const SESSION_KEY = 'rpd761_admin_auth';   // advisor-only; NOT shared with cadet pages
 const TIER_KEY = 'rpd761_admin_tier';      // 'full' (golden) or 'ltd' (limited advisor)
 const LIMITED_TOOLS = ['records','ridealongs','donations'];
@@ -831,6 +886,14 @@ const TOOLS = [
     desc: 'Record which cadet rode with which officer, the date, and start and end times.',
     icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 17h-2v-6l2-5h9l4 5h3a1 1 0 0 1 1 1v5h-2"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/></svg>',
     open: openRideAlongs
+  },
+  {
+    id: 'approvals',
+    name: 'Pending Approvals',
+    desc: 'Review record edits and ride-alongs proposed from the /sgt page. Nothing goes live until you approve it.',
+    badge: true,
+    icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>',
+    open: openApprovals
   },
   {
     id: 'donations',
@@ -927,6 +990,7 @@ function enterApp(){
   document.getElementById('app').classList.add('on');
   if(typeof buildNav==='function') buildNav();
   buildHub();
+  if(TIER === 'full') refreshAprBadge();
   RPDRoster.subscribe(arr => {
     // Never let an incoming snapshot overwrite edits that haven't saved yet,
     // or yank a field the user is actively editing. Pending writes are our own.
@@ -956,6 +1020,7 @@ function buildHub(){
     const el = document.createElement(t.soon ? 'div' : 'button');
     el.className = 'tool-card' + (t.soon ? ' soon' : '');
     el.innerHTML = (t.soon ? '<span class="soon-tag">Soon</span>' : '') +
+      (t.badge ? '<span class="tool-badge" id="aprBadge" style="display:none"></span>' : '') +
       `<div class="tool-ico">${t.icon}</div><div class="tool-name">${t.name}</div><div class="tool-desc">${t.desc}</div>`;
     if(!t.soon && t.open) el.addEventListener('click', t.open);
     grid.appendChild(el);
@@ -2070,7 +2135,7 @@ async function openRecords(){
   try {
     let res = await RPDRoster.records.connect(adv);
     if(res.needsSetup){ await RPDRoster.records.setup(adv); res = { ok:true }; }
-    if(res.ok){ recData = (await RPDRoster.records.get()) || {}; migrateJoinDates(); renderRecords(); }
+    if(res.ok){ recData = (await RPDRoster.records.get()) || {}; migrateJoinDates(); renderRecords(); loadRecNotes(); }
     else { host.innerHTML = '<p style="color:var(--red-glow);padding:24px;text-align:center">Could not unlock records. Re-open the admin page and try again.</p>'; }
   } catch(e){ host.innerHTML = '<p style="color:var(--red-glow);padding:24px;text-align:center">Could not reach the database. Check your connection.</p>'; }
 }
@@ -2985,6 +3050,163 @@ document.getElementById('uniBack').addEventListener('click', ()=>showView('hubVi
 document.getElementById('trnBack').addEventListener('click', ()=>showView('hubView'));
 document.getElementById('recBack').addEventListener('click', ()=>showView('hubView'));
 document.getElementById('accBack').addEventListener('click', ()=>showView('hubView'));
+document.getElementById('aprBack').addEventListener('click', ()=>showView('hubView'));
+
+/* ── PENDING APPROVALS (proposals from /sgt; full advisor only) ── */
+let aprPending = [];
+async function refreshAprBadge(){
+  try{
+    const adv = sessionStorage.getItem(SESSION_KEY);
+    let rc = await RPDRoster.records.connect(adv);
+    if(!rc.ok && rc.needsSetup){ rc = await RPDRoster.records.setup(adv); }
+    if(!rc.ok) return;
+    const arr = (await RPDRoster.pending.get()) || [];
+    const b = document.getElementById('aprBadge');
+    if(b){ b.textContent = arr.length; b.style.display = arr.length ? 'flex' : 'none'; }
+  }catch(e){}
+}
+async function openApprovals(){
+  if(TIER==='ltd') return;
+  showView('approvalsView');
+  const host = document.getElementById('aprList');
+  host.innerHTML = '<p style="color:var(--text-muted);padding:24px;text-align:center">Loading…</p>';
+  const adv = sessionStorage.getItem(SESSION_KEY);
+  try{
+    let rc = await RPDRoster.records.connect(adv);
+    if(rc.needsSetup){ await RPDRoster.records.setup(adv); rc = { ok:true }; }
+    if(!rc.ok){ host.innerHTML='<p style="color:var(--red-glow);padding:24px;text-align:center">Could not unlock. Re-open the admin page and try again.</p>'; return; }
+    aprPending = (await RPDRoster.pending.get()) || [];
+    recData = (await RPDRoster.records.get()) || {};
+    try{ raDataApr = (await RPDRoster.ridealongs.get()) || []; }catch(e){ raDataApr = raDataApr || []; }
+    renderApprovals();
+  }catch(e){ host.innerHTML='<p style="color:var(--red-glow);padding:24px;text-align:center">Could not reach the database.</p>'; }
+}
+function aprFmtWhen(ts){ if(!ts) return ''; const d=new Date(ts); return isNaN(d)?'':d.toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'}); }
+function aprFmtDate(d){ if(!d) return ''; const dt=new Date(d+'T00:00:00'); return isNaN(dt)?d:dt.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); }
+function aprFmtTime(t){ if(!t) return ''; const [h,m]=t.split(':').map(Number); const ap=h>=12?'PM':'AM'; const hh=((h+11)%12)+1; return `${hh}:${String(m).padStart(2,'0')} ${ap}`; }
+const APR_SQUAD_LABEL = { leadership:'Leadership', 1:'Squad 1', 2:'Squad 2', 3:'Squad 3', 4:'Squad 4 (Admin)' };
+function aprCurrentDisplay(prop, c){
+  // current live value of a proposed field, so stale proposals are obvious
+  if(c.owner === 'roster'){
+    const entry = rosterEntryFor(prop.cadet); if(!entry) return null;
+    if(c.field==='squad') return APR_SQUAD_LABEL[entry.squad]||String(entry.squad);
+    if(c.field==='joinDate') return entry.joinDate ? aprFmtDate(entry.joinDate) : '—';
+    return entry[c.field] || '—';
+  }
+  const rec = recData[prop.cadet] || {};
+  const v = rec[c.field];
+  if(typeof c.raw === 'boolean') return v ? 'Yes' : 'No';
+  return (v==null || String(v).trim()==='') ? '—' : String(v);
+}
+function renderApprovals(){
+  const host = document.getElementById('aprList'); host.innerHTML='';
+  if(!aprPending.length){ host.innerHTML='<p style="color:var(--text-muted);padding:34px 20px;text-align:center;line-height:1.6">Nothing waiting. Proposals submitted from the /sgt page will appear here.</p>'; return; }
+  aprPending.slice().sort((a,b)=>(a.at||0)-(b.at||0)).forEach(p=>{
+    const el=document.createElement('div'); el.className='apr-card';
+    let body='';
+    if(p.kind==='ridealong'){
+      const r=p.entry||{};
+      body = `<div class="apr-change"><span class="lbl">Cadet</span><span class="new">${escapeHtmlA(r.cadet)}</span></div>`
+        + `<div class="apr-change"><span class="lbl">Officer</span><span class="new">${escapeHtmlA(r.officer)}</span></div>`
+        + `<div class="apr-change"><span class="lbl">When</span><span class="new">${aprFmtDate(r.date)}, ${aprFmtTime(r.start)} – ${aprFmtTime(r.end)}</span></div>`
+        + (r.notes?`<div class="apr-change"><span class="lbl">Notes</span><span>${escapeHtmlA(r.notes)}</span></div>`:'');
+      const n = raWindowCountApr(r.cadet, r.officer, r.date);
+      if(n >= 2) body += `<div class="apr-stale">⚠ Approving this makes ride-along #${n+1} between this cadet and officer within 30 days; the program limit is two.</div>`;
+    } else {
+      body = (p.changes||[]).map(c=>{
+        const cur = aprCurrentDisplay(p, c);
+        const stale = cur!==null && cur!==c.oldValue;
+        return `<div class="apr-change"><span class="lbl">${escapeHtmlA(c.label)}</span><span class="old">${escapeHtmlA(c.oldValue)}</span><span class="arw">→</span><span class="new">${escapeHtmlA(c.newValue)}</span></div>`
+          + (stale?`<div class="apr-stale">⚠ ${escapeHtmlA(c.label)} has changed since this was proposed; it is currently "${escapeHtmlA(cur)}". Approving will overwrite that with "${escapeHtmlA(c.newValue)}".</div>`:'');
+      }).join('');
+    }
+    el.innerHTML =
+      `<div class="apr-top"><span class="apr-kind">${p.kind==='ridealong'?'Ride-Along':'Records Edit'}</span>`
+      + (p.kind==='record'?`<span class="apr-cadet">${escapeHtmlA(p.cadet)}</span>`:'')
+      + `<span class="apr-by">by ${escapeHtmlA(p.by||'—')} · ${aprFmtWhen(p.at)}</span></div>`
+      + body
+      + `<div class="apr-actions"><button class="apr-approve">Approve</button><button class="apr-reject">Reject</button></div>`;
+    el.querySelector('.apr-approve').addEventListener('click', ()=> aprDecide(p.id, true, el));
+    el.querySelector('.apr-reject').addEventListener('click', ()=> aprDecide(p.id, false, el));
+    host.appendChild(el);
+  });
+}
+function raWindowCountApr(cadet,officer,date){
+  const arr = raDataApr || [];
+  const apart=(d1,d2)=>Math.abs((new Date(d1+'T00:00:00') - new Date(d2+'T00:00:00')) / 86400000);
+  return arr.filter(r => r.cadet===cadet && r.officer===officer && apart(r.date,date) <= 30).length;
+}
+let raDataApr = null;
+async function aprDecide(id, approve, el){
+  const p = aprPending.find(x=>x.id===id); if(!p) return;
+  if(!approve && !confirm('Reject this proposal? It will be removed from the queue.')) return;
+  el.querySelectorAll('button').forEach(b=>b.disabled=true);
+  try{
+    if(approve){
+      if(p.kind==='ridealong'){
+        const arr = (await RPDRoster.ridealongs.get()) || [];
+        const r=p.entry||{};
+        arr.push({ id:'ra_'+Math.random().toString(36).slice(2,9), cadet:r.cadet, officer:r.officer, date:r.date, start:r.start, end:r.end, notes:r.notes||'' });
+        await RPDRoster.ridealongs.save(arr);
+        raDataApr = arr;
+      } else {
+        // apply records-owned and roster-owned changes
+        recData = (await RPDRoster.records.get()) || {};
+        const rec = recData[p.cadet] || (recData[p.cadet] = {});
+        let rosterTouched=false, recTouched=false;
+        (p.changes||[]).forEach(c=>{
+          if(c.owner==='roster'){
+            const entry = rosterEntryFor(p.cadet); if(!entry) return;
+            if(c.field==='squad'){ entry.squad = (c.raw==='leadership') ? 'leadership' : +c.raw; }
+            else if(c.field==='joinDate'){ if(c.raw) entry.joinDate=c.raw; else delete entry.joinDate; }
+            else entry[c.field]=c.raw;
+            rosterTouched=true;
+          } else { rec[c.field]=c.raw; recTouched=true; }
+        });
+        if(recTouched) await RPDRoster.records.save(recData);
+        if(rosterTouched) await RPDRoster.save(data);
+      }
+    }
+    aprPending = ((await RPDRoster.pending.get()) || []).filter(x=>x.id!==id);
+    await RPDRoster.pending.save(aprPending);
+    showToast(approve?'Approved and applied':'Rejected');
+    renderApprovals();
+    refreshAprBadge();
+    if(document.getElementById('recordsView').classList.contains('on')) renderRecords();
+  }catch(e){
+    showToast('Could not save the decision. Try again.');
+    el.querySelectorAll('button').forEach(b=>b.disabled=false);
+  }
+}
+
+/* ── SGT NOTES read-along inside Cadet Records ── */
+let recNotesWired=false;
+async function loadRecNotes(){
+  const wrap=document.getElementById('recNotesWrap'), body=document.getElementById('recNotesBody'), cnt=document.getElementById('recNotesCount');
+  if(!wrap) return;
+  if(!recNotesWired){ recNotesWired=true; document.getElementById('recNotesHead').addEventListener('click', ()=>wrap.classList.toggle('open')); }
+  try{
+    const arr = (await RPDRoster.sgtnotes.get()) || [];
+    wrap.style.display='';
+    cnt.textContent = arr.length ? '('+arr.length+')' : '(none yet)';
+    if(!arr.length){ body.innerHTML='<div class="recnotes-empty">No notes posted from the /sgt page yet.</div>'; return; }
+    body.innerHTML='';
+    arr.slice().sort((a,b)=>(b.at||0)-(a.at||0)).forEach(n=>{
+      const el=document.createElement('div'); el.className='recnote';
+      const when = n.at ? new Date(n.at).toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'}) : '';
+      el.innerHTML = `<div class="recnote-top"><span class="recnote-name">${escapeHtmlA(n.name)}</span><span class="recnote-when">${when}</span><button class="recnote-del" title="Delete note">&times;</button></div><div class="recnote-text">${escapeHtmlA(n.text)}</div>`;
+      el.querySelector('.recnote-del').addEventListener('click', async ()=>{
+        if(!confirm('Delete this note from the sergeant board?')) return;
+        try{
+          const cur = ((await RPDRoster.sgtnotes.get()) || []).filter(x=>x.id!==n.id);
+          await RPDRoster.sgtnotes.save(cur);
+          loadRecNotes();
+        }catch(e){ showToast('Could not delete. Try again.'); }
+      });
+      body.appendChild(el);
+    });
+  }catch(e){ wrap.style.display='none'; }
+}
 document.getElementById('recSearch').addEventListener('input', renderRecords);
 document.getElementById('attBack').addEventListener('click', ()=>showView('hubView'));
 document.getElementById('attSearch').addEventListener('input', renderAttendance);

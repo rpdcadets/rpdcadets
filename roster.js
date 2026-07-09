@@ -1,4 +1,4 @@
-/* roster.js  |  VERSION 22  |  updated 2026-07-08  |  sergeant read tier: 'sgt' role wrap plus recordsWrapSgt, managed via access.setSgt/clearSgt/hasSgt, used by the /sgt read-only page */
+/* roster.js  |  VERSION 23  |  updated 2026-07-08  |  adds sergeant tier (v22) plus two records-key nodes: roster/sgtnotes (leadership notes board, no approval) and roster/pending (proposal queue approved from /admin) */
 /* ═══════════════════════════════════════════════════════════════════════
    RPD CADETS — SHARED ROSTER ENGINE
    One encrypted roster in Firebase, read by members, trackers, and
@@ -343,6 +343,12 @@
     ridealongs: {
       get: ridealongsGet, save: ridealongsSave
     },
+    sgtnotes: {
+      get: sgtnotesGet, save: sgtnotesSave
+    },
+    pending: {
+      get: pendingGet, save: pendingSave
+    },
     access: {
       setLimited: accessSetLimited, clearLimited: accessClearLimited, hasLimited: accessHasLimited,
       setSgt: accessSetSgt, clearSgt: accessClearSgt, hasSgt: accessHasSgt
@@ -460,6 +466,33 @@
     if (!recordsKey) throw new Error('records locked');
     const data = await keyEncrypt(JSON.stringify(arr), recordsKey);
     await db.ref(ROOT + '/ridealongs').set(data);
+  }
+  // Sergeant Notes board — same records key (advisor/ltd/sgt tiers only),
+  // separate node (roster/sgtnotes). A flat array of {id, name, text, at}.
+  async function sgtnotesGet() {
+    if (!recordsKey) return null;
+    const blob = await once('sgtnotes');
+    if (!blob) return [];
+    try { return JSON.parse(await keyDecrypt(blob, recordsKey)); } catch (e) { return []; }
+  }
+  async function sgtnotesSave(arr) {
+    if (!recordsKey) throw new Error('records locked');
+    const data = await keyEncrypt(JSON.stringify(arr), recordsKey);
+    await db.ref(ROOT + '/sgtnotes').set(data);
+  }
+  // Pending proposal queue — same records key, node roster/pending. The /sgt
+  // page appends proposals; /admin approves (applies + removes) or rejects
+  // (removes). Nothing in a proposal is live until approved.
+  async function pendingGet() {
+    if (!recordsKey) return null;
+    const blob = await once('pending');
+    if (!blob) return [];
+    try { return JSON.parse(await keyDecrypt(blob, recordsKey)); } catch (e) { return []; }
+  }
+  async function pendingSave(arr) {
+    if (!recordsKey) throw new Error('records locked');
+    const data = await keyEncrypt(JSON.stringify(arr), recordsKey);
+    await db.ref(ROOT + '/pending').set(data);
   }
   // Approved officers list — wrapped under the SHARED roster key (like the
   // roster itself), so cadet-facing pages (e.g. the ride-along request form)

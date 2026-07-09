@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- sgt.html  |  Build v3  |  updated 2026-07-08  |  pairs with roster.js v24  |  Advisor-only fields removed entirely from the page (Age still shown, computed server of DOB never sent to the layout); per-cadet sergeant note lines on every records card (post with name, delete per entry, no approval) that also appear in the merged Notes tab; itemized waiver status with Missing list and waiver proposals through the approval queue; Act. Sgt. rank in every name picker and proposal rank dropdown. -->
+<!-- sgt.html  |  Build v4  |  updated 2026-07-08  |  pairs with roster.js v24  |  Advisor-only fields removed entirely from the page (Age still shown, computed server of DOB never sent to the layout); per-cadet sergeant note lines on every records card (post with name, delete per entry, no approval) that also appear in the merged Notes tab; itemized waiver status with Missing list and waiver proposals through the approval queue; Act. Sgt. rank in every name picker and proposal rank dropdown; records-tab notice shortened (stale redaction wording removed). -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -266,7 +266,7 @@ button.rec-check{cursor:pointer;transition:all .18s}
     <button class="lock-btn" id="goBtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg><span id="goLabel">Unlock</span></button>
     <div class="lock-error" id="lockErr">Incorrect passcode.</div>
     <div class="lock-home"><a href="index.html">← Return to Home</a></div>
-    <div style="margin-top:16px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v3</div>
+    <div style="margin-top:16px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v4</div>
   </div>
 </div>
 
@@ -287,7 +287,7 @@ button.rec-check{cursor:pointer;transition:all .18s}
 
     <!-- CADET RECORDS -->
     <div class="panel on" id="panelRec">
-      <div class="rec-warning">Operational details kept in the admin console. Fields marked ADVISOR VIEW ONLY are not loaded onto this page. You can propose edits to the visible fields; changes wait for advisor approval before they take effect anywhere. Treat everything here as confidential.</div>
+      <div class="rec-warning">You can propose edits to the visible fields; changes wait for advisor approval before they take effect anywhere. Treat everything here as confidential.</div>
       <div class="bar">
         <input type="text" id="recSearch" class="search" placeholder="Search cadet…">
       </div>
@@ -353,7 +353,7 @@ button.rec-check{cursor:pointer;transition:all .18s}
 <div class="toast" id="toast"></div>
 
 <script>
-console.log('[sgt] Build v3');
+console.log('[sgt] Build v4');
 const SESSION_KEY = 'rpd761_sgt_auth';   // sergeant-only; NOT shared with admin or cadet pages
 const NAME_KEY = 'rpd761_sgt_name';      // remembers who this device posts as
 const APPROVAL_FORM = 'https://submit-form.com/9efCBVzQT';   // Formspark "Edits Needing Approval" (notifies the approving advisor)

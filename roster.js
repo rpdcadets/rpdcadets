@@ -1,4 +1,4 @@
-/* roster.js  |  VERSION 21  |  updated 2026-07-01  |  roll-up ignores no-meeting markers (intentional skipped weeks) */
+/* roster.js  |  VERSION 22  |  updated 2026-07-08  |  sergeant read tier: 'sgt' role wrap plus recordsWrapSgt, managed via access.setSgt/clearSgt/hasSgt, used by the /sgt read-only page */
 /* ═══════════════════════════════════════════════════════════════════════
    RPD CADETS — SHARED ROSTER ENGINE
    One encrypted roster in Firebase, read by members, trackers, and
@@ -154,7 +154,7 @@
      role: 'cadet' (members/trackers) or 'qm' (quartermaster)
      Returns needsSetup:true if no roster exists yet in Firebase.
      ────────────────────────────────────────────────────────────── */
-  function wrapRoleName(role){ return (role === 'qm' || role === 'advisor' || role === 'ltd') ? role : 'cadet'; }
+  function wrapRoleName(role){ return (role === 'qm' || role === 'advisor' || role === 'ltd' || role === 'sgt') ? role : 'cadet'; }
   async function connect(opts) {
     ensureFirebase();
     role = opts.role;
@@ -344,7 +344,8 @@
       get: ridealongsGet, save: ridealongsSave
     },
     access: {
-      setLimited: accessSetLimited, clearLimited: accessClearLimited, hasLimited: accessHasLimited
+      setLimited: accessSetLimited, clearLimited: accessClearLimited, hasLimited: accessHasLimited,
+      setSgt: accessSetSgt, clearSgt: accessClearSgt, hasSgt: accessHasSgt
     },
     officers: {
       get: officersGet, save: officersSave
@@ -398,6 +399,10 @@
       const ltdWrap = await once('recordsWrapLtd');   // limited advisor passcode
       if (ltdWrap) keyB64 = await pwDecrypt(ltdWrap, passphrase);
     }
+    if (!keyB64) {
+      const sgtWrap = await once('recordsWrapSgt');   // sergeant read passcode
+      if (sgtWrap) keyB64 = await pwDecrypt(sgtWrap, passphrase);
+    }
     if (keyB64) { recordsKey = b64ToArr(keyB64); return { ok: true }; }
     if (!wrap) {
       const dataExists = await once('records');
@@ -414,6 +419,15 @@
     await db.ref(ROOT + '/recordsWrapLtd').set(wrap);
   }
   async function recordsRevokeLtd() { await db.ref(ROOT + '/recordsWrapLtd').remove(); }
+  // Sergeant read tier: wraps the SAME records key under the sergeant passcode
+  // (node recordsWrapSgt). Pair with linkRole('sgt', pass) so the /sgt page can
+  // also read the roster, attendance, and events with the one passcode.
+  async function recordsGrantSgt(pass) {
+    if (!recordsKey) throw new Error('records locked');
+    const wrap = await pwEncrypt(arrToB64(recordsKey), pass);
+    await db.ref(ROOT + '/recordsWrapSgt').set(wrap);
+  }
+  async function recordsRevokeSgt() { await db.ref(ROOT + '/recordsWrapSgt').remove(); }
   async function recordsSetup(passphrase) {
     ensureFirebase();
     recordsKey = crypto.getRandomValues(new Uint8Array(32));
@@ -641,4 +655,19 @@
     await recordsRevokeLtd();
   }
   async function accessHasLimited() { return !!(await once('wrap/ltd')); }
+  // ── Sergeant read access: one passcode that opens ONLY the /sgt page
+  //    (read-only Cadet Records, Ride-Along Log, Current Attendance). It gets
+  //    the same roster + records keys so those views can decrypt; the /sgt page
+  //    never writes. UI-scoped, same model as the limited advisor tier.
+  async function accessSetSgt(pass) {
+    if (!rosterKey) throw new Error('not unlocked');
+    if (!recordsKey) throw new Error('records locked');
+    await linkRole('sgt', pass);
+    await recordsGrantSgt(pass);
+  }
+  async function accessClearSgt() {
+    await db.ref(ROOT + '/wrap/sgt').remove();
+    await recordsRevokeSgt();
+  }
+  async function accessHasSgt() { return !!(await once('wrap/sgt')); }
 })(window);

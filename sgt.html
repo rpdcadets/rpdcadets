@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<!-- sgt.html  |  Build v1  |  updated 2026-07-08  |  pairs with roster.js v22  |  Sergeant read-only console: Cadet Records, Ride-Along Log, and Current Attendance. Signs in with the sergeant passcode set in /admin Advisor Access. Nothing on this page writes to the database. -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sergeants — Richardson Police Public Safety Cadets</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@300;400;500;600;700&family=Barlow+Condensed:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
+<script src="roster.js?v=22"></script>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{--navy:#1a2744;--navy-deep:#0f1a30;--navy-light:#253758;--red:#c0392b;--red-glow:#e74c3c;--gold:#d4a952;--gold-light:#f0d68a;--white:#fff;--text-muted:#8899b0;--green:#27ae60;--amber:#d97706;--red-abs:#dc2626;--card-bg:rgba(255,255,255,0.025);--card-border:rgba(255,255,255,0.06);--input-bg:rgba(255,255,255,0.04);--input-border:rgba(255,255,255,0.1);--input-focus:rgba(192,57,43,0.4)}
+body{font-family:'Barlow',sans-serif;background:var(--navy-deep);color:var(--white);min-height:100vh;-webkit-font-smoothing:antialiased}
+.container{max-width:880px;margin:0 auto;padding:0 24px}
+
+/* LOCK */
+.lock-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:40px 24px}
+.lock-card{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:20px;padding:56px 44px;max-width:430px;width:100%;text-align:center;box-shadow:0 30px 80px rgba(0,0,0,0.3);position:relative}
+.lock-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--red),var(--gold),var(--red));border-radius:20px 20px 0 0}
+.lock-icon{width:68px;height:68px;margin:0 auto 24px;background:rgba(192,57,43,0.1);border:1px solid rgba(192,57,43,0.2);border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--red)}
+.lock-title{font-family:'Bebas Neue',sans-serif;font-size:30px;letter-spacing:2px;margin-bottom:8px}
+.lock-subtitle{font-weight:300;font-size:14px;color:var(--text-muted);margin-bottom:30px;line-height:1.6}
+.lock-input{width:100%;padding:15px 18px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:var(--white);font-family:'Barlow',sans-serif;font-size:16px;letter-spacing:3px;text-align:center;outline:none;margin-bottom:18px}
+.lock-input:focus{border-color:rgba(192,57,43,0.5);background:rgba(255,255,255,0.06)}
+.lock-btn{width:100%;padding:15px;background:var(--red);color:var(--white);border:none;border-radius:10px;font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:15px;letter-spacing:2.5px;text-transform:uppercase;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 4px 20px rgba(192,57,43,0.3)}
+.lock-btn:hover{background:var(--red-glow)}
+.lock-btn:disabled{opacity:0.5;cursor:wait}
+.lock-error{margin-top:14px;font-size:13px;color:var(--red-glow);opacity:0;min-height:18px;transition:opacity .3s;line-height:1.5}
+.lock-error.show{opacity:1}
+.lock-home{margin-top:24px}
+.lock-home a{font-family:'Barlow Condensed',sans-serif;font-size:13px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted);text-decoration:none}
+.lock-home a:hover{color:var(--white)}
+
+/* APP */
+.app{display:none}.app.on{display:block}
+.page-header{padding:44px 0 20px;text-align:center}
+.section-label{font-family:'Barlow Condensed',sans-serif;font-weight:500;font-size:12px;letter-spacing:3px;text-transform:uppercase;color:var(--red);margin-bottom:12px;display:flex;align-items:center;justify-content:center;gap:12px}
+.section-label::before,.section-label::after{content:'';width:24px;height:1px;background:var(--red)}
+.section-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(32px,5vw,46px);letter-spacing:2px;line-height:1;margin-bottom:10px}
+.page-desc{font-weight:300;font-size:15px;color:rgba(255,255,255,0.5);max-width:520px;margin:0 auto;line-height:1.6}
+.ro-badge{display:inline-flex;align-items:center;gap:7px;margin-top:14px;font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--gold-light);background:rgba(212,169,82,0.08);border:1px solid rgba(212,169,82,0.3);border-radius:20px;padding:5px 14px}
+
+/* TABS */
+.sgt-tabs{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:8px 0 26px}
+.sgt-tab{background:rgba(255,255,255,0.03);border:1px solid var(--card-border);color:var(--text-muted);font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;padding:11px 20px;border-radius:10px;cursor:pointer;display:inline-flex;align-items:center;gap:8px}
+.sgt-tab:hover{color:var(--white)}
+.sgt-tab.on{color:var(--white);border-color:rgba(192,57,43,0.5);background:rgba(192,57,43,0.12)}
+.panel{display:none;padding-bottom:70px}.panel.on{display:block}
+
+/* SHARED BITS */
+.bar{display:flex;align-items:center;gap:12px;margin-bottom:18px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:11px 16px;border-radius:9px;border:1px solid var(--card-border);background:rgba(255,255,255,0.03);color:var(--text-muted);font-family:'Barlow Condensed',sans-serif;font-size:13px;letter-spacing:1.2px;text-transform:uppercase;cursor:pointer}
+.btn:hover{color:var(--white);border-color:rgba(255,255,255,0.18)}
+.search{flex:1;min-width:160px;background:var(--input-bg);border:1px solid var(--input-border);border-radius:9px;padding:10px 14px;color:var(--white);font-family:'Barlow',sans-serif;font-size:14px;outline:none}
+.search:focus{border-color:var(--input-focus)}
+.empty{color:var(--text-muted);padding:34px 20px;text-align:center;line-height:1.6}
+
+/* CADET RECORDS (read-only) */
+.rec-warning{background:rgba(212,169,82,0.06);border:1px solid rgba(212,169,82,0.2);border-radius:12px;padding:13px 16px;font-size:12.5px;line-height:1.6;color:var(--text-muted);margin-bottom:18px}
+.rec-card{background:var(--card-bg);border:1px solid var(--card-border);border-radius:12px;margin-bottom:8px;overflow:hidden}
+.rec-card.open{border-color:rgba(212,169,82,0.3)}
+.rec-head{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;cursor:pointer}
+.rec-head:hover{background:rgba(255,255,255,0.02)}
+.rec-rank{font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--gold);margin-right:8px}
+.rec-name{font-size:15px;font-weight:600}
+.rec-meta{display:flex;align-items:center;gap:8px;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);font-family:'Barlow Condensed',sans-serif}
+.rec-chev{transition:transform .2s}
+.rec-card.open .rec-chev{transform:rotate(180deg)}
+.rec-body{padding:6px 16px 18px;border-top:1px solid var(--card-border)}
+.rec-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:14px}
+.rec-grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:14px}
+.rec-field{display:flex;flex-direction:column;gap:5px;min-width:0}
+.rec-field span{font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--text-muted)}
+.rov{background:rgba(255,255,255,0.03);border:1px solid var(--input-border);border-radius:8px;padding:9px 11px;font-size:13.5px;min-height:37px;overflow-wrap:anywhere}
+.rov.dim{color:var(--text-muted)}
+.rov.hl{color:var(--gold-light);font-weight:600}
+.rec-compute{margin:14px 0 4px;font-size:12.5px;color:var(--text-muted)}
+.rec-compute b{color:var(--gold-light);font-weight:600}
+.rec-checks{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 2px}
+.rec-check{display:inline-flex;align-items:center;gap:7px;background:var(--input-bg);border:1px solid var(--input-border);border-radius:20px;padding:7px 14px 7px 9px;color:var(--text-muted);font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:0.8px;text-transform:uppercase}
+.rec-check .box{width:16px;height:16px;border-radius:5px;border:1px solid var(--input-border);display:flex;align-items:center;justify-content:center;font-size:11px}
+.rec-check.on{background:rgba(39,174,96,0.12);border-color:var(--green);color:#fff}
+.rec-check.on .box{background:var(--green);border-color:var(--green);color:#fff}
+@media(max-width:640px){.rec-grid3{grid-template-columns:1fr 1fr}}
+
+/* RIDE-ALONG LOG (read-only) */
+.ra-row{display:grid;grid-template-columns:1fr auto;gap:14px;align-items:center;background:var(--card-bg);border:1px solid var(--card-border);border-radius:11px;padding:12px 16px;margin-bottom:8px}
+.ra-cadet{font-size:15px;font-weight:600}
+.ra-officer{font-size:12.5px;color:var(--text-muted);margin-top:1px}
+.ra-notes{font-size:12px;color:var(--text-muted);margin-top:5px;opacity:.85}
+.ra-when{text-align:right;white-space:nowrap}
+.ra-date{font-size:13px;font-weight:600}
+.ra-time{font-size:12px;color:var(--text-muted);margin-top:2px}
+.ra-dur{color:var(--gold-light);font-weight:600;margin-left:4px}
+.ra-row.over{border-color:rgba(220,38,38,0.4)}
+.ra-flag{display:inline-block;font-family:'Barlow Condensed',sans-serif;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:#f87171;border:1px solid rgba(220,38,38,0.45);border-radius:4px;padding:1px 6px;margin-left:8px;vertical-align:middle}
+@media(max-width:560px){.ra-row{grid-template-columns:1fr}.ra-when{text-align:left}}
+
+/* CURRENT ATTENDANCE (read-only roll-up, same UI as Trackers) */
+.ca-range{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+.ca-range-lbl{font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)}
+.ca-range input[type=date]{background:var(--input-bg);border:1px solid var(--input-border);border-radius:9px;padding:8px 11px;color:var(--white);font-family:'Barlow',sans-serif;font-size:13px;outline:none;color-scheme:dark}
+.ca-range input[type=date]:focus{border-color:var(--input-focus)}
+.ca-to{color:var(--text-muted);font-size:12px}
+.ca-btn{background:rgba(255,255,255,0.03);border:1px solid var(--card-border);color:var(--text-muted);font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:1px;text-transform:uppercase;padding:8px 12px;border-radius:9px;cursor:pointer}
+.ca-btn:hover{color:var(--white)}
+.ca-btn.on{color:var(--white);border-color:rgba(212,169,82,0.5);background:rgba(212,169,82,0.08)}
+.ca-search{width:100%;background:var(--input-bg);border:1px solid var(--input-border);border-radius:9px;padding:10px 14px;color:var(--white);font-family:'Barlow',sans-serif;font-size:14px;outline:none;margin-bottom:16px}
+.ca-search:focus{border-color:var(--input-focus)}
+.ca-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
+.ca-stat{background:var(--card-bg);border:1px solid var(--card-border);border-radius:12px;padding:16px 16px 14px}
+.ca-stat .num{font-family:'Bebas Neue',sans-serif;font-size:30px;line-height:1;letter-spacing:1px}
+.ca-stat .lbl{font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:1.2px;text-transform:uppercase;color:var(--text-muted);margin-top:6px}
+.ca-stat.flag .num{color:#f87171}
+.ca-empty{color:var(--text-muted);padding:34px 20px;text-align:center;line-height:1.6}
+.ca-item{background:var(--card-bg);border:1px solid var(--card-border);border-radius:11px;margin-bottom:8px;overflow:hidden}
+.ca-item.watch{border-color:rgba(220,38,38,0.4)}
+.ca-row{display:grid;grid-template-columns:1fr auto;gap:14px;align-items:center;padding:13px 16px;cursor:pointer}
+.ca-item.open .ca-row{background:rgba(255,255,255,0.02)}
+.ca-id{min-width:0}
+.ca-name{font-size:15px;font-weight:600}
+.ca-rank{font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--gold);margin-right:8px}
+.ca-sub{font-size:12px;color:var(--text-muted);margin-top:3px}
+.ca-streak{display:inline-block;font-family:'Barlow Condensed',sans-serif;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:#f87171;border:1px solid rgba(220,38,38,0.45);border-radius:4px;padding:1px 6px;margin-left:8px;vertical-align:middle}
+.ca-right{text-align:right;white-space:nowrap}
+.ca-rate{font-family:'Bebas Neue',sans-serif;font-size:24px;line-height:1;letter-spacing:1px}
+.ca-rate.good{color:var(--green)}.ca-rate.mid{color:var(--gold-light)}.ca-rate.low{color:#f87171}.ca-rate.none{color:var(--text-muted)}
+.ca-counts{font-size:11.5px;color:var(--text-muted);margin-top:3px;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.5px}
+.ca-counts b{font-weight:600}.ca-counts .cp{color:var(--green)}.ca-counts .ce{color:var(--gold-light)}.ca-counts .cu{color:#f87171}
+.ca-hours{font-family:'Barlow Condensed',sans-serif;font-size:13px;letter-spacing:0.5px;color:var(--gold-light);margin-top:3px}
+.ca-bar{height:5px;border-radius:3px;background:rgba(255,255,255,0.08);margin-top:8px;overflow:hidden}
+.ca-bar > i{display:block;height:100%;border-radius:3px}
+.ca-detail{display:none;padding:2px 16px 16px;border-top:1px solid var(--card-border)}
+.ca-item.open .ca-detail{display:block}
+.ca-d-hours{display:flex;gap:12px;flex-wrap:wrap;margin:14px 0}
+.ca-d-hours > div{flex:1;min-width:100px;background:rgba(255,255,255,0.02);border:1px solid var(--card-border);border-radius:9px;padding:10px 12px;display:flex;flex-direction:column;gap:2px}
+.ca-d-hours span{font-family:'Barlow Condensed',sans-serif;font-size:10px;letter-spacing:1.2px;text-transform:uppercase;color:var(--text-muted)}
+.ca-d-hours b{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:1px}
+.ca-d-hours small{font-size:11px;color:var(--text-muted)}
+.ca-d-hours .tot b{color:var(--gold)}
+.ca-d-cols{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.ca-d-col{min-width:0}
+.ca-d-h{font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px}
+.ca-d-row{display:flex;align-items:center;gap:8px;padding:6px 0;border-top:1px solid rgba(255,255,255,0.04);font-size:13px}
+.ca-d-date{color:var(--text-muted);width:92px;flex-shrink:0}
+.ca-d-ev{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ca-d-hrs{color:var(--gold-light);white-space:nowrap}
+.ca-d-empty{color:var(--text-muted);font-size:12.5px;padding:8px 0}
+.ca-status{font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:1px;text-transform:uppercase;padding:2px 8px;border-radius:5px;margin-left:auto}
+.ca-status.present{color:var(--green);background:rgba(39,174,96,0.12)}
+.ca-status.excused{color:var(--gold-light);background:rgba(217,119,6,0.14)}
+.ca-status.unexcused{color:#f87171;background:rgba(220,38,38,0.12)}
+.ca-status.none{color:var(--text-muted);background:rgba(255,255,255,0.05)}
+.ca-log-wrap{margin-top:22px}
+.ca-log-toggle{display:flex;align-items:center;gap:9px;background:none;border:none;color:var(--text-muted);font-family:'Barlow Condensed',sans-serif;font-size:13px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;padding:6px 0}
+.ca-log-toggle:hover{color:var(--white)}
+.ca-log-toggle svg{transition:transform .2s}
+.ca-log-wrap.open .ca-log-toggle svg{transform:rotate(180deg)}
+.ca-log-list{display:none;margin-top:12px}
+.ca-log-wrap.open .ca-log-list{display:block}
+.ca-log-row{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;background:var(--card-bg);border:1px solid var(--card-border);border-radius:10px;padding:11px 15px;margin-bottom:7px}
+.ca-log-date{font-size:13.5px;font-weight:600}
+.ca-log-by{font-size:12px;color:var(--text-muted);margin-top:2px}
+.ca-log-nums{font-family:'Barlow Condensed',sans-serif;font-size:13px;letter-spacing:0.5px;text-align:right;white-space:nowrap}
+.ca-log-nums .cp{color:var(--green)}.ca-log-nums .ce{color:var(--gold-light)}.ca-log-nums .cu{color:#f87171}
+@media(max-width:680px){.ca-stats{grid-template-columns:1fr 1fr}.ca-d-cols{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<!-- LOCK -->
+<div class="lock-screen" id="lockScreen">
+  <div class="lock-card">
+    <div class="lock-icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+    <h2 class="lock-title">Sergeants</h2>
+    <p class="lock-subtitle">Enter the sergeant passcode to open the read-only console.</p>
+    <input type="password" class="lock-input" id="pc" placeholder="Sergeant passcode" autocomplete="off" autofocus>
+    <button class="lock-btn" id="goBtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg><span id="goLabel">Unlock</span></button>
+    <div class="lock-error" id="lockErr">Incorrect passcode.</div>
+    <div class="lock-home"><a href="index.html">← Return to Home</a></div>
+    <div style="margin-top:16px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v1</div>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="app" id="app">
+  <div class="page-header">
+    <div class="section-label">Public Safety Cadets</div>
+    <h1 class="section-title">Sergeant Console</h1>
+    <p class="page-desc">Cadet records, the ride-along log, and current attendance for squad sergeants.</p>
+    <div class="ro-badge"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>Read only</div>
+  </div>
+  <div class="container">
+    <div class="sgt-tabs">
+      <button class="sgt-tab on" id="tabRec" onclick="showPanel('rec')">Cadet Records</button>
+      <button class="sgt-tab" id="tabRa" onclick="showPanel('ra')">Ride-Along Log</button>
+      <button class="sgt-tab" id="tabCa" onclick="showPanel('ca')">Current Attendance</button>
+    </div>
+
+    <!-- CADET RECORDS -->
+    <div class="panel on" id="panelRec">
+      <div class="rec-warning">Read-only view of the operational details kept in the admin console: school, date of birth, certifications, dates, shirt size, radio number, and cadet and parent/guardian contact. Treat everything here as confidential; do not screenshot or share it outside unit leadership.</div>
+      <div class="bar">
+        <input type="text" id="recSearch" class="search" placeholder="Search cadet…">
+      </div>
+      <div id="recRows"><p class="empty">Loading…</p></div>
+    </div>
+
+    <!-- RIDE-ALONG LOG -->
+    <div class="panel" id="panelRa">
+      <div class="bar">
+        <input type="text" id="raSearch" class="search" placeholder="Search cadet or officer…">
+        <button class="btn" id="raCsv">Export CSV</button>
+      </div>
+      <div id="raList"><p class="empty">Loading…</p></div>
+    </div>
+
+    <!-- CURRENT ATTENDANCE -->
+    <div class="panel" id="panelCa">
+      <div class="ca-range" id="caRange">
+        <span class="ca-range-lbl">Range</span>
+        <button class="ca-btn on" data-range="all">All time</button>
+        <button class="ca-btn" data-range="month">This month</button>
+        <button class="ca-btn" data-range="school">School year</button>
+        <input type="date" id="caFrom"><span class="ca-to">to</span><input type="date" id="caTo">
+      </div>
+      <input type="text" id="caSearch" class="ca-search" placeholder="Search cadet…">
+      <div class="ca-stats" id="caStats"></div>
+      <div id="caRows"><p class="ca-empty">Loading…</p></div>
+      <div class="ca-log-wrap" id="caLogWrap"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+console.log('[sgt] Build v1');
+const SESSION_KEY = 'rpd761_sgt_auth';   // sergeant-only; NOT shared with admin or cadet pages
+
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+/* ── LOCK / CONNECT ── */
+let recData = {}, raData = [];
+async function unlock(){
+  const inp = document.getElementById('pc');
+  const err = document.getElementById('lockErr');
+  const btn = document.getElementById('goBtn');
+  const pass = (inp.value||'').trim();
+  if(!pass) return;
+  btn.disabled = true; document.getElementById('goLabel').textContent = 'Unlocking…'; err.classList.remove('show');
+  try{
+    const res = await RPDRoster.connect({ passcode: pass, role: 'sgt' });
+    if(!res.ok){
+      err.textContent = res.badPasscode ? 'Incorrect passcode.' : 'Sergeant access has not been set up yet. Ask an advisor to create the sergeant passcode in the admin console.';
+      err.classList.add('show'); btn.disabled=false; document.getElementById('goLabel').textContent='Unlock'; inp.value=''; inp.focus(); return;
+    }
+    const rc = await RPDRoster.records.connect(pass);
+    sessionStorage.setItem(SESSION_KEY, pass);
+    enterApp(rc && rc.ok);
+  }catch(e){
+    err.textContent = 'Could not reach the database. Check your connection and try again.';
+    err.classList.add('show'); btn.disabled=false; document.getElementById('goLabel').textContent='Unlock';
+  }
+}
+async function enterApp(recordsOk){
+  document.getElementById('lockScreen').style.display='none';
+  document.getElementById('app').classList.add('on');
+  wireOnce();
+  if(recordsOk){
+    try{
+      recData = (await RPDRoster.records.get()) || {};
+      raData  = (await RPDRoster.ridealongs.get()) || [];
+    }catch(e){ /* leave empty; panels show their own messages */ }
+  } else {
+    document.getElementById('recRows').innerHTML = '<p class="empty">Records are unavailable for this passcode. Ask an advisor to re-save the sergeant passcode in the admin console.</p>';
+    document.getElementById('raList').innerHTML = '<p class="empty">The ride-along log is unavailable for this passcode. Ask an advisor to re-save the sergeant passcode in the admin console.</p>';
+  }
+  if(recordsOk){ renderRecords(); renderRaList(); }
+  loadCurrentAttendance();
+}
+document.getElementById('goBtn').addEventListener('click', unlock);
+document.getElementById('pc').addEventListener('keydown', e=>{ if(e.key==='Enter') unlock(); document.getElementById('lockErr').classList.remove('show'); });
+(async function trySession(){
+  const saved = sessionStorage.getItem(SESSION_KEY);
+  if(!saved) return;
+  try{
+    const res = await RPDRoster.connect({ passcode: saved, role: 'sgt' });
+    if(res.ok){ const rc = await RPDRoster.records.connect(saved); enterApp(rc && rc.ok); }
+  }catch(e){}
+})();
+
+/* ── TABS ── */
+function showPanel(t){
+  ['Rec','Ra','Ca'].forEach(x=>{ document.getElementById('tab'+x).classList.remove('on'); document.getElementById('panel'+x).classList.remove('on'); });
+  const cap = t==='rec'?'Rec':t==='ra'?'Ra':'Ca';
+  document.getElementById('tab'+cap).classList.add('on');
+  document.getElementById('panel'+cap).classList.add('on');
+  if(t==='ca') loadCurrentAttendance();
+}
+let wired=false;
+function wireOnce(){
+  if(wired) return; wired=true;
+  document.getElementById('recSearch').addEventListener('input', renderRecords);
+  document.getElementById('raSearch').addEventListener('input', renderRaList);
+  document.getElementById('raCsv').addEventListener('click', raExportCSV);
+  document.querySelectorAll('#caRange .ca-btn').forEach(b=> b.addEventListener('click', ()=> caApplyPreset(b.dataset.range)));
+  ['caFrom','caTo'].forEach(id=>{ const el=document.getElementById(id); if(el) el.addEventListener('change', ()=>{ caSetPreset(null); renderCurrentAttendance(); }); });
+  const s=document.getElementById('caSearch'); if(s) s.addEventListener('input', renderCurrentAttendance);
+  RPDRoster.subscribe(()=>{ renderRecords(); renderCurrentAttendance(); });
+}
+
+/* ── CADET RECORDS (read-only) ── */
+const REC_CHECKS = [['offProbation','Off Probation'],['rideAlong','Ride-Along Certified'],['competition','Competition Team'],['waivers','Waivers Completed'],['uas','UAS Certified']];
+const SQUAD_LABEL = { leadership:'Leadership', 1:'Squad 1', 2:'Squad 2', 3:'Squad 3', 4:'Squad 4 (Admin)' };
+function addMonths(dateStr, n){
+  if(!dateStr) return '';
+  const d = new Date(dateStr + 'T00:00:00'); if(isNaN(d)) return '';
+  d.setMonth(d.getMonth()+n);
+  return d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+}
+function timeIn(dateStr){
+  if(!dateStr) return '';
+  const a = new Date(dateStr + 'T00:00:00'); if(isNaN(a)) return '';
+  const b = new Date();
+  let y = b.getFullYear()-a.getFullYear(), m = b.getMonth()-a.getMonth(), d = b.getDate()-a.getDate();
+  if(d < 0){ m--; const pm = new Date(b.getFullYear(), b.getMonth(), 0).getDate(); d += pm; }
+  if(m < 0){ y--; m += 12; }
+  if(y < 0) return '';
+  return `${y} year${y!==1?'s':''}, ${m} month${m!==1?'s':''}, ${d} day${d!==1?'s':''}`;
+}
+function ageFrom(dateStr){
+  if(!dateStr) return null;
+  const b = new Date(dateStr + 'T00:00:00'); if(isNaN(b)) return null;
+  const now = new Date();
+  let age = now.getFullYear()-b.getFullYear();
+  const m = now.getMonth()-b.getMonth();
+  if(m < 0 || (m === 0 && now.getDate() < b.getDate())) age--;
+  if(age < 0 || age > 120) return null;
+  return age;
+}
+function fmtDateLong(d){ if(!d) return ''; const dt=new Date(d+'T00:00:00'); return isNaN(dt)?d:dt.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); }
+function recFilledCount(rec){
+  let n = 0;
+  ['radio','shirt','school','dob','email','phone','parentName','parentPhone','parentEmail','notes'].forEach(k => { if((rec[k]||'').toString().trim()) n++; });
+  REC_CHECKS.forEach(([k]) => { if(rec[k]) n++; });
+  return n;
+}
+function rov(v, cls){ const has = (v!=null && String(v).trim()!==''); return `<div class="rov ${has?(cls||''):'dim'}">${has?esc(v):'—'}</div>`; }
+function renderRecords(){
+  const host = document.getElementById('recRows'); if(!host) return;
+  if(!(window.RPDRoster && RPDRoster.get().length)) return;
+  if(!RPDRoster.records.isUnlocked()) return;
+  const q = (document.getElementById('recSearch').value||'').toLowerCase().trim();
+  const cadets = RPDRoster.activeSorted().filter(p => !q || p.name.toLowerCase().includes(q));
+  host.innerHTML='';
+  if(!cadets.length){ host.innerHTML='<p class="empty">No cadet matches.</p>'; return; }
+  cadets.forEach(p => host.appendChild(recCard(p)));
+}
+function recCard(p){
+  const wrap = document.createElement('div'); wrap.className='rec-card';
+  const rec = recData[p.name] || {};
+  const filled = recFilledCount(rec);
+  const checks = REC_CHECKS.map(([k,l]) => `<span class="rec-check ${rec[k]?'on':''}"><span class="box">${rec[k]?'✓':''}</span>${l}</span>`).join('');
+  const yr = ageFrom(rec.dob);
+  const compute = p.joinDate
+    ? `Probation ends <b>${addMonths(p.joinDate,6)}</b> &nbsp;·&nbsp; Time in: <b>${timeIn(p.joinDate)}</b>`
+    : 'No join date on file.';
+  wrap.innerHTML =
+    `<div class="rec-head">
+       <div><span class="rec-rank">${esc(p.rank)}</span> <span class="rec-name">${esc(p.name)}</span></div>
+       <div class="rec-meta"><span>${filled?filled+' filled':'empty'}</span> <svg class="rec-chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div>
+     </div>
+     <div class="rec-body" style="display:none">
+       <div class="rec-grid3">
+         <div class="rec-field"><span>Squad</span>${rov(SQUAD_LABEL[p.squad]||p.squad)}</div>
+         <div class="rec-field"><span>Rank</span>${rov(p.rank)}</div>
+         <div class="rec-field"><span>Date of join</span>${rov(fmtDateLong(p.joinDate))}</div>
+       </div>
+       <div class="rec-compute">${compute}</div>
+       <div class="rec-grid3">
+         <div class="rec-field"><span>Radio #</span>${rov(rec.radio)}</div>
+         <div class="rec-field"><span>Shirt size</span>${rov(rec.shirt)}</div>
+         <div class="rec-field"><span>School</span>${rov(rec.school)}</div>
+       </div>
+       <div class="rec-grid">
+         <div class="rec-field"><span>Date of birth</span>${rov(fmtDateLong(rec.dob))}</div>
+         <div class="rec-field"><span>Age</span>${rov(yr===null?'':yr+' yrs','hl')}</div>
+       </div>
+       <div class="rec-checks">${checks}</div>
+       <div class="rec-grid">
+         <div class="rec-field"><span>Email</span>${rov(rec.email)}</div>
+         <div class="rec-field"><span>Phone</span>${rov(rec.phone)}</div>
+       </div>
+       <div class="rec-grid3">
+         <div class="rec-field"><span>Parent / guardian name</span>${rov(rec.parentName)}</div>
+         <div class="rec-field"><span>Parent phone</span>${rov(rec.parentPhone)}</div>
+         <div class="rec-field"><span>Parent email</span>${rov(rec.parentEmail)}</div>
+       </div>
+       <div class="rec-field" style="margin-top:14px"><span>Notes</span>${rov(rec.notes)}</div>
+     </div>`;
+  const body = wrap.querySelector('.rec-body');
+  wrap.querySelector('.rec-head').addEventListener('click', ()=>{ const open=body.style.display!=='none'; body.style.display=open?'none':'block'; wrap.classList.toggle('open', !open); });
+  return wrap;
+}
+
+/* ── RIDE-ALONG LOG (read-only) ── */
+function raDuration(start,end){
+  if(!start||!end) return '';
+  const [sh,sm]=start.split(':').map(Number), [eh,em]=end.split(':').map(Number);
+  let mins=(eh*60+em)-(sh*60+sm); if(mins<0) mins+=24*60;
+  const h=Math.floor(mins/60), m=mins%60;
+  return (h?h+'h ':'')+(m+'m');
+}
+function raDaysApart(d1,d2){ return Math.abs((new Date(d1+'T00:00:00') - new Date(d2+'T00:00:00')) / 86400000); }
+function raWindowCount(cadet,officer,date,excludeId){
+  if(!cadet||!officer||!date) return 0;
+  return raData.filter(r => r.id!==excludeId && r.cadet===cadet && r.officer===officer && raDaysApart(r.date,date) <= 30).length;
+}
+function raFmtDate(d){ if(!d) return ''; const dt=new Date(d+'T00:00:00'); return isNaN(dt)?d:dt.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); }
+function raFmtTime(t){ if(!t) return ''; const [h,m]=t.split(':').map(Number); const ap=h>=12?'PM':'AM'; const hh=((h+11)%12)+1; return `${hh}:${String(m).padStart(2,'0')} ${ap}`; }
+function renderRaList(){
+  const host=document.getElementById('raList'); if(!host) return;
+  if(!RPDRoster.records.isUnlocked()) return;
+  host.innerHTML='';
+  const q=(document.getElementById('raSearch').value||'').toLowerCase().trim();
+  let rows=raData.slice().sort((a,b)=>(b.date||'').localeCompare(a.date||'')||(b.start||'').localeCompare(a.start||''));
+  if(q) rows=rows.filter(r=>(r.cadet||'').toLowerCase().includes(q)||(r.officer||'').toLowerCase().includes(q));
+  if(!rows.length){ host.innerHTML='<p class="empty">'+(raData.length?'No match.':'No ride-alongs logged yet.')+'</p>'; return; }
+  rows.forEach(r=>{
+    const over = raWindowCount(r.cadet,r.officer,r.date,r.id) >= 2;
+    const el=document.createElement('div'); el.className='ra-row'+(over?' over':'');
+    el.innerHTML =
+      `<div class="ra-main"><div class="ra-cadet">${esc(r.cadet)}${over?' <span class="ra-flag">over limit</span>':''}</div><div class="ra-officer">with ${esc(r.officer)}</div>${r.notes?`<div class="ra-notes">${esc(r.notes)}</div>`:''}</div>
+       <div class="ra-when"><div class="ra-date">${raFmtDate(r.date)}</div><div class="ra-time">${raFmtTime(r.start)} – ${raFmtTime(r.end)} <span class="ra-dur">${raDuration(r.start,r.end)}</span></div></div>`;
+    host.appendChild(el);
+  });
+}
+function raExportCSV(){
+  if(!raData.length) return;
+  const head=['Cadet','Officer','Date','Start','End','Duration','Notes'];
+  const rows=raData.slice().sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+  const csv=[head].concat(rows.map(r=>[r.cadet,r.officer,r.date,raFmtTime(r.start),raFmtTime(r.end),raDuration(r.start,r.end),r.notes||'']))
+    .map(r=>r.map(c=>`"${String(c==null?'':c).replace(/"/g,'""')}"`).join(',')).join('\r\n');
+  const blob=new Blob([csv],{type:'text/csv'}); const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download='ride-along-log-'+new Date().toISOString().slice(0,10)+'.csv';
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url),1500);
+}
+
+/* ── CURRENT ATTENDANCE (read-only roll-up; shares roster.js rollup) ── */
+let caData=null, caEvents=[];
+function caFromVal(){ const e=document.getElementById('caFrom'); return e?e.value:''; }
+function caToVal(){ const e=document.getElementById('caTo'); return e?e.value:''; }
+function caFmtDate(d){ if(!d) return ''; const dt=new Date(d+'T12:00:00'); return isNaN(dt)?d:dt.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); }
+function caRateClass(r){ if(r===null) return 'none'; if(r>=85) return 'good'; if(r>=70) return 'mid'; return 'low'; }
+function caBarColor(c){ return c==='good'?'var(--green)':c==='mid'?'var(--gold-light)':c==='low'?'#f87171':'rgba(255,255,255,0.15)'; }
+function caSetPreset(name){ document.querySelectorAll('#caRange .ca-btn').forEach(b=>b.classList.toggle('on', b.dataset.range===name)); }
+function caApplyPreset(which){
+  const from=document.getElementById('caFrom'), to=document.getElementById('caTo');
+  const pad=n=>String(n).padStart(2,'0'); const iso=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+  const today=new Date();
+  if(which==='all'){ from.value=''; to.value=''; }
+  else if(which==='month'){ from.value=iso(new Date(today.getFullYear(),today.getMonth(),1)); to.value=iso(today); }
+  else if(which==='school'){ const sy = today.getMonth()>=7 ? today.getFullYear() : today.getFullYear()-1; from.value=sy+'-08-01'; to.value=(sy+1)+'-07-31'; }
+  caSetPreset(which); renderCurrentAttendance();
+}
+async function loadCurrentAttendance(){
+  const rows=document.getElementById('caRows');
+  if(caData===null && rows) rows.innerHTML='<p class="ca-empty">Loading\u2026</p>';
+  try{
+    if(!(window.RPDRoster && RPDRoster.attendance && RPDRoster.attendance.rollup)){ if(rows) rows.innerHTML='<p class="ca-empty">Attendance is unavailable. Try reloading the page.</p>'; return; }
+    caData = (await RPDRoster.attendance.get()) || {};
+    try{ caEvents = (await RPDRoster.events.get()) || []; }catch(e){ caEvents=[]; }
+    renderCurrentAttendance();
+  }catch(e){ if(rows) rows.innerHTML='<p class="ca-empty">Could not load attendance. Check your connection and try again.</p>'; }
+}
+function renderCurrentAttendance(){
+  const host=document.getElementById('caRows');
+  const statHost=document.getElementById('caStats');
+  const logWrap=document.getElementById('caLogWrap');
+  if(caData===null || !host) return;
+  const allSessions=Object.values(caData);
+  const from=caFromVal(), to=caToVal();
+  const inR=d=>{ d=d||''; if(from&&d<from) return false; if(to&&d>to) return false; return true; };
+  const sessions=allSessions.filter(s=>inR(s.date) && !s.noMeeting).sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+  if(!allSessions.length && !(caEvents||[]).length){
+    statHost.innerHTML=''; logWrap.innerHTML='';
+    host.innerHTML='<p class="ca-empty">No attendance or event hours have been logged yet.</p>';
+    return;
+  }
+  const agg=RPDRoster.attendance.rollup({ attData: caData, events: caEvents, from, to });
+  let tp=0,tr=0; agg.forEach(a=>{ tp+=a.present; tr+=a.recorded; });
+  const unitRate=tr?Math.round((tp/tr)*100):0;
+  const totalHrs=Math.round(agg.reduce((a,x)=>a+x.totalHours,0)*10)/10;
+  const flagged=agg.filter(a=>a.watch).length;
+  statHost.innerHTML =
+    '<div class="ca-stat"><div class="num">'+sessions.length+'</div><div class="lbl">Meetings in range</div></div>'+
+    '<div class="ca-stat"><div class="num" style="color:'+caBarColor(caRateClass(unitRate))+'">'+unitRate+'%</div><div class="lbl">Overall attendance</div></div>'+
+    '<div class="ca-stat"><div class="num">'+totalHrs+'</div><div class="lbl">Total hours</div></div>'+
+    '<div class="ca-stat '+(flagged?'flag':'')+'"><div class="num">'+flagged+'</div><div class="lbl">Needs attention</div></div>';
+  const q=((document.getElementById('caSearch')||{}).value||'').toLowerCase().trim();
+  let rows=agg.slice().sort((a,b)=> b.unexcused-a.unexcused || (b.excused+b.unexcused)-(a.excused+a.unexcused) || ((a.rate===null?101:a.rate)-(b.rate===null?101:b.rate)) || a.name.localeCompare(b.name));
+  if(q) rows=rows.filter(r=>r.name.toLowerCase().includes(q));
+  host.innerHTML='';
+  if(!rows.length){ host.innerHTML='<p class="ca-empty">No cadet matches.</p>'; }
+  rows.forEach(r=>{
+    const rc=caRateClass(r.rate);
+    const item=document.createElement('div'); item.className='ca-item'+(r.watch?' watch':'');
+    const sub=r.lastPresent?('Last present '+caFmtDate(r.lastPresent)):(r.recorded?'No meetings attended in range':(r.events.length?'Events only, no meetings':'Not yet recorded'));
+    const streak=r.streak>=2?('<span class="ca-streak">'+r.streak+' absences in a row</span>'):'';
+    const barPct=r.recorded?Math.round((r.present/r.recorded)*100):0;
+    item.innerHTML =
+      '<div class="ca-row">'+
+        '<div class="ca-id"><div class="ca-name"><span class="ca-rank">'+esc(r.p.rank)+'</span>'+esc(r.name)+streak+'</div>'+
+        '<div class="ca-sub">'+sub+'</div>'+
+        '<div class="ca-bar"><i style="width:'+barPct+'%;background:'+caBarColor(rc)+'"></i></div></div>'+
+        '<div class="ca-right"><div class="ca-rate '+rc+'">'+(r.rate===null?'\u2014':r.rate+'%')+'</div>'+
+        '<div class="ca-counts"><span class="cp"><b>'+r.present+'</b> P</span> \u00b7 <span class="ce"><b>'+r.excused+'</b> E</span> \u00b7 <span class="cu"><b>'+r.unexcused+'</b> U</span></div>'+
+        '<div class="ca-hours">'+r.totalHours+' hrs</div></div>'+
+      '</div>'+
+      '<div class="ca-detail">'+caDetailHtml(r)+'</div>';
+    item.querySelector('.ca-row').addEventListener('click', ()=> item.classList.toggle('open'));
+    host.appendChild(item);
+  });
+  const recent=sessions.slice().reverse();
+  if(recent.length){
+    logWrap.innerHTML='<button class="ca-log-toggle" id="caLogToggle">Session log ('+sessions.length+') <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></button>'+
+      '<div class="ca-log-list">'+recent.map(s=>'<div class="ca-log-row"><div><div class="ca-log-date">'+caFmtDate(s.date)+'</div><div class="ca-log-by">Submitted by '+esc(s.submittedBy||'\u2014')+'</div></div><div class="ca-log-nums"><span class="cp">'+((s.present||[]).length)+' P</span> \u00b7 <span class="ce">'+((s.excused||[]).length)+' E</span> \u00b7 <span class="cu">'+((s.unexcused||[]).length)+' U</span></div></div>').join('')+'</div>';
+    document.getElementById('caLogToggle').addEventListener('click', ()=>logWrap.classList.toggle('open'));
+  } else logWrap.innerHTML='';
+}
+function caDetailHtml(r){
+  const meetings=r.meetings.slice().reverse();
+  const mRows=meetings.length?meetings.map(m=>{
+    const cls=m.status==='present'?'present':m.status==='excused'?'excused':m.status==='unexcused'?'unexcused':'none';
+    const lbl=m.status==='present'?'Present':m.status==='excused'?'Excused':m.status==='unexcused'?'Unexcused':'Not recorded';
+    return '<div class="ca-d-row"><span class="ca-d-date">'+caFmtDate(m.date)+'</span><span class="ca-status '+cls+'">'+lbl+'</span></div>';
+  }).join(''):'<div class="ca-d-empty">No meetings in this range.</div>';
+  const eRows=r.events.length?r.events.slice().reverse().map(e=>'<div class="ca-d-row"><span class="ca-d-date">'+caFmtDate(e.date)+'</span><span class="ca-d-ev">'+esc(e.event||'Event')+'</span><span class="ca-d-hrs">'+(Number(e.hours)||0)+' hrs</span></div>').join(''):'<div class="ca-d-empty">No events in this range.</div>';
+  return '<div class="ca-d-hours">'+
+      '<div><span>Weekly</span><b>'+r.weeklyHours+'</b><small>'+r.present+' present \u00d7 3 hrs</small></div>'+
+      '<div><span>Events</span><b>'+r.eventHours+'</b><small>'+r.events.length+' logged</small></div>'+
+      '<div class="tot"><span>Total hours</span><b>'+r.totalHours+'</b></div>'+
+    '</div>'+
+    '<div class="ca-d-cols"><div class="ca-d-col"><div class="ca-d-h">Meetings</div>'+mRows+'</div><div class="ca-d-col"><div class="ca-d-h">Events</div>'+eRows+'</div></div>';
+}
+</script>
+</body>
+</html>

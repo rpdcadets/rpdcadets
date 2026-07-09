@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- admin.html  |  Build v27  |  updated 2026-07-01  |  pairs with roster.js v21  |  Display errors no longer mislabeled as database errors (logged to console); adding or moving a session onto a no-meeting week now replaces the marker; em dash removed from a toast -->
+<!-- admin.html  |  Build v28  |  updated 2026-07-08  |  pairs with roster.js v22  |  Advisor Access now also manages a Sergeant passcode for the read-only /sgt page; Unit # removed from the page title and hub label -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Admin — Richardson Police Public Safety Cadets Unit #1078</title>
+<title>Admin — Richardson Police Public Safety Cadets</title>
 <meta name="robots" content="noindex, nofollow">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@300;400;500;600;700&family=Barlow+Condensed:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -528,7 +528,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
     <button class="lock-btn" id="goBtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg><span id="goLabel">Unlock</span></button>
     <div class="lock-error" id="lockErr">Incorrect passcode.</div>
     <div class="lock-home"><a href="index.html">← Return to Home</a></div>
-    <div style="margin-top:16px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v27</div>
+    <div style="margin-top:16px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v28</div>
   </div>
 </div>
 
@@ -538,7 +538,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
   <!-- HUB VIEW -->
   <div class="view on" id="hubView">
     <div class="page-header">
-      <div class="section-label">Unit #1078</div>
+      <div class="section-label">Public Safety Cadets</div>
       <h1 class="section-title">Admin Console</h1>
       <p class="page-desc">Internal tools for unit leadership.</p>
     </div>
@@ -558,7 +558,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
       <button class="back-link" id="rosterBack"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Admin Console</button>
       <div class="bar">
         <div class="status-pill" id="pill"><span class="dot"></span><span id="pillText">Synced</span></div>
-        <span style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v27</span>
+        <span style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v28</span>
         <button class="btn ghost" id="syncMembersBtn" title="One-time: pull titles and alumni from the Members page into the shared roster">Sync members data</button>
         <button class="btn add" id="addBtn">+ Add Person</button>
       </div>
@@ -747,7 +747,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
     <div class="page-header">
       <div class="section-label">Advisor Access</div>
       <h1 class="section-title">Advisor Access</h1>
-      <p class="page-desc">Create a limited passcode for advisors who only need Cadet Records, Ride-Along, and Donations. Signing in with it shows just those three tools and hides everything else.</p>
+      <p class="page-desc">Two extra passcodes: a limited advisor passcode that opens only Cadet Records, Ride-Along, and Donations here in /admin, and a sergeant passcode that opens the read-only /sgt page.</p>
     </div>
     <div class="container">
       <button class="back-link" id="accBack"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Admin Console</button>
@@ -762,6 +762,20 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
       </div>
       <div class="acc-msg" id="accMsg"></div>
       <div class="acc-note">Give this only to advisors you trust with cadet records and donation details. It uses the same encryption as your advisor passcode; it just controls which tools appear. To change it, save a new one. To turn it off, remove access.</div>
+
+      <div style="height:1px;background:var(--card-border);margin:28px 0"></div>
+
+      <div class="acc-status" id="sgtStatus"></div>
+      <div class="acc-field">
+        <label for="sgtPass">Sergeant passcode (read-only /sgt page)</label>
+        <input type="text" id="sgtPass" placeholder="Choose a passcode for sergeants" autocomplete="off">
+      </div>
+      <div class="acc-actions">
+        <button class="acc-save" id="sgtSave" onclick="saveSgt()">Save passcode</button>
+        <button class="acc-remove" id="sgtRemove" onclick="removeSgt()">Remove access</button>
+      </div>
+      <div class="acc-msg" id="sgtMsg"></div>
+      <div class="acc-note">Sergeants sign in at <b>rpdcadets.com/sgt</b> with this passcode. The page shows Cadet Records, the Ride-Along Log, and Current Attendance, all read-only; nothing on it can edit or delete. It cannot open /admin. To change it, save a new one. To turn it off, remove access.</div>
     </div>
   </div>
 
@@ -769,9 +783,9 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
 
 <div class="toast" id="toast"></div>
 
-<script src="roster.js?v=21"></script>
+<script src="roster.js?v=22"></script>
 <script>
-console.log('[admin] Build v27');
+console.log('[admin] Build v28');
 const SESSION_KEY = 'rpd761_admin_auth';   // advisor-only; NOT shared with cadet pages
 const TIER_KEY = 'rpd761_admin_tier';      // 'full' (golden) or 'ltd' (limited advisor)
 const LIMITED_TOOLS = ['records','ridealongs','donations'];
@@ -842,7 +856,7 @@ const TOOLS = [
   {
     id: 'access',
     name: 'Advisor Access',
-    desc: 'Create a limited passcode that opens only Cadet Records, Ride-Along, and Donations.',
+    desc: 'Limited advisor passcode for a trimmed /admin, and a sergeant passcode for the read-only /sgt page.',
     icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15.5 7.5 2.3 2.3a1 1 0 0 0 1.4 0l2.1-2.1a1 1 0 0 0 0-1.4L19 4"/><path d="m21 2-9.6 9.6"/><circle cx="7.5" cy="15.5" r="5.5"/></svg>',
     open: openAccess
   },
@@ -953,7 +967,7 @@ function showView(id){
   document.getElementById(id).classList.add('on');
   window.scrollTo(0,0);
 }
-function openAccess(){ if(TIER==='ltd') return; showView('accessView'); refreshAccStatus(); const m=document.getElementById('accMsg'); if(m){ m.textContent=''; m.className='acc-msg'; } }
+function openAccess(){ if(TIER==='ltd') return; showView('accessView'); refreshAccStatus(); ['accMsg','sgtMsg'].forEach(id=>{ const m=document.getElementById(id); if(m){ m.textContent=''; m.className='acc-msg'; } }); }
 async function refreshAccStatus(){
   const el=document.getElementById('accStatus'), rm=document.getElementById('accRemove');
   try{
@@ -961,6 +975,12 @@ async function refreshAccStatus(){
     el.innerHTML = has ? '<span class="acc-on">\u25CF A limited passcode is active.</span>' : '<span class="acc-off">\u25CB No limited passcode is set.</span>';
     if(rm) rm.style.display = has ? '' : 'none';
   }catch(e){ el.textContent=''; }
+  const se=document.getElementById('sgtStatus'), srm=document.getElementById('sgtRemove');
+  try{
+    const hasS = await RPDRoster.access.hasSgt();
+    se.innerHTML = hasS ? '<span class="acc-on">\u25CF A sergeant passcode is active.</span>' : '<span class="acc-off">\u25CB No sergeant passcode is set.</span>';
+    if(srm) srm.style.display = hasS ? '' : 'none';
+  }catch(e){ if(se) se.textContent=''; }
 }
 async function saveLimited(){
   const inp=document.getElementById('accPass'), msg=document.getElementById('accMsg');
@@ -983,6 +1003,29 @@ async function removeLimited(){
   if(!confirm('Remove the limited passcode? Advisors using it will lose access until you set a new one.')) return;
   const msg=document.getElementById('accMsg');
   try{ await RPDRoster.access.clearLimited(); msg.textContent='Removed.'; msg.className='acc-msg ok'; refreshAccStatus(); }
+  catch(e){ msg.textContent='Could not remove. Try again.'; msg.className='acc-msg err'; }
+}
+async function saveSgt(){
+  const inp=document.getElementById('sgtPass'), msg=document.getElementById('sgtMsg');
+  const pass=(inp.value||'').trim();
+  if(pass.length<6){ msg.textContent='Use at least 6 characters.'; msg.className='acc-msg err'; return; }
+  const golden=sessionStorage.getItem(SESSION_KEY);
+  if(pass===golden){ msg.textContent='That is your full advisor passcode. Choose a different one.'; msg.className='acc-msg err'; return; }
+  const btn=document.getElementById('sgtSave'); btn.disabled=true; msg.textContent='Saving\u2026'; msg.className='acc-msg';
+  try{
+    let rc=await RPDRoster.records.connect(golden);
+    if(!rc.ok && rc.needsSetup) rc=await RPDRoster.records.setup(golden);
+    if(!rc.ok) throw new Error('records');
+    await RPDRoster.access.setSgt(pass);
+    inp.value=''; msg.textContent='Saved. Sergeants can sign in at /sgt with this passcode now.'; msg.className='acc-msg ok';
+    refreshAccStatus();
+  }catch(e){ msg.textContent='Could not save. Make sure you are signed in as the full advisor and try again.'; msg.className='acc-msg err'; }
+  btn.disabled=false;
+}
+async function removeSgt(){
+  if(!confirm('Remove the sergeant passcode? Sergeants will lose access to /sgt until you set a new one.')) return;
+  const msg=document.getElementById('sgtMsg');
+  try{ await RPDRoster.access.clearSgt(); msg.textContent='Removed.'; msg.className='acc-msg ok'; refreshAccStatus(); }
   catch(e){ msg.textContent='Could not remove. Try again.'; msg.className='acc-msg err'; }
 }
 function openRoster(){ showView('rosterView'); renderRows(); }

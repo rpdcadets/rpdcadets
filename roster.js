@@ -1,4 +1,4 @@
-/* roster.js  |  VERSION 23  |  updated 2026-07-08  |  adds sergeant tier (v22) plus two records-key nodes: roster/sgtnotes (leadership notes board, no approval) and roster/pending (proposal queue approved from /admin) */
+/* roster.js  |  VERSION 24  |  updated 2026-07-08  |  Act. Sgt. rank added everywhere ranks matter (order, display prefix, role label, squad lead fallback, sections, and the attendance rank-strip regex so Act. Sgt. never drops out of hour counts); new records-key node roster/cadetnotes (per-cadet sergeant note lines shared with the main notes feed) */
 /* ═══════════════════════════════════════════════════════════════════════
    RPD CADETS — SHARED ROSTER ENGINE
    One encrypted roster in Firebase, read by members, trackers, and
@@ -270,8 +270,8 @@
   function getCatalog() { return catalogCache ? catalogCache.slice() : []; }
 
   // ── display helpers ──
-  const RANK_ORDER = { 'Captain': 0, 'Lt.': 1, 'Sgt.': 2, 'Cadet': 3, 'Probationary': 4 };
-  function rankRank(r) { return r in RANK_ORDER ? RANK_ORDER[r] : 5; }
+  const RANK_ORDER = { 'Captain': 0, 'Lt.': 1, 'Sgt.': 2, 'Act. Sgt.': 3, 'Cadet': 4, 'Probationary': 5 };
+  function rankRank(r) { return r in RANK_ORDER ? RANK_ORDER[r] : 6; }
   // roster sorted by rank (Captain → Lt. → Sgt. → Cadet → Probationary),
   // stable within a rank so newer entries stay at the bottom of their rank.
   function getSorted() {
@@ -287,14 +287,14 @@
   }
   function displayName(entry) {
     if (entry.open) return entry.name;
-    const pfx = { 'Captain': 'Capt.', 'Lt.': 'Lt.', 'Sgt.': 'Sgt.' }[entry.rank];
+    const pfx = { 'Captain': 'Capt.', 'Lt.': 'Lt.', 'Sgt.': 'Sgt.', 'Act. Sgt.': 'Act. Sgt.' }[entry.rank];
     return pfx ? pfx + ' ' + entry.name : entry.name;
   }
   function flatNames() {
     // every active person, rank-ordered, leadership prefixed (for attendance/dropdown)
     return getSorted().filter(e => !e.open && e.status !== 'alumni').map(displayName);
   }
-  const ROLE_LABEL = { 'Captain': 'Captain', 'Lt.': 'Lieutenant', 'Sgt.': 'Sergeant', 'Cadet': 'Cadet', 'Probationary': 'Probationary' };
+  const ROLE_LABEL = { 'Captain': 'Captain', 'Lt.': 'Lieutenant', 'Sgt.': 'Sergeant', 'Act. Sgt.': 'Acting Sergeant', 'Cadet': 'Cadet', 'Probationary': 'Probationary' };
   function defaultRoleLabel(rank) { return ROLE_LABEL[rank] || 'Cadet'; }
   function getAlumni() { return get().filter(e => e && e.status === 'alumni'); }
   function activeSorted() { return getSorted().filter(e => !e.open && e.status !== 'alumni'); }
@@ -315,8 +315,11 @@
     return order.map(s => ({ squad: s, meta: SQUAD_META[s], members: groups[s] })).filter(g => g.members.length);
   }
   function squadLead(members) {
+    // a real Sgt. always holds "Led by"; an Act. Sgt. leads only when no Sgt. exists
     const sgt = members.find(m => m.rank === 'Sgt.');
-    return sgt ? sgt.name : null;
+    if (sgt) return sgt.name;
+    const act = members.find(m => m.rank === 'Act. Sgt.');
+    return act ? act.name : null;
   }
   function byRankSections() {
     const list = getSorted().filter(e => !e.open && e.status !== 'alumni');
@@ -325,6 +328,7 @@
       sec('Captain', e => e.rank === 'Captain'),
       sec('Lieutenant', e => e.rank === 'Lt.'),
       sec('Sergeants', e => e.rank === 'Sgt.'),
+      sec('Acting Sergeants', e => e.rank === 'Act. Sgt.'),
       sec('Cadets', e => e.rank === 'Cadet'),
       sec('Probationary', e => e.rank === 'Probationary')
     ];
@@ -345,6 +349,9 @@
     },
     sgtnotes: {
       get: sgtnotesGet, save: sgtnotesSave
+    },
+    cadetnotes: {
+      get: cadetnotesGet, save: cadetnotesSave
     },
     pending: {
       get: pendingGet, save: pendingSave
@@ -479,6 +486,20 @@
     if (!recordsKey) throw new Error('records locked');
     const data = await keyEncrypt(JSON.stringify(arr), recordsKey);
     await db.ref(ROOT + '/sgtnotes').set(data);
+  }
+  // Per-cadet note lines — same records key, node roster/cadetnotes. A flat
+  // array of {id, cadet, name, text, at}; each entry shows on the cadet's card
+  // AND in the merged notes feed, so a delete in either place removes both.
+  async function cadetnotesGet() {
+    if (!recordsKey) return null;
+    const blob = await once('cadetnotes');
+    if (!blob) return [];
+    try { return JSON.parse(await keyDecrypt(blob, recordsKey)); } catch (e) { return []; }
+  }
+  async function cadetnotesSave(arr) {
+    if (!recordsKey) throw new Error('records locked');
+    const data = await keyEncrypt(JSON.stringify(arr), recordsKey);
+    await db.ref(ROOT + '/cadetnotes').set(data);
   }
   // Pending proposal queue — same records key, node roster/pending. The /sgt
   // page appends proposals; /admin approves (applies + removes) or rejects
@@ -636,7 +657,7 @@
   //    leadership counted. If a NEW rank prefix is added to displayName(), extend
   //    attStripRank's regex here (single source of truth for this logic).
   const ATT_WEEKLY_HOURS = 3;
-  function attStripRank(n){ return String(n==null?'':n).replace(/^(Capt\.|Captain|Lt\.|Sgt\.)\s+/,'').trim(); }
+  function attStripRank(n){ return String(n==null?'':n).replace(/^(Act\. Sgt\.|Capt\.|Captain|Lt\.|Sgt\.)\s+/,'').trim(); }
   function attInList(list, name){ const t = attStripRank(name); return (list||[]).some(x => attStripRank(x) === t); }
   function attInRange(d, from, to){ d=d||''; if(from && d<from) return false; if(to && d>to) return false; return true; }
   function attRollup(opts){

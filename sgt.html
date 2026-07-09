@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- sgt.html  |  Build v2  |  updated 2026-07-08  |  pairs with roster.js v23  |  Adds the Notes board (leadership-only, no approval, honor-system delete), propose-an-edit on records cards and ride-along proposals that queue in roster/pending until approved in /admin, Formspark email to the approving advisor (form 9efCBVzQT), and redaction bars (ADVISOR VIEW ONLY) over DOB, parent contact, and advisor notes with computed Age still shown. Captain and Lt. included alongside Sgt. in every name picker. -->
+<!-- sgt.html  |  Build v3  |  updated 2026-07-08  |  pairs with roster.js v24  |  Advisor-only fields removed entirely from the page (Age still shown, computed server of DOB never sent to the layout); per-cadet sergeant note lines on every records card (post with name, delete per entry, no approval) that also appear in the merged Notes tab; itemized waiver status with Missing list and waiver proposals through the approval queue; Act. Sgt. rank in every name picker and proposal rank dropdown. -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -10,7 +10,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@300;400;500;600;700&family=Barlow+Condensed:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
-<script src="roster.js?v=23"></script>
+<script src="roster.js?v=24"></script>
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
 :root{--navy:#1a2744;--navy-deep:#0f1a30;--navy-light:#253758;--red:#c0392b;--red-glow:#e74c3c;--gold:#d4a952;--gold-light:#f0d68a;--white:#fff;--text-muted:#8899b0;--green:#27ae60;--amber:#d97706;--red-abs:#dc2626;--card-bg:rgba(255,255,255,0.025);--card-border:rgba(255,255,255,0.06);--input-bg:rgba(255,255,255,0.04);--input-border:rgba(255,255,255,0.1);--input-focus:rgba(192,57,43,0.4)}
@@ -62,11 +62,6 @@ body{font-family:'Barlow',sans-serif;background:var(--navy-deep);color:var(--whi
 .empty{color:var(--text-muted);padding:34px 20px;text-align:center;line-height:1.6}
 .toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(20px);background:var(--navy);border:1px solid rgba(255,255,255,0.15);color:var(--white);border-radius:10px;padding:12px 20px;font-size:13.5px;opacity:0;pointer-events:none;transition:all .3s;z-index:2000;box-shadow:0 10px 30px rgba(0,0,0,0.4)}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-
-/* REDACTION */
-.redact{position:relative;background:#090b10;border:1px solid rgba(255,255,255,0.07);border-radius:8px;min-height:37px;display:flex;align-items:center;justify-content:center;overflow:hidden}
-.redact::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(-45deg,rgba(255,255,255,0.02) 0 6px,transparent 6px 12px)}
-.redact i{position:relative;font-style:normal;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:rgba(231,76,60,0.8);border:1.5px solid rgba(231,76,60,0.55);border-radius:3px;padding:2px 9px;transform:rotate(-4deg)}
 
 /* CADET RECORDS */
 .rec-warning{background:rgba(212,169,82,0.06);border:1px solid rgba(212,169,82,0.2);border-radius:12px;padding:13px 16px;font-size:12.5px;line-height:1.6;color:var(--text-muted);margin-bottom:18px}
@@ -152,6 +147,29 @@ button.rec-check{cursor:pointer;transition:all .18s}
 .ra-sec-h{font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted);margin:22px 0 10px}
 @media(max-width:680px){.ra-form-grid{grid-template-columns:1fr 1fr}}
 @media(max-width:560px){.ra-row{grid-template-columns:1fr}.ra-when{text-align:left}}
+
+/* WAIVER STATUS */
+.wv-chip.part{background:rgba(217,119,6,0.12);border-color:var(--amber);color:var(--gold-light)}
+.wv-chip.part .box{background:var(--amber);border-color:var(--amber);color:#1a1206}
+.wv-chip.full{background:rgba(39,174,96,0.12);border-color:var(--green);color:#fff}
+.wv-chip.full .box{background:var(--green);border-color:var(--green);color:#fff}
+.wv-missing{margin-top:10px;font-size:12.5px;line-height:1.6;color:var(--text-muted);background:rgba(217,119,6,0.06);border:1px solid rgba(217,119,6,0.25);border-radius:9px;padding:9px 12px}
+.wv-missing b{color:var(--gold-light);font-weight:600}
+
+/* PER-CADET NOTE LINES */
+.cnotes{margin-top:16px;padding-top:14px;border-top:1px solid var(--card-border)}
+.cnotes-h{font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--gold);margin-bottom:10px}
+.cnote-add{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.cnote-input{flex:1;min-width:180px;background:var(--input-bg);border:1px solid var(--input-border);border-radius:8px;padding:9px 12px;color:var(--white);font-family:'Barlow',sans-serif;font-size:13.5px;outline:none}
+.cnote-input:focus{border-color:var(--input-focus)}
+.cnote-who{background:var(--input-bg);border:1px solid var(--input-border);border-radius:8px;padding:9px 11px;color:var(--white);font-family:'Barlow',sans-serif;font-size:13px;outline:none;appearance:none;cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%238899b0' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:28px}
+.cnote-who option{background:var(--navy)}
+.cnote{padding:8px 0;border-top:1px solid rgba(255,255,255,0.05)}
+.cnote-top{display:flex;align-items:center;gap:10px;margin-bottom:3px}
+.cnote-name{font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--gold)}
+.cnote-when{font-size:11px;color:var(--text-muted)}
+.cnote-empty{color:var(--text-muted);font-size:12.5px;padding:6px 0}
+.note-cadet{color:var(--text-muted);font-weight:400;text-transform:none;letter-spacing:0.3px}
 
 /* NOTES */
 .note-form{background:var(--card-bg);border:1px solid var(--card-border);border-radius:14px;padding:18px;margin-bottom:22px}
@@ -248,7 +266,7 @@ button.rec-check{cursor:pointer;transition:all .18s}
     <button class="lock-btn" id="goBtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg><span id="goLabel">Unlock</span></button>
     <div class="lock-error" id="lockErr">Incorrect passcode.</div>
     <div class="lock-home"><a href="index.html">← Return to Home</a></div>
-    <div style="margin-top:16px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v2</div>
+    <div style="margin-top:16px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v3</div>
   </div>
 </div>
 
@@ -335,7 +353,7 @@ button.rec-check{cursor:pointer;transition:all .18s}
 <div class="toast" id="toast"></div>
 
 <script>
-console.log('[sgt] Build v2');
+console.log('[sgt] Build v3');
 const SESSION_KEY = 'rpd761_sgt_auth';   // sergeant-only; NOT shared with admin or cadet pages
 const NAME_KEY = 'rpd761_sgt_name';      // remembers who this device posts as
 const APPROVAL_FORM = 'https://submit-form.com/9efCBVzQT';   // Formspark "Edits Needing Approval" (notifies the approving advisor)
@@ -347,7 +365,7 @@ const genId = pre => pre + '_' + Math.random().toString(36).slice(2, 9);
 function fmtWhen(ts){ if(!ts) return ''; const d=new Date(ts); return isNaN(d)?'':d.toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'}); }
 
 /* ── LOCK / CONNECT ── */
-let recData = {}, raData = [], notes = [], pending = [], officers = [];
+let recData = {}, raData = [], notes = [], cadNotes = [], pending = [], officers = [];
 let recordsOn = false;
 async function unlock(){
   const inp = document.getElementById('pc');
@@ -380,6 +398,7 @@ async function enterApp(recOk){
       recData = (await RPDRoster.records.get()) || {};
       raData  = (await RPDRoster.ridealongs.get()) || [];
       notes   = (await RPDRoster.sgtnotes.get()) || [];
+      cadNotes = (await RPDRoster.cadetnotes.get()) || [];
       pending = (await RPDRoster.pending.get()) || [];
     }catch(e){}
     try{ officers = (await RPDRoster.officers.get()) || []; }catch(e){ officers=[]; }
@@ -434,7 +453,7 @@ function wireOnce(){
 
 /* ── WHO PICKERS (Captain, Lt., and Sgt. from the live roster) ── */
 function leadershipNames(){
-  return RPDRoster.activeSorted().filter(p => ['Captain','Lt.','Sgt.'].includes(p.rank)).map(p => RPDRoster.displayName(p));
+  return RPDRoster.activeSorted().filter(p => ['Captain','Lt.','Sgt.','Act. Sgt.'].includes(p.rank)).map(p => RPDRoster.displayName(p));
 }
 function syncWho(v){ ['rapWho','noteWho'].forEach(id=>{ const el=document.getElementById(id); if(el && v && Array.from(el.options).some(o=>o.value===v)) el.value=v; }); }
 function fillWhoSelects(){
@@ -463,10 +482,36 @@ async function withdraw(id){
   renderRaQueued(); renderRecords();
 }
 
-/* ── CADET RECORDS (redacted read view + propose-an-edit) ── */
-const REC_CHECKS = [['offProbation','Off Probation'],['rideAlong','Ride-Along Certified'],['competition','Competition Team'],['waivers','Waivers Completed'],['uas','UAS Certified']];
+/* ── CADET RECORDS (read view + per-cadet notes + propose-an-edit) ── */
+const REC_CHECKS = [['offProbation','Off Probation'],['rideAlong','Ride-Along Certified'],['competition','Competition Team'],['uas','UAS Certified']];
 const REC_SHIRT = ['','XS','S','M','L','XL','2XL','3XL'];
-const RANKS = ['Captain','Lt.','Sgt.','Cadet','Probationary'];
+const WAIVER_ITEMS = [
+  ['psc','Public Safety Cadets Agreement and Legal Waiver'],
+  ['ptc','Police Training Center Waiver'],
+  ['photo','Photo Release'],
+  ['sim','Simunitions Waiver'],
+  ['med','Permission for Medical Treatment']
+];
+const WAIVER_LIAB = [
+  ['married','Release of Liability (Minors with Married Parents or Single Guardian)'],
+  ['divorced','Release of Liability (Minors with Divorced Parents)'],
+  ['adult','Release of Liability (Adults, Cadets 18+)']
+];
+function waiverLiabLabel(k){ const f=WAIVER_LIAB.find(x=>x[0]===k); return f?f[1]:''; }
+function waiverProgress(rec){
+  const ws = (rec||{}).waiverSet || {};
+  let done = 0;
+  WAIVER_ITEMS.forEach(([k])=>{ if(ws[k]) done++; });
+  if(ws.liability) done++;
+  return { done, total: WAIVER_ITEMS.length + 1, state: done===0 ? 'none' : (done===WAIVER_ITEMS.length+1 ? 'full' : 'part') };
+}
+function waiverMissing(rec){
+  const ws = (rec||{}).waiverSet || {};
+  const out = WAIVER_ITEMS.filter(([k])=>!ws[k]).map(([,l])=>l);
+  if(!ws.liability) out.push('Release of Liability (the one that applies)');
+  return out;
+}
+const RANKS = ['Captain','Lt.','Sgt.','Act. Sgt.','Cadet','Probationary'];
 const SQUADS = [['leadership','Leadership'],[1,'Squad 1'],[2,'Squad 2'],[3,'Squad 3'],[4,'Squad 4 (Admin)']];
 const SQUAD_LABEL = { leadership:'Leadership', 1:'Squad 1', 2:'Squad 2', 3:'Squad 3', 4:'Squad 4 (Admin)' };
 function addMonths(dateStr, n){
@@ -497,7 +542,6 @@ function ageFrom(dateStr){
 }
 function fmtDateLong(d){ if(!d) return ''; const dt=new Date(d+'T00:00:00'); return isNaN(dt)?d:dt.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); }
 function rov(v, cls){ const has = (v!=null && String(v).trim()!==''); return `<div class="rov ${has?(cls||''):'dim'}">${has?esc(v):'—'}</div>`; }
-const REDACT = '<div class="redact"><i>Advisor view only</i></div>';
 function pendingForCadet(name){ return pending.filter(p=>p.kind==='record' && p.cadet===name); }
 function renderRecords(){
   const host = document.getElementById('recRows'); if(!host || !recordsOn) return;
@@ -513,6 +557,10 @@ function recCard(p){
   const rec = recData[p.name] || {};
   const myPending = pendingForCadet(p.name);
   const checks = REC_CHECKS.map(([k,l]) => `<span class="rec-check ${rec[k]?'on':''}"><span class="box">${rec[k]?'✓':''}</span>${l}</span>`).join('');
+  const wp = waiverProgress(rec);
+  const missing = waiverMissing(rec);
+  const wvChip = `<span class="rec-check wv-chip ${wp.state}"><span class="box">${wp.state==='full'?'✓':(wp.state==='part'?'…':'')}</span>Waivers ${wp.done} of ${wp.total}</span>`;
+  const wvMissing = missing.length ? `<div class="wv-missing"><b>Missing:</b> ${missing.map(esc).join(', ')}</div>` : '';
   const yr = ageFrom(rec.dob);
   const compute = p.joinDate
     ? `Probation ends <b>${addMonths(p.joinDate,6)}</b> &nbsp;·&nbsp; Time in: <b>${timeIn(p.joinDate)}</b>`
@@ -523,6 +571,10 @@ function recCard(p){
       `<div class="pending-line"><span>${esc(c.label)}:</span> <span>${esc(c.oldValue||'—')}</span> → <b>${esc(c.newValue||'—')}</b> <span class="pending-by">by ${esc(pr.by)} · ${fmtWhen(pr.at)}</span><button class="pw-del" data-w="${esc(pr.id)}">Withdraw</button></div>`
     ).join('')).join('') + `</div>`
   ) : '';
+  const cn = (cadNotes||[]).filter(x=>x.cadet===p.name);
+  const cnRows = cn.length ? cn.slice().sort((a,b)=>(b.at||0)-(a.at||0)).map(x=>
+    `<div class="cnote" data-cnid="${esc(x.id)}"><div class="cnote-top"><span class="cnote-name">${esc(x.name)}</span><span class="cnote-when">${fmtWhen(x.at)}</span><button class="note-del cnote-del" title="Delete note">&times;</button></div><div class="note-text">${esc(x.text)}</div></div>`
+  ).join('') : '<div class="cnote-empty">No notes on this cadet yet.</div>';
   wrap.innerHTML =
     `<div class="rec-head">
        <div><span class="rec-rank">${esc(p.rank)}</span> <span class="rec-name">${esc(p.name)}</span></div>
@@ -542,20 +594,24 @@ function recCard(p){
          <div class="rec-field"><span>School</span>${rov(rec.school)}</div>
        </div>
        <div class="rec-grid">
-         <div class="rec-field"><span>Date of birth</span>${REDACT}</div>
          <div class="rec-field"><span>Age</span>${rov(yr===null?'':yr+' yrs','hl')}</div>
-       </div>
-       <div class="rec-checks">${checks}</div>
-       <div class="rec-grid">
          <div class="rec-field"><span>Email</span>${rov(rec.email)}</div>
+       </div>
+       <div class="rec-grid">
          <div class="rec-field"><span>Phone</span>${rov(rec.phone)}</div>
+         <div class="rec-field"><span>&nbsp;</span><div style="min-height:37px"></div></div>
        </div>
-       <div class="rec-grid3">
-         <div class="rec-field"><span>Parent / guardian name</span>${REDACT}</div>
-         <div class="rec-field"><span>Parent phone</span>${REDACT}</div>
-         <div class="rec-field"><span>Parent email</span>${REDACT}</div>
+       <div class="rec-checks">${checks}${wvChip}</div>
+       ${wvMissing}
+       <div class="cnotes">
+         <div class="cnotes-h">Sergeant notes on this cadet</div>
+         <div class="cnote-add">
+           <input type="text" class="cnote-input" placeholder="Add a note line for ${esc(p.name)}…" maxlength="500">
+           <select class="cnote-who"></select>
+           <button class="btn primary cnote-post">Post</button>
+         </div>
+         <div class="cnote-list">${cnRows}</div>
        </div>
-       <div class="rec-field" style="margin-top:14px"><span>Notes</span>${REDACT}</div>
        <div class="prop-open"><button class="btn" data-act="prop">Propose an edit</button></div>
        <div class="prop-host"></div>
      </div>`;
@@ -563,7 +619,41 @@ function recCard(p){
   wrap.querySelector('.rec-head').addEventListener('click', ()=>{ const open=body.style.display!=='none'; body.style.display=open?'none':'block'; wrap.classList.toggle('open', !open); });
   wrap.querySelectorAll('.pw-del').forEach(b=> b.addEventListener('click', e=>{ e.stopPropagation(); withdraw(b.dataset.w); }));
   wrap.querySelector('[data-act="prop"]').addEventListener('click', ()=> openPropForm(wrap, p));
+  // per-cadet note posting (direct save, no approval)
+  const whoSel = wrap.querySelector('.cnote-who');
+  let saved=''; try{ saved = localStorage.getItem(NAME_KEY)||''; }catch(e){}
+  whoSel.innerHTML = '<option value="">Your name…</option>' + leadershipNames().map(n=>`<option value="${esc(n)}" ${n===saved?'selected':''}>${esc(n)}</option>`).join('');
+  wrap.querySelector('.cnote-post').addEventListener('click', ()=> cnotePost(wrap, p));
+  wrap.querySelector('.cnote-input').addEventListener('keydown', e=>{ if(e.key==='Enter') cnotePost(wrap, p); });
+  wrap.querySelectorAll('.cnote-del').forEach(b=> b.addEventListener('click', ()=> cnoteDelete(b.closest('.cnote').dataset.cnid)));
   return wrap;
+}
+async function cnotePost(wrap, p){
+  const input = wrap.querySelector('.cnote-input');
+  const by = wrap.querySelector('.cnote-who').value;
+  const text = (input.value||'').trim();
+  if(!by){ showToast('Select your name first'); return; }
+  if(!text){ showToast('Type a note first'); return; }
+  try{ localStorage.setItem(NAME_KEY, by); }catch(e){}
+  const btn = wrap.querySelector('.cnote-post'); btn.disabled=true;
+  try{
+    cadNotes = ((await RPDRoster.cadetnotes.get()) || []);   // re-read so nobody's line is lost
+    cadNotes.push({ id:genId('cn'), cadet:p.name, name:by, text, at:Date.now() });
+    await RPDRoster.cadetnotes.save(cadNotes);
+    input.value='';
+    renderRecords(); renderNotes();
+    showToast('Note posted');
+  }catch(e){ showToast('Could not post. Check your connection.'); }
+  btn.disabled=false;
+}
+async function cnoteDelete(id){
+  if(!confirm('Delete this note? It disappears from the Notes tab too.')) return;
+  try{
+    cadNotes = ((await RPDRoster.cadetnotes.get()) || []).filter(x=>x.id!==id);
+    await RPDRoster.cadetnotes.save(cadNotes);
+    renderRecords(); renderNotes();
+    showToast('Note deleted');
+  }catch(e){ showToast('Could not delete. Try again.'); }
 }
 function openPropForm(wrap, p){
   const host = wrap.querySelector('.prop-host');
@@ -573,6 +663,9 @@ function openPropForm(wrap, p){
   const sqOpts = SQUADS.map(([v,l])=>`<option value="${v}" ${String(v)===String(p.squad)?'selected':''}>${l}</option>`).join('');
   const rankOpts = RANKS.map(r=>`<option value="${r}" ${r===p.rank?'selected':''}>${r}</option>`).join('');
   const checks = REC_CHECKS.map(([k,l]) => `<button type="button" class="rec-check ${rec[k]?'on':''}" data-k="${k}"><span class="box">${rec[k]?'✓':''}</span>${l}</button>`).join('');
+  const ws = rec.waiverSet || {};
+  const wvItems = WAIVER_ITEMS.map(([k,l]) => `<button type="button" class="rec-check ${ws[k]?'on':''}" data-wv="${k}"><span class="box">${ws[k]?'✓':''}</span>${l}</button>`).join('');
+  const wvLiab = WAIVER_LIAB.map(([k,l]) => `<button type="button" class="rec-check ${ws.liability===k?'on':''}" data-wl="${k}"><span class="box">${ws.liability===k?'✓':''}</span>${l}</button>`).join('');
   const div = document.createElement('div'); div.className='prop-form';
   div.innerHTML =
     `<div class="prop-h">Propose an edit for ${esc(p.name)}</div>
@@ -588,6 +681,10 @@ function openPropForm(wrap, p){
        <label class="rec-field"><span>School</span><input type="text" data-k="school" value="${esc(rec.school||'')}" placeholder="e.g. Berkner HS"></label>
      </div>
      <div class="rec-checks">${checks}</div>
+     <div class="prop-h" style="margin-top:14px">Waivers on file</div>
+     <div class="rec-checks">${wvItems}</div>
+     <div class="prop-h" style="margin-top:12px">Release of Liability, mark only the one that applies</div>
+     <div class="rec-checks">${wvLiab}</div>
      <div class="rec-grid">
        <label class="rec-field"><span>Email</span><input type="text" data-k="email" value="${esc(rec.email||'')}" placeholder="cadet@example.com"></label>
        <label class="rec-field"><span>Phone</span><input type="text" data-k="phone" value="${esc(rec.phone||'')}" placeholder="(972) 555-0100"></label>
@@ -604,9 +701,21 @@ function openPropForm(wrap, p){
   who.innerHTML = '<option value="">Select your name…</option>' + leadershipNames().map(n=>`<option value="${esc(n)}" ${n===saved?'selected':''}>${esc(n)}</option>`).join('');
   // check toggles (local to the form only)
   const checkState = {}; REC_CHECKS.forEach(([k])=> checkState[k] = !!rec[k]);
-  div.querySelectorAll('.rec-check').forEach(btn => btn.addEventListener('click', ()=>{
+  div.querySelectorAll('.rec-check[data-k]').forEach(btn => btn.addEventListener('click', ()=>{
     const k=btn.dataset.k; checkState[k]=!checkState[k];
     btn.classList.toggle('on', checkState[k]); btn.querySelector('.box').textContent = checkState[k]?'✓':'';
+  }));
+  // waiver toggles (local to the form; liability behaves like a radio)
+  const wvState = {}; WAIVER_ITEMS.forEach(([k])=> wvState[k] = !!ws[k]);
+  let wvLiabState = ws.liability || '';
+  div.querySelectorAll('[data-wv]').forEach(btn => btn.addEventListener('click', ()=>{
+    const k=btn.dataset.wv; wvState[k]=!wvState[k];
+    btn.classList.toggle('on', wvState[k]); btn.querySelector('.box').textContent = wvState[k]?'✓':'';
+  }));
+  div.querySelectorAll('[data-wl]').forEach(btn => btn.addEventListener('click', ()=>{
+    const k=btn.dataset.wl;
+    wvLiabState = (wvLiabState===k) ? '' : k;
+    div.querySelectorAll('[data-wl]').forEach(b=>{ const on = wvLiabState===b.dataset.wl; b.classList.toggle('on', on); b.querySelector('.box').textContent = on?'✓':''; });
   }));
   div.querySelector('[data-act="cancel"]').addEventListener('click', ()=> host.innerHTML='');
   div.querySelector('[data-act="send"]').addEventListener('click', async ()=>{
@@ -628,6 +737,10 @@ function openPropForm(wrap, p){
     REC_CHECKS.forEach(([k,l])=>{
       if(checkState[k] !== !!rec[k]) changes.push({ owner:'rec', field:k, label:l, oldValue:rec[k]?'Yes':'No', newValue:checkState[k]?'Yes':'No', raw:checkState[k] });
     });
+    WAIVER_ITEMS.forEach(([k,l])=>{
+      if(wvState[k] !== !!ws[k]) changes.push({ owner:'waiver', field:k, label:l, oldValue:ws[k]?'On file':'Missing', newValue:wvState[k]?'On file':'Missing', raw:wvState[k] });
+    });
+    if(wvLiabState !== (ws.liability||'')) changes.push({ owner:'waiver', field:'liability', label:'Release of Liability', oldValue:ws.liability?waiverLiabLabel(ws.liability):'—', newValue:wvLiabState?waiverLiabLabel(wvLiabState):'—', raw:wvLiabState });
     if(!changes.length){ showToast('No changes to submit'); return; }
     const btn=div.querySelector('[data-act="send"]'); btn.disabled=true;
     const prop = { id:genId('pr'), kind:'record', cadet:p.name, changes, by, at:Date.now() };
@@ -755,7 +868,7 @@ function raExportCSV(){
 }
 
 /* ── NOTES BOARD (no approval; honor-system delete) ── */
-async function refreshNotes(){ try{ notes = (await RPDRoster.sgtnotes.get()) || []; }catch(e){} renderNotes(); }
+async function refreshNotes(){ try{ notes = (await RPDRoster.sgtnotes.get()) || []; cadNotes = (await RPDRoster.cadetnotes.get()) || []; }catch(e){} renderNotes(); renderRecords(); }
 async function noteSubmit(){
   const ta=document.getElementById('noteText');
   const by=document.getElementById('noteWho').value;
@@ -775,13 +888,21 @@ async function noteSubmit(){
   btn.disabled=false;
 }
 function renderNotes(){
+  // one chronological feed: general board posts plus per-cadet note lines.
+  // A cadet line is the SAME entry shown on the cadet's card, so deleting it
+  // here removes it there too (and vice versa).
   const host=document.getElementById('noteFeed'); if(!host || !recordsOn) return;
   host.innerHTML='';
-  if(!notes.length){ host.innerHTML='<p class="empty">No notes yet. Post the first one above.</p>'; return; }
-  notes.slice().sort((a,b)=>(b.at||0)-(a.at||0)).forEach(n=>{
+  const merged = notes.map(n=>({ ...n, _src:'gen' })).concat((cadNotes||[]).map(n=>({ ...n, _src:'cad' })));
+  if(!merged.length){ host.innerHTML='<p class="empty">No notes yet. Post the first one above, or add one on a cadet card.</p>'; return; }
+  merged.sort((a,b)=>(b.at||0)-(a.at||0)).forEach(n=>{
     const el=document.createElement('div'); el.className='note-card';
-    el.innerHTML = `<div class="note-top"><span class="note-name">${esc(n.name)}</span><span class="note-when">${fmtWhen(n.at)}</span><button class="note-del" title="Delete note">&times;</button></div><div class="note-text">${esc(n.text)}</div>`;
+    const who = n._src==='cad'
+      ? `${esc(n.name)} <span class="note-cadet">· ${esc(n.cadet)}</span>`
+      : esc(n.name);
+    el.innerHTML = `<div class="note-top"><span class="note-name">${who}</span><span class="note-when">${fmtWhen(n.at)}</span><button class="note-del" title="Delete note">&times;</button></div><div class="note-text">${esc(n.text)}</div>`;
     el.querySelector('.note-del').addEventListener('click', async ()=>{
+      if(n._src==='cad'){ cnoteDelete(n.id); return; }
       if(!confirm('Delete this note?')) return;
       try{
         notes = ((await RPDRoster.sgtnotes.get()) || []).filter(x=>x.id!==n.id);

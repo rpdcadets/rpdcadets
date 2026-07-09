@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- admin.html  |  Build v29  |  updated 2026-07-08  |  pairs with roster.js v23  |  New Pending Approvals tool (reviews record edits and ride-alongs proposed from /sgt, with a count badge on the hub tile); Cadet Records now shows the sergeant notes board read-along with delete; Sergeant passcode manager from v28 unchanged -->
+<!-- admin.html  |  Build v30  |  updated 2026-07-08  |  pairs with roster.js v24  |  Act. Sgt. added to the rank dropdown; Waivers Completed checkbox replaced with an itemized six-waiver panel (five fixed forms plus one Release of Liability pick, chip goes amber when partial and green when complete; old single checkmarks intentionally not migrated so each cadet is re-verified); per-cadet sergeant note lines shown inside each records card with delete; the Sergeant Notes panel now merges general notes and cadet note lines; Pending Approvals understands waiver-item proposals -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -123,6 +123,14 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
 .recnote-del:hover{color:#f87171;border-color:rgba(220,38,38,0.4)}
 .recnote-text{font-size:13.5px;line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere}
 .recnotes-empty{color:var(--text-muted);font-size:12.5px;padding:10px 0}
+
+/* ITEMIZED WAIVERS */
+.wv-chip.part{background:rgba(217,119,6,0.12);border-color:var(--amber);color:var(--gold-light)}
+.wv-chip.part .box{background:var(--amber);border-color:var(--amber);color:#1a1206}
+.wv-chip.full{background:rgba(39,174,96,0.12);border-color:var(--green);color:#fff}
+.wv-chip.full .box{background:var(--green);border-color:var(--green);color:#fff}
+.wv-panel{margin-top:12px;padding:13px 15px;border:1px dashed rgba(212,169,82,0.3);border-radius:11px;background:rgba(212,169,82,0.03)}
+.wv-h{font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--gold)}
 .acc-msg{font-size:13px;min-height:18px;margin-bottom:14px}
 .acc-msg.ok{color:var(--green)} .acc-msg.err{color:#f87171}
 .acc-note{max-width:520px;font-size:12.5px;line-height:1.6;color:var(--text-muted);background:var(--card-bg);border:1px solid var(--card-border);border-radius:10px;padding:14px 16px}
@@ -566,7 +574,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
     <button class="lock-btn" id="goBtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg><span id="goLabel">Unlock</span></button>
     <div class="lock-error" id="lockErr">Incorrect passcode.</div>
     <div class="lock-home"><a href="index.html">← Return to Home</a></div>
-    <div style="margin-top:16px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v29</div>
+    <div style="margin-top:16px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v30</div>
   </div>
 </div>
 
@@ -596,7 +604,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
       <button class="back-link" id="rosterBack"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Admin Console</button>
       <div class="bar">
         <div class="status-pill" id="pill"><span class="dot"></span><span id="pillText">Synced</span></div>
-        <span style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v29</span>
+        <span style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v30</span>
         <button class="btn ghost" id="syncMembersBtn" title="One-time: pull titles and alumni from the Members page into the shared roster">Sync members data</button>
         <button class="btn add" id="addBtn">+ Add Person</button>
       </div>
@@ -838,14 +846,14 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
 
 <div class="toast" id="toast"></div>
 
-<script src="roster.js?v=23"></script>
+<script src="roster.js?v=24"></script>
 <script>
-console.log('[admin] Build v29');
+console.log('[admin] Build v30');
 const SESSION_KEY = 'rpd761_admin_auth';   // advisor-only; NOT shared with cadet pages
 const TIER_KEY = 'rpd761_admin_tier';      // 'full' (golden) or 'ltd' (limited advisor)
 const LIMITED_TOOLS = ['records','ridealongs','donations'];
 let TIER = 'full';
-const RANKS = ['Captain','Lt.','Sgt.','Cadet','Probationary'];
+const RANKS = ['Captain','Lt.','Sgt.','Act. Sgt.','Cadet','Probationary'];
 const SQUADS = [['leadership','Leadership'],[1,'Squad 1'],[2,'Squad 2'],[3,'Squad 3'],[4,'Squad 4 (Admin)']];
 
 /* ── Admin tools. To add a tool later, drop another entry here and the
@@ -2094,8 +2102,32 @@ function setTrnStatus(s){ const p=document.getElementById('trnPill'); p.classNam
 
 /* ── CADET RECORDS (separate passphrase, separate node/key) ── */
 let recData = null;
+let cadNotes = [];   // per-cadet sergeant note lines (roster/cadetnotes)
 let recSaveTimer = null;
-const REC_CHECKS = [['offProbation','Off Probation'],['rideAlong','Ride-Along Certified'],['competition','Competition Team'],['waivers','Waivers Completed'],['uas','UAS Certified']];
+const REC_CHECKS = [['offProbation','Off Probation'],['rideAlong','Ride-Along Certified'],['competition','Competition Team'],['uas','UAS Certified']];
+/* Itemized waivers. The old single rec.waivers checkmark is intentionally ignored
+   (not migrated): every cadet starts unverified and gets checked off against the
+   physical paperwork. Five fixed forms plus exactly ONE Release of Liability. */
+const WAIVER_ITEMS = [
+  ['psc','Public Safety Cadets Agreement and Legal Waiver'],
+  ['ptc','Police Training Center Waiver'],
+  ['photo','Photo Release'],
+  ['sim','Simunitions Waiver'],
+  ['med','Permission for Medical Treatment']
+];
+const WAIVER_LIAB = [
+  ['married','Release of Liability (Minors with Married Parents or Single Guardian)'],
+  ['divorced','Release of Liability (Minors with Divorced Parents)'],
+  ['adult','Release of Liability (Adults, Cadets 18+)']
+];
+function waiverLiabLabel(k){ const f=WAIVER_LIAB.find(x=>x[0]===k); return f?f[1]:''; }
+function waiverProgress(rec){
+  const ws = rec.waiverSet || {};
+  let done = 0;
+  WAIVER_ITEMS.forEach(([k])=>{ if(ws[k]) done++; });
+  if(ws.liability) done++;
+  return { done, total: WAIVER_ITEMS.length + 1, state: done===0 ? 'none' : (done===WAIVER_ITEMS.length+1 ? 'full' : 'part') };
+}
 const REC_SHIRT = ['','XS','S','M','L','XL','2XL','3XL'];
 function escapeHtmlA(s){ return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
@@ -2135,7 +2167,7 @@ async function openRecords(){
   try {
     let res = await RPDRoster.records.connect(adv);
     if(res.needsSetup){ await RPDRoster.records.setup(adv); res = { ok:true }; }
-    if(res.ok){ recData = (await RPDRoster.records.get()) || {}; migrateJoinDates(); renderRecords(); loadRecNotes(); }
+    if(res.ok){ recData = (await RPDRoster.records.get()) || {}; try{ cadNotes = (await RPDRoster.cadetnotes.get()) || []; }catch(e){ cadNotes=[]; } migrateJoinDates(); renderRecords(); loadRecNotes(); }
     else { host.innerHTML = '<p style="color:var(--red-glow);padding:24px;text-align:center">Could not unlock records. Re-open the admin page and try again.</p>'; }
   } catch(e){ host.innerHTML = '<p style="color:var(--red-glow);padding:24px;text-align:center">Could not reach the database. Check your connection.</p>'; }
 }
@@ -2151,6 +2183,7 @@ function recFilledCount(rec){
   let n = 0;
   ['radio','shirt','school','dob','email','phone','parentName','parentPhone','parentEmail','notes'].forEach(k => { if((rec[k]||'').toString().trim()) n++; });
   REC_CHECKS.forEach(([k]) => { if(rec[k]) n++; });
+  if(waiverProgress(rec).done) n++;
   return n;
 }
 function recCard(p){
@@ -2160,6 +2193,15 @@ function recCard(p){
   const sqOpts = SQUADS.map(([v,l])=>`<option value="${v}" ${String(v)===String(p.squad)?'selected':''}>${l}</option>`).join('');
   const rankOpts = RANKS.map(r=>`<option value="${r}" ${r===p.rank?'selected':''}>${r}</option>`).join('');
   const checks = REC_CHECKS.map(([k,l]) => `<button type="button" class="rec-check ${rec[k]?'on':''}" data-k="${k}"><span class="box">${rec[k]?'✓':''}</span>${l}</button>`).join('');
+  const ws = rec.waiverSet || (rec.waiverSet = {});
+  const wp = waiverProgress(rec);
+  const wvChip = `<button type="button" class="rec-check wv-chip ${wp.state}" data-act="wv"><span class="box">${wp.state==='full'?'✓':(wp.state==='part'?'…':'')}</span><span class="wv-lbl">Waivers ${wp.done} of ${wp.total}</span></button>`;
+  const wvItems = WAIVER_ITEMS.map(([k,l]) => `<button type="button" class="rec-check ${ws[k]?'on':''}" data-wv="${k}"><span class="box">${ws[k]?'✓':''}</span>${l}</button>`).join('');
+  const wvLiab = WAIVER_LIAB.map(([k,l]) => `<button type="button" class="rec-check ${ws.liability===k?'on':''}" data-wl="${k}"><span class="box">${ws.liability===k?'✓':''}</span>${l}</button>`).join('');
+  const cn = (cadNotes||[]).filter(x=>x.cadet===p.name);
+  const cnRows = cn.length ? cn.slice().sort((a,b)=>(b.at||0)-(a.at||0)).map(x=>
+    `<div class="recnote" data-cnid="${escapeHtmlA(x.id)}"><div class="recnote-top"><span class="recnote-name">${escapeHtmlA(x.name)}</span><span class="recnote-when">${x.at?new Date(x.at).toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'}):''}</span><button class="recnote-del" title="Delete note">&times;</button></div><div class="recnote-text">${escapeHtmlA(x.text)}</div></div>`
+  ).join('') : '<div class="recnotes-empty">No sergeant notes on this cadet yet.</div>';
   wrap.innerHTML =
     `<div class="rec-head" data-act="toggle">
        <div><span class="rec-rank">${p.rank}</span> <span class="rec-name">${escapeHtmlA(p.name)}</span></div>
@@ -2182,7 +2224,13 @@ function recCard(p){
          <label class="rec-field"><span>Date of birth</span><input type="date" data-k="dob" value="${escapeHtmlA(rec.dob||'')}"></label>
          <label class="rec-field"><span>Age</span><div class="rec-age${ageFrom(rec.dob)===null?' empty':''}" data-role="age">${ageFrom(rec.dob)===null?'—':ageFrom(rec.dob)+' yrs'}</div></label>
        </div>
-       <div class="rec-checks">${checks}</div>
+       <div class="rec-checks">${checks}${wvChip}</div>
+       <div class="wv-panel" style="display:none">
+         <div class="wv-h">Waivers on file</div>
+         <div class="rec-checks" style="margin-top:8px">${wvItems}</div>
+         <div class="wv-h" style="margin-top:12px">Release of Liability, complete only the one that applies</div>
+         <div class="rec-checks" style="margin-top:8px">${wvLiab}</div>
+       </div>
        <div class="rec-grid">
          <label class="rec-field"><span>Email</span><input type="text" data-k="email" value="${escapeHtmlA(rec.email||'')}" placeholder="cadet@example.com"></label>
          <label class="rec-field"><span>Phone</span><input type="text" data-k="phone" value="${escapeHtmlA(rec.phone||'')}" placeholder="(972) 555-0100"></label>
@@ -2193,6 +2241,7 @@ function recCard(p){
          <label class="rec-field"><span>Parent email</span><input type="text" data-k="parentEmail" value="${escapeHtmlA(rec.parentEmail||'')}" placeholder="parent@example.com"></label>
        </div>
        <label class="rec-field"><span>Notes</span><textarea data-k="notes" rows="2" placeholder="Program notes">${escapeHtmlA(rec.notes||'')}</textarea></label>
+       <div class="rec-cnotes"><div class="wv-h" style="margin:14px 0 6px">Sergeant notes on this cadet</div><div class="rec-cnotes-list">${cnRows}</div></div>
      </div>`;
   const body = wrap.querySelector('.rec-body');
   wrap.querySelector('.rec-head').addEventListener('click', ()=>{ const open=body.style.display!=='none'; body.style.display=open?'none':'block'; wrap.classList.toggle('open', !open); });
@@ -2214,11 +2263,47 @@ function recCard(p){
     if(f==='rank'){ const rk=wrap.querySelector('.rec-rank'); if(rk) rk.textContent = v; }
     scheduleSave();
   }));
-  wrap.querySelectorAll('.rec-check').forEach(btn => btn.addEventListener('click', () => {
+  wrap.querySelectorAll('.rec-check[data-k]').forEach(btn => btn.addEventListener('click', () => {
     const k = btn.dataset.k; rec[k] = !rec[k];
     btn.classList.toggle('on', rec[k]); btn.querySelector('.box').textContent = rec[k]?'✓':'';
     wrap.querySelector('.rec-filled').textContent = recFilledCount(rec)?recFilledCount(rec)+' filled':'empty';
     recSchedule();
+  }));
+  // waivers: chip toggles the panel; items toggle; liability behaves like a radio group
+  const wvPanel = wrap.querySelector('.wv-panel');
+  const wvChipEl = wrap.querySelector('.wv-chip');
+  function wvRefreshChip(){
+    const w = waiverProgress(rec);
+    wvChipEl.className = 'rec-check wv-chip ' + w.state;
+    wvChipEl.querySelector('.box').textContent = w.state==='full'?'✓':(w.state==='part'?'…':'');
+    wvChipEl.querySelector('.wv-lbl').textContent = `Waivers ${w.done} of ${w.total}`;
+    wrap.querySelector('.rec-filled').textContent = recFilledCount(rec)?recFilledCount(rec)+' filled':'empty';
+  }
+  wvChipEl.addEventListener('click', () => { wvPanel.style.display = wvPanel.style.display==='none' ? 'block' : 'none'; });
+  wrap.querySelectorAll('[data-wv]').forEach(btn => btn.addEventListener('click', () => {
+    const k = btn.dataset.wv; ws[k] = !ws[k]; if(!ws[k]) delete ws[k];
+    btn.classList.toggle('on', !!ws[k]); btn.querySelector('.box').textContent = ws[k]?'✓':'';
+    wvRefreshChip(); recSchedule();
+  }));
+  wrap.querySelectorAll('[data-wl]').forEach(btn => btn.addEventListener('click', () => {
+    const k = btn.dataset.wl;
+    ws.liability = (ws.liability === k) ? '' : k;
+    if(!ws.liability) delete ws.liability;
+    wrap.querySelectorAll('[data-wl]').forEach(b => { const on = ws.liability===b.dataset.wl; b.classList.toggle('on', on); b.querySelector('.box').textContent = on?'✓':''; });
+    wvRefreshChip(); recSchedule();
+  }));
+  // per-cadet sergeant note lines (delete removes them from the shared feed too)
+  wrap.querySelectorAll('.recnote-del').forEach(btn => btn.addEventListener('click', async () => {
+    const id = btn.closest('.recnote').dataset.cnid;
+    if(!confirm('Delete this sergeant note? It disappears from the /sgt page too.')) return;
+    try{
+      cadNotes = ((await RPDRoster.cadetnotes.get()) || []).filter(x=>x.id!==id);
+      await RPDRoster.cadetnotes.save(cadNotes);
+      btn.closest('.recnote').remove();
+      const list = wrap.querySelector('.rec-cnotes-list');
+      if(list && !list.children.length) list.innerHTML = '<div class="recnotes-empty">No sergeant notes on this cadet yet.</div>';
+      loadRecNotes();   // keep the merged panel in step
+    }catch(e){ showToast('Could not delete. Try again.'); }
   }));
   return wrap;
 }
@@ -3093,6 +3178,11 @@ function aprCurrentDisplay(prop, c){
     if(c.field==='joinDate') return entry.joinDate ? aprFmtDate(entry.joinDate) : '—';
     return entry[c.field] || '—';
   }
+  if(c.owner === 'waiver'){
+    const ws = (recData[prop.cadet] || {}).waiverSet || {};
+    if(c.field === 'liability') return ws.liability ? waiverLiabLabel(ws.liability) : '—';
+    return ws[c.field] ? 'On file' : 'Missing';
+  }
   const rec = recData[prop.cadet] || {};
   const v = rec[c.field];
   if(typeof c.raw === 'boolean') return v ? 'Yes' : 'No';
@@ -3161,6 +3251,11 @@ async function aprDecide(id, approve, el){
             else if(c.field==='joinDate'){ if(c.raw) entry.joinDate=c.raw; else delete entry.joinDate; }
             else entry[c.field]=c.raw;
             rosterTouched=true;
+          } else if(c.owner==='waiver'){
+            const ws = rec.waiverSet || (rec.waiverSet = {});
+            if(c.field==='liability'){ if(c.raw) ws.liability=c.raw; else delete ws.liability; }
+            else { if(c.raw) ws[c.field]=true; else delete ws[c.field]; }
+            recTouched=true;
           } else { rec[c.field]=c.raw; recTouched=true; }
         });
         if(recTouched) await RPDRoster.records.save(recData);
@@ -3186,20 +3281,29 @@ async function loadRecNotes(){
   if(!wrap) return;
   if(!recNotesWired){ recNotesWired=true; document.getElementById('recNotesHead').addEventListener('click', ()=>wrap.classList.toggle('open')); }
   try{
-    const arr = (await RPDRoster.sgtnotes.get()) || [];
+    const gen = (await RPDRoster.sgtnotes.get()) || [];
+    try{ cadNotes = (await RPDRoster.cadetnotes.get()) || []; }catch(e){}
+    const merged = gen.map(n=>({ ...n, _src:'gen' })).concat(cadNotes.map(n=>({ ...n, _src:'cad' })));
     wrap.style.display='';
-    cnt.textContent = arr.length ? '('+arr.length+')' : '(none yet)';
-    if(!arr.length){ body.innerHTML='<div class="recnotes-empty">No notes posted from the /sgt page yet.</div>'; return; }
+    cnt.textContent = merged.length ? '('+merged.length+')' : '(none yet)';
+    if(!merged.length){ body.innerHTML='<div class="recnotes-empty">No notes posted from the /sgt page yet.</div>'; return; }
     body.innerHTML='';
-    arr.slice().sort((a,b)=>(b.at||0)-(a.at||0)).forEach(n=>{
+    merged.sort((a,b)=>(b.at||0)-(a.at||0)).forEach(n=>{
       const el=document.createElement('div'); el.className='recnote';
       const when = n.at ? new Date(n.at).toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'}) : '';
-      el.innerHTML = `<div class="recnote-top"><span class="recnote-name">${escapeHtmlA(n.name)}</span><span class="recnote-when">${when}</span><button class="recnote-del" title="Delete note">&times;</button></div><div class="recnote-text">${escapeHtmlA(n.text)}</div>`;
+      const who = n._src==='cad' ? `${escapeHtmlA(n.name)} · ${escapeHtmlA(n.cadet)}` : escapeHtmlA(n.name);
+      el.innerHTML = `<div class="recnote-top"><span class="recnote-name">${who}</span><span class="recnote-when">${when}</span><button class="recnote-del" title="Delete note">&times;</button></div><div class="recnote-text">${escapeHtmlA(n.text)}</div>`;
       el.querySelector('.recnote-del').addEventListener('click', async ()=>{
         if(!confirm('Delete this note from the sergeant board?')) return;
         try{
-          const cur = ((await RPDRoster.sgtnotes.get()) || []).filter(x=>x.id!==n.id);
-          await RPDRoster.sgtnotes.save(cur);
+          if(n._src==='cad'){
+            cadNotes = ((await RPDRoster.cadetnotes.get()) || []).filter(x=>x.id!==n.id);
+            await RPDRoster.cadetnotes.save(cadNotes);
+            if(document.getElementById('recordsView').classList.contains('on')) renderRecords();
+          } else {
+            const cur = ((await RPDRoster.sgtnotes.get()) || []).filter(x=>x.id!==n.id);
+            await RPDRoster.sgtnotes.save(cur);
+          }
           loadRecNotes();
         }catch(e){ showToast('Could not delete. Try again.'); }
       });

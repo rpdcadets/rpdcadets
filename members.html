@@ -1,3 +1,4 @@
+<!-- members.html | Build v3 | 2026-07-08 | Roster List/Grid view toggle; build stamp moved to the passcode lock screen -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -167,6 +168,26 @@ footer{background:var(--navy);border-top:1px solid rgba(255,255,255,0.05);paddin
 .admin-header::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--gold)}
 .admin-badge{width:42px;height:42px;border-radius:10px;background:rgba(212,169,82,0.15);border:1px solid rgba(212,169,82,0.25);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:14px;color:var(--gold)}
 
+/* Roster view toggle (List / Grid) */
+.roster-view-toggle{display:flex;justify-content:flex-end;margin-bottom:16px}
+.rvt-group{display:inline-flex;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:8px;overflow:hidden}
+.rvt-btn{display:flex;align-items:center;gap:6px;padding:7px 14px;background:transparent;border:none;cursor:pointer;color:var(--text-muted);font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;transition:all .25s}
+.rvt-btn svg{width:14px;height:14px}
+.rvt-btn:hover{color:var(--white);background:rgba(255,255,255,0.04)}
+.rvt-btn.active{background:rgba(192,57,43,0.2);color:var(--white)}
+
+/* Grid view: squads side by side, org-chart style */
+.roster-cards.view-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:20px;align-items:start}
+.roster-cards.view-grid .admin-card{grid-column:1/-1;margin-bottom:0}
+.roster-cards.view-grid .squad-card{margin-bottom:0}
+.roster-cards.view-grid .squad-header{padding:16px 18px;gap:12px;flex-wrap:wrap}
+.roster-cards.view-grid .squad-name{font-size:20px}
+.roster-cards.view-grid .squad-members{padding:6px 8px}
+.roster-cards.view-grid .member-row{padding:8px 10px;gap:10px}
+.roster-cards.view-grid .member-name{font-size:13px}
+.roster-cards.view-grid .member-role{font-size:10px;padding:3px 8px}
+.roster-cards.view-grid .member-note{display:none}
+
 /* ═══ DIGITAL ID TAB ═══ */
 .id-selector{text-align:center;margin-bottom:32px}
 .id-selector p{font-size:14px;color:var(--text-muted);margin-bottom:16px;font-weight:300}
@@ -291,6 +312,7 @@ footer{background:var(--navy);border-top:1px solid rgba(255,255,255,0.05);paddin
 <button class="lock-btn" id="unlockBtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>Unlock</button>
 <div class="lock-error" id="lockError">Incorrect passcode. Please try again.</div>
 <div class="lock-home"><a href="index.html"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>Return to Home</a></div>
+<div style="margin-top:20px;font-family:'Barlow Condensed',sans-serif;font-size:10px;letter-spacing:1.5px;color:rgba(255,255,255,0.15)">Build v3</div>
 </div>
 </div>
 
@@ -306,6 +328,16 @@ footer{background:var(--navy);border-top:1px solid rgba(255,255,255,0.05);paddin
 (function(){
   function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
   const SQUAD_AVATAR = { leadership:'c-red', 1:'c-red', 2:'c-yellow', 3:'c-blue', 4:'c-green' };
+
+  /* Roster view preference: 'list' (stacked) or 'grid' (side by side) */
+  const VIEW_KEY = 'rpd761_roster_view';
+  let rosterView = 'list';
+  try { rosterView = localStorage.getItem(VIEW_KEY) === 'grid' ? 'grid' : 'list'; } catch(e){}
+  window.setRosterView = function(v){
+    rosterView = (v === 'grid') ? 'grid' : 'list';
+    try { localStorage.setItem(VIEW_KEY, rosterView); } catch(e){}
+    window.renderSharedRoster();
+  };
 
   function memberRowHTML(m, squad, isLead){
     const R = window.RPDRoster;
@@ -334,7 +366,13 @@ footer{background:var(--navy);border-top:1px solid rgba(255,255,255,0.05);paddin
     const mount = document.getElementById('sharedRosterMount');
     if(!mount || typeof window.RPDRoster === 'undefined') return;
     const R = window.RPDRoster;
-    let html = '';
+    const iconList = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>';
+    const iconGrid = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="18" rx="1"/><rect x="14" y="3" width="7" height="18" rx="1"/></svg>';
+    let html = '<div class="roster-view-toggle"><div class="rvt-group">'
+      + '<button type="button" class="rvt-btn' + (rosterView==='list'?' active':'') + '" onclick="setRosterView(\'list\')">' + iconList + 'List</button>'
+      + '<button type="button" class="rvt-btn' + (rosterView==='grid'?' active':'') + '" onclick="setRosterView(\'grid\')">' + iconGrid + 'Grid</button>'
+      + '</div></div>'
+      + '<div class="roster-cards' + (rosterView==='grid'?' view-grid':'') + '">';
 
     R.bySquad().forEach(g => {
       if(g.squad === 'leadership'){
@@ -373,6 +411,7 @@ footer{background:var(--navy);border-top:1px solid rgba(255,255,255,0.05);paddin
       html += `</div></div>`;
     }
 
+    html += '</div>'; /* close .roster-cards */
     mount.innerHTML = html;
   };
 

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- sgt.html  |  Build v4  |  updated 2026-07-08  |  pairs with roster.js v24  |  Advisor-only fields removed entirely from the page (Age still shown, computed server of DOB never sent to the layout); per-cadet sergeant note lines on every records card (post with name, delete per entry, no approval) that also appear in the merged Notes tab; itemized waiver status with Missing list and waiver proposals through the approval queue; Act. Sgt. rank in every name picker and proposal rank dropdown; records-tab notice shortened (stale redaction wording removed). -->
+<!-- sgt.html  |  Build v5  |  updated 2026-07-15  |  pairs with roster.js v25  |  New Observers tab fed by the public /guest interest form: decrypted list (records key), expandable cards with age computed from DOB, four-state status chips (Visited / GroupMe / Applied / No Longer Interested, click again to clear), full-record edit with duplicate-index rehash on email or DOB change, per-observer sergeant note lines, and delete (frees the duplicate check so the person can resubmit). Prior v4 notes: |  Advisor-only fields removed entirely from the page (Age still shown, computed server of DOB never sent to the layout); per-cadet sergeant note lines on every records card (post with name, delete per entry, no approval) that also appear in the merged Notes tab; itemized waiver status with Missing list and waiver proposals through the approval queue; Act. Sgt. rank in every name picker and proposal rank dropdown; records-tab notice shortened (stale redaction wording removed). -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -10,7 +10,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@300;400;500;600;700&family=Barlow+Condensed:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
-<script src="roster.js?v=24"></script>
+<script src="roster.js?v=25"></script>
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
 :root{--navy:#1a2744;--navy-deep:#0f1a30;--navy-light:#253758;--red:#c0392b;--red-glow:#e74c3c;--gold:#d4a952;--gold-light:#f0d68a;--white:#fff;--text-muted:#8899b0;--green:#27ae60;--amber:#d97706;--red-abs:#dc2626;--card-bg:rgba(255,255,255,0.025);--card-border:rgba(255,255,255,0.06);--input-bg:rgba(255,255,255,0.04);--input-border:rgba(255,255,255,0.1);--input-focus:rgba(192,57,43,0.4)}
@@ -252,6 +252,28 @@ button.rec-check{cursor:pointer;transition:all .18s}
 .ca-log-nums{font-family:'Barlow Condensed',sans-serif;font-size:13px;letter-spacing:0.5px;text-align:right;white-space:nowrap}
 .ca-log-nums .cp{color:var(--green)}.ca-log-nums .ce{color:var(--gold-light)}.ca-log-nums .cu{color:#f87171}
 @media(max-width:680px){.ca-stats{grid-template-columns:1fr 1fr}.ca-d-cols{grid-template-columns:1fr}}
+
+/* OBSERVERS */
+.obs-pill{display:inline-block;font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;border-radius:4px;padding:2px 7px;margin-left:8px;vertical-align:middle;border:1px solid var(--card-border);color:var(--text-muted)}
+.obs-pill.st-visited{border-color:rgba(212,169,82,0.5);color:var(--gold-light)}
+.obs-pill.st-groupme{border-color:rgba(136,153,176,0.6);color:#b9c7da}
+.obs-pill.st-applied{border-color:rgba(39,174,96,0.55);color:#6fdc9d}
+.obs-pill.st-nli{border-color:rgba(220,38,38,0.45);color:#f87171}
+.obs-status{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:16px}
+.obs-status-l{font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);margin-right:2px}
+.os-chip{background:rgba(255,255,255,0.03);border:1px solid var(--card-border);color:var(--text-muted);border-radius:20px;padding:6px 14px;font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;cursor:pointer}
+.os-chip:hover{color:var(--white)}
+.os-chip:disabled{opacity:.5;cursor:wait}
+.os-chip.on[data-st=visited]{background:rgba(212,169,82,0.12);border-color:var(--gold);color:var(--gold-light)}
+.os-chip.on[data-st=groupme]{background:rgba(136,153,176,0.14);border-color:#8899b0;color:#cfdaea}
+.os-chip.on[data-st=applied]{background:rgba(39,174,96,0.12);border-color:var(--green);color:#8ee7b1}
+.os-chip.on[data-st=nli]{background:rgba(220,38,38,0.1);border-color:var(--red-abs);color:#f8a3a3}
+.obs-heard{margin-top:14px;font-size:12.5px;line-height:1.6;color:var(--text-muted);background:rgba(255,255,255,0.02);border:1px solid var(--card-border);border-radius:9px;padding:9px 12px}
+.obs-heard b{color:var(--gold-light);font-weight:600}
+.obs-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:16px}
+.obs-del{margin-left:auto;background:none;border:1px solid rgba(220,38,38,0.35);color:#f87171;border-radius:8px;font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;padding:9px 16px;cursor:pointer}
+.obs-del:hover{background:rgba(220,38,38,0.12)}
+.obs-edit-form{margin-top:14px;padding:14px;border:1px dashed rgba(212,169,82,0.35);border-radius:12px;background:rgba(212,169,82,0.03)}
 </style>
 </head>
 <body>
@@ -266,7 +288,7 @@ button.rec-check{cursor:pointer;transition:all .18s}
     <button class="lock-btn" id="goBtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg><span id="goLabel">Unlock</span></button>
     <div class="lock-error" id="lockErr">Incorrect passcode.</div>
     <div class="lock-home"><a href="index.html">← Return to Home</a></div>
-    <div style="margin-top:16px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v4</div>
+    <div style="margin-top:16px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v5</div>
   </div>
 </div>
 
@@ -283,6 +305,7 @@ button.rec-check{cursor:pointer;transition:all .18s}
       <button class="sgt-tab" id="tabRa" onclick="showPanel('ra')">Ride-Along Log</button>
       <button class="sgt-tab" id="tabCa" onclick="showPanel('ca')">Current Attendance</button>
       <button class="sgt-tab" id="tabNotes" onclick="showPanel('notes')">Notes</button>
+      <button class="sgt-tab" id="tabObs" onclick="showPanel('obs')">Observers</button>
     </div>
 
     <!-- CADET RECORDS -->
@@ -347,13 +370,22 @@ button.rec-check{cursor:pointer;transition:all .18s}
       </div>
       <div id="noteFeed"><p class="empty">Loading…</p></div>
     </div>
+
+    <!-- OBSERVERS -->
+    <div class="panel" id="panelObs">
+      <div class="rec-warning">Submissions from the public observer interest form. Edits save immediately with no approval step. Treat everything here as confidential.</div>
+      <div class="bar">
+        <input type="text" id="obsSearch" class="search" placeholder="Search observer…">
+      </div>
+      <div id="obsRows"><p class="empty">Loading…</p></div>
+    </div>
   </div>
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script>
-console.log('[sgt] Build v4');
+console.log('[sgt] Build v5');
 const SESSION_KEY = 'rpd761_sgt_auth';   // sergeant-only; NOT shared with admin or cadet pages
 const NAME_KEY = 'rpd761_sgt_name';      // remembers who this device posts as
 const APPROVAL_FORM = 'https://submit-form.com/9efCBVzQT';   // Formspark "Edits Needing Approval" (notifies the approving advisor)
@@ -404,11 +436,13 @@ async function enterApp(recOk){
     try{ officers = (await RPDRoster.officers.get()) || []; }catch(e){ officers=[]; }
     fillWhoSelects(); fillRapSelects();
     renderRecords(); renderRaQueued(); renderRaList(); renderNotes();
+    loadObservers();
   } else {
     const msg = '<p class="empty">This section is unavailable for this passcode. Ask an advisor to re-save the sergeant passcode in the admin console.</p>';
     document.getElementById('recRows').innerHTML = msg;
     document.getElementById('raList').innerHTML = msg;
     document.getElementById('noteFeed').innerHTML = msg;
+    document.getElementById('obsRows').innerHTML = msg;
     document.querySelector('#panelRa .ra-form').style.display='none';
     document.querySelector('#panelNotes .note-form').style.display='none';
   }
@@ -427,18 +461,20 @@ document.getElementById('pc').addEventListener('keydown', e=>{ if(e.key==='Enter
 
 /* ── TABS ── */
 function showPanel(t){
-  ['Rec','Ra','Ca','Notes'].forEach(x=>{ document.getElementById('tab'+x).classList.remove('on'); document.getElementById('panel'+x).classList.remove('on'); });
-  const cap = t==='rec'?'Rec':t==='ra'?'Ra':t==='ca'?'Ca':'Notes';
+  ['Rec','Ra','Ca','Notes','Obs'].forEach(x=>{ document.getElementById('tab'+x).classList.remove('on'); document.getElementById('panel'+x).classList.remove('on'); });
+  const cap = t==='rec'?'Rec':t==='ra'?'Ra':t==='ca'?'Ca':t==='obs'?'Obs':'Notes';
   document.getElementById('tab'+cap).classList.add('on');
   document.getElementById('panel'+cap).classList.add('on');
   if(t==='ca') loadCurrentAttendance();
   if(t==='notes' && recordsOn) refreshNotes();
   if(t==='ra' && recordsOn) refreshPending();
+  if(t==='obs' && recordsOn) refreshObservers();
 }
 let wired=false;
 function wireOnce(){
   if(wired) return; wired=true;
   document.getElementById('recSearch').addEventListener('input', renderRecords);
+  document.getElementById('obsSearch').addEventListener('input', renderObservers);
   document.getElementById('raSearch').addEventListener('input', renderRaList);
   document.getElementById('raCsv').addEventListener('click', raExportCSV);
   document.getElementById('rapSubmit').addEventListener('click', rapSubmit);
@@ -1010,6 +1046,206 @@ function caDetailHtml(r){
       '<div class="tot"><span>Total hours</span><b>'+r.totalHours+'</b></div>'+
     '</div>'+
     '<div class="ca-d-cols"><div class="ca-d-col"><div class="ca-d-h">Meetings</div>'+mRows+'</div><div class="ca-d-col"><div class="ca-d-h">Events</div>'+eRows+'</div></div>';
+}
+
+/* ══════════ OBSERVERS (public /guest form submissions) ══════════
+   Entries arrive RSA-envelope encrypted; RPDRoster.observers handles all
+   crypto. Every mutation re-reads the list first (same clobber-protection
+   idea as the notes feed), then re-encrypts the single record it touched.
+   entry = { id, at, hash, data:{ name, dob, phone, email, school,
+   parentName, parentPhone, parentEmail, heard, heardCadet, heardOther,
+   status:''|'visited'|'groupme'|'applied'|'nli', notes:[{id,name,text,at}],
+   submittedAt, updatedAt } } */
+let obsList = [];
+const OBS_STATUS = [ ['visited','Visited'], ['groupme','GroupMe'], ['applied','Applied'], ['nli','No Longer Interested'] ];
+function obsStatusLabel(k){ const f=OBS_STATUS.find(x=>x[0]===k); return f?f[1]:''; }
+async function loadObservers(){
+  const host=document.getElementById('obsRows');
+  try{
+    await RPDRoster.observers.ensureKeys();   // no-op after first run
+    obsList = (await RPDRoster.observers.get()) || [];
+    renderObservers();
+  }catch(e){ if(host) host.innerHTML='<p class="empty">Could not load observers. Check your connection and reload.</p>'; }
+}
+async function refreshObservers(){ try{ obsList = (await RPDRoster.observers.get()) || []; }catch(e){} renderObservers(); }
+function obsHeardText(d){
+  if(!d.heard) return '';
+  if(d.heard==='Current Cadet') return 'Current Cadet' + (d.heardCadet ? ': '+d.heardCadet : '');
+  if(d.heard==='Other') return 'Other' + (d.heardOther ? ': '+d.heardOther : '');
+  return d.heard;
+}
+function renderObservers(){
+  const host=document.getElementById('obsRows'); if(!host || !recordsOn) return;
+  const q=(document.getElementById('obsSearch').value||'').toLowerCase().trim();
+  const list=obsList.filter(o=> o.broken || !q || (o.data.name||'').toLowerCase().includes(q) || (o.data.email||'').toLowerCase().includes(q) || (o.data.school||'').toLowerCase().includes(q));
+  host.innerHTML='';
+  if(!obsList.length){ host.innerHTML='<p class="empty">No observer submissions yet. Share the /guest link with visitors and their forms will appear here.</p>'; return; }
+  if(!list.length){ host.innerHTML='<p class="empty">No observer matches.</p>'; return; }
+  list.forEach(o=> host.appendChild(obsCard(o)));
+}
+function obsCard(o){
+  const wrap=document.createElement('div'); wrap.className='rec-card';
+  if(o.broken){
+    wrap.innerHTML='<div class="rec-head"><div><span class="rec-name">Unreadable entry</span><span class="obs-pill">Error</span></div>'+
+      '<div class="rec-meta"><button class="obs-del" data-act="del">Delete</button></div></div>';
+    wrap.querySelector('[data-act="del"]').addEventListener('click', async e=>{ e.stopPropagation();
+      if(!confirm('Delete this unreadable entry? It cannot be recovered.')) return;
+      try{ await RPDRoster.observers.remove(o.id, null); obsList=obsList.filter(x=>x.id!==o.id); renderObservers(); showToast('Entry deleted'); }
+      catch(err){ showToast('Could not delete. Try again.'); }
+    });
+    return wrap;
+  }
+  const d=o.data;
+  const yr=ageFrom(d.dob);
+  const pill = d.status ? `<span class="obs-pill st-${esc(d.status)}">${esc(obsStatusLabel(d.status))}</span>` : '<span class="obs-pill">New</span>';
+  const heard=obsHeardText(d);
+  const chips=OBS_STATUS.map(([k,l])=>`<button type="button" class="os-chip ${d.status===k?'on':''}" data-st="${k}">${l}</button>`).join('');
+  const nRows=(d.notes||[]).slice().sort((a,b)=>(b.at||0)-(a.at||0)).map(x=>
+    `<div class="cnote" data-onid="${esc(x.id)}"><div class="cnote-top"><span class="cnote-name">${esc(x.name)}</span><span class="cnote-when">${fmtWhen(x.at)}</span><button class="note-del onote-del" title="Delete note">&times;</button></div><div class="note-text">${esc(x.text)}</div></div>`
+  ).join('') || '<div class="cnote-empty">No notes on this observer yet.</div>';
+  wrap.innerHTML=
+    `<div class="rec-head">
+       <div><span class="rec-name">${esc(d.name)}</span>${pill}</div>
+       <div class="rec-meta"><span class="cnote-when">${fmtWhen(o.at)}</span><svg class="rec-chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div>
+     </div>
+     <div class="rec-body" style="display:none">
+       <div class="rec-grid3">
+         <div class="rec-field"><span>Date of birth</span>${rov(fmtDateLong(d.dob))}</div>
+         <div class="rec-field"><span>Age</span>${rov(yr===null?'':yr+' yrs','hl')}</div>
+         <div class="rec-field"><span>School</span>${rov(d.school)}</div>
+       </div>
+       <div class="rec-grid">
+         <div class="rec-field"><span>Phone</span>${rov(d.phone)}</div>
+         <div class="rec-field"><span>Email</span>${rov(d.email)}</div>
+       </div>
+       <div class="rec-grid3">
+         <div class="rec-field"><span>Parent / guardian</span>${rov(d.parentName)}</div>
+         <div class="rec-field"><span>Parent phone</span>${rov(d.parentPhone)}</div>
+         <div class="rec-field"><span>Parent email</span>${rov(d.parentEmail)}</div>
+       </div>
+       ${heard?`<div class="obs-heard"><b>How they heard about us:</b> ${esc(heard)}</div>`:''}
+       <div class="obs-status"><span class="obs-status-l">Status</span>${chips}</div>
+       <div class="cnotes">
+         <div class="cnotes-h">Sergeant notes on this observer</div>
+         <div class="cnote-add">
+           <input type="text" class="cnote-input" placeholder="Add a note line for ${esc(d.name)}…" maxlength="500">
+           <select class="cnote-who"></select>
+           <button class="btn primary onote-post">Post</button>
+         </div>
+         <div class="cnote-list">${nRows}</div>
+       </div>
+       <div class="obs-actions">
+         <button class="btn" data-act="edit">Edit details</button>
+         <button class="obs-del" data-act="del">Delete observer</button>
+       </div>
+       <div class="obs-edit-host"></div>
+     </div>`;
+  const body=wrap.querySelector('.rec-body');
+  wrap.querySelector('.rec-head').addEventListener('click', ()=>{ const open=body.style.display!=='none'; body.style.display=open?'none':'block'; wrap.classList.toggle('open', !open); });
+  wrap.querySelectorAll('.os-chip').forEach(b=> b.addEventListener('click', ()=> obsSetStatus(wrap, o, b.dataset.st)));
+  const whoSel=wrap.querySelector('.cnote-who');
+  let saved=''; try{ saved=localStorage.getItem(NAME_KEY)||''; }catch(e){}
+  whoSel.innerHTML='<option value="">Your name…</option>'+leadershipNames().map(n=>`<option value="${esc(n)}" ${n===saved?'selected':''}>${esc(n)}</option>`).join('');
+  wrap.querySelector('.onote-post').addEventListener('click', ()=> onotePost(wrap, o));
+  wrap.querySelector('.cnote-input').addEventListener('keydown', e=>{ if(e.key==='Enter') onotePost(wrap, o); });
+  wrap.querySelectorAll('.onote-del').forEach(b=> b.addEventListener('click', ()=> onoteDelete(o, b.closest('.cnote').dataset.onid)));
+  wrap.querySelector('[data-act="edit"]').addEventListener('click', ()=> obsOpenEdit(wrap, o));
+  wrap.querySelector('[data-act="del"]').addEventListener('click', ()=> obsDelete(o));
+  return wrap;
+}
+/* Re-read, apply a mutation to the FRESH copy of this one entry, save, and
+   sync the local list. Keeps two sergeants from clobbering each other. */
+async function obsMutate(id, fn){
+  const fresh=(await RPDRoster.observers.get())||[];
+  const entry=fresh.find(x=>x.id===id && !x.broken);
+  if(!entry) throw new Error('entry gone');
+  fn(entry.data);
+  entry.data.updatedAt=Date.now();
+  entry.hash=await RPDRoster.observers.save(entry.id, entry.data, entry.hash);
+  obsList=fresh;
+  return entry;
+}
+async function obsSetStatus(wrap, o, st){
+  const btns=wrap.querySelectorAll('.os-chip'); btns.forEach(b=>b.disabled=true);
+  try{
+    await obsMutate(o.id, d=>{ d.status = (d.status===st ? '' : st); });
+    renderObservers(); showToast('Status updated');
+  }catch(e){ showToast('Could not update. Try again.'); btns.forEach(b=>b.disabled=false); }
+}
+async function onotePost(wrap, o){
+  const input=wrap.querySelector('.cnote-input');
+  const by=wrap.querySelector('.cnote-who').value;
+  const text=(input.value||'').trim();
+  if(!by){ showToast('Select your name first'); return; }
+  if(!text){ showToast('Type a note first'); return; }
+  try{ localStorage.setItem(NAME_KEY, by); }catch(e){}
+  const btn=wrap.querySelector('.onote-post'); btn.disabled=true;
+  try{
+    await obsMutate(o.id, d=>{ d.notes=d.notes||[]; d.notes.push({ id:genId('on'), name:by, text, at:Date.now() }); });
+    renderObservers(); showToast('Note posted');
+  }catch(e){ showToast('Could not post. Check your connection.'); }
+  btn.disabled=false;
+}
+async function onoteDelete(o, nid){
+  if(!confirm('Delete this note?')) return;
+  try{
+    await obsMutate(o.id, d=>{ d.notes=(d.notes||[]).filter(x=>x.id!==nid); });
+    renderObservers(); showToast('Note deleted');
+  }catch(e){ showToast('Could not delete. Try again.'); }
+}
+async function obsDelete(o){
+  if(!confirm('Delete '+(o.data.name||'this observer')+'? This also frees the duplicate check, so the same person could submit the form again.')) return;
+  try{
+    await RPDRoster.observers.remove(o.id, o.hash);
+    obsList=obsList.filter(x=>x.id!==o.id);
+    renderObservers(); showToast('Observer deleted');
+  }catch(e){ showToast('Could not delete. Try again.'); }
+}
+function obsOpenEdit(wrap, o){
+  const host=wrap.querySelector('.obs-edit-host');
+  if(host.querySelector('.obs-edit-form')){ host.innerHTML=''; return; }   // toggle closed
+  const d=o.data;
+  const HEARD=['School Resource Officer','Friend','Current Cadet','Flyer or Brochure','Social Media','Website','Community Event','Other'];
+  const hOpts='<option value=""></option>'+HEARD.map(h=>`<option value="${h}" ${h===(d.heard||'')?'selected':''}>${h}</option>`).join('');
+  host.innerHTML=
+    `<div class="obs-edit-form">
+      <div class="prop-h">Edit observer details</div>
+      <div class="prop-sub">Changes save immediately. If you change the email or date of birth, the duplicate check updates to match.</div>
+      <div class="rec-grid3">
+        <label class="rec-field"><span>Full name</span><input type="text" data-f="name" value="${esc(d.name)}"></label>
+        <label class="rec-field"><span>Date of birth</span><input type="date" data-f="dob" value="${esc(d.dob)}"></label>
+        <label class="rec-field"><span>School</span><input type="text" data-f="school" value="${esc(d.school)}"></label>
+      </div>
+      <div class="rec-grid">
+        <label class="rec-field"><span>Phone</span><input type="tel" data-f="phone" value="${esc(d.phone)}"></label>
+        <label class="rec-field"><span>Email</span><input type="email" data-f="email" value="${esc(d.email)}"></label>
+      </div>
+      <div class="rec-grid3">
+        <label class="rec-field"><span>Parent / guardian</span><input type="text" data-f="parentName" value="${esc(d.parentName)}"></label>
+        <label class="rec-field"><span>Parent phone</span><input type="tel" data-f="parentPhone" value="${esc(d.parentPhone)}"></label>
+        <label class="rec-field"><span>Parent email</span><input type="email" data-f="parentEmail" value="${esc(d.parentEmail)}"></label>
+      </div>
+      <div class="rec-grid3">
+        <label class="rec-field"><span>How they heard</span><select data-f="heard">${hOpts}</select></label>
+        <label class="rec-field"><span>Cadet named (if any)</span><input type="text" data-f="heardCadet" value="${esc(d.heardCadet)}"></label>
+        <label class="rec-field"><span>Other details</span><input type="text" data-f="heardOther" value="${esc(d.heardOther)}"></label>
+      </div>
+      <div class="prop-actions">
+        <button class="btn primary" data-act="save">Save changes</button>
+        <button class="btn" data-act="cancel">Cancel</button>
+      </div>
+    </div>`;
+  host.querySelector('[data-act="cancel"]').addEventListener('click', ()=> host.innerHTML='');
+  host.querySelector('[data-act="save"]').addEventListener('click', async ()=>{
+    const val=f=>{ const el=host.querySelector('[data-f="'+f+'"]'); return el?(el.value||'').trim():''; };
+    if(!val('name')){ showToast('Name cannot be empty'); return; }
+    if(!val('email') || !val('dob')){ showToast('Email and date of birth are required for the duplicate check'); return; }
+    const btn=host.querySelector('[data-act="save"]'); btn.disabled=true;
+    try{
+      await obsMutate(o.id, dd=>{ ['name','dob','school','phone','email','parentName','parentPhone','parentEmail','heard','heardCadet','heardOther'].forEach(f=> dd[f]=val(f)); });
+      renderObservers(); showToast('Observer updated');
+    }catch(e){ showToast('Could not save. Try again.'); btn.disabled=false; }
+  });
 }
 </script>
 </body>

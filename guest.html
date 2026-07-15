@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<!-- guest.html | Build v1 | 07/15/26 | New public observer interest form. Not linked in site navigation; the link is handed out to visitors directly. Submissions are RSA-envelope encrypted in the visitor's browser (public key at roster/observersPub) and written to roster/observersEntries; only the sergeant/advisor tiers can decrypt them on the /sgt Observers tab. Duplicate check via roster/observersIndex, SHA-256 of salt|email|dob; SALT and hash recipe are duplicated verbatim from roster.js v25 and must change in both files together. Formspark notification 6mDKk8ihA. GroupMe handoff on success and on duplicate. Pairs with roster.js v25 and sgt.html v5. -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Observer Interest &mdash; Richardson Police Public Safety Cadets</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@300;400;500;600;700&family=Barlow+Condensed:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{--navy:#1a2744;--navy-deep:#0f1a30;--red:#c0392b;--red-glow:#e74c3c;--gold:#d4a952;--gold-light:#f0d68a;--white:#fff;--text-muted:#8899b0;--card-bg:rgba(255,255,255,0.025);--card-border:rgba(255,255,255,0.06);--input-bg:rgba(255,255,255,0.04);--input-border:rgba(255,255,255,0.1);--input-focus:rgba(192,57,43,0.4)}
+body{font-family:'Barlow',sans-serif;background:var(--navy-deep);color:var(--white);min-height:100vh;-webkit-font-smoothing:antialiased}
+.wrap{max-width:640px;margin:0 auto;padding:48px 24px 60px}
+.head{text-align:center;margin-bottom:34px}
+.head img{height:76px;width:auto;margin-bottom:18px}
+.section-label{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:var(--gold);margin-bottom:10px}
+h1{font-family:'Bebas Neue',sans-serif;font-size:42px;letter-spacing:2px;line-height:1.05;margin-bottom:12px}
+.head p{font-weight:300;font-size:15px;color:var(--text-muted);line-height:1.65;max-width:520px;margin:0 auto}
+.card{background:var(--card-bg);border:1px solid var(--card-border);border-radius:16px;padding:36px 34px 32px;position:relative}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--red),var(--gold),var(--red));border-radius:16px 16px 0 0}
+.f-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.f-row.one{grid-template-columns:1fr}
+.f{display:flex;flex-direction:column;gap:6px;min-width:0}
+.f label{font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:var(--text-muted)}
+.f .req{color:var(--red-glow)}
+.f input,.f select,.f textarea{background:var(--input-bg);border:1px solid var(--input-border);border-radius:9px;padding:12px 13px;color:var(--white);font-family:'Barlow',sans-serif;font-size:15px;outline:none;width:100%}
+.f input:focus,.f select:focus,.f textarea:focus{border-color:var(--input-focus);background:rgba(255,255,255,0.06)}
+.f select{appearance:none;cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%238899b0' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px}
+.f select option{background:var(--navy)}
+.f input[type=date]{color-scheme:dark}
+.f textarea{resize:vertical;min-height:80px}
+.sec-h{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin:26px 0 4px;padding-top:20px;border-top:1px solid var(--card-border)}
+.sec-sub{font-size:12.5px;color:var(--text-muted);line-height:1.5;margin-bottom:14px}
+.submit{width:100%;margin-top:24px;padding:15px;background:var(--red);color:var(--white);border:none;border-radius:10px;font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:15px;letter-spacing:2.5px;text-transform:uppercase;cursor:pointer;box-shadow:0 4px 20px rgba(192,57,43,0.3)}
+.submit:hover{background:var(--red-glow)}
+.submit:disabled{opacity:.5;cursor:wait}
+.form-error{margin-top:14px;font-size:13.5px;color:var(--red-glow);line-height:1.5;text-align:center;min-height:18px}
+.result{text-align:center;display:none}
+.result .check{width:70px;height:70px;margin:6px auto 22px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.result.ok .check{background:rgba(39,174,96,0.12);border:1px solid rgba(39,174,96,0.35);color:#6fdc9d}
+.result.dup .check{background:rgba(212,169,82,0.12);border:1px solid rgba(212,169,82,0.35);color:var(--gold-light)}
+.result h2{font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:1.5px;margin-bottom:12px}
+.result p{font-weight:300;font-size:15px;color:var(--text-muted);line-height:1.7;max-width:460px;margin:0 auto 12px}
+.gm-btn{display:inline-flex;align-items:center;gap:10px;margin-top:16px;padding:14px 30px;background:var(--red);color:var(--white);text-decoration:none;border-radius:10px;font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:15px;letter-spacing:2px;text-transform:uppercase;box-shadow:0 4px 20px rgba(192,57,43,0.3)}
+.gm-btn:hover{background:var(--red-glow)}
+.foot{text-align:center;margin-top:30px;font-size:12.5px;color:var(--text-muted)}
+.foot a{color:var(--gold-light);text-decoration:none}
+.hp{position:absolute;left:-9999px;top:-9999px;height:1px;width:1px;overflow:hidden}
+@media(max-width:560px){.f-row{grid-template-columns:1fr}.card{padding:28px 20px 26px}h1{font-size:34px}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="head">
+    <img src="logo_transparent.png" alt="Richardson Police Department Public Safety Cadets badge logo">
+    <div class="section-label">Richardson Police Department</div>
+    <h1>Public Safety Cadets<br>Observer Interest Form</h1>
+    <p>Thanks for coming out to see the program. Fill this out so we know who visited and can follow up with you. When you finish, you'll get a link to our observer GroupMe where you can ask questions.</p>
+  </div>
+
+  <!-- FORM -->
+  <div class="card" id="formCard">
+    <div class="f-row one">
+      <div class="f"><label for="gName">Full Name <span class="req">*</span></label><input type="text" id="gName" autocomplete="name" placeholder="First and last name"></div>
+    </div>
+    <div class="f-row">
+      <div class="f"><label for="gDob">Date of Birth <span class="req">*</span></label><input type="date" id="gDob" autocomplete="bday"></div>
+      <div class="f"><label for="gSchool">School Attending <span class="req">*</span></label><input type="text" id="gSchool" placeholder="School name"></div>
+    </div>
+    <div class="f-row">
+      <div class="f"><label for="gPhone">Phone Number <span class="req">*</span></label><input type="tel" id="gPhone" autocomplete="tel" placeholder="(000) 000-0000"></div>
+      <div class="f"><label for="gEmail">Email <span class="req">*</span></label><input type="email" id="gEmail" autocomplete="email" placeholder="you@example.com"></div>
+    </div>
+
+    <div class="sec-h">Parent / Guardian</div>
+    <div class="sec-sub" id="parentSub">Required for observers under 18.</div>
+    <div class="f-row one">
+      <div class="f"><label for="gPName">Parent Name <span class="req pr">*</span></label><input type="text" id="gPName" placeholder="Parent or guardian name"></div>
+    </div>
+    <div class="f-row">
+      <div class="f"><label for="gPPhone">Parent Phone Number <span class="req pr">*</span></label><input type="tel" id="gPPhone" placeholder="(000) 000-0000"></div>
+      <div class="f"><label for="gPEmail">Parent Email <span class="req pr">*</span></label><input type="email" id="gPEmail" placeholder="parent@example.com"></div>
+    </div>
+
+    <div class="sec-h">About Your Visit</div>
+    <div class="sec-sub">One quick question so we know what's working.</div>
+    <div class="f-row one">
+      <div class="f"><label for="gHeard">How did you hear about us? <span class="req">*</span></label>
+        <select id="gHeard">
+          <option value=""></option>
+          <option>School Resource Officer</option>
+          <option>Friend</option>
+          <option>Current Cadet</option>
+          <option>Flyer or Brochure</option>
+          <option>Social Media</option>
+          <option>Website</option>
+          <option>Community Event</option>
+          <option>Other</option>
+        </select>
+      </div>
+    </div>
+    <div class="f-row one" id="cadetRow" style="display:none">
+      <div class="f"><label for="gHeardCadet">Cadet's Name <span class="req">*</span></label><input type="text" id="gHeardCadet" placeholder="Which cadet told you about us?"></div>
+    </div>
+    <div class="f-row one" id="otherRow" style="display:none">
+      <div class="f"><label for="gHeardOther">Tell us more <span class="req">*</span></label><textarea id="gHeardOther" placeholder="Where did you hear about the program?"></textarea></div>
+    </div>
+
+    <!-- honeypot: humans never see or fill this -->
+    <div class="hp" aria-hidden="true"><label>Leave this field empty<input type="text" id="hpField" name="website" tabindex="-1" autocomplete="off"></label></div>
+
+    <button class="submit" id="goBtn" type="button">Submit</button>
+    <div class="form-error" id="formErr"></div>
+  </div>
+
+  <!-- SUCCESS -->
+  <div class="card result ok" id="okCard">
+    <div class="check"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+    <h2>You're Checked In</h2>
+    <p>Thanks for observing the program. Your information has been sent to our sergeants, and someone will follow up with you.</p>
+    <p>In the meantime, join the observer GroupMe below. It's the best place to ask questions about the program, meetings, and how to apply.</p>
+    <a class="gm-btn" href="https://groupme.com/join_group/115968010/hd3DGK0Q" target="_blank" rel="noopener">Join the Observer GroupMe</a>
+  </div>
+
+  <!-- DUPLICATE -->
+  <div class="card result dup" id="dupCard">
+    <div class="check"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
+    <h2>We Already Have Your Info</h2>
+    <p>Your information matches a previous observer, so there's nothing else you need to submit. If you're looking for the GroupMe link, it's right below.</p>
+    <a class="gm-btn" href="https://groupme.com/join_group/115968010/hd3DGK0Q" target="_blank" rel="noopener">Join the Observer GroupMe</a>
+    <p style="margin-top:20px;font-size:13px">Think this is a mistake? Email <a href="mailto:advisors@rpdcadets.com" style="color:var(--gold-light)">advisors@rpdcadets.com</a> and we'll sort it out.</p>
+  </div>
+
+  <div class="foot">Richardson Police Department Public Safety Cadets &middot; <a href="https://rpdcadets.com">rpdcadets.com</a></div>
+</div>
+
+<script>
+/* ====== CONFIG ====== */
+const FORMSPARK_ACTION = "https://submit-form.com/6mDKk8ihA";   // New Observer form
+// Same Firebase project as the rest of the site. This page deliberately does
+// NOT load roster.js (its seed carries cadet names, which must never ship in
+// a fully public page), so the config is duplicated here.
+const firebaseConfig = {
+  apiKey:            "AIzaSyDV0vuyGg7gpPXJd2jRqZtUTeKiP3yPxhU",
+  authDomain:        "rpdcadets-quartermaster.firebaseapp.com",
+  databaseURL:       "https://rpdcadets-quartermaster-default-rtdb.firebaseio.com",
+  projectId:         "rpdcadets-quartermaster",
+  storageBucket:     "rpdcadets-quartermaster.firebasestorage.app",
+  messagingSenderId: "832497600166",
+  appId:             "1:832497600166:web:67895b333e07b8806c1667"
+};
+// COUPLING: OBS_SALT and the hash recipe below are duplicated verbatim from
+// roster.js (v25, the observers module). If either ever changes, change BOTH
+// files together or the duplicate check silently stops matching.
+const OBS_SALT = 'rpdcadets-observers-v1';
+const ROOT = 'roster';
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+const enc = new TextEncoder();
+
+function arrToB64(arr){ let s=''; const a=new Uint8Array(arr); for(let i=0;i<a.length;i++) s+=String.fromCharCode(a[i]); return btoa(s); }
+async function obsHash(email, dob){
+  const norm = OBS_SALT + '|' + String(email||'').trim().toLowerCase() + '|' + String(dob||'').trim();
+  const d = await crypto.subtle.digest('SHA-256', enc.encode(norm));
+  return Array.from(new Uint8Array(d)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+/* RSA-OAEP envelope: fresh AES-GCM key per submission, RSA-encrypted with the
+   observers public key. Mirrors obsEnvelope() in roster.js. This page can
+   encrypt but can never decrypt: the private key only exists wrapped under the
+   sergeant/advisor records key. */
+async function envelope(plainJson, pubJwkTxt){
+  const pubKey = await crypto.subtle.importKey('jwk', JSON.parse(pubJwkTxt), { name:'RSA-OAEP', hash:'SHA-256' }, false, ['encrypt']);
+  const aes = crypto.getRandomValues(new Uint8Array(32));
+  const iv  = crypto.getRandomValues(new Uint8Array(12));
+  const key = await crypto.subtle.importKey('raw', aes, { name:'AES-GCM' }, false, ['encrypt']);
+  const ct  = new Uint8Array(await crypto.subtle.encrypt({ name:'AES-GCM', iv }, key, enc.encode(plainJson)));
+  const ek  = new Uint8Array(await crypto.subtle.encrypt({ name:'RSA-OAEP' }, pubKey, aes));
+  return arrToB64(ek) + '.' + arrToB64(iv) + '.' + arrToB64(ct);
+}
+
+function v(id){ const el=document.getElementById(id); return el?(el.value||'').trim():''; }
+function ageFrom(dob){
+  if(!dob) return null;
+  const d=new Date(dob+'T00:00:00'); if(isNaN(d)) return null;
+  const now=new Date();
+  let a=now.getFullYear()-d.getFullYear();
+  const m=now.getMonth()-d.getMonth();
+  if(m<0 || (m===0 && now.getDate()<d.getDate())) a--;
+  return a;
+}
+function parentRequired(){
+  const a=ageFrom(v('gDob'));
+  return a===null || a<18;   // no DOB yet = treat as a minor
+}
+function syncParentUi(){
+  const req=parentRequired();
+  document.querySelectorAll('.req.pr').forEach(el=> el.style.display = req?'':'none');
+  document.getElementById('parentSub').textContent = req
+    ? 'Required for observers under 18.'
+    : 'Optional since you are 18 or older, but welcome if you want us to have it.';
+}
+document.getElementById('gDob').addEventListener('change', syncParentUi);
+document.getElementById('gHeard').addEventListener('change', ()=>{
+  const h=v('gHeard');
+  document.getElementById('cadetRow').style.display = h==='Current Cadet' ? '' : 'none';
+  document.getElementById('otherRow').style.display = h==='Other' ? '' : 'none';
+});
+
+let submitting=false, done=false;
+async function submit(){
+  if(submitting || done) return;
+  const err=document.getElementById('formErr'); err.textContent='';
+
+  const name=v('gName'), dob=v('gDob'), phone=v('gPhone'), email=v('gEmail'), school=v('gSchool');
+  const pName=v('gPName'), pPhone=v('gPPhone'), pEmail=v('gPEmail');
+  const heard=v('gHeard'), heardCadet=v('gHeardCadet'), heardOther=v('gHeardOther');
+
+  // honeypot: bots fill it, humans never see it. Pretend success, write nothing.
+  if(v('hpField')){ done=true; showCard('okCard'); return; }
+
+  if(!name){ err.textContent='Please enter your full name.'; return; }
+  if(!dob){ err.textContent='Please enter your date of birth.'; return; }
+  const d=new Date(dob+'T00:00:00');
+  if(isNaN(d) || d>new Date()){ err.textContent='Please enter a valid date of birth.'; return; }
+  if(!phone || phone.replace(/\D/g,'').length<7){ err.textContent='Please enter a valid phone number.'; return; }
+  if(!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ err.textContent='Please enter a valid email address.'; return; }
+  if(!school){ err.textContent='Please enter the school you attend.'; return; }
+  if(parentRequired()){
+    if(!pName){ err.textContent='Please enter a parent or guardian name.'; return; }
+    if(!pPhone || pPhone.replace(/\D/g,'').length<7){ err.textContent='Please enter a valid parent phone number.'; return; }
+    if(!pEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(pEmail)){ err.textContent='Please enter a valid parent email address.'; return; }
+  }
+  if(!heard){ err.textContent='Please tell us how you heard about the program.'; return; }
+  if(heard==='Current Cadet' && !heardCadet){ err.textContent="Please enter the cadet's name."; return; }
+  if(heard==='Other' && !heardOther){ err.textContent='Please tell us a little more in the box provided.'; return; }
+
+  submitting=true;
+  const btn=document.getElementById('goBtn');
+  btn.disabled=true; btn.textContent='Submitting\u2026';
+
+  try{
+    // 1. duplicate check: matching email + DOB means we already have this person
+    const hash=await obsHash(email, dob);
+    const dupSnap=await db.ref(ROOT+'/observersIndex/'+hash).once('value');
+    if(dupSnap.exists()){ done=true; showCard('dupCard'); return; }
+
+    // 2. fetch the public key and encrypt the submission in this browser
+    const pubSnap=await db.ref(ROOT+'/observersPub').once('value');
+    if(!pubSnap.exists()){
+      err.textContent='This form is not ready to accept submissions yet. Please let a sergeant know, or email advisors@rpdcadets.com.';
+      btn.disabled=false; btn.textContent='Submit'; submitting=false; return;
+    }
+    const payload={ name, dob, phone, email, school, parentName:pName, parentPhone:pPhone, parentEmail:pEmail,
+                    heard, heardCadet: heard==='Current Cadet'?heardCadet:'', heardOther: heard==='Other'?heardOther:'',
+                    status:'', notes:[], submittedAt:Date.now(), updatedAt:Date.now() };
+    const env=await envelope(JSON.stringify(payload), pubSnap.val());
+
+    // 3. write the entry, then claim the duplicate-check hash
+    await db.ref(ROOT+'/observersEntries').push({ env, at:Date.now() });
+    try{ await db.ref(ROOT+'/observersIndex/'+hash).set(true); }catch(e){}
+
+    // 4. email notification: best effort, never blocks the visitor
+    try{
+      await fetch(FORMSPARK_ACTION, {
+        method:'POST', headers:{ 'Content-Type':'application/json', 'Accept':'application/json' },
+        body: JSON.stringify({
+          'Full Name':name, 'Date of Birth':dob, 'Phone':phone, email:email, 'School':school,
+          'Parent Name':pName, 'Parent Phone':pPhone, 'Parent Email':pEmail,
+          'How They Heard': heard + (heard==='Current Cadet'&&heardCadet?': '+heardCadet:'') + (heard==='Other'&&heardOther?': '+heardOther:'')
+        })
+      });
+    }catch(e){}
+
+    done=true; showCard('okCard');
+  }catch(e){
+    err.textContent='Something went wrong sending your form. Check your connection and try again.';
+    btn.disabled=false; btn.textContent='Submit'; submitting=false;
+  }
+}
+function showCard(id){
+  document.getElementById('formCard').style.display='none';
+  document.getElementById(id).style.display='block';
+  window.scrollTo({ top:0, behavior:'smooth' });
+}
+document.getElementById('goBtn').addEventListener('click', submit);
+syncParentUi();
+</script>
+</body>
+</html>

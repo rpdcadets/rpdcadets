@@ -1,4 +1,4 @@
-/* roster.js  |  VERSION 24  |  updated 2026-07-08  |  Act. Sgt. rank added everywhere ranks matter (order, display prefix, role label, squad lead fallback, sections, and the attendance rank-strip regex so Act. Sgt. never drops out of hour counts); new records-key node roster/cadetnotes (per-cadet sergeant note lines shared with the main notes feed) */
+/* roster.js  |  VERSION 25  |  updated 2026-07-15  |  New RPDRoster.observers module for the public /guest interest form: RSA-OAEP envelope encryption (public key encrypts in the visitor's browser, private key wrapped under the records key so only advisor/ltd/sgt tiers can read), nodes roster/observersPub, roster/observersKeyWrap, roster/observersEntries, roster/observersIndex (SHA-256 email+DOB duplicate check, salt shared verbatim with guest.html). No changes to any existing module. */
 /* ═══════════════════════════════════════════════════════════════════════
    RPD CADETS — SHARED ROSTER ENGINE
    One encrypted roster in Firebase, read by members, trackers, and
@@ -392,6 +392,14 @@
     // from /admin (advisor), read by the Trackers Event form (cadet) for the picker.
     eventNames: {
       get: eventNamesGet, save: eventNamesSave
+    },
+    // Guest Observers (public /guest form): records key required for everything
+    // except hash(). ensureKeys() is a no-op after first run. See the module
+    // comment above obsHash for the full encryption model and the guest.html
+    // salt coupling.
+    observers: {
+      ensureKeys: obsEnsureKeys, get: observersGet, save: observersSave,
+      remove: observersRemove, hash: obsHash
     }
   };
 
@@ -501,6 +509,114 @@
     const data = await keyEncrypt(JSON.stringify(arr), recordsKey);
     await db.ref(ROOT + '/cadetnotes').set(data);
   }
+
+  /* ── Guest Observers — submissions from the public /guest interest form ──
+     Confidentiality model: the site has no Firebase Auth, so database rules
+     cannot tell a sergeant's browser from a stranger's. Instead every /guest
+     submission is encrypted IN THE VISITOR'S BROWSER before upload, using an
+     RSA-OAEP envelope: a fresh AES-GCM key per submission, itself encrypted
+     with the observers PUBLIC key. Only the records key (advisor / limited /
+     sergeant tiers) can unwrap the PRIVATE key, so nothing readable ever sits
+     in the database and the public page can encrypt but never decrypt.
+     Nodes (all under roster/ so the existing Firebase rules already apply):
+       roster/observersPub          RSA public JWK, plaintext (safe to expose)
+       roster/observersKeyWrap     RSA private JWK, keyEncrypt'd with records key
+       roster/observersEntries/{id} { env: 'b64Key.b64Iv.b64Ct', at: ms }
+       roster/observersIndex/{hex}  true — duplicate check, hex = SHA-256 of
+                                    OBS_SALT|email(lowercased,trimmed)|dob
+     IMPORTANT COUPLING: guest.html is standalone (it must not load roster.js,
+     which carries cadet names in its seed) and duplicates OBS_SALT and the
+     hash recipe verbatim. If either ever changes, change BOTH files together
+     or the duplicate check silently stops matching old submissions. */
+  const OBS_SALT = 'rpdcadets-observers-v1';
+  async function obsHash(email, dob) {
+    const norm = OBS_SALT + '|' + String(email || '').trim().toLowerCase() + '|' + String(dob || '').trim();
+    const d = await crypto.subtle.digest('SHA-256', enc.encode(norm));
+    return Array.from(new Uint8Array(d)).map(b => b.toString(16).padStart(2, '0')).join('');
+  }
+  let obsPrivKey = null;   // per-session cache of the imported private key
+  async function obsEnsureKeys() {
+    if (!recordsKey) throw new Error('records locked');
+    ensureFirebase();
+    const pub = await once('observersPub');
+    if (pub) return { ok: true, created: false };
+    const pair = await crypto.subtle.generateKey(
+      { name: 'RSA-OAEP', modulusLength: 2048, publicExponent: new Uint8Array([1, 0, 1]), hash: 'SHA-256' },
+      true, ['encrypt', 'decrypt']);
+    const pubJwk = JSON.stringify(await crypto.subtle.exportKey('jwk', pair.publicKey));
+    const privJwk = JSON.stringify(await crypto.subtle.exportKey('jwk', pair.privateKey));
+    // keyWrap first: if the pubkey ever exists without its wrap, /guest would
+    // accept submissions nobody could ever read.
+    await db.ref(ROOT + '/observersKeyWrap').set(await keyEncrypt(privJwk, recordsKey));
+    await db.ref(ROOT + '/observersPub').set(pubJwk);
+    return { ok: true, created: true };
+  }
+  async function obsPriv() {
+    if (obsPrivKey) return obsPrivKey;
+    if (!recordsKey) throw new Error('records locked');
+    const wrap = await once('observersKeyWrap');
+    if (!wrap) return null;
+    const jwk = JSON.parse(await keyDecrypt(wrap, recordsKey));
+    obsPrivKey = await crypto.subtle.importKey('jwk', jwk, { name: 'RSA-OAEP', hash: 'SHA-256' }, false, ['decrypt']);
+    return obsPrivKey;
+  }
+  async function obsEnvelope(plainJson) {   // encrypt with the PUBLIC key (mirrors guest.html)
+    const pubTxt = await once('observersPub');
+    if (!pubTxt) throw new Error('observers not initialized');
+    const pubKey = await crypto.subtle.importKey('jwk', JSON.parse(pubTxt), { name: 'RSA-OAEP', hash: 'SHA-256' }, false, ['encrypt']);
+    const aes = crypto.getRandomValues(new Uint8Array(32));
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const key = await crypto.subtle.importKey('raw', aes, { name: 'AES-GCM' }, false, ['encrypt']);
+    const ct = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, enc.encode(plainJson)));
+    const ek = new Uint8Array(await crypto.subtle.encrypt({ name: 'RSA-OAEP' }, pubKey, aes));
+    return arrToB64(ek) + '.' + arrToB64(iv) + '.' + arrToB64(ct);
+  }
+  async function obsOpen(env) {             // decrypt with the PRIVATE key
+    const priv = await obsPriv();
+    if (!priv) throw new Error('observers not initialized');
+    const [ekB64, ivB64, ctB64] = String(env).split('.');
+    const aes = new Uint8Array(await crypto.subtle.decrypt({ name: 'RSA-OAEP' }, priv, b64ToArr(ekB64)));
+    const key = await crypto.subtle.importKey('raw', aes, { name: 'AES-GCM' }, false, ['decrypt']);
+    return dec.decode(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: b64ToArr(ivB64) }, key, b64ToArr(ctB64)));
+  }
+  async function observersGet() {
+    if (!recordsKey) return null;
+    ensureFirebase();
+    const all = await once('observersEntries');
+    if (!all) return [];
+    const out = [];
+    for (const id of Object.keys(all)) {
+      const row = all[id] || {};
+      try {
+        const data = JSON.parse(await obsOpen(row.env));
+        out.push({ id, at: row.at || 0, data, hash: await obsHash(data.email, data.dob) });
+      } catch (e) {
+        out.push({ id, at: row.at || 0, data: null, hash: null, broken: true });
+      }
+    }
+    out.sort((a, b) => (b.at || 0) - (a.at || 0));
+    return out;
+  }
+  // Re-encrypts the full record; if email or DOB changed, moves the duplicate-
+  // check index entry so the old identity frees up and the new one is claimed.
+  // Returns the current hash so the caller can keep its copy in sync.
+  async function observersSave(id, data, oldHash) {
+    if (!recordsKey) throw new Error('records locked');
+    const env = await obsEnvelope(JSON.stringify(data));
+    await db.ref(ROOT + '/observersEntries/' + id + '/env').set(env);
+    const nh = await obsHash(data.email, data.dob);
+    if (nh !== oldHash) {
+      await db.ref(ROOT + '/observersIndex/' + nh).set(true);
+      if (oldHash) await db.ref(ROOT + '/observersIndex/' + oldHash).remove();
+    }
+    return nh;
+  }
+  async function observersRemove(id, hash) {
+    if (!recordsKey) throw new Error('records locked');
+    await db.ref(ROOT + '/observersEntries/' + id).remove();
+    if (hash) await db.ref(ROOT + '/observersIndex/' + hash).remove();
+  }
+
   // Pending proposal queue — same records key, node roster/pending. The /sgt
   // page appends proposals; /admin approves (applies + removes) or rejects
   // (removes). Nothing in a proposal is live until approved.

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- guest.html | Build v1 | 07/15/26 | New public observer interest form. Not linked in site navigation; the link is handed out to visitors directly. Submissions are RSA-envelope encrypted in the visitor's browser (public key at roster/observersPub) and written to roster/observersEntries; only the sergeant/advisor tiers can decrypt them on the /sgt Observers tab. Duplicate check via roster/observersIndex, SHA-256 of salt|email|dob; SALT and hash recipe are duplicated verbatim from roster.js v25 and must change in both files together. Formspark notification 6mDKk8ihA. GroupMe handoff on success and on duplicate. Pairs with roster.js v25 and sgt.html v5. -->
+<!-- guest.html | Build v2 | 07/15/26 | Added centered QR Link under the footer: opens a popup with an inline SVG QR code (no external dependency, verified to decode to https://rpdcadets.com/guest) on a white card so visitors can scan it straight off a phone screen; closes on X, outside click, or Escape. Prior v1 notes: New public observer interest form. Not linked in site navigation; the link is handed out to visitors directly. Submissions are RSA-envelope encrypted in the visitor's browser (public key at roster/observersPub) and written to roster/observersEntries; only the sergeant/advisor tiers can decrypt them on the /sgt Observers tab. Duplicate check via roster/observersIndex, SHA-256 of salt|email|dob; SALT and hash recipe are duplicated verbatim from roster.js v25 and must change in both files together. Formspark notification 6mDKk8ihA. GroupMe handoff on success and on duplicate. Pairs with roster.js v25 and sgt.html v5. -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -51,6 +51,17 @@ h1{font-family:'Bebas Neue',sans-serif;font-size:42px;letter-spacing:2px;line-he
 .foot a{color:var(--gold-light);text-decoration:none}
 .hp{position:absolute;left:-9999px;top:-9999px;height:1px;width:1px;overflow:hidden}
 @media(max-width:560px){.f-row{grid-template-columns:1fr}.card{padding:28px 20px 26px}h1{font-size:34px}}
+/* QR POPUP */
+.qr-open{display:block;margin:14px auto 0;background:none;border:1px solid var(--card-border);color:var(--text-muted);border-radius:8px;font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:600;letter-spacing:2px;text-transform:uppercase;padding:8px 18px;cursor:pointer}
+.qr-open:hover{color:var(--white);border-color:rgba(255,255,255,0.25)}
+.qr-overlay{display:none;position:fixed;inset:0;background:rgba(6,11,22,0.85);z-index:1000;align-items:center;justify-content:center;padding:24px}
+.qr-overlay.show{display:flex}
+.qr-card{background:#fff;border-radius:18px;padding:26px 26px 20px;max-width:340px;width:100%;text-align:center;position:relative;box-shadow:0 30px 80px rgba(0,0,0,0.5)}
+.qr-card svg{display:block;width:100%;height:auto;border-radius:6px}
+.qr-card .qr-url{margin-top:12px;font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:600;letter-spacing:1px;color:#1a2744}
+.qr-card .qr-hint{margin-top:2px;font-size:12px;color:#5b6b82}
+.qr-close{position:absolute;top:10px;right:12px;background:none;border:none;font-size:26px;line-height:1;color:#5b6b82;cursor:pointer;padding:4px}
+.qr-close:hover{color:#1a2744}
 </style>
 </head>
 <body>
@@ -136,7 +147,19 @@ h1{font-family:'Bebas Neue',sans-serif;font-size:42px;letter-spacing:2px;line-he
     <p style="margin-top:20px;font-size:13px">Think this is a mistake? Email <a href="mailto:advisors@rpdcadets.com" style="color:var(--gold-light)">advisors@rpdcadets.com</a> and we'll sort it out.</p>
   </div>
 
-  <div class="foot">Richardson Police Department Public Safety Cadets &middot; <a href="https://rpdcadets.com">rpdcadets.com</a></div>
+  <div class="foot">Richardson Police Department Public Safety Cadets &middot; <a href="https://rpdcadets.com">rpdcadets.com</a>
+    <button type="button" class="qr-open" id="qrOpen">QR Link</button>
+  </div>
+</div>
+
+<!-- QR POPUP: inline SVG, no external dependency; white card so cameras scan it reliably -->
+<div class="qr-overlay" id="qrOverlay" role="dialog" aria-modal="true" aria-label="QR code for this form">
+  <div class="qr-card">
+    <button type="button" class="qr-close" id="qrClose" aria-label="Close">&times;</button>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 37 37" shape-rendering="crispEdges"><path fill="#111" d="M2 2h7v1h-7zM12 2h1v1h-1zM17 2h1v1h-1zM19 2h1v1h-1zM21 2h2v1h-2zM25 2h2v1h-2zM28 2h7v1h-7zM2 3h1v1h-1zM8 3h1v1h-1zM10 3h1v1h-1zM12 3h2v1h-2zM17 3h4v1h-4zM22 3h1v1h-1zM24 3h1v1h-1zM26 3h1v1h-1zM28 3h1v1h-1zM34 3h1v1h-1zM2 4h1v1h-1zM4 4h3v1h-3zM8 4h1v1h-1zM11 4h1v1h-1zM16 4h2v1h-2zM19 4h2v1h-2zM23 4h1v1h-1zM28 4h1v1h-1zM30 4h3v1h-3zM34 4h1v1h-1zM2 5h1v1h-1zM4 5h3v1h-3zM8 5h1v1h-1zM11 5h1v1h-1zM13 5h1v1h-1zM16 5h1v1h-1zM18 5h1v1h-1zM28 5h1v1h-1zM30 5h3v1h-3zM34 5h1v1h-1zM2 6h1v1h-1zM4 6h3v1h-3zM8 6h1v1h-1zM12 6h3v1h-3zM16 6h1v1h-1zM19 6h2v1h-2zM22 6h1v1h-1zM24 6h1v1h-1zM28 6h1v1h-1zM30 6h3v1h-3zM34 6h1v1h-1zM2 7h1v1h-1zM8 7h1v1h-1zM10 7h5v1h-5zM17 7h2v1h-2zM21 7h1v1h-1zM24 7h3v1h-3zM28 7h1v1h-1zM34 7h1v1h-1zM2 8h7v1h-7zM10 8h1v1h-1zM12 8h1v1h-1zM14 8h1v1h-1zM16 8h1v1h-1zM18 8h1v1h-1zM20 8h1v1h-1zM22 8h1v1h-1zM24 8h1v1h-1zM26 8h1v1h-1zM28 8h7v1h-7zM10 9h2v1h-2zM13 9h2v1h-2zM18 9h1v1h-1zM21 9h1v1h-1zM23 9h1v1h-1zM26 9h1v1h-1zM6 10h4v1h-4zM17 10h5v1h-5zM23 10h3v1h-3zM28 10h2v1h-2zM33 10h1v1h-1zM2 11h1v1h-1zM5 11h3v1h-3zM9 11h4v1h-4zM15 11h3v1h-3zM19 11h1v1h-1zM21 11h1v1h-1zM25 11h1v1h-1zM29 11h1v1h-1zM31 11h1v1h-1zM3 12h3v1h-3zM8 12h1v1h-1zM15 12h3v1h-3zM19 12h1v1h-1zM23 12h4v1h-4zM29 12h5v1h-5zM2 13h3v1h-3zM11 13h1v1h-1zM13 13h9v1h-9zM23 13h1v1h-1zM26 13h3v1h-3zM30 13h1v1h-1zM34 13h1v1h-1zM2 14h1v1h-1zM6 14h3v1h-3zM10 14h4v1h-4zM15 14h1v1h-1zM18 14h4v1h-4zM26 14h1v1h-1zM28 14h2v1h-2zM33 14h2v1h-2zM2 15h1v1h-1zM4 15h1v1h-1zM9 15h1v1h-1zM11 15h2v1h-2zM15 15h2v1h-2zM18 15h1v1h-1zM23 15h3v1h-3zM27 15h1v1h-1zM31 15h3v1h-3zM2 16h1v1h-1zM4 16h1v1h-1zM6 16h1v1h-1zM8 16h3v1h-3zM12 16h2v1h-2zM16 16h1v1h-1zM19 16h1v1h-1zM25 16h1v1h-1zM27 16h2v1h-2zM30 16h2v1h-2zM33 16h1v1h-1zM2 17h1v1h-1zM4 17h3v1h-3zM10 17h1v1h-1zM13 17h1v1h-1zM16 17h1v1h-1zM18 17h1v1h-1zM21 17h1v1h-1zM23 17h1v1h-1zM25 17h3v1h-3zM29 17h3v1h-3zM33 17h2v1h-2zM3 18h1v1h-1zM7 18h4v1h-4zM12 18h4v1h-4zM19 18h1v1h-1zM21 18h1v1h-1zM23 18h1v1h-1zM27 18h2v1h-2zM30 18h1v1h-1zM32 18h2v1h-2zM5 19h1v1h-1zM7 19h1v1h-1zM9 19h2v1h-2zM13 19h2v1h-2zM19 19h3v1h-3zM25 19h3v1h-3zM29 19h1v1h-1zM3 20h2v1h-2zM6 20h4v1h-4zM11 20h1v1h-1zM14 20h4v1h-4zM20 20h4v1h-4zM25 20h4v1h-4zM31 20h1v1h-1zM33 20h1v1h-1zM2 21h2v1h-2zM5 21h1v1h-1zM10 21h2v1h-2zM13 21h1v1h-1zM17 21h1v1h-1zM20 21h1v1h-1zM23 21h2v1h-2zM28 21h1v1h-1zM33 21h2v1h-2zM4 22h2v1h-2zM7 22h2v1h-2zM11 22h1v1h-1zM15 22h2v1h-2zM19 22h1v1h-1zM22 22h3v1h-3zM30 22h2v1h-2zM33 22h2v1h-2zM2 23h1v1h-1zM5 23h2v1h-2zM10 23h1v1h-1zM14 23h1v1h-1zM18 23h2v1h-2zM21 23h2v1h-2zM24 23h1v1h-1zM26 23h4v1h-4zM32 23h2v1h-2zM5 24h4v1h-4zM13 24h1v1h-1zM16 24h1v1h-1zM18 24h1v1h-1zM21 24h3v1h-3zM25 24h2v1h-2zM29 24h3v1h-3zM4 25h3v1h-3zM10 25h1v1h-1zM12 25h2v1h-2zM15 25h1v1h-1zM17 25h2v1h-2zM20 25h2v1h-2zM23 25h1v1h-1zM25 25h1v1h-1zM30 25h1v1h-1zM33 25h2v1h-2zM2 26h5v1h-5zM8 26h1v1h-1zM10 26h1v1h-1zM13 26h5v1h-5zM20 26h2v1h-2zM23 26h2v1h-2zM26 26h5v1h-5zM33 26h2v1h-2zM10 27h1v1h-1zM13 27h4v1h-4zM18 27h3v1h-3zM23 27h2v1h-2zM26 27h1v1h-1zM30 27h1v1h-1zM32 27h1v1h-1zM2 28h7v1h-7zM10 28h2v1h-2zM15 28h2v1h-2zM18 28h2v1h-2zM22 28h1v1h-1zM26 28h1v1h-1zM28 28h1v1h-1zM30 28h1v1h-1zM32 28h2v1h-2zM2 29h1v1h-1zM8 29h1v1h-1zM10 29h2v1h-2zM13 29h3v1h-3zM19 29h4v1h-4zM24 29h1v1h-1zM26 29h1v1h-1zM30 29h1v1h-1zM33 29h2v1h-2zM2 30h1v1h-1zM4 30h3v1h-3zM8 30h1v1h-1zM10 30h13v1h-13zM24 30h1v1h-1zM26 30h5v1h-5zM2 31h1v1h-1zM4 31h3v1h-3zM8 31h1v1h-1zM11 31h1v1h-1zM15 31h2v1h-2zM18 31h1v1h-1zM20 31h4v1h-4zM25 31h1v1h-1zM28 31h4v1h-4zM34 31h1v1h-1zM2 32h1v1h-1zM4 32h3v1h-3zM8 32h1v1h-1zM12 32h4v1h-4zM19 32h3v1h-3zM26 32h3v1h-3zM30 32h3v1h-3zM2 33h1v1h-1zM8 33h1v1h-1zM12 33h1v1h-1zM14 33h1v1h-1zM17 33h2v1h-2zM23 33h1v1h-1zM25 33h2v1h-2zM29 33h2v1h-2zM32 33h1v1h-1zM2 34h7v1h-7zM14 34h2v1h-2zM17 34h2v1h-2zM23 34h4v1h-4zM28 34h2v1h-2zM32 34h1v1h-1zM34 34h1v1h-1z"/></svg>
+    <div class="qr-url">rpdcadets.com/guest</div>
+    <div class="qr-hint">Scan to open this form on your phone</div>
+  </div>
 </div>
 
 <script>
@@ -289,6 +312,14 @@ function showCard(id){
   window.scrollTo({ top:0, behavior:'smooth' });
 }
 document.getElementById('goBtn').addEventListener('click', submit);
+
+// QR popup: for showing on a phone so the next visitor can scan the link
+const qrOverlay=document.getElementById('qrOverlay');
+document.getElementById('qrOpen').addEventListener('click', ()=> qrOverlay.classList.add('show'));
+document.getElementById('qrClose').addEventListener('click', ()=> qrOverlay.classList.remove('show'));
+qrOverlay.addEventListener('click', e=>{ if(e.target===qrOverlay) qrOverlay.classList.remove('show'); });
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') qrOverlay.classList.remove('show'); });
+
 syncParentUi();
 </script>
 </body>

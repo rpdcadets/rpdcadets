@@ -1,4 +1,4 @@
-/* roster.js  |  VERSION 25  |  updated 2026-07-15  |  New RPDRoster.observers module for the public /guest interest form: RSA-OAEP envelope encryption (public key encrypts in the visitor's browser, private key wrapped under the records key so only advisor/ltd/sgt tiers can read), nodes roster/observersPub, roster/observersKeyWrap, roster/observersEntries, roster/observersIndex (SHA-256 email+DOB duplicate check, salt shared verbatim with guest.html). No changes to any existing module. */
+/* roster.js  |  VERSION 26  |  updated 2026-07-23  |  Ride-Along Trackers inbox: RPDRoster.ridealongs gains submit (cadet-tier: entry RSA-envelope encrypted with the observers public key to roster/raInbox, duplicate hash claimed at roster/raIndex), merge (records-tier: /admin and /sgt decrypt the inbox, append new entries to the log tagged via:'trackers', drop duplicates, clear the inbox), hashExists, indexAdd, indexRemove. RA_SALT 'rpdcadets-ridealongs-v1' lives only in this file (Trackers loads roster.js, so no guest.html-style cross-file coupling). Prior v25 notes: RPDRoster.observers module for the public /guest interest form (RSA-OAEP envelope, nodes observersPub/observersKeyWrap/observersEntries/observersIndex, salt shared verbatim with guest.html). */
 /* ═══════════════════════════════════════════════════════════════════════
    RPD CADETS — SHARED ROSTER ENGINE
    One encrypted roster in Firebase, read by members, trackers, and
@@ -345,7 +345,11 @@
       connect: recordsConnect, setup: recordsSetup, get: recordsGet, save: recordsSave, isUnlocked: () => !!recordsKey
     },
     ridealongs: {
-      get: ridealongsGet, save: ridealongsSave
+      get: ridealongsGet, save: ridealongsSave,
+      // Trackers inbox (v26): submit is cadet-tier; merge is records-tier.
+      // indexAdd/indexRemove maintain the duplicate ledger on add/edit/delete.
+      submit: raInboxSubmit, merge: raInboxMerge,
+      hashExists: raHashExists, indexAdd: raIndexAdd, indexRemove: raIndexRemove
     },
     sgtnotes: {
       get: sgtnotesGet, save: sgtnotesSave
@@ -481,6 +485,94 @@
     if (!recordsKey) throw new Error('records locked');
     const data = await keyEncrypt(JSON.stringify(arr), recordsKey);
     await db.ref(ROOT + '/ridealongs').set(data);
+  }
+  /* ── Ride-Along Trackers inbox (v26) ──
+     Cadets on the Trackers Event form can log a ride-along without holding the
+     records key: the entry is RSA-envelope encrypted in the cadet's browser
+     using the OBSERVERS public key (roster/observersPub; private key wrapped
+     under the records key), written to roster/raInbox/{id}, and a duplicate
+     hash is claimed at roster/raIndex/{hex} (SHA-256 of
+     RA_SALT|cadet(rank-stripped,lowercased)|officer(lowercased)|date). The next
+     time /admin or /sgt opens a ride-along view, merge() decrypts the inbox,
+     appends new entries to roster/ridealongs (tagged via:'trackers'), silently
+     drops any that already exist (same cadet+officer+date), and clears the
+     inbox. Unlike OBS_SALT there is NO cross-file duplication: Trackers loads
+     roster.js, so the salt and recipe live only here. The consoles MUST
+     maintain roster/raIndex on add/edit/delete (indexAdd/indexRemove) so that
+     deleting an entry frees the cadet to resubmit it. Reuses the observers
+     RSA keypair; if those keys ever rotate, in-flight inbox entries encrypted
+     under the old key become unreadable and are dropped at the next merge. */
+  const RA_SALT = 'rpdcadets-ridealongs-v1';
+  function raNormKey(cadet, officer, date) {
+    return attStripRank(cadet).trim().toLowerCase() + '|' + String(officer == null ? '' : officer).trim().toLowerCase() + '|' + String(date == null ? '' : date).trim();
+  }
+  async function raHash(cadet, officer, date) {
+    const d = await crypto.subtle.digest('SHA-256', enc.encode(RA_SALT + '|' + raNormKey(cadet, officer, date)));
+    return Array.from(new Uint8Array(d)).map(b => b.toString(16).padStart(2, '0')).join('');
+  }
+  async function raHashExists(cadet, officer, date) {
+    ensureFirebase();
+    return !!(await once('raIndex/' + await raHash(cadet, officer, date)));
+  }
+  async function raIndexAdd(cadet, officer, date) {
+    ensureFirebase();
+    await db.ref(ROOT + '/raIndex/' + await raHash(cadet, officer, date)).set(true);
+  }
+  async function raIndexRemove(cadet, officer, date) {
+    ensureFirebase();
+    await db.ref(ROOT + '/raIndex/' + await raHash(cadet, officer, date)).remove();
+  }
+  // Cadet-tier submit from the Trackers Event form. Strips any leadership rank
+  // prefix from the cadet name so merged entries match the raw roster names the
+  // consoles use. Throws an Error with .duplicate=true if the ride is claimed.
+  async function raInboxSubmit(rec) {
+    ensureFirebase();
+    const cadet = attStripRank(rec.cadet).trim();
+    if (await raHashExists(cadet, rec.officer, rec.date)) {
+      const e = new Error('duplicate'); e.duplicate = true; throw e;
+    }
+    const env = await obsEnvelope(JSON.stringify({
+      cadet, officer: rec.officer, date: rec.date,
+      start: rec.start, end: rec.end, notes: rec.notes || ''
+    }));
+    const id = 'rin_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    await db.ref(ROOT + '/raInbox/' + id).set({ env, at: Date.now() });
+    await raIndexAdd(cadet, rec.officer, rec.date);
+    return { ok: true };
+  }
+  // Records-tier merge, called by /admin and /sgt when a ride-along view opens.
+  // Returns { all, added, dropped } where `all` is the post-merge log.
+  async function raInboxMerge() {
+    if (!recordsKey) throw new Error('records locked');
+    ensureFirebase();
+    try { await obsEnsureKeys(); } catch (e) {}   // no-op after first run; guarantees future submits can encrypt
+    const all = (await ridealongsGet()) || [];
+    const box = await once('raInbox');
+    if (!box) return { all, added: 0, dropped: 0 };
+    const seen = new Set(all.map(r => raNormKey(r.cadet, r.officer, r.date)));
+    let added = 0, dropped = 0;
+    const ids = Object.keys(box).sort((a, b) => ((box[a] || {}).at || 0) - ((box[b] || {}).at || 0));
+    for (const id of ids) {
+      let rec = null;
+      try { rec = JSON.parse(await obsOpen((box[id] || {}).env)); } catch (e) { rec = null; }
+      const k = rec ? raNormKey(rec.cadet, rec.officer, rec.date) : null;
+      if (rec && rec.cadet && rec.officer && rec.date && !seen.has(k)) {
+        seen.add(k);
+        all.push({
+          id: 'ra_' + Math.random().toString(36).slice(2, 9),
+          cadet: rec.cadet, officer: rec.officer, date: rec.date,
+          start: rec.start || '', end: rec.end || '', notes: rec.notes || '',
+          via: 'trackers', at: (box[id] || {}).at || Date.now()
+        });
+        try { await raIndexAdd(rec.cadet, rec.officer, rec.date); } catch (e) {}
+        added++;
+      } else {
+        dropped++;   // duplicate of an existing log row, or an unreadable envelope
+      }
+      try { await db.ref(ROOT + '/raInbox/' + id).remove(); } catch (e) {}
+    }
+    if (added) await ridealongsSave(all);
+    return { all, added, dropped };
   }
   // Sergeant Notes board — same records key (advisor/ltd/sgt tiers only),
   // separate node (roster/sgtnotes). A flat array of {id, name, text, at}.

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- trackers.html  |  Build v18  |  updated 2026-07-23  |  pairs with roster.js v26  |  Ride-along auto-log: picking an Event name containing "ride along" (Academy events excluded) opens a popup requiring an officer from the approved list (roster/officers); submit blocks duplicates via the roster/raIndex hash ledger, then writes hours to roster/events as normal plus an RSA-encrypted entry to the roster/raInbox queue that /admin and /sgt merge into the official Ride-Along Log. Officer also included in the Formspark email. Prior v17: cache-buster bump for roster.js v24. -->
+<!-- trackers.html  |  Build v19  |  updated 2026-07-23  |  pairs with roster.js v26  |  Officer popup fix: the approved-officers list is refetched when the popup opens with an empty cached list, so officers added in /admin after this page loaded (or missed by a transient connection error at load) now appear without a page reload. Shows a brief "Loading officers" state during the refetch. Prior v18 notes preserved: ride-along auto-log via officer popup, roster/raIndex duplicate ledger, RSA raInbox queue merged by /admin and /sgt, officer included in the Formspark email. -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -436,7 +436,7 @@ footer { background: var(--navy); border-top: 1px solid rgba(255,255,255,0.05); 
         Return to Home
       </a>
     </div>
-    <div style="margin-top:20px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v18</div>
+    <div style="margin-top:20px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v19</div>
   </div>
 </div>
 
@@ -962,13 +962,24 @@ function ensureRaModal(){
     renderRaOfficerLine();
   });
 }
-function openRaModal(){
+async function openRaModal(){
   ensureRaModal();
   const sel=document.getElementById('raModalOfficer');
   const ok=document.getElementById('raModalOk');
   const err=document.getElementById('raModalErr');
   err.textContent='';
-  const list=(raOfficerList||[]).slice().sort((a,b)=>a.localeCompare(b));
+  // The list is snapshotted at page load, so an officer added in /admin after
+  // this tab opened (or a transient fetch error at load) leaves it empty.
+  // Refetch on open whenever the cache is empty; a populated cache is trusted
+  // so the popup stays instant in the normal case.
+  let list=(raOfficerList||[]).slice().sort((a,b)=>a.localeCompare(b));
+  if(!list.length){
+    sel.innerHTML='<option value="">Loading officers\u2026</option>';
+    sel.disabled=true; ok.disabled=true;
+    document.getElementById('raModal').classList.add('open');
+    try { raOfficerList = (window.RPDRoster && RPDRoster.officers) ? ((await RPDRoster.officers.get()) || []) : []; } catch(e){}
+    list=(raOfficerList||[]).slice().sort((a,b)=>a.localeCompare(b));
+  }
   if(!list.length){
     sel.innerHTML='<option value="">No approved officers listed</option>';
     sel.disabled=true; ok.disabled=true;

@@ -1,4 +1,4 @@
-/* roster.js  |  VERSION 26  |  updated 2026-07-23  |  Ride-Along Trackers inbox: RPDRoster.ridealongs gains submit (cadet-tier: entry RSA-envelope encrypted with the observers public key to roster/raInbox, duplicate hash claimed at roster/raIndex), merge (records-tier: /admin and /sgt decrypt the inbox, append new entries to the log tagged via:'trackers', drop duplicates, clear the inbox), hashExists, indexAdd, indexRemove. RA_SALT 'rpdcadets-ridealongs-v1' lives only in this file (Trackers loads roster.js, so no guest.html-style cross-file coupling). Prior v25 notes: RPDRoster.observers module for the public /guest interest form (RSA-OAEP envelope, nodes observersPub/observersKeyWrap/observersEntries/observersIndex, salt shared verbatim with guest.html). */
+/* roster.js  |  VERSION 27  |  updated 2026-07-25  |  Requests board: RPDRoster.requests gains get/save (records key, node roster/requests), a flat array of {id, name, text, at, done, doneAt} backing the new Requests tab on /sgt: sergeants post wants, changes, and policy proposals for the post; the advisor checks items off as they are completed and checked items sink below the open list. Prior v26 notes: Ride-Along Trackers inbox (submit cadet-tier via RSA envelope to roster/raInbox, merge records-tier into the log tagged via:'trackers', duplicate ledger at roster/raIndex, RA_SALT 'rpdcadets-ridealongs-v1' lives only in this file). Prior v25: RPDRoster.observers module for the public /guest interest form. */
 /* ═══════════════════════════════════════════════════════════════════════
    RPD CADETS — SHARED ROSTER ENGINE
    One encrypted roster in Firebase, read by members, trackers, and
@@ -357,6 +357,9 @@
     cadetnotes: {
       get: cadetnotesGet, save: cadetnotesSave
     },
+    requests: {
+      get: requestsGet, save: requestsSave
+    },
     pending: {
       get: pendingGet, save: pendingSave
     },
@@ -600,6 +603,20 @@
     if (!recordsKey) throw new Error('records locked');
     const data = await keyEncrypt(JSON.stringify(arr), recordsKey);
     await db.ref(ROOT + '/cadetnotes').set(data);
+  }
+  // Requests board: same records key, node roster/requests. A flat array of
+  // {id, name, text, at, done, doneAt}: sergeants post wants, changes, and
+  // policy proposals for the post; the advisor checks items off when done.
+  async function requestsGet() {
+    if (!recordsKey) return null;
+    const blob = await once('requests');
+    if (!blob) return [];
+    try { return JSON.parse(await keyDecrypt(blob, recordsKey)); } catch (e) { return []; }
+  }
+  async function requestsSave(arr) {
+    if (!recordsKey) throw new Error('records locked');
+    const data = await keyEncrypt(JSON.stringify(arr), recordsKey);
+    await db.ref(ROOT + '/requests').set(data);
   }
 
   /* ── Guest Observers — submissions from the public /guest interest form ──

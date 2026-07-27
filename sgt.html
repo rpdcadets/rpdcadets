@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- sgt.html  |  Build v7  |  updated 2026-07-25  |  pairs with roster.js v27  |  New Requests tab: sergeants post wants, changes, and policy proposals for the post (same posting-as picker and honor-system delete as Notes, stored encrypted at roster/requests). Each request has a checkbox; the advisor checks items off as they are completed, checked items dim, strike through, and sink into a Completed section below the open list, and the check is toggleable in case of a mis-click. Prior v6 notes: Ride-Along Log approved list merges the Trackers inbox on load with sergeant Edit and Delete maintaining the raIndex duplicate ledger. Prior v5: Observers tab fed by the public /guest interest form. Prior v4: per-cadet sergeant note lines; itemized waiver status; Act. Sgt. rank in pickers. -->
+<!-- sgt.html  |  Build v8  |  updated 2026-07-26  |  pairs with roster.js v27  |  Requests tab gains a Deny action: a Deny button on each open request prompts for a reason, crosses the request out with a red Denied marker and the reason line, and sinks it into the resolved list alongside completed items (divider renamed Resolved). Denied cards get a Reopen button and the reason can be edited by tapping it. Data adds denied/deniedAt/deniedReason fields on the same roster/requests node, so roster.js is unchanged at v27. Prior v7 notes: Requests tab itself (posting-as picker, honor-system delete, advisor checkbox with toggleable complete). Prior v6: Ride-Along Log merges the Trackers inbox with sergeant Edit and Delete. Prior v5: Observers tab. -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -204,6 +204,17 @@ button.rec-check{cursor:pointer;transition:all .18s}
 .req-divider{display:flex;align-items:center;gap:12px;margin:22px 0 12px}
 .req-divider::before,.req-divider::after{content:"";flex:1;height:1px;background:var(--card-border)}
 .req-divider span{font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)}
+.req-actions{display:flex;gap:8px;margin-left:auto;align-items:center}
+.req-deny{background:none;border:1px solid var(--card-border);color:var(--text-muted);border-radius:7px;padding:4px 10px;cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase}
+.req-deny:hover{color:#f87171;border-color:rgba(220,38,38,0.4)}
+.note-card.denied{opacity:.6;border-color:rgba(220,38,38,0.25)}
+.note-card.denied .note-text{text-decoration:line-through;text-decoration-color:rgba(248,113,113,0.55)}
+.req-x{flex:0 0 auto;width:19px;text-align:center;margin-top:1px;color:#f87171;font-size:15px;font-weight:700;line-height:1.3}
+.req-deniedline{font-size:12px;color:#f8a5a5;margin-top:6px;cursor:pointer}
+.req-deniedline:hover{text-decoration:underline}
+.req-deniedline .req-dtag{font-family:'Barlow Condensed',sans-serif;font-size:10.5px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:#f87171;margin-right:6px}
+.req-reopen{background:none;border:1px solid var(--card-border);color:var(--text-muted);border-radius:7px;padding:4px 10px;cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase}
+.req-reopen:hover{color:var(--gold);border-color:rgba(197,165,90,0.5)}
 
 /* CURRENT ATTENDANCE */
 .ca-range{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:18px}
@@ -1079,18 +1090,73 @@ async function reqToggle(id, checked){
     const r = reqs.find(x=>x.id===id); if(!r){ renderRequests(); return; }
     r.done = !!checked;
     r.doneAt = checked ? Date.now() : null;
+    if(checked){ r.denied=false; r.deniedAt=null; r.deniedReason=''; }
     await RPDRoster.requests.save(reqs);
     renderRequests();
     showToast(checked ? 'Marked complete' : 'Reopened');
   }catch(e){ showToast('Could not update. Try again.'); renderRequests(); }
 }
+async function reqDeny(id){
+  const reason = prompt('Why is this request denied? (optional, shown to the sergeants)');
+  if(reason===null) return;   // cancelled
+  try{
+    reqs = ((await RPDRoster.requests.get()) || []);
+    const r = reqs.find(x=>x.id===id); if(!r){ renderRequests(); return; }
+    r.denied = true; r.deniedAt = Date.now(); r.deniedReason = (reason||'').trim();
+    r.done = false; r.doneAt = null;
+    await RPDRoster.requests.save(reqs);
+    renderRequests();
+    showToast('Request denied');
+  }catch(e){ showToast('Could not update. Try again.'); renderRequests(); }
+}
+async function reqReopen(id){
+  try{
+    reqs = ((await RPDRoster.requests.get()) || []);
+    const r = reqs.find(x=>x.id===id); if(!r){ renderRequests(); return; }
+    r.denied = false; r.deniedAt = null; r.deniedReason = '';
+    await RPDRoster.requests.save(reqs);
+    renderRequests();
+    showToast('Reopened');
+  }catch(e){ showToast('Could not update. Try again.'); renderRequests(); }
+}
+async function reqEditReason(id, current){
+  const reason = prompt('Edit the denial reason:', current||'');
+  if(reason===null) return;
+  try{
+    reqs = ((await RPDRoster.requests.get()) || []);
+    const r = reqs.find(x=>x.id===id); if(!r){ renderRequests(); return; }
+    r.deniedReason = (reason||'').trim();
+    await RPDRoster.requests.save(reqs);
+    renderRequests();
+    showToast('Reason updated');
+  }catch(e){ showToast('Could not update. Try again.'); renderRequests(); }
+}
 function reqCard(r){
-  const el=document.createElement('div'); el.className='note-card req-card'+(r.done?' done':'');
-  const doneLine = r.done && r.doneAt ? `<div class="req-doneline">Completed ${fmtWhen(r.doneAt)}</div>` : '';
-  el.innerHTML = `<input type="checkbox" class="req-check" title="${r.done?'Reopen this request':'Mark complete'}" ${r.done?'checked':''}>`
-    + `<div class="req-body"><div class="note-top"><span class="note-name">${esc(r.name)}</span><span class="note-when">${fmtWhen(r.at)}</span><button class="note-del" title="Delete request">&times;</button></div>`
-    + `<div class="note-text">${esc(r.text)}</div>${doneLine}</div>`;
-  el.querySelector('.req-check').addEventListener('change', e=> reqToggle(r.id, e.target.checked));
+  const el=document.createElement('div');
+  el.className='note-card req-card'+(r.done?' done':'')+(r.denied?' denied':'');
+  const marker = r.denied
+    ? '<span class="req-x" title="Denied">&times;</span>'
+    : `<input type="checkbox" class="req-check" title="${r.done?'Reopen this request':'Mark complete'}" ${r.done?'checked':''}>`;
+  const doneLine = (!r.denied && r.done && r.doneAt) ? `<div class="req-doneline">Completed ${fmtWhen(r.doneAt)}</div>` : '';
+  const deniedLine = r.denied
+    ? `<div class="req-deniedline" title="Tap to edit the reason"><span class="req-dtag">Denied ${fmtWhen(r.deniedAt)}</span>${r.deniedReason?esc(r.deniedReason):'<em>No reason given. Tap to add one.</em>'}</div>`
+    : '';
+  const actions = r.denied
+    ? '<div class="req-actions"><button class="req-reopen">Reopen</button><button class="note-del" title="Delete request">&times;</button></div>'
+    : (r.done
+        ? '<div class="req-actions"><button class="note-del" title="Delete request">&times;</button></div>'
+        : '<div class="req-actions"><button class="req-deny">Deny</button><button class="note-del" title="Delete request">&times;</button></div>');
+  el.innerHTML = marker
+    + `<div class="req-body"><div class="note-top"><span class="note-name">${esc(r.name)}</span><span class="note-when">${fmtWhen(r.at)}</span>${actions}</div>`
+    + `<div class="note-text">${esc(r.text)}</div>${doneLine}${deniedLine}</div>`;
+  const chk = el.querySelector('.req-check');
+  if(chk) chk.addEventListener('change', e=> reqToggle(r.id, e.target.checked));
+  const deny = el.querySelector('.req-deny');
+  if(deny) deny.addEventListener('click', ()=> reqDeny(r.id));
+  const reopen = el.querySelector('.req-reopen');
+  if(reopen) reopen.addEventListener('click', ()=> reqReopen(r.id));
+  const dline = el.querySelector('.req-deniedline');
+  if(dline) dline.addEventListener('click', ()=> reqEditReason(r.id, r.deniedReason||''));
   el.querySelector('.note-del').addEventListener('click', async ()=>{
     if(!confirm('Delete this request?')) return;
     try{
@@ -1105,14 +1171,14 @@ function renderRequests(){
   const host=document.getElementById('reqFeed'); if(!host || !recordsOn) return;
   host.innerHTML='';
   if(!reqs.length){ host.innerHTML='<p class="empty">No requests yet. Post what your squad wants for the post above.</p>'; return; }
-  const open = reqs.filter(r=>!r.done).sort((a,b)=>(b.at||0)-(a.at||0));
-  const done = reqs.filter(r=> r.done).sort((a,b)=>(b.doneAt||0)-(a.doneAt||0));
-  if(!open.length) host.innerHTML='<p class="empty">Nothing open right now. Every request has been completed.</p>';
+  const open = reqs.filter(r=>!r.done && !r.denied).sort((a,b)=>(b.at||0)-(a.at||0));
+  const closed = reqs.filter(r=> r.done || r.denied).sort((a,b)=>((b.doneAt||b.deniedAt||0)-(a.doneAt||a.deniedAt||0)));
+  if(!open.length) host.innerHTML='<p class="empty">Nothing open right now. Every request has been resolved.</p>';
   open.forEach(r=> host.appendChild(reqCard(r)));
-  if(done.length){
-    const div=document.createElement('div'); div.className='req-divider'; div.innerHTML='<span>Completed</span>';
+  if(closed.length){
+    const div=document.createElement('div'); div.className='req-divider'; div.innerHTML='<span>Resolved</span>';
     host.appendChild(div);
-    done.forEach(r=> host.appendChild(reqCard(r)));
+    closed.forEach(r=> host.appendChild(reqCard(r)));
   }
 }
 

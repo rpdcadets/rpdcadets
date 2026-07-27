@@ -1,4 +1,5 @@
 // ═══════ RPD CADETS — SHARED NAV & FOOTER ═══════
+// shared.js  |  Build v2  |  updated 2026-07-26  |  ADA fixes only: skip-to-content link injected before nav (with focus-reveal CSS), hamburger given aria-expanded/aria-controls with state toggling. No visual changes when not using a keyboard.
 // Edit this ONE file to update nav links, footer, and site info across all pages.
 
 const SITE = {
@@ -40,7 +41,15 @@ function buildNav() {
 
   const navEl = document.getElementById('site-nav');
   if (navEl) {
+    // ADA: skip-to-content link, visually hidden until keyboard focus (WCAG 2.4.1)
+    if (!document.getElementById('skipLinkStyle')) {
+      const st = document.createElement('style');
+      st.id = 'skipLinkStyle';
+      st.textContent = '.skip-link{position:absolute;left:-9999px;top:0;z-index:2000;background:#0f1a30;color:#fff;padding:12px 20px;font-family:Barlow,sans-serif;font-size:14px;text-decoration:none;border:1px solid rgba(255,255,255,0.4);border-radius:0 0 8px 0}.skip-link:focus{left:0}';
+      document.head.appendChild(st);
+    }
     navEl.innerHTML = `
+      <a href="#main-content" class="skip-link">Skip to main content</a>
       <nav id="navbar">
         <div class="nav-inner">
           <a href="index.html" class="nav-brand">
@@ -51,7 +60,7 @@ function buildNav() {
             </div>
           </a>
           <ul class="nav-links">${linksHTML}</ul>
-          <button class="hamburger" id="hamburger" aria-label="Toggle menu"><span></span><span></span><span></span></button>
+          <button class="hamburger" id="hamburger" aria-label="Toggle menu" aria-expanded="false" aria-controls="mobileMenu"><span></span><span></span><span></span></button>
         </div>
       </nav>
       <div class="mobile-menu" id="mobileMenu">${mobileLinksHTML}</div>
@@ -66,9 +75,15 @@ function buildNav() {
     // Mobile menu toggle
     const hamburger = document.getElementById('hamburger');
     const mobileMenu = document.getElementById('mobileMenu');
-    hamburger.addEventListener('click', () => mobileMenu.classList.toggle('open'));
+    hamburger.addEventListener('click', () => {
+      const open = mobileMenu.classList.toggle('open');
+      hamburger.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
     document.querySelectorAll('.mobile-menu a').forEach(link => {
-      link.addEventListener('click', () => mobileMenu.classList.remove('open'));
+      link.addEventListener('click', () => {
+        mobileMenu.classList.remove('open');
+        hamburger.setAttribute('aria-expanded', 'false');
+      });
     });
   }
 }

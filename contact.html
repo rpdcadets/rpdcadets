@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- contact.html  |  Build v2  |  updated 2026-07-26  |  ADA fixes only: main-content skip target, footer contrast to AA, section-label and required asterisks to --red-glow, formError given role=alert for screen reader announcement, required/aria-required added to first name, last name, email (matches existing JS validation). No layout or copy changes. -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -39,7 +40,7 @@ nav.scrolled { background: rgba(15,26,48,0.97); box-shadow: 0 4px 30px rgba(0,0,
 .contact-bg::before { content: ''; position: absolute; inset: 0; background-image: linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px); background-size: 60px 60px; }
 .contact-wrapper { position: relative; z-index: 1; max-width: 800px; width: 100%; }
 .contact-header { text-align: center; margin-bottom: 48px; }
-.section-label { font-family: 'Barlow Condensed', sans-serif; font-weight: 500; font-size: 12px; letter-spacing: 3px; text-transform: uppercase; color: var(--red); margin-bottom: 16px; display: flex; align-items: center; justify-content: center; gap: 12px; }
+.section-label { font-family: 'Barlow Condensed', sans-serif; font-weight: 500; font-size: 12px; letter-spacing: 3px; text-transform: uppercase; color: var(--red-glow); margin-bottom: 16px; display: flex; align-items: center; justify-content: center; gap: 12px; }
 .section-label::before { content: ''; width: 24px; height: 1px; background: var(--red); }
 .contact-title { font-family: 'Bebas Neue', sans-serif; font-size: clamp(36px,6vw,56px); letter-spacing: 2px; line-height: 1; margin-bottom: 16px; opacity: 0; animation: fadeUp 0.6s ease 0.2s forwards; }
 .contact-desc { font-weight: 300; font-size: 16px; line-height: 1.7; color: rgba(255,255,255,0.5); max-width: 480px; margin: 0 auto; opacity: 0; animation: fadeUp 0.6s ease 0.4s forwards; }
@@ -70,7 +71,7 @@ nav.scrolled { background: rgba(15,26,48,0.97); box-shadow: 0 4px 30px rgba(0,0,
 .form-field { display: flex; flex-direction: column; gap: 7px; }
 .form-field.full { grid-column: 1 / -1; }
 .form-field label { font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-muted); }
-.form-field label .req { color: var(--red); }
+.form-field label .req { color: var(--red-glow); }
 .form-field input, .form-field textarea { width: 100%; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 13px 15px; color: var(--white); font-family: 'Barlow', sans-serif; font-size: 15px; transition: all 0.25s ease; }
 .form-field input::placeholder, .form-field textarea::placeholder { color: rgba(255,255,255,0.25); }
 .form-field input:focus, .form-field textarea:focus { outline: none; border-color: rgba(192,57,43,0.5); background: rgba(255,255,255,0.06); box-shadow: 0 0 0 3px rgba(192,57,43,0.1); }
@@ -87,7 +88,7 @@ nav.scrolled { background: rgba(15,26,48,0.97); box-shadow: 0 4px 30px rgba(0,0,
 
 footer { background: var(--navy); border-top: 1px solid rgba(255,255,255,0.05); padding: 40px 0; position: relative; z-index: 1; }
 .footer-bottom { max-width: 1200px; margin: 0 auto; padding: 0 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; }
-.footer-copy { font-size: 12px; color: rgba(255,255,255,0.3); }
+.footer-copy { font-size: 12px; color: rgba(255,255,255,0.55); }
 .footer-back a { font-family: 'Barlow Condensed', sans-serif; font-size: 13px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-muted); text-decoration: none; transition: color 0.3s ease; }
 .footer-back a:hover { color: var(--white); }
 @media (max-width: 900px) { .nav-links { display: none; } .hamburger { display: flex; } }
@@ -98,7 +99,7 @@ footer { background: var(--navy); border-top: 1px solid rgba(255,255,255,0.05); 
 
 <div id="site-nav"></div>
 
-<div class="contact-page">
+<div class="contact-page" id="main-content">
   <div class="contact-bg"></div>
   <div class="contact-wrapper">
     <div class="contact-header">
@@ -132,17 +133,17 @@ footer { background: var(--navy); border-top: 1px solid rgba(255,255,255,0.05); 
       <div class="form-row">
         <div class="form-field">
           <label for="firstName">First Name <span class="req">*</span></label>
-          <input type="text" id="firstName" placeholder="First name" autocomplete="given-name">
+          <input type="text" id="firstName" placeholder="First name" autocomplete="given-name" required aria-required="true">
         </div>
         <div class="form-field">
           <label for="lastName">Last Name <span class="req">*</span></label>
-          <input type="text" id="lastName" placeholder="Last name" autocomplete="family-name">
+          <input type="text" id="lastName" placeholder="Last name" autocomplete="family-name" required aria-required="true">
         </div>
       </div>
       <div class="form-row">
         <div class="form-field">
           <label for="email">Email Address <span class="req">*</span></label>
-          <input type="email" id="email" placeholder="you@example.com" autocomplete="email">
+          <input type="email" id="email" placeholder="you@example.com" autocomplete="email" required aria-required="true">
         </div>
         <div class="form-field">
           <label for="phone">Phone Number</label>
@@ -156,7 +157,7 @@ footer { background: var(--navy); border-top: 1px solid rgba(255,255,255,0.05); 
         </div>
       </div>
       <button class="form-submit" id="submitBtn" type="button">Send Message</button>
-      <div class="form-error" id="formError"></div>
+      <div class="form-error" id="formError" role="alert"></div>
     </div>
 
     <!-- Success screen (revealed after submit) -->

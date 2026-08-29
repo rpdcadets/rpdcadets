@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- patrol/index.html | Build v1 | 2026-08-29 | Field tools landing: tool cards plus booking-code pickup box -->
+<!-- patrol/index.html | Build v2 | 2026-08-29 | Self-refresh when a newer build is live -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -96,9 +96,18 @@
   </div>
 </main>
 
-<footer class="foot">Internal field tools &middot; Build v1</footer>
+<footer class="foot">Internal field tools &middot; Build v2</footer>
 
 <script>
+  const BUILD = '2';
+  (async () => {
+    try {
+      const r = await fetch(location.pathname + '?cb=' + Date.now(), {cache:'no-store'}); if (!r.ok) return;
+      const m = (await r.text()).match(/Build v(\d+)/); if (!m || m[1] === BUILD) return;
+      if (new URLSearchParams(location.search).get('fresh') === m[1]) return;
+      location.replace(location.pathname + '?fresh=' + m[1]);
+    } catch(e){}
+  })();
   const code = document.getElementById('code');
   const go   = document.getElementById('go');
   function clean(){ return code.value.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,8); }

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- guest.html | Build v2 | 07/15/26 | Added centered QR Link under the footer: opens a popup with an inline SVG QR code (no external dependency, verified to decode to https://rpdcadets.com/guest) on a white card so visitors can scan it straight off a phone screen; closes on X, outside click, or Escape. Prior v1 notes: New public observer interest form. Not linked in site navigation; the link is handed out to visitors directly. Submissions are RSA-envelope encrypted in the visitor's browser (public key at roster/observersPub) and written to roster/observersEntries; only the sergeant/advisor tiers can decrypt them on the /sgt Observers tab. Duplicate check via roster/observersIndex, SHA-256 of salt|email|dob; SALT and hash recipe are duplicated verbatim from roster.js v25 and must change in both files together. Formspark notification 6mDKk8ihA. GroupMe handoff on success and on duplicate. Pairs with roster.js v25 and sgt.html v5. -->
+<!-- guest.html | Build v3 | 08/28/26 | Parent/Guardian section now also covers adult observers who live at home: sub-label reads "Required for observers under 18 or those living with a parent or guardian"; when the DOB says 18+, a checkbox "I live with my parent(s) or guardian(s)" appears and, when checked, makes the parent fields required exactly as for a minor. New livesWithParent boolean saved in the encrypted payload and sent in the Formspark notification. Visible Build stamp added under the footer. Pairs with sgt.html v9. Prior v2 notes: Added centered QR Link under the footer: opens a popup with an inline SVG QR code (no external dependency, verified to decode to https://rpdcadets.com/guest) on a white card so visitors can scan it straight off a phone screen; closes on X, outside click, or Escape. Prior v1 notes: New public observer interest form. Not linked in site navigation; the link is handed out to visitors directly. Submissions are RSA-envelope encrypted in the visitor's browser (public key at roster/observersPub) and written to roster/observersEntries; only the sergeant/advisor tiers can decrypt them on the /sgt Observers tab. Duplicate check via roster/observersIndex, SHA-256 of salt|email|dob; SALT and hash recipe are duplicated verbatim from roster.js v25 and must change in both files together. Formspark notification 6mDKk8ihA. GroupMe handoff on success and on duplicate. Pairs with roster.js v25 and sgt.html v5. -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -35,6 +35,9 @@ h1{font-family:'Bebas Neue',sans-serif;font-size:42px;letter-spacing:2px;line-he
 .f textarea{resize:vertical;min-height:80px}
 .sec-h{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin:26px 0 4px;padding-top:20px;border-top:1px solid var(--card-border)}
 .sec-sub{font-size:12.5px;color:var(--text-muted);line-height:1.5;margin-bottom:14px}
+.chk-row{display:none;align-items:flex-start;gap:10px;margin:-4px 0 16px;font-size:14px;color:var(--white);line-height:1.45;cursor:pointer}
+.chk-row input{width:18px;height:18px;margin:1px 0 0;accent-color:var(--gold);flex:0 0 auto;cursor:pointer}
+.build{margin-top:12px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted);text-align:center}
 .submit{width:100%;margin-top:24px;padding:15px;background:var(--red);color:var(--white);border:none;border-radius:10px;font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:15px;letter-spacing:2.5px;text-transform:uppercase;cursor:pointer;box-shadow:0 4px 20px rgba(192,57,43,0.3)}
 .submit:hover{background:var(--red-glow)}
 .submit:disabled{opacity:.5;cursor:wait}
@@ -89,7 +92,8 @@ h1{font-family:'Bebas Neue',sans-serif;font-size:42px;letter-spacing:2px;line-he
     </div>
 
     <div class="sec-h">Parent / Guardian</div>
-    <div class="sec-sub" id="parentSub">Required for observers under 18.</div>
+    <div class="sec-sub" id="parentSub">Required for observers under 18 or those living with a parent or guardian.</div>
+    <label class="chk-row" id="lwpRow" for="gLwp"><input type="checkbox" id="gLwp"><span>I live with my parent(s) or guardian(s)</span></label>
     <div class="f-row one">
       <div class="f"><label for="gPName">Parent Name <span class="req pr">*</span></label><input type="text" id="gPName" placeholder="Parent or guardian name"></div>
     </div>
@@ -149,6 +153,7 @@ h1{font-family:'Bebas Neue',sans-serif;font-size:42px;letter-spacing:2px;line-he
 
   <div class="foot">Richardson Police Department Public Safety Cadets &middot; <a href="https://rpdcadets.com">rpdcadets.com</a>
     <button type="button" class="qr-open" id="qrOpen">QR Link</button>
+    <div class="build">Build v3</div>
   </div>
 </div>
 
@@ -217,18 +222,21 @@ function ageFrom(dob){
   if(m<0 || (m===0 && now.getDate()<d.getDate())) a--;
   return a;
 }
-function parentRequired(){
-  const a=ageFrom(v('gDob'));
-  return a===null || a<18;   // no DOB yet = treat as a minor
-}
+function isAdult(){ const a=ageFrom(v('gDob')); return a!==null && a>=18; }   // no DOB yet = treat as a minor
+function livesWithParent(){ return isAdult() && document.getElementById('gLwp').checked; }
+function parentRequired(){ return !isAdult() || livesWithParent(); }
 function syncParentUi(){
-  const req=parentRequired();
+  const adult=isAdult(), req=parentRequired();
+  document.getElementById('lwpRow').style.display = adult ? 'flex' : 'none';
+  if(!adult) document.getElementById('gLwp').checked=false;
   document.querySelectorAll('.req.pr').forEach(el=> el.style.display = req?'':'none');
-  document.getElementById('parentSub').textContent = req
-    ? 'Required for observers under 18.'
-    : 'Optional since you are 18 or older, but welcome if you want us to have it.';
+  document.getElementById('parentSub').textContent = !adult
+    ? 'Required for observers under 18 or those living with a parent or guardian.'
+    : (req ? 'Required since you live with a parent or guardian.'
+           : 'Required if you live with a parent or guardian; otherwise optional, but welcome if you want us to have it.');
 }
 document.getElementById('gDob').addEventListener('change', syncParentUi);
+document.getElementById('gLwp').addEventListener('change', syncParentUi);
 document.getElementById('gHeard').addEventListener('change', ()=>{
   const h=v('gHeard');
   document.getElementById('cadetRow').style.display = h==='Current Cadet' ? '' : 'none';
@@ -279,7 +287,7 @@ async function submit(){
       err.textContent='This form is not ready to accept submissions yet. Please let a sergeant know, or email advisors@rpdcadets.com.';
       btn.disabled=false; btn.textContent='Submit'; submitting=false; return;
     }
-    const payload={ name, dob, phone, email, school, parentName:pName, parentPhone:pPhone, parentEmail:pEmail,
+    const payload={ name, dob, phone, email, school, parentName:pName, parentPhone:pPhone, parentEmail:pEmail, livesWithParent: livesWithParent(),
                     heard, heardCadet: heard==='Current Cadet'?heardCadet:'', heardOther: heard==='Other'?heardOther:'',
                     status:'', notes:[], submittedAt:Date.now(), updatedAt:Date.now() };
     const env=await envelope(JSON.stringify(payload), pubSnap.val());
@@ -294,7 +302,7 @@ async function submit(){
         method:'POST', headers:{ 'Content-Type':'application/json', 'Accept':'application/json' },
         body: JSON.stringify({
           'Full Name':name, 'Date of Birth':dob, 'Phone':phone, email:email, 'School':school,
-          'Parent Name':pName, 'Parent Phone':pPhone, 'Parent Email':pEmail,
+          'Parent Name':pName, 'Parent Phone':pPhone, 'Parent Email':pEmail, 'Lives With Parent': livesWithParent()?'Yes':'No',
           'How They Heard': heard + (heard==='Current Cadet'&&heardCadet?': '+heardCadet:'') + (heard==='Other'&&heardOther?': '+heardOther:'')
         })
       });

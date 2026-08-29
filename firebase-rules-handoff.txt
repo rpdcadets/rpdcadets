@@ -1,0 +1,40 @@
+FIREBASE RULES FOR THE BOOKING SLIP DESKTOP HANDOFF (handoff node)
+=================================================================
+firebase-rules-handoff.txt | Build v1 | 2026-08-29
+
+What the node holds: one record per desktop code created in /patrol/booking.
+Each record is AES-GCM ciphertext of the form data plus a timestamp. The
+encryption key is derived from the 8-character code, which never touches
+Firebase (only a SHA-256 of it is used as the record id). Nothing under
+handoff/ is readable without the code.
+
+Records are removed on first pickup, by the on-load sweep in the booking page
+(anything older than 10 minutes), and by the handoff-purge GitHub Action
+(anything older than 15 minutes). This node is completely separate from
+roster/ and every other cadet-program path.
+
+Paste this block into your rules at the top level, as a sibling of "roster"
+(Firebase console, Realtime Database, Rules tab):
+
+"handoff": {
+  ".read": true,
+  ".write": true,
+  "$id": {
+    ".validate": "$id.length === 64 && (!newData.exists() || (newData.hasChildren(['iv','ct','at']) && newData.child('at').isNumber() && newData.child('at').val() <= now + 60000))",
+    "iv": { ".validate": "newData.isString() && newData.val().length < 40" },
+    "ct": { ".validate": "newData.isString() && newData.val().length < 60000" },
+    "at": { ".validate": "newData.isNumber()" },
+    "$other": { ".validate": false }
+  }
+}
+
+Notes:
+1. The read/write grants at handoff are the same open model the rest of the
+   site uses (no Firebase Auth). Confidentiality comes from the encryption,
+   not from the rules. The .validate lines only shape what can be written:
+   64-char ids, the three expected keys, a sane timestamp, and a size cap so
+   nobody can dump large blobs here.
+2. The purge workflow and the on-load sweep both need write access to delete
+   stale records, which this block provides.
+3. Nothing in this block touches roster/ or any other path. Adding it cannot
+   change how the cadet pages behave.

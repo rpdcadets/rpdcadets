@@ -1,0 +1,32 @@
+# handoff-purge.yml  |  Build v1  |  2026-08-29
+# Deletes booking-slip desktop-handoff records older than 15 minutes from
+# the Firebase "handoff" node. That node only ever holds encrypted form data
+# created by /patrol/booking; this job never touches any other path and
+# never writes to the repo.
+#
+# File location in the repo: .github/workflows/handoff-purge.yml
+# No repo secrets required.
+
+name: Purge stale booking handoff codes
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'   # every 15 minutes
+  workflow_dispatch:         # manual run button for testing
+
+permissions: {}
+
+jobs:
+  purge:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Delete records older than 15 minutes
+        run: |
+          DB="https://rpdcadets-quartermaster-default-rtdb.firebaseio.com/handoff"
+          CUTOFF=$(( $(date +%s) * 1000 - 15 * 60 * 1000 ))
+          KEYS=$(curl -sf "$DB.json" | jq -r --argjson c "$CUTOFF" 'to_entries[]? | select((.value.at // 0) < $c) | .key')
+          if [ -z "$KEYS" ]; then echo "Nothing to purge."; exit 0; fi
+          for K in $KEYS; do
+            curl -sf -X DELETE "$DB/$K.json" > /dev/null && echo "Deleted $K"
+          done

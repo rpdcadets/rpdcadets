@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<!-- patrol/booking/index.html | Build v1 | 2026-08-29 | Fills GO 803-01 (Booking Slip and Jail Intake Medical Screening) in the browser; desktop handoff by one-time code -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Booking Slip / Medical Screening</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
+<style>
+  :root{
+    --navy:#0b1f3a; --navy-2:#13294b; --paper:#f4f1ea; --ink:#1a1d24; --line:#c9c2b4;
+    --red:#9b2030; --gold:#b8923a; --field:#fbfaf6; --muted:#5f6675; --ok:#1f6b3b;
+    --warn:#8a5a00; --warnbg:#fdf6e3; --redbg:#fbe9ec;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:"Barlow","Segoe UI",system-ui,sans-serif;
+    background:
+      radial-gradient(circle at 12% -10%, rgba(184,146,58,.10), transparent 40%),
+      radial-gradient(circle at 100% 0%, rgba(155,32,48,.08), transparent 45%),
+      var(--paper);
+    color:var(--ink); line-height:1.4; min-height:100vh; padding-bottom:110px;
+    -webkit-text-size-adjust:100%;
+  }
+  header.masthead{
+    background:linear-gradient(180deg,var(--navy) 0%,var(--navy-2) 100%);
+    border-bottom:3px solid var(--gold);
+    box-shadow:0 2px 0 var(--red) inset, 0 6px 20px rgba(0,0,0,.25);
+    padding:14px 18px 12px;
+  }
+  .masthead .kick{margin:0 0 2px;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);font-weight:600;}
+  .masthead .kick a{color:inherit;text-decoration:none;}
+  .masthead h1{margin:0;font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:26px;letter-spacing:.02em;color:#fff;line-height:1.05;}
+  .masthead .sub{margin-top:3px;font-size:12.5px;color:rgba(255,255,255,.72);}
+
+  /* step bar */
+  .steps{position:sticky;top:0;z-index:20;display:flex;background:#fff;border-bottom:1px solid var(--line);box-shadow:0 2px 8px rgba(0,0,0,.06);}
+  .steps button{
+    flex:1;padding:10px 4px 8px;border:0;background:none;cursor:pointer;color:var(--muted);
+    font-family:"Barlow Condensed",sans-serif;font-size:15px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
+    border-bottom:3px solid transparent;
+  }
+  .steps button.active{color:var(--navy);border-bottom-color:var(--gold);}
+  .steps button:focus-visible{outline:2px solid var(--gold);outline-offset:-2px;}
+
+  main{max-width:720px;margin:0 auto;padding:14px 14px 0;}
+  .panel{display:none;}
+  .panel.active{display:block;}
+  .card{background:#fff;border:1px solid var(--line);border-radius:8px;margin-bottom:12px;overflow:hidden;}
+  .card-h{
+    background:var(--navy);color:#fff;padding:7px 14px;font-family:"Barlow Condensed",sans-serif;
+    font-size:15px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+  }
+  .card-body{padding:12px 14px 6px;}
+  .row{display:flex;gap:10px;}
+  .row > *{flex:1;min-width:0;}
+  .f{margin-bottom:10px;}
+  label.l{display:block;font-size:12px;font-weight:600;letter-spacing:.03em;text-transform:uppercase;color:var(--muted);margin-bottom:3px;}
+  .field{
+    width:100%;font:inherit;font-size:16px;padding:9px 10px;border:1.5px solid var(--line);border-radius:6px;
+    background:var(--field);color:var(--ink);
+  }
+  .field:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(184,146,58,.22);}
+  textarea.field{min-height:64px;resize:vertical;}
+  .with-btn{display:flex;gap:6px;}
+  .with-btn .field{flex:1;min-width:0;}
+  .now{
+    font-family:"Barlow Condensed",sans-serif;font-size:15px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+    padding:0 14px;border:1.5px solid var(--navy);border-radius:6px;background:#fff;color:var(--navy);cursor:pointer;white-space:nowrap;
+  }
+  .now:active{background:var(--navy);color:#fff;}
+
+  /* chips */
+  .chips{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:10px;}
+  .chip{
+    font:inherit;font-size:14.5px;font-weight:500;padding:8px 13px;border:1.5px solid var(--line);border-radius:999px;
+    background:#fff;color:var(--ink);cursor:pointer;user-select:none;-webkit-user-select:none;
+  }
+  .chip.on{background:var(--navy);border-color:var(--navy);color:#fff;}
+  .chip.on.warnchip{background:var(--red);border-color:var(--red);}
+  .chip:focus-visible{outline:2px solid var(--gold);outline-offset:2px;}
+  .yn .chip{min-width:64px;text-align:center;}
+  .inline{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;}
+  .inline .lab{font-size:14px;font-weight:500;}
+  .fv{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border:1.5px solid var(--line);border-radius:6px;background:var(--field);margin-bottom:10px;cursor:pointer;}
+  .fv input{width:22px;height:22px;margin:0;flex:none;accent-color:var(--red);}
+  .fv .t{font-size:14px;line-height:1.3;}
+  .fv.on{border-color:var(--red);background:var(--redbg);}
+  .hint{font-size:12px;color:var(--muted);margin:-4px 0 10px;}
+
+  /* medical */
+  .bwc{background:var(--warnbg);border:1.5px solid var(--warn);color:var(--warn);border-radius:6px;padding:10px 12px;font-weight:600;font-size:14px;margin-bottom:12px;text-align:center;}
+  .banner{
+    display:none;position:sticky;top:41px;z-index:15;background:var(--red);color:#fff;padding:10px 14px;border-radius:6px;margin-bottom:12px;
+    font-weight:600;font-size:14.5px;box-shadow:0 4px 12px rgba(155,32,48,.3);
+  }
+  .banner.show{display:block;}
+  .q{padding:11px 0;border-bottom:1px solid #ebe6da;}
+  .q:last-child{border-bottom:0;}
+  .q .qt{display:flex;gap:8px;font-size:15px;margin-bottom:8px;}
+  .q .n{font-family:"Barlow Condensed",sans-serif;font-weight:700;color:var(--navy);flex:none;width:22px;}
+  .q .desc{display:none;margin-top:8px;}
+  .q.yes .desc{display:block;}
+  .subhead{font-weight:700;font-size:14px;color:var(--navy);margin:2px 0 4px;}
+  .proto{font-size:13px;color:var(--muted);margin:0;padding-left:18px;}
+  .proto li{margin-bottom:4px;}
+
+  /* charges */
+  .charge{border-top:2px dashed var(--line);padding-top:10px;margin-top:6px;}
+  .charge:first-of-type{border-top:0;padding-top:0;margin-top:0;}
+  .charge .ch{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:16px;color:var(--navy);margin-bottom:6px;}
+  .add{width:100%;font:inherit;font-weight:600;padding:10px;border:1.5px dashed var(--navy);border-radius:6px;background:#fff;color:var(--navy);cursor:pointer;margin-bottom:12px;}
+
+  .skip{display:block;text-align:center;font-size:13px;color:var(--muted);margin:0 0 10px;}
+  .skip a{color:var(--navy);font-weight:600;}
+  .nav{display:flex;gap:10px;margin:4px 0 16px;}
+  .nav button{
+    flex:1;font-family:"Barlow Condensed",sans-serif;font-size:18px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
+    padding:11px;border:1.5px solid var(--navy);border-radius:6px;background:#fff;color:var(--navy);cursor:pointer;
+  }
+  .nav button.primary{background:var(--navy);color:#fff;}
+
+  /* action bar */
+  .actions{
+    position:fixed;left:0;right:0;bottom:0;z-index:30;background:#fff;border-top:1px solid var(--line);
+    box-shadow:0 -4px 14px rgba(0,0,0,.08);padding:10px 12px calc(10px + env(safe-area-inset-bottom));
+  }
+  .actions .inner{max-width:720px;margin:0 auto;display:flex;gap:8px;}
+  .btn{
+    flex:1;font-family:"Barlow Condensed",sans-serif;font-size:17px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
+    padding:12px 6px;border:1.5px solid var(--navy);border-radius:6px;background:#fff;color:var(--navy);cursor:pointer;white-space:nowrap;
+  }
+  .btn-gold{background:var(--gold);border-color:var(--gold);color:var(--navy);}
+  .btn-red{border-color:var(--red);color:var(--red);flex:0 0 auto;padding:12px 14px;}
+  .btn:disabled{opacity:.5;cursor:default;}
+  .status{font-size:13px;text-align:center;color:var(--muted);min-height:16px;margin-top:6px;}
+  .status.err{color:var(--red);font-weight:600;}
+  .status.ok{color:var(--ok);font-weight:600;}
+
+  /* modal */
+  .modal{display:none;position:fixed;inset:0;z-index:50;background:rgba(11,31,58,.75);align-items:center;justify-content:center;padding:18px;}
+  .modal.show{display:flex;}
+  .modal .box{background:#fff;border-radius:10px;padding:20px 18px;max-width:440px;width:100%;text-align:center;}
+  .modal h3{margin:0 0 6px;font-family:"Barlow Condensed",sans-serif;font-size:22px;letter-spacing:.04em;text-transform:uppercase;color:var(--navy);}
+  .modal p{margin:0 0 12px;font-size:14px;color:var(--muted);}
+  .bigcode{font-family:"Barlow Condensed",monospace;font-size:44px;font-weight:700;letter-spacing:.22em;color:var(--navy);background:var(--paper);border:2px solid var(--gold);border-radius:8px;padding:10px 6px 10px 12px;margin:0 0 10px;user-select:all;-webkit-user-select:all;}
+  .linkline{font-size:13px;word-break:break-all;background:var(--field);border:1px solid var(--line);border-radius:6px;padding:8px;margin-bottom:10px;user-select:all;-webkit-user-select:all;}
+  .modal .btn{width:100%;margin-top:6px;}
+
+  footer.foot{text-align:center;font-size:12px;color:var(--muted);padding:12px 18px 6px;}
+  @media (min-width:560px){ .masthead h1{font-size:30px;} .steps button{font-size:16px;} }
+  @media (prefers-reduced-motion:reduce){ *{transition:none !important;} }
+</style>
+</head>
+<body>
+<header class="masthead">
+  <p class="kick"><a href="/patrol/">&lsaquo; Field Tools</a></p>
+  <h1>Booking Slip / Medical Screening</h1>
+  <div class="sub">GO 803-01 &middot; Fill on your phone, output is the official PDF. Anything left blank stays fillable.</div>
+</header>
+
+<div class="steps" id="steps">
+  <button data-step="1" class="active">Suspect</button>
+  <button data-step="2">Medical</button>
+  <button data-step="3">Booking</button>
+  <button data-step="4">Charges</button>
+</div>
+
+<main>
+
+<!-- ============ STEP 1: SUSPECT ============ -->
+<section class="panel active" data-panel="1">
+  <div class="card">
+    <div class="card-h">Name</div>
+    <div class="card-body">
+      <div class="f"><label class="l" for="nameLast">Last</label><input class="field" id="nameLast" autocomplete="off" autocapitalize="words"></div>
+      <div class="row">
+        <div class="f"><label class="l" for="nameFirst">First</label><input class="field" id="nameFirst" autocomplete="off" autocapitalize="words"></div>
+        <div class="f"><label class="l" for="nameMiddle">Middle</label><input class="field" id="nameMiddle" autocomplete="off" autocapitalize="words"></div>
+      </div>
+      <div class="row">
+        <div class="f"><label class="l" for="dob">DOB</label><input class="field" id="dob" type="date"></div>
+        <div class="f"><label class="l" for="aliasDob">Alias DOB</label><input class="field" id="aliasDob" type="date"></div>
+      </div>
+    </div>
+  </div>
+  <div class="nav"><button class="primary" data-go="2">Next: Medical &rsaquo;</button></div>
+</section>
+
+<!-- ============ STEP 2: MEDICAL ============ -->
+<section class="panel" data-panel="2">
+  <div class="bwc">&#9888; ACTIVATE IN CAR OR BODY-WORN CAMERA (BWC)</div>
+  <div class="banner" id="medBanner">A "Yes" was marked. The prisoner must be taken to the hospital for medical clearance before jail intake.</div>
+
+  <div class="card">
+    <div class="card-h">Jail Intake Medical Screening Form</div>
+    <div class="card-body">
+      <div class="f"><label class="l">Inmate Name</label><div class="field" id="inmateName" style="color:var(--muted);">Fills from Step 1</div></div>
+      <div class="subhead">Medical Questions to be answered by the prisoner:</div>
+      <div id="medPrisoner"></div>
+      <div class="subhead" style="margin-top:12px;">Medical Questions to be answered based on the Officers observations:</div>
+      <div id="medOfficer"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-h">Important Medical Protocol</div>
+    <div class="card-body">
+      <ul class="proto">
+        <li>If the answer is &ldquo;Yes&rdquo; to any question the prisoner must be taken to the hospital for medical clearance.</li>
+        <li>The on-duty Detention Supervisor will have the final decision on admittance to the jail or the requirement that the prisoner be taken for medical clearance at a hospital.</li>
+        <li>A paramedic evaluation is not considered sufficient medical clearance for jail intake.</li>
+      </ul>
+      <div class="hint" style="margin-top:10px;">"Medical History Taken By" and its date fill from the Arresting Officer and Date of Arrest in Step 3. The Detention Officer line stays blank for the jail.</div>
+    </div>
+  </div>
+  <div class="nav"><button data-go="1">&lsaquo; Back</button><button class="primary" data-go="3">Next: Booking &rsaquo;</button></div>
+</section>
+
+<!-- ============ STEP 3: BOOKING ============ -->
+<section class="panel" data-panel="3">
+  <p class="skip">Done for now? <a href="#" data-act="pdf">Download the PDF</a> or <a href="#" data-act="code">create a desktop code</a>. The rest stays fillable later.</p>
+
+  <div class="card">
+    <div class="card-h">Booking Slip</div>
+    <div class="card-body">
+      <label class="l">Agency</label>
+      <div class="chips" data-group="agency" data-single>
+        <button class="chip" data-v="RICHARDSON">Richardson</button>
+        <button class="chip" data-v="ADDISON">Addison</button>
+        <button class="chip" data-v="UTD">UTD</button>
+        <button class="chip" data-v="METHODIST">Methodist Health System</button>
+      </div>
+      <label class="l">Race Ethnicity</label>
+      <div class="chips" data-group="race" data-single>
+        <button class="chip" data-v="WW">W/W</button><button class="chip" data-v="WA">W/A</button><button class="chip" data-v="WH">W/H</button>
+        <button class="chip" data-v="AA">A/A</button><button class="chip" data-v="BB">B/B</button><button class="chip" data-v="II">I/I</button>
+      </div>
+      <div class="f"><label class="l" for="homeAddress">Home Address</label><input class="field" id="homeAddress" autocomplete="off"></div>
+      <div class="row">
+        <div class="f" style="flex:2;"><label class="l" for="city">City</label><input class="field" id="city" autocomplete="off"></div>
+        <div class="f"><label class="l" for="state">State</label><input class="field" id="state" autocomplete="off" maxlength="2" autocapitalize="characters"></div>
+        <div class="f"><label class="l" for="zip">Zip Code</label><input class="field" id="zip" inputmode="numeric" autocomplete="off"></div>
+      </div>
+      <div class="f"><label class="l" for="homePhone">Home Phone #</label><input class="field" id="homePhone" type="tel" autocomplete="off"></div>
+      <div class="f"><label class="l" for="aka">AKA Name(s)</label><input class="field" id="aka" autocomplete="off"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-h">Caution Indicators</div>
+    <div class="card-body">
+      <div class="chips" data-group="caution">
+        <button class="chip warnchip" data-v="Resists Arrest">Resists Arrest</button>
+        <button class="chip warnchip" data-v="Weapons">Weapons</button>
+        <button class="chip warnchip" data-v="Violent">Violent</button>
+        <button class="chip warnchip" data-v="Mental Health">Mental Health</button>
+        <button class="chip warnchip" data-v="Medical Problems">Medical Problems</button>
+        <button class="chip warnchip" data-v="Suicidal">Suicidal</button>
+        <button class="chip warnchip" data-v="Gang">Gang</button>
+        <button class="chip warnchip" data-v="Sex Offender">Sex Offender</button>
+        <button class="chip warnchip" data-v="Drug User">Drug User</button>
+        <button class="chip warnchip" data-v="Intoxicated">Intoxicated</button>
+        <button class="chip warnchip" data-v="Escape Risk">Escape Risk</button>
+        <button class="chip" data-v="NONE">NONE</button>
+      </div>
+      <div class="f"><label class="l" for="cautionOther">Other</label><input class="field" id="cautionOther" autocomplete="off"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-h">Arrest / Search Data</div>
+    <div class="card-body">
+      <div class="row">
+        <div class="f"><label class="l" for="incident">Incident #</label><input class="field" id="incident" autocomplete="off"></div>
+        <div class="f"><label class="l" for="cid">CID # (if available)</label><input class="field" id="cid" autocomplete="off"></div>
+      </div>
+      <div class="f"><label class="l" for="dateArrest">Date of Arrest</label>
+        <div class="with-btn"><input class="field" id="dateArrest" type="date"><button class="now" data-now="date" data-for="dateArrest">Now</button></div></div>
+      <div class="row">
+        <div class="f"><label class="l" for="timeArrest">Time of Arrest</label>
+          <div class="with-btn"><input class="field" id="timeArrest" inputmode="numeric" placeholder="HH:MM" autocomplete="off"><button class="now" data-now="time" data-for="timeArrest">Now</button></div></div>
+        <div class="f"><label class="l" for="timeJail">Arrival Time at Jail</label>
+          <div class="with-btn"><input class="field" id="timeJail" inputmode="numeric" placeholder="HH:MM" autocomplete="off"><button class="now" data-now="time" data-for="timeJail">Now</button></div></div>
+      </div>
+      <div class="row">
+        <div class="f" style="flex:2;"><label class="l" for="arrestLocation">Arrest Location</label><input class="field" id="arrestLocation" autocomplete="off"></div>
+        <div class="f"><label class="l" for="arrestCounty">County</label><input class="field" id="arrestCounty" autocomplete="off"></div>
+      </div>
+      <div class="row">
+        <div class="f" style="flex:2;"><label class="l" for="officers">Arresting Officer(s)</label><input class="field" id="officers" autocomplete="off"></div>
+        <div class="f"><label class="l" for="officerId">ID #</label><input class="field" id="officerId" autocomplete="off"></div>
+      </div>
+      <div class="f"><label class="l" for="searchedBy">Searched By: ID#</label><input class="field" id="searchedBy" autocomplete="off"></div>
+      <label class="l">Type of Search</label>
+      <div class="chips" data-group="search" data-single>
+        <button class="chip" data-v="Thorough">Thorough</button>
+        <button class="chip" data-v="Visual Strip">Visual Strip</button>
+        <button class="chip" data-v="Other_2">Other</button>
+      </div>
+      <div class="inline">
+        <span class="lab">Notification of victim required before release of defendant?</span>
+        <div class="chips yn" data-group="victimNotify" data-single style="margin:0;">
+          <button class="chip" data-v="YES">Yes</button><button class="chip" data-v="NO">No</button>
+        </div>
+      </div>
+      <label class="fv" id="fvLabel"><input type="checkbox" id="fv"><span class="t">CHECK THIS BOX IF FAMILY VIOLENCE (REQUIRES 4-HOUR EXTENDED INCARCERATION)</span></label>
+      <div class="f"><label class="l" for="victimName">Victims Name</label><input class="field" id="victimName" autocomplete="off"></div>
+      <div class="f"><label class="l" for="victimPhone">Phone #: Number(s)</label><input class="field" id="victimPhone" type="tel" autocomplete="off"></div>
+      <div class="f"><label class="l" for="victimRel">Relationship to Victim</label><input class="field" id="victimRel" autocomplete="off"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-h">Vehicle Information</div>
+    <div class="card-body">
+      <div class="inline"><span class="lab">Impounded?</span>
+        <div class="chips yn" data-group="impounded" data-single style="margin:0;"><button class="chip" data-v="Yes">Yes</button><button class="chip" data-v="No">No</button></div></div>
+      <div class="inline"><span class="lab">Hold?</span>
+        <div class="chips yn" data-group="hold" data-single style="margin:0;"><button class="chip" data-v="Yes_2">Yes</button><button class="chip" data-v="No_2">No</button></div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-h">Prisoner Location</div>
+    <div class="card-body">
+      <div class="row">
+        <div class="f"><label class="l" for="prisonerLoc">Prisoner Location</label><input class="field" id="prisonerLoc" autocomplete="off"></div>
+        <div class="f"><label class="l" for="locker">Property Locker No.</label><input class="field" id="locker" autocomplete="off"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-h">Telephone Hold / Cell Separation</div>
+    <div class="card-body">
+      <div class="inline"><span class="lab">Telephone Hold:</span>
+        <div class="chips yn" data-group="phoneHold" data-single style="margin:0;"><button class="chip" data-v="Yes_3">Yes</button><button class="chip" data-v="No_3">No</button></div></div>
+      <div class="inline"><span class="lab">Cell Separation:</span>
+        <div class="chips yn" data-group="cellSep" data-single style="margin:0;"><button class="chip" data-v="Yes_4">Yes</button><button class="chip" data-v="No_4">No</button></div></div>
+      <div class="f"><label class="l" for="sepFrom">Separation from</label><input class="field" id="sepFrom" autocomplete="off"></div>
+    </div>
+  </div>
+  <div class="nav"><button data-go="2">&lsaquo; Back</button><button class="primary" data-go="4">Next: Charges &rsaquo;</button></div>
+</section>
+
+<!-- ============ STEP 4: CHARGES ============ -->
+<section class="panel" data-panel="4">
+  <p class="skip">Charges can be typed at the jail. <a href="#" data-act="pdf">Download the PDF</a> or <a href="#" data-act="code">create a desktop code</a> any time.</p>
+  <div class="card">
+    <div class="card-h">Charges</div>
+    <div class="card-body" id="charges"></div>
+  </div>
+  <button class="add" id="addCharge">+ Add charge</button>
+  <div class="nav"><button data-go="3">&lsaquo; Back</button></div>
+</section>
+
+<footer class="foot">Internal field tool. Renders entirely in your browser. Nothing is saved on this device or the site. &middot; Build v1</footer>
+</main>
+
+<div class="actions">
+  <div class="inner">
+    <button class="btn btn-gold" id="btnPdf">Download PDF</button>
+    <button class="btn" id="btnCode">Desktop code</button>
+    <button class="btn btn-red" id="btnClear" title="Clear all">Clear</button>
+  </div>
+  <div class="status" id="status"></div>
+</div>
+
+<div class="modal" id="codeModal">
+  <div class="box">
+    <h3>Desktop code</h3>
+    <p>On the desktop, open <strong>rpdcadets.com/patrol</strong> and enter this code. Works once, expires in 10 minutes.</p>
+    <div class="bigcode" id="bigCode"></div>
+    <div class="linkline" id="fullLink"></div>
+    <button class="btn" id="copyLink">Copy link</button>
+    <button class="btn btn-gold" id="closeModal">Done</button>
+  </div>
+</div>
+
+<script>
+/* ---------------- constants ---------------- */
+const PDF_URL = 'GO-803-01.pdf?v=1';
+const HANDOFF_TTL_MS = 10 * 60 * 1000;
+const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no 0/O/1/I
+const firebaseConfig = {
+  apiKey: "AIzaSyDV0vuyGg7gpPXJd2jRqZtUTeKiP3yPxhU",
+  authDomain: "rpdcadets-quartermaster.firebaseapp.com",
+  databaseURL: "https://rpdcadets-quartermaster-default-rtdb.firebaseio.com",
+  projectId: "rpdcadets-quartermaster",
+  storageBucket: "rpdcadets-quartermaster.firebasestorage.app"
+};
+
+/* Medical questions, verbatim from GO 803-01 page 3.
+   yes/no = PDF checkbox names; desc = PDF text field for "If yes, describe". */
+const MED = [
+  {n:1,  t:'Have you ingested illegal drugs, are you actively detoxing, or are you going to detox while in custody? (coming off alcohol or drugs with symptoms like vomiting, diarrhea, shaking, weakness)?', yes:'Check Box14', no:'Check Box41', desc:'Text28', who:'p'},
+  {n:2,  t:'Do you have any head or significant facial trauma (injury)?', yes:'Check Box15', no:'Check Box13', desc:'Text29', who:'p'},
+  {n:3,  t:'Are you in respiratory distress (difficulty breathing)?', yes:'Check Box16', no:'Check Box12', desc:'Text30', who:'p'},
+  {n:4,  t:'Are you having chest pains, or have any cardiac or heart attack history?', yes:'Check Box17', no:'Check Box11', desc:'Text31', who:'p'},
+  {n:5,  t:'Do you have a have a broken bone or obvious deformity of a limb or other body part?', yes:'Check Box18', no:'Check Box10', desc:'Text32', who:'p'},
+  {n:6,  t:'Do you have open wounds or significant active bleeding?', yes:'Check Box19', no:'Check Box9',  desc:'Text33', who:'p'},
+  {n:7,  t:'Are you a pregnant female detoxing from or currently using heroin or methadone?', yes:'Check Box20', no:'Check Box8',  desc:'Text34', who:'p'},
+  {n:8,  t:'Have you been injured in a motor vehicle collision?', yes:'Check Box21', no:'Check Box7',  desc:'Text35', who:'p'},
+  {n:9,  t:'Do you have any potential acute medical problems that could place you at risk?', yes:'Check Box22', no:'Check Box6',  desc:'Text36', who:'p'},
+  {n:10, t:'Suspected drug or alcohol overdose (or ingesting or swallowing drugs)', yes:'Check Box23', no:'Check Box5',  desc:'Text38', who:'o'},
+  {n:11, t:'Does the prisoner have an altered mental state, or loss consciousness (passing out)?', yes:'Check Box3',  no:'Check Box4',  desc:'Text37', who:'o'},
+  {n:12, t:'Is the prisoner actively acting suicidal or psychotic?', yes:'Check Box1',  no:'Check Box2',  desc:'Text39', who:'o'}
+];
+
+/* Text inputs -> PDF text fields (page 1 unless noted) */
+const TEXT_MAP = {
+  homeAddress:'Home Address', city:'City', state:'State', zip:'Zip Code', homePhone:'Home Phone', aka:'AKA Names',
+  cautionOther:'Other', incident:'Incident', cid:'CID', timeArrest:'Time of Arrest', timeJail:'Arrival Time at Jail',
+  arrestLocation:'Arrest Location', arrestCounty:'Arrest County', officers:'Arresting Officers', officerId:'ID',
+  searchedBy:'Searched By ID', victimName:'Victims Name', victimPhone:'Phone  Numbers', victimRel:'Relationship to Victim',
+  prisonerLoc:'Prisoner Location', locker:'Property Locker No', sepFrom:'Separation from'
+};
+/* Single-select chip groups -> PDF checkboxes (value = checkbox name, agency mirrors to page 3) */
+const AGENCY_P3 = { RICHARDSON:'Check Box24', ADDISON:'Check Box25', UTD:'Check Box26', METHODIST:'Check Box27' };
+const AGENCY_P1 = { RICHARDSON:'RICHARDSON', ADDISON:'ADDISON', UTD:'UTD', METHODIST:'METHODIST HEALTH SYSTEM' };
+const VICTIM_NOTIFY = { YES:'Check Box42', NO:'Check Box43' };
+const RADIOS = { impounded:'Impounded', hold:'Hold', phoneHold:'Telephone Hold', cellSep:'Cell Separation' };
+const CHARGE_FIELDS = [['agency','Agency'],['charge','Charge'],['code','Code'],['warrant','Warrant'],['remarks','RemarksProperty Tag'],['loc','Offense Location'],['county','County']];
+const FV_FIELD = 'CHECK THIS BOX IF FAMILY VIOLENCE REQUIRES 4HOUR EXTENDED INCARCERATION';
+
+const $ = id => document.getElementById(id);
+const status = (msg, cls='') => { const s=$('status'); s.textContent=msg; s.className='status '+cls; };
+
+/* ---------------- build dynamic UI ---------------- */
+function buildMedical(){
+  const html = q => `
+    <div class="q" id="q${q.n}">
+      <div class="qt"><span class="n">${q.n}.</span><span>${q.t}</span></div>
+      <div class="chips yn" data-group="med${q.n}" data-single>
+        <button class="chip" data-v="yes">Yes</button><button class="chip" data-v="no">No</button>
+      </div>
+      <div class="desc"><label class="l" for="med${q.n}desc">If yes, describe</label><textarea class="field" id="med${q.n}desc"></textarea></div>
+    </div>`;
+  $('medPrisoner').innerHTML = MED.filter(q=>q.who==='p').map(html).join('');
+  $('medOfficer').innerHTML  = MED.filter(q=>q.who==='o').map(html).join('');
+}
+let chargeCount = 0;
+function addCharge(){
+  if (chargeCount >= 7) return;
+  chargeCount++;
+  const i = chargeCount, sfx = i===1 ? '' : '_'+i;
+  const div = document.createElement('div'); div.className='charge'; div.dataset.n=i;
+  div.innerHTML = `
+    <div class="ch">${i})</div>
+    <div class="f"><label class="l" for="c${i}charge">Charge</label><input class="field" id="c${i}charge" autocomplete="off"></div>
+    <div class="row">
+      <div class="f"><label class="l" for="c${i}agency">Agency</label><input class="field" id="c${i}agency" autocomplete="off"></div>
+      <div class="f"><label class="l" for="c${i}code">Code</label><input class="field" id="c${i}code" autocomplete="off"></div>
+    </div>
+    <div class="row">
+      <div class="f"><label class="l" for="c${i}warrant">Warrant #</label><input class="field" id="c${i}warrant" autocomplete="off"></div>
+      <div class="f"><label class="l" for="c${i}remarks">Remarks / Property Tag #</label><input class="field" id="c${i}remarks" autocomplete="off"></div>
+    </div>
+    <div class="row">
+      <div class="f" style="flex:2;"><label class="l" for="c${i}loc">Offense Location</label><input class="field" id="c${i}loc" autocomplete="off"></div>
+      <div class="f"><label class="l" for="c${i}county">County</label><input class="field" id="c${i}county" autocomplete="off"></div>
+    </div>`;
+  div.dataset.sfx = sfx;
+  $('charges').appendChild(div);
+  $('addCharge').style.display = chargeCount>=7 ? 'none' : '';
+}
+
+/* ---------------- chips ---------------- */
+document.addEventListener('click', e => {
+  const chip = e.target.closest('.chip'); if (!chip) return;
+  e.preventDefault();
+  const grp = chip.closest('.chips'); const single = grp.hasAttribute('data-single');
+  if (single){
+    const was = chip.classList.contains('on');
+    grp.querySelectorAll('.chip').forEach(c=>c.classList.remove('on'));
+    if (!was) chip.classList.add('on');
+  } else {
+    if (chip.dataset.v === 'NONE'){ const was=chip.classList.contains('on'); grp.querySelectorAll('.chip').forEach(c=>c.classList.remove('on')); if(!was) chip.classList.add('on'); }
+    else { chip.classList.toggle('on'); grp.querySelector('[data-v="NONE"]')?.classList.remove('on'); }
+  }
+  if (grp.dataset.group.startsWith('med')) onMedChange();
+});
+function groupVal(name){ const on = document.querySelector(`.chips[data-group="${name}"] .chip.on`); return on ? on.dataset.v : ''; }
+function groupVals(name){ return [...document.querySelectorAll(`.chips[data-group="${name}"] .chip.on`)].map(c=>c.dataset.v); }
+function setGroup(name, vals){
+  const list = Array.isArray(vals) ? vals : [vals];
+  document.querySelectorAll(`.chips[data-group="${name}"] .chip`).forEach(c=>c.classList.toggle('on', list.includes(c.dataset.v)));
+}
+function onMedChange(){
+  let anyYes=false;
+  MED.forEach(q=>{ const yes = groupVal('med'+q.n)==='yes'; $('q'+q.n).classList.toggle('yes', yes); if(yes) anyYes=true; });
+  $('medBanner').classList.toggle('show', anyYes);
+}
+
+/* ---------------- steps ---------------- */
+function showStep(n){
+  document.querySelectorAll('#steps button').forEach(b=>b.classList.toggle('active', b.dataset.step==n));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('active', p.dataset.panel==n));
+  if (n==2) $('inmateName').textContent = fullName() || 'Fills from Step 1';
+  window.scrollTo({top:0});
+}
+document.querySelectorAll('#steps button').forEach(b=>b.addEventListener('click',()=>showStep(b.dataset.step)));
+document.querySelectorAll('[data-go]').forEach(b=>b.addEventListener('click',()=>showStep(b.dataset.go)));
+document.querySelectorAll('[data-act]').forEach(a=>a.addEventListener('click',e=>{ e.preventDefault(); a.dataset.act==='pdf' ? doPdf() : doCode(); }));
+
+/* ---------------- now buttons, family violence ---------------- */
+const pad = n => String(n).padStart(2,'0');
+function todayISO(){ const d=new Date(); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
+function nowHM(){ const d=new Date(); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; }
+document.querySelectorAll('.now').forEach(b=>b.addEventListener('click',()=>{ $(b.dataset.for).value = b.dataset.now==='date' ? todayISO() : nowHM(); }));
+$('fv').addEventListener('change', ()=>{
+  $('fvLabel').classList.toggle('on', $('fv').checked);
+  if ($('fv').checked && !groupVal('victimNotify')) setGroup('victimNotify','YES');
+});
+
+/* ---------------- collect / restore form data ---------------- */
+function fullName(){
+  const l=$('nameLast').value.trim(), f=$('nameFirst').value.trim(), m=$('nameMiddle').value.trim();
+  let s = l; if (f) s += (s?', ':'')+f; if (m) s += (s?' ':'')+m; return s;
+}
+function isoToUS(v){ if(!v) return ''; const [y,m,d]=v.split('-'); return `${m}/${d}/${y}`; }
+function collect(){
+  const d = { text:{}, groups:{}, fv:$('fv').checked, med:{}, charges:[] };
+  ['nameLast','nameFirst','nameMiddle','dob','aliasDob','dateArrest', ...Object.keys(TEXT_MAP)].forEach(id=>d.text[id]=$(id).value);
+  ['agency','race','search','victimNotify','impounded','hold','phoneHold','cellSep'].forEach(g=>d.groups[g]=groupVal(g));
+  d.groups.caution = groupVals('caution');
+  MED.forEach(q=>d.med[q.n]={ a:groupVal('med'+q.n), desc:$('med'+q.n+'desc').value });
+  for (let i=1;i<=chargeCount;i++){ const c={}; CHARGE_FIELDS.forEach(([k])=>c[k]=$('c'+i+k).value); if (Object.values(c).some(v=>v.trim())) d.charges.push(c); }
+  return d;
+}
+function restore(d){
+  Object.entries(d.text||{}).forEach(([id,v])=>{ if($(id)) $(id).value=v||''; });
+  Object.entries(d.groups||{}).forEach(([g,v])=>setGroup(g,v||[]));
+  $('fv').checked=!!d.fv; $('fvLabel').classList.toggle('on', !!d.fv);
+  MED.forEach(q=>{ const m=(d.med||{})[q.n]||{}; setGroup('med'+q.n, m.a||''); $('med'+q.n+'desc').value=m.desc||''; });
+  onMedChange();
+  (d.charges||[]).forEach((c,i)=>{ while(chargeCount<i+1) addCharge(); CHARGE_FIELDS.forEach(([k])=>$('c'+(i+1)+k).value=c[k]||''); });
+}
+
+/* ---------------- PDF ---------------- */
+let pdfBytesCache = null;
+async function loadBlank(){
+  if (pdfBytesCache) return pdfBytesCache;
+  const r = await fetch(PDF_URL, {cache:'no-store'}); if (!r.ok) throw new Error('Could not load the blank form ('+r.status+')');
+  pdfBytesCache = await r.arrayBuffer(); return pdfBytesCache;
+}
+async function buildPdf(d){
+  const { PDFDocument, StandardFonts } = PDFLib;
+  const doc = await PDFDocument.load(await loadBlank());
+  const form = doc.getForm(); const helv = await doc.embedFont(StandardFonts.Helvetica);
+  const setText = (name, v) => { if (!v) return; try { const f=form.getTextField(name); f.setText(String(v)); f.updateAppearances(helv); } catch(e){ console.warn('text',name,e); } };
+  const check   = name => { try { form.getCheckBox(name).check(); } catch(e){ console.warn('check',name,e); } };
+  const radio   = (name,v) => { if(!v) return; try { form.getRadioGroup(name).select(v); } catch(e){ console.warn('radio',name,e); } };
+  const t = d.text, g = d.groups;
+  const name = fullNameFrom(t);
+  setText('Name', name); setText('Text40', name);
+  setText('DOB', isoToUS(t.dob)); setText('Alias DOB', isoToUS(t.aliasDob)); setText('Date of Arrest', isoToUS(t.dateArrest));
+  Object.entries(TEXT_MAP).forEach(([id,pdf])=>setText(pdf, t[id]));
+  if (g.agency){ check(AGENCY_P1[g.agency]); check(AGENCY_P3[g.agency]); }
+  if (g.race) check(g.race);
+  (g.caution||[]).forEach(check);
+  if (g.search) check(g.search);
+  if (g.victimNotify) check(VICTIM_NOTIFY[g.victimNotify]);
+  if (d.fv) check(FV_FIELD);
+  Object.entries(RADIOS).forEach(([id,pdf])=>radio(pdf, g[id]));
+  MED.forEach(q=>{ const m=d.med[q.n]||{}; if(m.a==='yes'){ check(q.yes); setText(q.desc, m.desc); } else if (m.a==='no') check(q.no); });
+  setText('Medical Taken By', t.officers); setText('Medical Taken Date', isoToUS(t.dateArrest));
+  d.charges.forEach((c,i)=>{ const sfx = i===0?'':'_'+(i+1); CHARGE_FIELDS.forEach(([k,pdf])=>setText(pdf+sfx, c[k])); });
+  return await doc.save({ updateFieldAppearances:false });
+}
+function fullNameFrom(t){ let s=(t.nameLast||'').trim(); const f=(t.nameFirst||'').trim(), m=(t.nameMiddle||'').trim(); if(f) s+=(s?', ':'')+f; if(m) s+=(s?' ':'')+m; return s; }
+function fileName(d){
+  const l=(d.text.nameLast||'').replace(/[^A-Za-z0-9]/g,''), f=(d.text.nameFirst||'').replace(/[^A-Za-z0-9]/g,'');
+  const dt=(d.text.dateArrest||todayISO()).replace(/-/g,'');
+  return `Booking_${l||'Unknown'}${f?'_'+f:''}_${dt}.pdf`;
+}
+const isTouch = () => matchMedia('(pointer:coarse)').matches;
+async function deliver(bytes, fname, allowShare=true){
+  const blob = new Blob([bytes], {type:'application/pdf'});
+  const file = new File([blob], fname, {type:'application/pdf'});
+  if (allowShare && isTouch() && navigator.canShare && navigator.canShare({files:[file]})){
+    try { await navigator.share({files:[file], title:fname}); return 'shared'; } catch(e){ if (e.name==='AbortError') return 'cancelled'; }
+  }
+  const url = URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=fname; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 60000); return 'downloaded';
+}
+async function doPdf(){
+  $('btnPdf').disabled=true; status('Building PDF...');
+  try { const d=collect(); const bytes=await buildPdf(d); const how=await deliver(bytes, fileName(d)); status(how==='cancelled'?'':'PDF ready.', 'ok'); }
+  catch(e){ console.error(e); status('PDF failed: '+e.message, 'err'); }
+  $('btnPdf').disabled=false;
+}
+
+/* ---------------- handoff (encrypted, one-time code) ---------------- */
+let db = null;
+function getDb(){ if (!db){ firebase.initializeApp(firebaseConfig); db = firebase.database(); } return db; }
+const enc = new TextEncoder(), dec = new TextDecoder();
+async function sha256(s){ return new Uint8Array(await crypto.subtle.digest('SHA-256', enc.encode(s))); }
+const hex = u8 => [...u8].map(b=>b.toString(16).padStart(2,'0')).join('');
+const b64 = u8 => btoa(String.fromCharCode(...u8));
+const unb64 = s => Uint8Array.from(atob(s), c=>c.charCodeAt(0));
+async function keysFor(code){
+  const id = hex(await sha256('rpd-handoff-id:'+code));
+  const key = await crypto.subtle.importKey('raw', await sha256('rpd-handoff-key:'+code), 'AES-GCM', false, ['encrypt','decrypt']);
+  return { id, key };
+}
+function makeCode(){ const a=new Uint8Array(8); crypto.getRandomValues(a); return [...a].map(b=>CODE_ALPHABET[b % CODE_ALPHABET.length]).join(''); }
+async function doCode(){
+  $('btnCode').disabled=true; status('Creating code...');
+  try {
+    const code = makeCode(); const { id, key } = await keysFor(code);
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const ct = new Uint8Array(await crypto.subtle.encrypt({name:'AES-GCM', iv}, key, enc.encode(JSON.stringify(collect()))));
+    await getDb().ref('handoff/'+id).set({ iv:b64(iv), ct:b64(ct), at: Date.now() });
+    $('bigCode').textContent = code;
+    $('fullLink').textContent = location.origin + '/patrol/booking/#' + code;
+    $('codeModal').classList.add('show'); status('');
+  } catch(e){ console.error(e); status('Could not create code: '+e.message, 'err'); }
+  $('btnCode').disabled=false;
+}
+$('copyLink').addEventListener('click', async()=>{ try{ await navigator.clipboard.writeText($('fullLink').textContent); $('copyLink').textContent='Copied'; setTimeout(()=>$('copyLink').textContent='Copy link',1500);}catch(e){} });
+$('closeModal').addEventListener('click', ()=>$('codeModal').classList.remove('show'));
+
+async function pickup(code){
+  status('Fetching booking slip for code '+code+'...');
+  try {
+    const { id, key } = await keysFor(code);
+    const ref = getDb().ref('handoff/'+id);
+    const snap = await ref.get();
+    if (!snap.exists()) throw new Error('That code was not found. It may have expired (10 minutes) or already been used.');
+    const v = snap.val();
+    if (Date.now() - (v.at||0) > HANDOFF_TTL_MS){ try{ await ref.remove(); }catch(e){} throw new Error('That code has expired. Create a new one on the phone.'); }
+    const plain = dec.decode(await crypto.subtle.decrypt({name:'AES-GCM', iv:unb64(v.iv)}, key, unb64(v.ct)));
+    try { await ref.remove(); } catch(e){ console.warn('remove failed', e); }
+    const d = JSON.parse(plain); restore(d);
+    const bytes = await buildPdf(d); await deliver(bytes, fileName(d), false);
+    status('Booking slip loaded and PDF downloaded. Code has been used up.', 'ok');
+  } catch(e){ console.error(e); status(e.message, 'err'); }
+  history.replaceState(null, '', location.pathname);
+}
+async function sweep(){
+  try {
+    const snap = await getDb().ref('handoff').get(); if (!snap.exists()) return;
+    const cutoff = Date.now() - HANDOFF_TTL_MS; const dead = {};
+    snap.forEach(ch=>{ const at=(ch.val()||{}).at||0; if (at < cutoff) dead[ch.key]=null; });
+    if (Object.keys(dead).length) await getDb().ref('handoff').update(dead);
+  } catch(e){ console.warn('sweep skipped', e); }
+}
+
+/* ---------------- buttons, clear, init ---------------- */
+$('btnPdf').addEventListener('click', doPdf);
+$('btnCode').addEventListener('click', doCode);
+$('addCharge').addEventListener('click', ()=>addCharge());
+$('btnClear').addEventListener('click', ()=>{ if (confirm('Clear everything on this form?')) { clearing=true; location.replace(location.pathname); } });
+let clearing=false;
+window.addEventListener('beforeunload', e=>{ if (!clearing && fullName()) { e.preventDefault(); e.returnValue=''; } });
+
+buildMedical(); addCharge();
+const hashCode = location.hash.replace('#','').toUpperCase().replace(/[^A-Z0-9]/g,'');
+if (hashCode.length === 8){ pickup(hashCode).then(sweep); } else { sweep(); }
+</script>
+</body>
+</html>

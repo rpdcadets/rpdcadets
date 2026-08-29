@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- patrol/booking/index.html | Build v3 | 2026-08-29 | Incident # moved to Step 1 (mirrors to Arrest/Search Data); DOB and Alias DOB typed as MM/DD/YYYY -->
+<!-- patrol/booking/index.html | Build v4 | 2026-08-29 | Medical Q5 wording fixed on screen only (PDF form text untouched) -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -367,7 +367,7 @@
   <div class="nav"><button data-go="3">&lsaquo; Back</button></div>
 </section>
 
-<footer class="foot">Internal field tool. Renders entirely in your browser. Nothing is saved on this device or the site. &middot; Build v3</footer>
+<footer class="foot">Internal field tool. Renders entirely in your browser. Nothing is saved on this device or the site. &middot; Build v4</footer>
 </main>
 
 <div class="actions">
@@ -392,7 +392,7 @@
 
 <script>
 /* ---------------- constants ---------------- */
-const BUILD = '3';
+const BUILD = '4';
 const PDF_URL = 'GO-803-01.pdf?v=1';
 const DEFAULT_AGENCY = 'RICHARDSON';
 const HANDOFF_TTL_MS = 10 * 60 * 1000;
@@ -412,7 +412,7 @@ const MED = [
   {n:2,  t:'Do you have any head or significant facial trauma (injury)?', yes:'Check Box15', no:'Check Box13', desc:'Text29', who:'p'},
   {n:3,  t:'Are you in respiratory distress (difficulty breathing)?', yes:'Check Box16', no:'Check Box12', desc:'Text30', who:'p'},
   {n:4,  t:'Are you having chest pains, or have any cardiac or heart attack history?', yes:'Check Box17', no:'Check Box11', desc:'Text31', who:'p'},
-  {n:5,  t:'Do you have a have a broken bone or obvious deformity of a limb or other body part?', yes:'Check Box18', no:'Check Box10', desc:'Text32', who:'p'},
+  {n:5,  t:'Do you have a broken bone or obvious deformity of a limb or other body part?', yes:'Check Box18', no:'Check Box10', desc:'Text32', who:'p'},
   {n:6,  t:'Do you have open wounds or significant active bleeding?', yes:'Check Box19', no:'Check Box9',  desc:'Text33', who:'p'},
   {n:7,  t:'Are you a pregnant female detoxing from or currently using heroin or methadone?', yes:'Check Box20', no:'Check Box8',  desc:'Text34', who:'p'},
   {n:8,  t:'Have you been injured in a motor vehicle collision?', yes:'Check Box21', no:'Check Box7',  desc:'Text35', who:'p'},

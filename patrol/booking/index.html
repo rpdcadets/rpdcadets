@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- patrol/booking/index.html | Build v1 | 2026-08-29 | Fills GO 803-01 (Booking Slip and Jail Intake Medical Screening) in the browser; desktop handoff by one-time code -->
+<!-- patrol/booking/index.html | Build v3 | 2026-08-29 | Incident # moved to Step 1 (mirrors to Arrest/Search Data); DOB and Alias DOB typed as MM/DD/YYYY -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -66,6 +66,7 @@
     background:var(--field);color:var(--ink);
   }
   .field:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(184,146,58,.22);}
+  .field.bad{border-color:var(--red);background:var(--redbg);}
   textarea.field{min-height:64px;resize:vertical;}
   .with-btn{display:flex;gap:6px;}
   .with-btn .field{flex:1;min-width:0;}
@@ -176,6 +177,12 @@
 <!-- ============ STEP 1: SUSPECT ============ -->
 <section class="panel active" data-panel="1">
   <div class="card">
+    <div class="card-h">Incident</div>
+    <div class="card-body">
+      <div class="f"><label class="l" for="incident">Incident #</label><input class="field" id="incident" autocomplete="off"></div>
+    </div>
+  </div>
+  <div class="card">
     <div class="card-h">Name</div>
     <div class="card-body">
       <div class="f"><label class="l" for="nameLast">Last</label><input class="field" id="nameLast" autocomplete="off" autocapitalize="words"></div>
@@ -184,8 +191,8 @@
         <div class="f"><label class="l" for="nameMiddle">Middle</label><input class="field" id="nameMiddle" autocomplete="off" autocapitalize="words"></div>
       </div>
       <div class="row">
-        <div class="f"><label class="l" for="dob">DOB</label><input class="field" id="dob" type="date"></div>
-        <div class="f"><label class="l" for="aliasDob">Alias DOB</label><input class="field" id="aliasDob" type="date"></div>
+        <div class="f"><label class="l" for="dob">DOB</label><input class="field usdate" id="dob" inputmode="numeric" placeholder="MM/DD/YYYY" maxlength="10" autocomplete="off"></div>
+        <div class="f"><label class="l" for="aliasDob">Alias DOB</label><input class="field usdate" id="aliasDob" inputmode="numeric" placeholder="MM/DD/YYYY" maxlength="10" autocomplete="off"></div>
       </div>
     </div>
   </div>
@@ -277,7 +284,7 @@
     <div class="card-h">Arrest / Search Data</div>
     <div class="card-body">
       <div class="row">
-        <div class="f"><label class="l" for="incident">Incident #</label><input class="field" id="incident" autocomplete="off"></div>
+        <div class="f"><label class="l" for="incident2">Incident # <span style="text-transform:none;font-weight:400;">(from Step 1)</span></label><input class="field" id="incident2" autocomplete="off"></div>
         <div class="f"><label class="l" for="cid">CID # (if available)</label><input class="field" id="cid" autocomplete="off"></div>
       </div>
       <div class="f"><label class="l" for="dateArrest">Date of Arrest</label>
@@ -360,7 +367,7 @@
   <div class="nav"><button data-go="3">&lsaquo; Back</button></div>
 </section>
 
-<footer class="foot">Internal field tool. Renders entirely in your browser. Nothing is saved on this device or the site. &middot; Build v1</footer>
+<footer class="foot">Internal field tool. Renders entirely in your browser. Nothing is saved on this device or the site. &middot; Build v3</footer>
 </main>
 
 <div class="actions">
@@ -385,7 +392,9 @@
 
 <script>
 /* ---------------- constants ---------------- */
+const BUILD = '3';
 const PDF_URL = 'GO-803-01.pdf?v=1';
+const DEFAULT_AGENCY = 'RICHARDSON';
 const HANDOFF_TTL_MS = 10 * 60 * 1000;
 const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no 0/O/1/I
 const firebaseConfig = {
@@ -514,6 +523,19 @@ const pad = n => String(n).padStart(2,'0');
 function todayISO(){ const d=new Date(); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
 function nowHM(){ const d=new Date(); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; }
 document.querySelectorAll('.now').forEach(b=>b.addEventListener('click',()=>{ $(b.dataset.for).value = b.dataset.now==='date' ? todayISO() : nowHM(); }));
+/* Incident # typed in Step 1 mirrors to Step 3 (and back) */
+$('incident').addEventListener('input', ()=>{ $('incident2').value = $('incident').value; });
+$('incident2').addEventListener('input', ()=>{ $('incident').value = $('incident2').value; });
+/* Typed dates: digits only, slashes inserted, MM/DD/YYYY enforced */
+const DATE_RE = /^(0[1-9]|1[0-2])\/(0[1-9]|[12]\d|3[01])\/(19|20)\d{2}$/;
+document.querySelectorAll('.usdate').forEach(el=>{
+  el.addEventListener('input', ()=>{
+    const d = el.value.replace(/\D/g,'').slice(0,8);
+    el.value = d.length>4 ? d.slice(0,2)+'/'+d.slice(2,4)+'/'+d.slice(4) : d.length>2 ? d.slice(0,2)+'/'+d.slice(2) : d;
+    el.classList.remove('bad');
+  });
+  el.addEventListener('blur', ()=>{ el.classList.toggle('bad', el.value !== '' && !DATE_RE.test(el.value)); });
+});
 $('fv').addEventListener('change', ()=>{
   $('fvLabel').classList.toggle('on', $('fv').checked);
   if ($('fv').checked && !groupVal('victimNotify')) setGroup('victimNotify','YES');
@@ -536,6 +558,7 @@ function collect(){
 }
 function restore(d){
   Object.entries(d.text||{}).forEach(([id,v])=>{ if($(id)) $(id).value=v||''; });
+  $('incident2').value = $('incident').value;
   Object.entries(d.groups||{}).forEach(([g,v])=>setGroup(g,v||[]));
   $('fv').checked=!!d.fv; $('fvLabel').classList.toggle('on', !!d.fv);
   MED.forEach(q=>{ const m=(d.med||{})[q.n]||{}; setGroup('med'+q.n, m.a||''); $('med'+q.n+'desc').value=m.desc||''; });
@@ -560,7 +583,7 @@ async function buildPdf(d){
   const t = d.text, g = d.groups;
   const name = fullNameFrom(t);
   setText('Name', name); setText('Text40', name);
-  setText('DOB', isoToUS(t.dob)); setText('Alias DOB', isoToUS(t.aliasDob)); setText('Date of Arrest', isoToUS(t.dateArrest));
+  setText('DOB', t.dob); setText('Alias DOB', t.aliasDob); setText('Date of Arrest', isoToUS(t.dateArrest));
   Object.entries(TEXT_MAP).forEach(([id,pdf])=>setText(pdf, t[id]));
   if (g.agency){ check(AGENCY_P1[g.agency]); check(AGENCY_P3[g.agency]); }
   if (g.race) check(g.race);
@@ -657,13 +680,27 @@ async function sweep(){
 $('btnPdf').addEventListener('click', doPdf);
 $('btnCode').addEventListener('click', doCode);
 $('addCharge').addEventListener('click', ()=>addCharge());
-$('btnClear').addEventListener('click', ()=>{ if (confirm('Clear everything on this form?')) { clearing=true; location.replace(location.pathname); } });
+$('btnClear').addEventListener('click', ()=>{ if (confirm('Clear everything on this form?')) { clearing=true; location.replace(location.pathname + location.search); } });
 let clearing=false;
 window.addEventListener('beforeunload', e=>{ if (!clearing && fullName()) { e.preventDefault(); e.returnValue=''; } });
 
-buildMedical(); addCharge();
-const hashCode = location.hash.replace('#','').toUpperCase().replace(/[^A-Z0-9]/g,'');
-if (hashCode.length === 8){ pickup(hashCode).then(sweep); } else { sweep(); }
+/* ---------------- self-refresh: skip GitHub's 10-minute cache when a newer build is live ---------------- */
+async function newerBuildLive(){
+  try {
+    const r = await fetch(location.pathname + '?cb=' + Date.now(), {cache:'no-store'}); if (!r.ok) return false;
+    const m = (await r.text()).match(/Build v(\d+)/); if (!m || m[1] === BUILD) return false;
+    const already = new URLSearchParams(location.search).get('fresh');
+    if (already === m[1]) return false;                       // already reloaded once for this build
+    location.replace(location.pathname + '?fresh=' + m[1] + location.hash);
+    return true;
+  } catch(e){ return false; }
+}
+function init(){
+  buildMedical(); addCharge(); setGroup('agency', DEFAULT_AGENCY);
+  const hashCode = location.hash.replace('#','').toUpperCase().replace(/[^A-Z0-9]/g,'');
+  if (hashCode.length === 8){ pickup(hashCode).then(sweep); } else { sweep(); }
+}
+newerBuildLive().then(reloading => { if (!reloading) init(); });
 </script>
 </body>
 </html>

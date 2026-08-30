@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- patrol/index.html | Build v2 | 2026-08-29 | Self-refresh when a newer build is live -->
+<!-- patrol/index.html | Build v3 | 2026-08-30 | Adds Emergency Protective Order Packet card; code box routes E-codes to /patrol/epo -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -83,11 +83,16 @@
       <div class="name">Booking Slip / Medical Questionnaire</div>
       <div class="desc">GO 803-01 filled on your phone, output as the official PDF</div>
     </a>
+    <a class="tool" href="/patrol/epo/">
+      <span class="go">&rsaquo;</span>
+      <div class="name">Emergency Protective Order Packet</div>
+      <div class="desc">Application, EPO (English/Spanish), 4-Hour Notice, and TCIC form from one entry</div>
+    </a>
   </div>
 
-  <h2>Booking sheet code</h2>
+  <h2>Desktop code</h2>
   <div class="code-box">
-    <p>Created a desktop code on your phone? Enter it here to pull the booking slip up on this computer.</p>
+    <p>Created a desktop code on your phone? Enter it here to pull that booking slip or EPO packet up on this computer.</p>
     <div class="code-row">
       <input id="code" inputmode="latin" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="8" placeholder="8 characters">
       <button id="go" disabled>Go</button>
@@ -96,10 +101,10 @@
   </div>
 </main>
 
-<footer class="foot">Internal field tools &middot; Build v2</footer>
+<footer class="foot">Internal field tools &middot; Build v3</footer>
 
 <script>
-  const BUILD = '2';
+  const BUILD = '3';
   (async () => {
     try {
       const r = await fetch(location.pathname + '?cb=' + Date.now(), {cache:'no-store'}); if (!r.ok) return;
@@ -113,7 +118,7 @@
   function clean(){ return code.value.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,8); }
   code.addEventListener('input', () => { const c = clean(); if (code.value !== c) code.value = c; go.disabled = c.length !== 8; });
   code.addEventListener('keydown', e => { if (e.key === 'Enter' && !go.disabled) go.click(); });
-  go.addEventListener('click', () => { location.href = '/patrol/booking/#' + clean(); });
+  go.addEventListener('click', () => { const c = clean(); location.href = (c[0] === 'E' ? '/patrol/epo/#' : '/patrol/booking/#') + c; });
 </script>
 </body>
 </html>

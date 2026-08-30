@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- patrol/booking/index.html | Build v5 | 2026-08-29 | Shrink-to-fit text in PDF fields so long entries are not clipped -->
+<!-- patrol/booking/index.html | Build v6 | 2026-08-30 | Desktop codes now start with B so the /patrol code box can route them (E-codes go to the EPO tool) -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -367,7 +367,7 @@
   <div class="nav"><button data-go="3">&lsaquo; Back</button></div>
 </section>
 
-<footer class="foot">Internal field tool. Renders entirely in your browser. Nothing is saved on this device or the site. &middot; Build v5</footer>
+<footer class="foot">Internal field tool. Renders entirely in your browser. Nothing is saved on this device or the site. &middot; Build v6</footer>
 </main>
 
 <div class="actions">
@@ -392,7 +392,7 @@
 
 <script>
 /* ---------------- constants ---------------- */
-const BUILD = '5';
+const BUILD = '6';
 const PDF_URL = 'GO-803-01.pdf?v=1';
 const DEFAULT_AGENCY = 'RICHARDSON';
 const HANDOFF_TTL_MS = 10 * 60 * 1000;
@@ -641,7 +641,7 @@ async function keysFor(code){
   const key = await crypto.subtle.importKey('raw', await sha256('rpd-handoff-key:'+code), 'AES-GCM', false, ['encrypt','decrypt']);
   return { id, key };
 }
-function makeCode(){ const a=new Uint8Array(8); crypto.getRandomValues(a); return [...a].map(b=>CODE_ALPHABET[b % CODE_ALPHABET.length]).join(''); }
+function makeCode(){ const a=new Uint8Array(7); crypto.getRandomValues(a); return 'B'+[...a].map(b=>CODE_ALPHABET[b % CODE_ALPHABET.length]).join(''); }
 async function doCode(){
   $('btnCode').disabled=true; status('Creating code...');
   try {

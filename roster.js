@@ -1,4 +1,4 @@
-/* roster.js  |  VERSION 27  |  updated 2026-07-25  |  Requests board: RPDRoster.requests gains get/save (records key, node roster/requests), a flat array of {id, name, text, at, done, doneAt} backing the new Requests tab on /sgt: sergeants post wants, changes, and policy proposals for the post; the advisor checks items off as they are completed and checked items sink below the open list. Prior v26 notes: Ride-Along Trackers inbox (submit cadet-tier via RSA envelope to roster/raInbox, merge records-tier into the log tagged via:'trackers', duplicate ledger at roster/raIndex, RA_SALT 'rpdcadets-ridealongs-v1' lives only in this file). Prior v25: RPDRoster.observers module for the public /guest interest form. */
+/* roster.js  |  VERSION 29  |  updated 2026-08-29  |  Task categories config: RPDRoster.taskconfig gains get/save (records key, node roster/taskConfig) holding {cats:[{id,label,color,retired}]} so the Tasks tab on /sgt can manage its own category list. Same isolation as tasks: reads and writes only roster/taskConfig. Prior v28 notes: Tasks board: RPDRoster.tasks gains get/save (records key, node roster/tasks), a flat array of {id, text, cat, cadet, assignee, due, priority, by, at, done, doneBy, doneAt} backing the new Tasks tab on /sgt. This module reads and writes ONLY roster/tasks; it never touches roster, records, requests, notes, or any other node. Prior v27 notes: Requests board: RPDRoster.requests gains get/save (records key, node roster/requests), a flat array of {id, name, text, at, done, doneAt} backing the new Requests tab on /sgt: sergeants post wants, changes, and policy proposals for the post; the advisor checks items off as they are completed and checked items sink below the open list. Prior v26 notes: Ride-Along Trackers inbox (submit cadet-tier via RSA envelope to roster/raInbox, merge records-tier into the log tagged via:'trackers', duplicate ledger at roster/raIndex, RA_SALT 'rpdcadets-ridealongs-v1' lives only in this file). Prior v25: RPDRoster.observers module for the public /guest interest form. */
 /* ═══════════════════════════════════════════════════════════════════════
    RPD CADETS — SHARED ROSTER ENGINE
    One encrypted roster in Firebase, read by members, trackers, and
@@ -360,6 +360,12 @@
     requests: {
       get: requestsGet, save: requestsSave
     },
+    tasks: {
+      get: tasksGet, save: tasksSave
+    },
+    taskconfig: {
+      get: taskconfigGet, save: taskconfigSave
+    },
     pending: {
       get: pendingGet, save: pendingSave
     },
@@ -617,6 +623,34 @@
     if (!recordsKey) throw new Error('records locked');
     const data = await keyEncrypt(JSON.stringify(arr), recordsKey);
     await db.ref(ROOT + '/requests').set(data);
+  }
+  // Tasks board (v28): same records key, node roster/tasks. A flat array of
+  // {id, text, cat, cadet, assignee, due, priority, by, at, done, doneBy, doneAt}.
+  // Isolated by design: these two functions are the only code that reads or
+  // writes roster/tasks, and they touch nothing else.
+  async function tasksGet() {
+    if (!recordsKey) return null;
+    const blob = await once('tasks');
+    if (!blob) return [];
+    try { return JSON.parse(await keyDecrypt(blob, recordsKey)); } catch (e) { return []; }
+  }
+  async function tasksSave(arr) {
+    if (!recordsKey) throw new Error('records locked');
+    const data = await keyEncrypt(JSON.stringify(arr), recordsKey);
+    await db.ref(ROOT + '/tasks').set(data);
+  }
+  // Task categories config (v29): node roster/taskConfig, {cats:[{id,label,color,retired}]}.
+  // Only the Tasks tab reads or writes this; nothing else depends on it.
+  async function taskconfigGet() {
+    if (!recordsKey) return null;
+    const blob = await once('taskConfig');
+    if (!blob) return null;
+    try { return JSON.parse(await keyDecrypt(blob, recordsKey)); } catch (e) { return null; }
+  }
+  async function taskconfigSave(obj) {
+    if (!recordsKey) throw new Error('records locked');
+    const data = await keyEncrypt(JSON.stringify(obj || {}), recordsKey);
+    await db.ref(ROOT + '/taskConfig').set(data);
   }
 
   /* ── Guest Observers — submissions from the public /guest interest form ──

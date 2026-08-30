@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- sgt.html  |  Build v9  |  updated 2026-08-28  |  pairs with roster.js v27  |  Observers tab: two new status chips, Accepted to Post (green) and Rejected (red), for six total. Observers marked Accepted to Post, Rejected, or No Longer Interested sink out of the active list into a Previous Observers section under a divider; clearing or changing the chip moves them back up. Search filters both sections. Card shows a lives-with-parent marker when the guest form (v3) reports it. Status is stored on the same encrypted entry, so roster.js is unchanged at v27. Prior v8 notes: Requests tab gains a Deny action: a Deny button on each open request prompts for a reason, crosses the request out with a red Denied marker and the reason line, and sinks it into the resolved list alongside completed items (divider renamed Resolved). Denied cards get a Reopen button and the reason can be edited by tapping it. Data adds denied/deniedAt/deniedReason fields on the same roster/requests node, so roster.js is unchanged at v27. Prior v7 notes: Requests tab itself (posting-as picker, honor-system delete, advisor checkbox with toggleable complete). Prior v6: Ride-Along Log merges the Trackers inbox with sergeant Edit and Delete. Prior v5: Observers tab. -->
+<!-- sgt.html  |  Build v11  |  updated 2026-08-29  |  pairs with roster.js v29  |  Tasks tab, full set: tap a card to expand details (subtask checklist with x of y count, comment thread, activity trail); Edit in place for text, category, cadet, assignee, due, priority; Due Soon strip at the top of the tab listing overdue and due-within-3-days items across every category, tap to jump; the Tasks tab button pulses red when anything is overdue and gold when anything is due within 3 days (steady border under reduced-motion); sort menu (priority, due, newest, assignee) and a compact card toggle; Manage Categories panel (add, rename, recolor, reorder, retire, restore) saved to roster/taskConfig via RPDRoster.taskconfig, seeded from the built-in five on first save. Every mutation re-reads the node before writing. Isolation unchanged: only roster/tasks and roster/taskConfig are written. Prior v10 notes: Tasks tab: a to-do board for leadership, its own tab between Requests and Observers. Each task has a category (Probationary, Quartermaster, Events, Sgt Tasks, Follow-ups), an optional cadet link when the category is Probationary, an assignee (leadership name or Anyone), optional due date with overdue/due-soon markers, a High priority flag, posting-as, complete checkbox (sinks under a Done divider with who and when), reopen, and honor-system delete. Filter chips across the top narrow by category; Mine shows tasks assigned to the selected name. Open Probationary tasks linked to a cadet also appear read-only on that cadet's card. Isolation: the tab reads names already on the page and calls only RPDRoster.tasks.get/save (node roster/tasks); it never writes roster, records, requests, notes, or admin data. Prior v9 notes: Observers tab: two new status chips, Accepted to Post (green) and Rejected (red), for six total. Observers marked Accepted to Post, Rejected, or No Longer Interested sink out of the active list into a Previous Observers section under a divider; clearing or changing the chip moves them back up. Search filters both sections. Card shows a lives-with-parent marker when the guest form (v3) reports it. Status is stored on the same encrypted entry, so roster.js is unchanged at v27. Prior v8 notes: Requests tab gains a Deny action: a Deny button on each open request prompts for a reason, crosses the request out with a red Denied marker and the reason line, and sinks it into the resolved list alongside completed items (divider renamed Resolved). Denied cards get a Reopen button and the reason can be edited by tapping it. Data adds denied/deniedAt/deniedReason fields on the same roster/requests node, so roster.js is unchanged at v27. Prior v7 notes: Requests tab itself (posting-as picker, honor-system delete, advisor checkbox with toggleable complete). Prior v6: Ride-Along Log merges the Trackers inbox with sergeant Edit and Delete. Prior v5: Observers tab. -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -10,7 +10,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@300;400;500;600;700&family=Barlow+Condensed:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
-<script src="roster.js?v=27"></script>
+<script src="roster.js?v=29"></script>
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
 :root{--navy:#1a2744;--navy-deep:#0f1a30;--navy-light:#253758;--red:#c0392b;--red-glow:#e74c3c;--gold:#d4a952;--gold-light:#f0d68a;--white:#fff;--text-muted:#8899b0;--green:#27ae60;--amber:#d97706;--red-abs:#dc2626;--card-bg:rgba(255,255,255,0.025);--card-border:rgba(255,255,255,0.06);--input-bg:rgba(255,255,255,0.04);--input-border:rgba(255,255,255,0.1);--input-focus:rgba(192,57,43,0.4)}
@@ -212,6 +212,121 @@ button.rec-check{cursor:pointer;transition:all .18s}
 .req-x{flex:0 0 auto;width:19px;text-align:center;margin-top:1px;color:#f87171;font-size:15px;font-weight:700;line-height:1.3}
 .req-deniedline{font-size:12px;color:#f8a5a5;margin-top:6px;cursor:pointer}
 .req-deniedline:hover{text-decoration:underline}
+/* TASKS (Build v11) */
+.task-form-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:12px}
+.task-f{display:flex;flex-direction:column;gap:5px}
+.task-f span{font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--text-muted)}
+.task-f input,.task-f select{background:var(--input-bg);border:1px solid var(--input-border);border-radius:8px;padding:9px 11px;color:var(--white);font-family:'Barlow',sans-serif;font-size:13.5px;outline:none}
+.task-f input:focus,.task-f select:focus{border-color:var(--input-focus)}
+.task-f select{appearance:none;cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%238899b0' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:28px}
+.task-f select option{background:var(--navy)}
+.task-f input[type=date]{color-scheme:dark}
+.task-f.hide{display:none}
+.task-pri{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-muted);cursor:pointer;padding-top:22px}
+.task-pri input{width:17px;height:17px;accent-color:var(--red);cursor:pointer}
+/* tab alert pulse */
+@keyframes taskPulseLate{0%,100%{box-shadow:0 0 0 0 rgba(220,38,38,0);border-color:rgba(220,38,38,0.35)}50%{box-shadow:0 0 0 5px rgba(220,38,38,0.22);border-color:#ef4444}}
+@keyframes taskPulseSoon{0%,100%{box-shadow:0 0 0 0 rgba(212,169,82,0);border-color:rgba(212,169,82,0.35)}50%{box-shadow:0 0 0 5px rgba(212,169,82,0.22);border-color:var(--gold)}}
+.sgt-tab.alert-late{animation:taskPulseLate 1.4s ease-in-out infinite;border-color:#ef4444}
+.sgt-tab.alert-soon{animation:taskPulseSoon 1.6s ease-in-out infinite;border-color:var(--gold)}
+.sgt-tab .tab-dot{width:8px;height:8px;border-radius:50%;display:none}
+.sgt-tab.alert-late .tab-dot{display:inline-block;background:#ef4444}
+.sgt-tab.alert-soon .tab-dot{display:inline-block;background:var(--gold)}
+@media (prefers-reduced-motion:reduce){.sgt-tab.alert-late,.sgt-tab.alert-soon{animation:none}}
+/* due soon strip */
+.task-soon{background:rgba(255,255,255,0.025);border:1px solid var(--card-border);border-radius:12px;padding:12px 14px;margin-bottom:16px}
+.task-soon.late{border-color:rgba(220,38,38,0.4)}
+.task-soon.soon{border-color:rgba(212,169,82,0.4)}
+.task-soon-h{font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--gold);margin-bottom:6px}
+.task-soon.late .task-soon-h{color:#f87171}
+.task-soon-row{display:flex;gap:9px;align-items:baseline;padding:5px 0;font-size:13.5px;cursor:pointer;border-top:1px solid rgba(255,255,255,0.05)}
+.task-soon-row:first-of-type{border-top:0}
+.task-soon-row:hover{color:var(--white)}
+.task-soon-dot{flex:0 0 auto;width:7px;height:7px;border-radius:50%;position:relative;top:-1px;background:var(--gold)}
+.task-soon-row.late .task-soon-dot{background:#ef4444}
+.task-soon-sub{margin-left:auto;font-size:11.5px;color:var(--text-muted);white-space:nowrap}
+.task-soon-row.late .task-soon-sub{color:#f87171}
+/* toolbar */
+.task-toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+.task-filters{display:flex;gap:7px;flex-wrap:wrap;flex:1}
+.task-chip{background:rgba(255,255,255,0.03);border:1px solid var(--card-border);color:var(--text-muted);font-family:'Barlow Condensed',sans-serif;font-size:11.5px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;padding:7px 13px;border-radius:999px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.task-chip:hover{color:var(--white)}
+.task-chip.on{color:var(--white);border-color:rgba(212,169,82,0.55);background:rgba(212,169,82,0.12)}
+.task-chip .n{opacity:.65}
+.task-chip .cdot{width:7px;height:7px;border-radius:50%;display:inline-block}
+.task-tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.task-tools select{background:var(--input-bg);border:1px solid var(--input-border);border-radius:8px;padding:7px 28px 7px 10px;color:var(--white);font-family:'Barlow Condensed',sans-serif;font-size:11.5px;letter-spacing:1px;text-transform:uppercase;outline:none;appearance:none;cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%238899b0' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center}
+.task-tools select option{background:var(--navy)}
+.task-tbtn{background:rgba(255,255,255,0.03);border:1px solid var(--card-border);color:var(--text-muted);font-family:'Barlow Condensed',sans-serif;font-size:11.5px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;padding:7px 12px;border-radius:8px;cursor:pointer}
+.task-tbtn:hover{color:var(--white)}
+.task-tbtn.on{color:var(--white);border-color:rgba(212,169,82,0.55);background:rgba(212,169,82,0.12)}
+/* cards */
+.task-card{border-left:3px solid var(--card-border);transition:box-shadow .3s}
+.task-card.done{border-left-color:var(--card-border) !important}
+.task-card.flash{box-shadow:0 0 0 3px rgba(212,169,82,0.55)}
+.task-meta{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px;align-items:center}
+.task-tag{font-family:'Barlow Condensed',sans-serif;font-size:10.5px;font-weight:600;letter-spacing:1px;text-transform:uppercase;padding:3px 8px;border-radius:6px;border:1px solid var(--card-border);color:var(--text-muted)}
+.task-tag.cat{color:var(--white);border-color:rgba(255,255,255,0.18)}
+.task-tag.hi{color:#f87171;border-color:rgba(220,38,38,0.45)}
+.task-tag.due{color:var(--text-muted)}
+.task-tag.due.soon{color:var(--gold-light);border-color:rgba(212,169,82,0.45)}
+.task-tag.due.late{color:#f87171;border-color:rgba(220,38,38,0.45)}
+.task-tag.cnt{border-style:dashed}
+.task-more{margin-left:auto;background:none;border:0;color:var(--text-muted);font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;display:inline-flex;align-items:center;gap:5px}
+.task-more:hover{color:var(--white)}
+.task-more svg{transition:transform .2s}
+.task-card.open .task-more svg{transform:rotate(180deg)}
+.task-edit{background:none;border:1px solid var(--card-border);color:var(--text-muted);border-radius:7px;padding:4px 10px;cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase}
+.task-edit:hover{color:var(--white)}
+.compact .task-card .task-meta .task-tag:not(.due):not(.hi){display:none}
+.compact .task-card .note-when,.compact .task-card .task-more{display:none}
+.compact .task-card{padding:9px 14px}
+.compact .task-card .note-text{font-size:13.5px}
+/* details */
+.task-details{display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--card-border)}
+.task-card.open .task-details{display:block}
+.td-h{font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--gold);margin:10px 0 6px}
+.td-h:first-child{margin-top:0}
+.sub-row{display:flex;gap:9px;align-items:center;padding:5px 0;font-size:13.5px}
+.sub-row input[type=checkbox]{width:16px;height:16px;accent-color:var(--gold);cursor:pointer;flex:0 0 auto}
+.sub-row.done span{text-decoration:line-through;opacity:.55}
+.sub-row .sub-del{margin-left:auto;background:none;border:0;color:var(--text-muted);cursor:pointer;font-size:14px;line-height:1}
+.sub-row .sub-del:hover{color:#f87171}
+.td-add{display:flex;gap:8px;margin-top:6px}
+.td-add input{flex:1;min-width:120px;background:var(--input-bg);border:1px solid var(--input-border);border-radius:8px;padding:8px 11px;color:var(--white);font-family:'Barlow',sans-serif;font-size:13px;outline:none}
+.td-add input:focus{border-color:var(--input-focus)}
+.td-add .btn{padding:8px 12px}
+.cm-row{padding:7px 0;border-top:1px solid rgba(255,255,255,0.05);font-size:13.5px;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere}
+.cm-top{display:flex;align-items:center;gap:9px;margin-bottom:2px}
+.cm-name{font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--gold)}
+.cm-when{font-size:11px;color:var(--text-muted)}
+.cm-del{margin-left:auto;background:none;border:0;color:var(--text-muted);cursor:pointer;font-size:14px;line-height:1}
+.cm-del:hover{color:#f87171}
+.act-row{font-size:12px;color:var(--text-muted);padding:3px 0;display:flex;gap:8px}
+.act-row b{color:var(--gold-light);font-weight:600}
+.act-when{margin-left:auto;white-space:nowrap;opacity:.8}
+.td-empty{color:var(--text-muted);font-size:12.5px;padding:4px 0}
+/* inline editor */
+.task-editor{margin-top:10px;padding:12px;border:1px dashed rgba(212,169,82,0.35);border-radius:10px;background:rgba(212,169,82,0.03)}
+.task-editor textarea{width:100%;min-height:60px;background:var(--input-bg);border:1px solid var(--input-border);border-radius:9px;padding:10px 12px;color:var(--white);font-family:'Barlow',sans-serif;font-size:14px;line-height:1.5;outline:none;resize:vertical}
+.task-editor .task-form-row{margin-top:10px}
+.task-editor .ed-actions{display:flex;gap:8px;margin-top:10px}
+/* categories manager */
+.cat-mgr{background:var(--card-bg);border:1px solid var(--card-border);border-radius:14px;padding:16px 18px;margin-bottom:18px;display:none}
+.cat-mgr.on{display:block}
+.cat-mgr-h{font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--gold);margin-bottom:4px}
+.cat-mgr-sub{font-size:12px;color:var(--text-muted);line-height:1.5;margin-bottom:10px}
+.cat-row{display:flex;gap:8px;align-items:center;padding:6px 0;border-top:1px solid rgba(255,255,255,0.05)}
+.cat-row input[type=text]{flex:1;min-width:120px;background:var(--input-bg);border:1px solid var(--input-border);border-radius:8px;padding:8px 11px;color:var(--white);font-family:'Barlow',sans-serif;font-size:13.5px;outline:none}
+.cat-row input[type=color]{width:34px;height:32px;border:1px solid var(--input-border);border-radius:8px;background:var(--input-bg);padding:2px;cursor:pointer}
+.cat-row.retired input[type=text]{opacity:.5;text-decoration:line-through}
+.cat-mini{background:none;border:1px solid var(--card-border);color:var(--text-muted);border-radius:7px;width:30px;height:30px;cursor:pointer;font-size:13px;line-height:1}
+.cat-mini:hover{color:var(--white)}
+.cat-mini.wide{width:auto;padding:0 10px;font-family:'Barlow Condensed',sans-serif;font-size:10.5px;letter-spacing:1px;text-transform:uppercase}
+.cat-mgr-actions{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}
+.ctask{padding:7px 0;border-top:1px solid rgba(255,255,255,0.05);font-size:13px;display:flex;gap:8px;align-items:baseline}
+.ctask-dot{flex:0 0 auto;width:7px;height:7px;border-radius:50%;background:#60a5fa;position:relative;top:-1px}
+.ctask-sub{color:var(--text-muted);font-size:11.5px;margin-left:auto;white-space:nowrap}
 .req-deniedline .req-dtag{font-family:'Barlow Condensed',sans-serif;font-size:10.5px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:#f87171;margin-right:6px}
 .req-reopen{background:none;border:1px solid var(--card-border);color:var(--text-muted);border-radius:7px;padding:4px 10px;cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase}
 .req-reopen:hover{color:var(--gold);border-color:rgba(197,165,90,0.5)}
@@ -325,7 +440,7 @@ button.rec-check{cursor:pointer;transition:all .18s}
     <button class="lock-btn" id="goBtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg><span id="goLabel">Unlock</span></button>
     <div class="lock-error" id="lockErr">Incorrect passcode.</div>
     <div class="lock-home"><a href="index.html">← Return to Home</a></div>
-    <div style="margin-top:16px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v9</div>
+    <div style="margin-top:16px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v11</div>
   </div>
 </div>
 
@@ -334,7 +449,7 @@ button.rec-check{cursor:pointer;transition:all .18s}
   <div class="page-header">
     <div class="section-label">Public Safety Cadets</div>
     <h1 class="section-title">Sergeant Console</h1>
-    <p class="page-desc">Cadet records, the ride-along log, current attendance, and the leadership notes board. Proposed edits go to an advisor for approval before they take effect.</p>
+    <p class="page-desc">Cadet records, the ride-along log, current attendance, the leadership notes board, and the tasks board. Proposed edits go to an advisor for approval before they take effect.</p>
   </div>
   <div class="container">
     <div class="sgt-tabs">
@@ -343,6 +458,7 @@ button.rec-check{cursor:pointer;transition:all .18s}
       <button class="sgt-tab" id="tabCa" onclick="showPanel('ca')">Current Attendance</button>
       <button class="sgt-tab" id="tabNotes" onclick="showPanel('notes')">Notes</button>
       <button class="sgt-tab" id="tabReq" onclick="showPanel('req')">Requests</button>
+      <button class="sgt-tab" id="tabTasks" onclick="showPanel('tasks')">Tasks<span class="tab-dot"></span></button>
       <button class="sgt-tab" id="tabObs" onclick="showPanel('obs')">Observers</button>
     </div>
 
@@ -421,6 +537,49 @@ button.rec-check{cursor:pointer;transition:all .18s}
       <div id="reqFeed"><p class="empty">Loading…</p></div>
     </div>
 
+    <!-- TASKS (Build v11) -->
+    <div class="panel" id="panelTasks">
+      <div class="note-form">
+        <textarea id="taskText" placeholder="What needs to get done? One task per entry, be specific…" style="min-height:64px"></textarea>
+        <div class="task-form-row">
+          <label class="task-f"><span>Category</span><select id="taskCat"></select></label>
+          <label class="task-f hide" id="taskCadetWrap"><span>Cadet (optional)</span><select id="taskCadet"></select></label>
+          <label class="task-f"><span>Assigned to</span><select id="taskAssignee"></select></label>
+          <label class="task-f"><span>Due (optional)</span><input type="date" id="taskDue"></label>
+          <label class="task-pri"><input type="checkbox" id="taskHigh"> High priority</label>
+        </div>
+        <div class="note-actions">
+          <label class="who"><span>Posting as</span><select id="taskWho"></select></label>
+          <button class="btn primary" id="taskSubmit">Add task</button>
+        </div>
+      </div>
+      <div id="taskSoon"></div>
+      <div class="task-toolbar">
+        <div class="task-filters" id="taskFilters"></div>
+        <div class="task-tools">
+          <select id="taskSort" title="Sort open tasks">
+            <option value="priority">Priority first</option>
+            <option value="due">Due date</option>
+            <option value="newest">Newest</option>
+            <option value="assignee">Assignee</option>
+          </select>
+          <button class="task-tbtn" id="taskCompact" title="Compact cards">Compact</button>
+          <button class="task-tbtn" id="taskCatMgrBtn">Categories</button>
+        </div>
+      </div>
+      <div class="cat-mgr" id="catMgr">
+        <div class="cat-mgr-h">Manage categories</div>
+        <div class="cat-mgr-sub">Rename, recolor, or reorder the buckets on this tab. Retiring a category hides it from the picker; tasks already in it keep their label. Changes affect only the Tasks tab.</div>
+        <div id="catRows"></div>
+        <div class="cat-mgr-actions">
+          <button class="btn" id="catAdd">+ Add category</button>
+          <button class="btn primary" id="catSave">Save categories</button>
+          <button class="btn" id="catCancel">Cancel</button>
+        </div>
+      </div>
+      <div id="taskFeed"><p class="empty">Loading…</p></div>
+    </div>
+
     <!-- OBSERVERS -->
     <div class="panel" id="panelObs">
       <div class="rec-warning">Submissions from the public observer interest form. Edits save immediately with no approval step. Treat everything here as confidential.</div>
@@ -435,7 +594,7 @@ button.rec-check{cursor:pointer;transition:all .18s}
 <div class="toast" id="toast"></div>
 
 <script>
-console.log('[sgt] Build v9');
+console.log('[sgt] Build v11');
 const SESSION_KEY = 'rpd761_sgt_auth';   // sergeant-only; NOT shared with admin or cadet pages
 const NAME_KEY = 'rpd761_sgt_name';      // remembers who this device posts as
 const APPROVAL_FORM = 'https://submit-form.com/9efCBVzQT';   // Formspark "Edits Needing Approval" (notifies the approving advisor)
@@ -447,7 +606,7 @@ const genId = pre => pre + '_' + Math.random().toString(36).slice(2, 9);
 function fmtWhen(ts){ if(!ts) return ''; const d=new Date(ts); return isNaN(d)?'':d.toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'}); }
 
 /* ── LOCK / CONNECT ── */
-let recData = {}, raData = [], notes = [], cadNotes = [], reqs = [], pending = [], officers = [];
+let recData = {}, raData = [], notes = [], cadNotes = [], reqs = [], tasks = [], pending = [], officers = [];
 let recordsOn = false;
 async function unlock(){
   const inp = document.getElementById('pc');
@@ -485,12 +644,14 @@ async function enterApp(recOk){
       }catch(eRa){ try{ raData = (await RPDRoster.ridealongs.get()) || []; }catch(eRa2){ raData = []; } }
       notes   = (await RPDRoster.sgtnotes.get()) || [];
       reqs    = (await RPDRoster.requests.get()) || [];
+      try{ tasks = (await RPDRoster.tasks.get()) || []; }catch(eT){ tasks = []; }
+      try{ taskCfg = (await RPDRoster.taskconfig.get()) || null; }catch(eC){ taskCfg = null; }
       cadNotes = (await RPDRoster.cadetnotes.get()) || [];
       pending = (await RPDRoster.pending.get()) || [];
     }catch(e){}
     try{ officers = (await RPDRoster.officers.get()) || []; }catch(e){ officers=[]; }
-    fillWhoSelects(); fillRapSelects();
-    renderRecords(); renderRaQueued(); renderRaList(); renderNotes(); renderRequests();
+    fillWhoSelects(); fillRapSelects(); fillTaskSelects();
+    renderRecords(); renderRaQueued(); renderRaList(); renderNotes(); renderRequests(); renderTasks();
     loadObservers();
   } else {
     const msg = '<p class="empty">This section is unavailable for this passcode. Ask an advisor to re-save the sergeant passcode in the admin console.</p>';
@@ -498,10 +659,13 @@ async function enterApp(recOk){
     document.getElementById('raList').innerHTML = msg;
     document.getElementById('noteFeed').innerHTML = msg;
     document.getElementById('reqFeed').innerHTML = msg;
+    document.getElementById('taskFeed').innerHTML = msg;
     document.getElementById('obsRows').innerHTML = msg;
     document.querySelector('#panelRa .ra-form').style.display='none';
     document.querySelector('#panelNotes .note-form').style.display='none';
     document.querySelector('#panelReq .note-form').style.display='none';
+    document.querySelector('#panelTasks .note-form').style.display='none';
+    document.querySelector('#panelTasks .task-toolbar').style.display='none';
   }
   loadCurrentAttendance();
 }
@@ -518,13 +682,14 @@ document.getElementById('pc').addEventListener('keydown', e=>{ if(e.key==='Enter
 
 /* ── TABS ── */
 function showPanel(t){
-  ['Rec','Ra','Ca','Notes','Req','Obs'].forEach(x=>{ document.getElementById('tab'+x).classList.remove('on'); document.getElementById('panel'+x).classList.remove('on'); });
-  const cap = t==='rec'?'Rec':t==='ra'?'Ra':t==='ca'?'Ca':t==='obs'?'Obs':t==='req'?'Req':'Notes';
+  ['Rec','Ra','Ca','Notes','Req','Tasks','Obs'].forEach(x=>{ document.getElementById('tab'+x).classList.remove('on'); document.getElementById('panel'+x).classList.remove('on'); });
+  const cap = t==='rec'?'Rec':t==='ra'?'Ra':t==='ca'?'Ca':t==='obs'?'Obs':t==='req'?'Req':t==='tasks'?'Tasks':'Notes';
   document.getElementById('tab'+cap).classList.add('on');
   document.getElementById('panel'+cap).classList.add('on');
   if(t==='ca') loadCurrentAttendance();
   if(t==='notes' && recordsOn) refreshNotes();
   if(t==='req' && recordsOn) refreshRequests();
+  if(t==='tasks' && recordsOn) refreshTasks();
   if(t==='ra' && recordsOn) refreshPending();
   if(t==='obs' && recordsOn) refreshObservers();
 }
@@ -539,7 +704,15 @@ function wireOnce(){
   ['rapCadet','rapOfficer','rapDate'].forEach(id=> document.getElementById(id).addEventListener('change', rapCheckRule));
   document.getElementById('noteSubmit').addEventListener('click', noteSubmit);
   document.getElementById('reqSubmit').addEventListener('click', reqSubmit);
-  ['rapWho','noteWho','reqWho'].forEach(id=> document.getElementById(id).addEventListener('change', e=>{ try{ localStorage.setItem(NAME_KEY, e.target.value); }catch(err){} syncWho(e.target.value); }));
+  document.getElementById('taskSubmit').addEventListener('click', taskSubmit);
+  document.getElementById('taskCat').addEventListener('change', taskCatChanged);
+  document.getElementById('taskSort').addEventListener('change', e=>{ taskSort=e.target.value; try{ localStorage.setItem('rpd761_taskSort', taskSort); }catch(err){} renderTasks(); });
+  document.getElementById('taskCompact').addEventListener('click', ()=>{ taskCompact=!taskCompact; try{ localStorage.setItem('rpd761_taskCompact', taskCompact?'1':''); }catch(err){} renderTasks(); });
+  document.getElementById('taskCatMgrBtn').addEventListener('click', catMgrToggle);
+  document.getElementById('catAdd').addEventListener('click', catMgrAdd);
+  document.getElementById('catSave').addEventListener('click', catMgrSave);
+  document.getElementById('catCancel').addEventListener('click', ()=>catMgrToggle(false));
+  ['rapWho','noteWho','reqWho','taskWho'].forEach(id=> document.getElementById(id).addEventListener('change', e=>{ try{ localStorage.setItem(NAME_KEY, e.target.value); }catch(err){} syncWho(e.target.value); if(recordsOn) renderTasks(); }));
   document.querySelectorAll('#caRange .ca-btn').forEach(b=> b.addEventListener('click', ()=> caApplyPreset(b.dataset.range)));
   ['caFrom','caTo'].forEach(id=>{ const el=document.getElementById(id); if(el) el.addEventListener('change', ()=>{ caSetPreset(null); renderCurrentAttendance(); }); });
   const s=document.getElementById('caSearch'); if(s) s.addEventListener('input', renderCurrentAttendance);
@@ -550,11 +723,11 @@ function wireOnce(){
 function leadershipNames(){
   return RPDRoster.activeSorted().filter(p => ['Captain','Lt.','Sgt.','Act. Sgt.'].includes(p.rank)).map(p => RPDRoster.displayName(p));
 }
-function syncWho(v){ ['rapWho','noteWho','reqWho'].forEach(id=>{ const el=document.getElementById(id); if(el && v && Array.from(el.options).some(o=>o.value===v)) el.value=v; }); }
+function syncWho(v){ ['rapWho','noteWho','reqWho','taskWho'].forEach(id=>{ const el=document.getElementById(id); if(el && v && Array.from(el.options).some(o=>o.value===v)) el.value=v; }); }
 function fillWhoSelects(){
   const names = leadershipNames();
   let saved=''; try{ saved = localStorage.getItem(NAME_KEY)||''; }catch(e){}
-  ['rapWho','noteWho','reqWho'].forEach(id=>{
+  ['rapWho','noteWho','reqWho','taskWho'].forEach(id=>{
     const sel=document.getElementById(id); if(!sel) return;
     const cur = sel.value || saved;
     sel.innerHTML = '<option value="">Select your name…</option>' + names.map(n=>`<option value="${esc(n)}" ${n===cur?'selected':''}>${esc(n)}</option>`).join('');
@@ -707,6 +880,7 @@ function recCard(p){
          </div>
          <div class="cnote-list">${cnRows}</div>
        </div>
+       ${cadetTaskBlock(p.name)}
        <div class="prop-open"><button class="btn" data-act="prop">Propose an edit</button></div>
        <div class="prop-host"></div>
      </div>`;
@@ -1136,6 +1310,336 @@ async function reqEditReason(id, current){
     showToast('Reason updated');
   }catch(e){ showToast('Could not update. Try again.'); renderRequests(); }
 }
+/* ── TASKS BOARD (Build v11) ─────────────────────────────────────────────
+   Isolation contract: this block reads names already loaded on the page and
+   calls ONLY RPDRoster.tasks.get/save and RPDRoster.taskconfig.get/save. It
+   never writes the roster, cadet records, requests, notes, pending edits, or
+   any admin data. Every mutation re-reads the node first so concurrent edits
+   from other sergeants are kept. */
+const TASK_CATS_DEFAULT = [
+  { id:'prob', label:'Probationary',  color:'#60a5fa' },
+  { id:'qm',   label:'Quartermaster', color:'#34d399' },
+  { id:'evt',  label:'Events',        color:'#c084fc' },
+  { id:'sgt',  label:'Sgt Tasks',     color:'#d4a952' },
+  { id:'fu',   label:'Follow-ups',    color:'#fb923c' }
+];
+const TASK_ANYONE = 'Anyone';
+const TASK_SOON_DAYS = 3;
+let taskCfg = null, taskFilter = 'all', taskSort = 'priority', taskCompact = false;
+let taskOpen = new Set();          // ids of cards expanded to show details
+let taskEditing = null;            // id of card in inline edit mode
+let catDraft = null;               // working copy while the manager is open
+try{ taskSort = localStorage.getItem('rpd761_taskSort') || 'priority'; taskCompact = !!localStorage.getItem('rpd761_taskCompact'); }catch(e){}
+
+function taskCats(){ return (taskCfg && Array.isArray(taskCfg.cats) && taskCfg.cats.length) ? taskCfg.cats : TASK_CATS_DEFAULT; }
+function taskCat(id){ return taskCats().find(c=>c.id===id) || { id, label:id||'Uncategorized', color:'#7A8BA0', retired:true }; }
+function taskWhoName(){ return (document.getElementById('taskWho')||{}).value || ''; }
+function isProbCat(id){ return id==='prob' || /probation/i.test(taskCat(id).label||''); }
+function fillTaskSelects(){
+  const cs=document.getElementById('taskCat');
+  if(cs){ const cur=cs.value; const live=taskCats().filter(c=>!c.retired);
+    cs.innerHTML = live.map(c=>`<option value="${esc(c.id)}" ${c.id===cur?'selected':''}>${esc(c.label)}</option>`).join('');
+    if(!cs.value && live.length) cs.value=live[0].id; }
+  const cad=document.getElementById('taskCadet');
+  if(cad){ const cur=cad.value; const names=RPDRoster.activeSorted().map(p=>p.name);
+    cad.innerHTML='<option value="">No specific cadet</option>'+names.map(n=>`<option value="${esc(n)}" ${n===cur?'selected':''}>${esc(n)}</option>`).join(''); }
+  const as=document.getElementById('taskAssignee');
+  if(as){ const cur=as.value; const names=leadershipNames();
+    as.innerHTML=`<option value="${TASK_ANYONE}">${TASK_ANYONE}</option>`+names.map(n=>`<option value="${esc(n)}" ${n===cur?'selected':''}>${esc(n)}</option>`).join(''); }
+  const so=document.getElementById('taskSort'); if(so) so.value=taskSort;
+  taskCatChanged();
+}
+function taskCatChanged(){
+  const cat=document.getElementById('taskCat').value;
+  document.getElementById('taskCadetWrap').classList.toggle('hide', !isProbCat(cat));
+}
+async function refreshTasks(){
+  try{ tasks = (await RPDRoster.tasks.get()) || []; }catch(e){}
+  try{ taskCfg = (await RPDRoster.taskconfig.get()) || taskCfg; }catch(e){}
+  fillTaskSelects(); renderTasks();
+}
+function taskLog(t, who, act){ t.log = (t.log||[]).concat([{ at:Date.now(), who:who||'Unknown', act }]).slice(-40); }
+// Generic re-read / mutate / save. fn(task) returns false to abort.
+async function taskMutate(id, fn, okMsg){
+  try{
+    tasks = ((await RPDRoster.tasks.get()) || []);
+    const t = tasks.find(x=>x.id===id); if(!t){ renderTasks(); return false; }
+    if(fn(t)===false){ renderTasks(); return false; }
+    await RPDRoster.tasks.save(tasks);
+    renderTasks(); renderRecords();
+    if(okMsg) showToast(okMsg);
+    return true;
+  }catch(e){ showToast('Could not update. Try again.'); renderTasks(); return false; }
+}
+async function taskSubmit(){
+  const ta=document.getElementById('taskText');
+  const by=taskWhoName();
+  const text=(ta.value||'').trim();
+  if(!by){ showToast('Select your name first'); return; }
+  if(!text){ showToast('Type a task first'); return; }
+  const cat=document.getElementById('taskCat').value;
+  const cadet = isProbCat(cat) ? (document.getElementById('taskCadet').value||'') : '';
+  const assignee=document.getElementById('taskAssignee').value || TASK_ANYONE;
+  const due=document.getElementById('taskDue').value || '';
+  const priority=document.getElementById('taskHigh').checked ? 'high' : 'normal';
+  try{ localStorage.setItem(NAME_KEY, by); }catch(e){}
+  const btn=document.getElementById('taskSubmit'); btn.disabled=true;
+  try{
+    tasks = ((await RPDRoster.tasks.get()) || []);
+    const t = { id:genId('tk'), text, cat, cadet, assignee, due, priority, by, at:Date.now(), done:false, doneBy:'', doneAt:null, subs:[], comments:[], log:[] };
+    taskLog(t, by, 'created the task');
+    tasks.unshift(t);
+    await RPDRoster.tasks.save(tasks);
+    ta.value=''; document.getElementById('taskDue').value=''; document.getElementById('taskHigh').checked=false;
+    document.getElementById('taskCadet').value='';
+    renderTasks(); renderRecords();
+    showToast('Task added');
+  }catch(e){ showToast('Could not add. Check your connection.'); }
+  btn.disabled=false;
+}
+function taskDueInfo(due){
+  if(!due) return null;
+  const d=new Date(due+'T00:00:00'); if(isNaN(d)) return null;
+  const today=new Date(); today.setHours(0,0,0,0);
+  const days=Math.round((d-today)/86400000);
+  const label=d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+  if(days<0)  return { cls:'late', days, text:`Overdue ${label}` };
+  if(days===0) return { cls:'late', days, text:'Due today' };
+  if(days<=TASK_SOON_DAYS) return { cls:'soon', days, text:days===1?'Due tomorrow':`Due ${label}` };
+  return { cls:'', days, text:`Due ${label}` };
+}
+function taskSorter(){
+  const byPri=(a,b)=>((a.priority==='high'?0:1)-(b.priority==='high'?0:1));
+  const byDue=(a,b)=>{ const da=a.due||'9999-99-99', db_=b.due||'9999-99-99'; return da===db_?0:(da<db_?-1:1); };
+  const byNew=(a,b)=>(b.at||0)-(a.at||0);
+  const byAsg=(a,b)=>String(a.assignee||'').localeCompare(String(b.assignee||''));
+  if(taskSort==='due')      return (a,b)=> byDue(a,b) || byPri(a,b) || byNew(a,b);
+  if(taskSort==='newest')   return (a,b)=> byNew(a,b);
+  if(taskSort==='assignee') return (a,b)=> byAsg(a,b) || byPri(a,b) || byDue(a,b);
+  return (a,b)=> byPri(a,b) || byDue(a,b) || byNew(a,b);
+}
+/* Due Soon strip and tab alert: overdue and due-within-3-days across ALL categories */
+function taskAlerts(){
+  const out=[]; (tasks||[]).forEach(t=>{ if(t.done) return; const d=taskDueInfo(t.due); if(d && (d.cls==='late'||d.cls==='soon')) out.push({ t, d }); });
+  out.sort((a,b)=> (a.d.days-b.d.days) || ((a.t.priority==='high'?0:1)-(b.t.priority==='high'?0:1)));
+  return out;
+}
+function renderTaskAlerts(){
+  const alerts=taskAlerts();
+  const tab=document.getElementById('tabTasks');
+  if(tab){ tab.classList.remove('alert-late','alert-soon');
+    if(alerts.some(a=>a.d.cls==='late')) tab.classList.add('alert-late');
+    else if(alerts.length) tab.classList.add('alert-soon'); }
+  const host=document.getElementById('taskSoon'); if(!host) return;
+  if(!alerts.length){ host.innerHTML=''; return; }
+  const late=alerts.some(a=>a.d.cls==='late');
+  const rows=alerts.map(a=>`<div class="task-soon-row ${a.d.cls}" data-id="${esc(a.t.id)}"><span class="task-soon-dot"></span><span>${esc(a.t.text)}</span><span class="task-soon-sub">${esc(taskCat(a.t.cat).label)} · ${a.t.assignee===TASK_ANYONE?'Anyone':esc(a.t.assignee)} · ${esc(a.d.text)}</span></div>`).join('');
+  host.innerHTML=`<div class="task-soon ${late?'late':'soon'}"><div class="task-soon-h">${late?'Past due and coming up':'Coming up'}</div>${rows}</div>`;
+  host.querySelectorAll('.task-soon-row').forEach(r=> r.addEventListener('click', ()=> taskJump(r.dataset.id)));
+}
+function taskJump(id){
+  taskFilter='all'; taskOpen.add(id); renderTasks();
+  const el=document.querySelector(`#taskFeed .task-card[data-id="${CSS.escape(id)}"]`); if(!el) return;
+  el.scrollIntoView({ behavior:'smooth', block:'center' });
+  el.classList.add('flash'); setTimeout(()=>el.classList.remove('flash'), 1600);
+}
+function renderTaskFilters(){
+  const host=document.getElementById('taskFilters'); if(!host) return;
+  const open=tasks.filter(t=>!t.done);
+  const me=taskWhoName();
+  const chips=[{ id:'all', label:'All', n:open.length }]
+    .concat(taskCats().filter(c=>!c.retired || open.some(t=>t.cat===c.id)).map(c=>({ id:c.id, label:c.label, color:c.color, n:open.filter(t=>t.cat===c.id).length })))
+    .concat(me ? [{ id:'mine', label:'Mine', n:open.filter(t=>t.assignee===me).length }] : []);
+  if(!chips.some(c=>c.id===taskFilter)) taskFilter='all';
+  host.innerHTML = chips.map(c=>`<button class="task-chip ${taskFilter===c.id?'on':''}" data-f="${esc(c.id)}">${c.color?`<span class="cdot" style="background:${esc(c.color)}"></span>`:''}${esc(c.label)}<span class="n">${c.n}</span></button>`).join('');
+  host.querySelectorAll('.task-chip').forEach(b=> b.addEventListener('click', ()=>{ taskFilter=b.dataset.f; renderTasks(); }));
+  const cb=document.getElementById('taskCompact'); if(cb) cb.classList.toggle('on', taskCompact);
+}
+function renderTasks(){
+  const host=document.getElementById('taskFeed'); if(!host || !recordsOn) return;
+  renderTaskAlerts(); renderTaskFilters();
+  host.classList.toggle('compact', taskCompact);
+  host.innerHTML='';
+  if(!tasks.length){ host.innerHTML='<p class="empty">No tasks yet. Add the first one above.</p>'; return; }
+  const me=taskWhoName();
+  const match = t => taskFilter==='all' ? true : taskFilter==='mine' ? t.assignee===me : t.cat===taskFilter;
+  const open = tasks.filter(t=>!t.done && match(t)).sort(taskSorter());
+  const done = tasks.filter(t=> t.done && match(t)).sort((a,b)=>(b.doneAt||0)-(a.doneAt||0));
+  if(!open.length) host.innerHTML='<p class="empty">Nothing open in this view.</p>';
+  open.forEach(t=> host.appendChild(taskCard(t)));
+  if(done.length){
+    const div=document.createElement('div'); div.className='req-divider'; div.innerHTML='<span>Done</span>';
+    host.appendChild(div);
+    done.forEach(t=> host.appendChild(taskCard(t)));
+  }
+}
+function taskCard(t){
+  const c=taskCat(t.cat);
+  const el=document.createElement('div');
+  el.className='note-card req-card task-card'+(t.done?' done':'')+(taskOpen.has(t.id)?' open':'');
+  el.dataset.id=t.id;
+  el.style.borderLeftColor = c.color || '';
+  const dueI = t.done ? null : taskDueInfo(t.due);
+  const subs=t.subs||[], cms=t.comments||[];
+  const subDone=subs.filter(x=>x.done).length;
+  const tags = [`<span class="task-tag cat">${esc(c.label)}</span>`]
+    .concat(t.cadet ? [`<span class="task-tag">${esc(t.cadet)}</span>`] : [])
+    .concat([`<span class="task-tag">${t.assignee===TASK_ANYONE?'Anyone':esc(t.assignee)}</span>`])
+    .concat(t.priority==='high' && !t.done ? ['<span class="task-tag hi">High</span>'] : [])
+    .concat(dueI ? [`<span class="task-tag due ${dueI.cls}">${esc(dueI.text)}</span>`] : [])
+    .concat(t.done && t.due ? [`<span class="task-tag due">Was due ${esc(t.due)}</span>`] : [])
+    .concat(subs.length ? [`<span class="task-tag cnt">${subDone}/${subs.length} steps</span>`] : [])
+    .concat(cms.length ? [`<span class="task-tag cnt">${cms.length} ${cms.length===1?'comment':'comments'}</span>`] : []);
+  const doneLine = (t.done && t.doneAt) ? `<div class="req-doneline">Done by ${esc(t.doneBy||'someone')} ${fmtWhen(t.doneAt)}</div>` : '';
+  const actions = t.done
+    ? '<div class="req-actions"><button class="note-del" title="Delete task">&times;</button></div>'
+    : '<div class="req-actions"><button class="task-edit">Edit</button><button class="note-del" title="Delete task">&times;</button></div>';
+  const chev='<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>';
+  el.innerHTML = `<input type="checkbox" class="req-check" title="${t.done?'Reopen this task':'Mark done'}" ${t.done?'checked':''}>`
+    + `<div class="req-body"><div class="note-top"><span class="note-name">${esc(t.by)}</span><span class="note-when">${fmtWhen(t.at)}</span>${actions}</div>`
+    + `<div class="note-text">${esc(t.text)}</div><div class="task-meta">${tags.join('')}<button class="task-more">Details ${chev}</button></div>${doneLine}`
+    + `<div class="task-editor-host"></div>`
+    + `<div class="task-details">${taskDetailsHtml(t)}</div></div>`;
+  el.querySelector('.req-check').addEventListener('change', e=> taskToggle(t.id, e.target.checked));
+  el.querySelector('.task-more').addEventListener('click', ()=>{ if(taskOpen.has(t.id)) taskOpen.delete(t.id); else taskOpen.add(t.id); el.classList.toggle('open'); });
+  const ed=el.querySelector('.task-edit'); if(ed) ed.addEventListener('click', ()=> taskEditOpen(t, el));
+  el.querySelector('.note-del').addEventListener('click', async ()=>{
+    if(!confirm('Delete this task?')) return;
+    try{
+      tasks = ((await RPDRoster.tasks.get()) || []).filter(x=>x.id!==t.id);
+      await RPDRoster.tasks.save(tasks);
+      taskOpen.delete(t.id);
+      renderTasks(); renderRecords(); showToast('Task deleted');
+    }catch(e){ showToast('Could not delete. Try again.'); }
+  });
+  wireTaskDetails(t, el);
+  if(taskEditing===t.id) taskEditOpen(t, el);
+  return el;
+}
+function taskDetailsHtml(t){
+  const subs=t.subs||[], cms=t.comments||[], log=(t.log||[]).slice().reverse();
+  const subRows = subs.length ? subs.map(x=>`<div class="sub-row ${x.done?'done':''}" data-sid="${esc(x.id)}"><input type="checkbox" ${x.done?'checked':''}><span>${esc(x.text)}</span><button class="sub-del" title="Remove step">&times;</button></div>`).join('') : '<div class="td-empty">No steps yet.</div>';
+  const cmRows = cms.length ? cms.map(x=>`<div class="cm-row" data-cid="${esc(x.id)}"><div class="cm-top"><span class="cm-name">${esc(x.name)}</span><span class="cm-when">${fmtWhen(x.at)}</span><button class="cm-del" title="Delete comment">&times;</button></div>${esc(x.text)}</div>`).join('') : '<div class="td-empty">No comments yet.</div>';
+  const logRows = log.length ? log.map(x=>`<div class="act-row"><b>${esc(x.who)}</b><span>${esc(x.act)}</span><span class="act-when">${fmtWhen(x.at)}</span></div>`).join('') : '<div class="td-empty">No activity recorded.</div>';
+  return `<div class="td-h">Steps</div><div class="sub-list">${subRows}</div>`
+    + (t.done ? '' : `<div class="td-add"><input type="text" class="sub-input" placeholder="Add a step…" maxlength="200"><button class="btn sub-add">Add</button></div>`)
+    + `<div class="td-h">Comments</div><div class="cm-list">${cmRows}</div>`
+    + `<div class="td-add"><input type="text" class="cm-input" placeholder="Add a comment…" maxlength="600"><button class="btn cm-add">Post</button></div>`
+    + `<div class="td-h">Activity</div><div class="act-list">${logRows}</div>`;
+}
+function wireTaskDetails(t, el){
+  const d=el.querySelector('.task-details'); if(!d) return;
+  d.querySelectorAll('.sub-row').forEach(row=>{
+    const sid=row.dataset.sid;
+    row.querySelector('input').addEventListener('change', e=>{
+      const on=e.target.checked;
+      taskMutate(t.id, tk=>{ const s=(tk.subs||[]).find(x=>x.id===sid); if(!s) return false; s.done=on; taskLog(tk, taskWhoName(), (on?'checked off step: ':'unchecked step: ')+s.text); });
+    });
+    row.querySelector('.sub-del').addEventListener('click', ()=>{
+      taskMutate(t.id, tk=>{ const s=(tk.subs||[]).find(x=>x.id===sid); if(!s) return false; tk.subs=tk.subs.filter(x=>x.id!==sid); taskLog(tk, taskWhoName(), 'removed step: '+s.text); });
+    });
+  });
+  const sa=d.querySelector('.sub-add'), si=d.querySelector('.sub-input');
+  if(sa){ const go=()=>{ const v=(si.value||'').trim(); if(!v) return; if(!taskWhoName()){ showToast('Select your name first'); return; }
+      taskMutate(t.id, tk=>{ tk.subs=(tk.subs||[]).concat([{ id:genId('st'), text:v, done:false }]); taskLog(tk, taskWhoName(), 'added step: '+v); }, 'Step added'); };
+    sa.addEventListener('click', go); si.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); go(); } }); }
+  const ca=d.querySelector('.cm-add'), ci=d.querySelector('.cm-input');
+  if(ca){ const go=()=>{ const v=(ci.value||'').trim(); if(!v) return; const who=taskWhoName(); if(!who){ showToast('Select your name first'); return; }
+      taskMutate(t.id, tk=>{ tk.comments=(tk.comments||[]).concat([{ id:genId('cm'), name:who, text:v, at:Date.now() }]); taskLog(tk, who, 'commented'); }, 'Comment posted'); };
+    ca.addEventListener('click', go); ci.addEventListener('keydown', e=>{ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); go(); } }); }
+  d.querySelectorAll('.cm-del').forEach(b=> b.addEventListener('click', ()=>{
+    const cid=b.closest('.cm-row').dataset.cid;
+    if(!confirm('Delete this comment?')) return;
+    taskMutate(t.id, tk=>{ tk.comments=(tk.comments||[]).filter(x=>x.id!==cid); taskLog(tk, taskWhoName(), 'deleted a comment'); });
+  }));
+}
+async function taskToggle(id, checked){
+  const who=taskWhoName() || 'Unknown';
+  await taskMutate(id, t=>{ t.done=!!checked; t.doneAt=checked?Date.now():null; t.doneBy=checked?who:''; taskLog(t, who, checked?'marked done':'reopened'); }, checked?'Marked done':'Reopened');
+}
+/* inline edit */
+function taskEditOpen(t, el){
+  taskEditing=t.id;
+  const host=el.querySelector('.task-editor-host'); if(!host || host.children.length) return;
+  const cats=taskCats().filter(c=>!c.retired || c.id===t.cat);
+  const cadets=RPDRoster.activeSorted().map(p=>p.name);
+  const names=leadershipNames();
+  host.innerHTML=`<div class="task-editor">
+    <textarea class="ed-text">${esc(t.text)}</textarea>
+    <div class="task-form-row">
+      <label class="task-f"><span>Category</span><select class="ed-cat">${cats.map(c=>`<option value="${esc(c.id)}" ${c.id===t.cat?'selected':''}>${esc(c.label)}</option>`).join('')}</select></label>
+      <label class="task-f ${isProbCat(t.cat)?'':'hide'} ed-cadet-wrap"><span>Cadet</span><select class="ed-cadet"><option value="">No specific cadet</option>${cadets.map(n=>`<option value="${esc(n)}" ${n===t.cadet?'selected':''}>${esc(n)}</option>`).join('')}</select></label>
+      <label class="task-f"><span>Assigned to</span><select class="ed-asg"><option value="${TASK_ANYONE}">${TASK_ANYONE}</option>${names.map(n=>`<option value="${esc(n)}" ${n===t.assignee?'selected':''}>${esc(n)}</option>`).join('')}</select></label>
+      <label class="task-f"><span>Due</span><input type="date" class="ed-due" value="${esc(t.due||'')}"></label>
+      <label class="task-pri"><input type="checkbox" class="ed-high" ${t.priority==='high'?'checked':''}> High priority</label>
+    </div>
+    <div class="ed-actions"><button class="btn primary ed-save">Save</button><button class="btn ed-cancel">Cancel</button></div>
+  </div>`;
+  host.querySelector('.ed-cat').addEventListener('change', e=> host.querySelector('.ed-cadet-wrap').classList.toggle('hide', !isProbCat(e.target.value)));
+  host.querySelector('.ed-cancel').addEventListener('click', ()=>{ taskEditing=null; host.innerHTML=''; });
+  host.querySelector('.ed-save').addEventListener('click', async ()=>{
+    const who=taskWhoName(); if(!who){ showToast('Select your name first'); return; }
+    const text=host.querySelector('.ed-text').value.trim(); if(!text){ showToast('Task text cannot be empty'); return; }
+    const cat=host.querySelector('.ed-cat').value;
+    const nv={ text, cat, cadet:isProbCat(cat)?host.querySelector('.ed-cadet').value:'', assignee:host.querySelector('.ed-asg').value||TASK_ANYONE, due:host.querySelector('.ed-due').value||'', priority:host.querySelector('.ed-high').checked?'high':'normal' };
+    const ok=await taskMutate(t.id, tk=>{
+      const ch=[]; if(tk.text!==nv.text) ch.push('text'); if(tk.cat!==nv.cat) ch.push('category'); if((tk.cadet||'')!==nv.cadet) ch.push('cadet'); if(tk.assignee!==nv.assignee) ch.push('assignee'); if((tk.due||'')!==nv.due) ch.push('due date'); if((tk.priority||'normal')!==nv.priority) ch.push('priority');
+      if(!ch.length) return false;
+      Object.assign(tk, nv); taskLog(tk, who, 'edited '+ch.join(', '));
+    }, 'Task updated');
+    taskEditing=null; if(!ok) host.innerHTML='';
+  });
+}
+/* categories manager */
+function catMgrToggle(force){
+  const box=document.getElementById('catMgr');
+  const on = typeof force==='boolean' ? force : !box.classList.contains('on');
+  box.classList.toggle('on', on);
+  document.getElementById('taskCatMgrBtn').classList.toggle('on', on);
+  if(on){ catDraft = taskCats().map(c=>({ id:c.id, label:c.label, color:c.color||'#7A8BA0', retired:!!c.retired })); catMgrRender(); }
+  else catDraft=null;
+}
+function catMgrRender(){
+  const host=document.getElementById('catRows'); if(!host || !catDraft) return;
+  host.innerHTML = catDraft.map((c,i)=>`<div class="cat-row ${c.retired?'retired':''}" data-i="${i}">
+    <input type="color" value="${esc(c.color)}" title="Color">
+    <input type="text" value="${esc(c.label)}" maxlength="30" placeholder="Category name">
+    <button class="cat-mini up" title="Move up" ${i===0?'disabled':''}>&#9650;</button>
+    <button class="cat-mini dn" title="Move down" ${i===catDraft.length-1?'disabled':''}>&#9660;</button>
+    <button class="cat-mini wide ret">${c.retired?'Restore':'Retire'}</button>
+  </div>`).join('');
+  host.querySelectorAll('.cat-row').forEach(row=>{
+    const i=+row.dataset.i;
+    row.querySelector('input[type=text]').addEventListener('input', e=> catDraft[i].label=e.target.value);
+    row.querySelector('input[type=color]').addEventListener('input', e=> catDraft[i].color=e.target.value);
+    row.querySelector('.up').addEventListener('click', ()=>{ if(i>0){ [catDraft[i-1],catDraft[i]]=[catDraft[i],catDraft[i-1]]; catMgrRender(); } });
+    row.querySelector('.dn').addEventListener('click', ()=>{ if(i<catDraft.length-1){ [catDraft[i+1],catDraft[i]]=[catDraft[i],catDraft[i+1]]; catMgrRender(); } });
+    row.querySelector('.ret').addEventListener('click', ()=>{ catDraft[i].retired=!catDraft[i].retired; catMgrRender(); });
+  });
+}
+function catMgrAdd(){ if(!catDraft) return; catDraft.push({ id:genId('ct'), label:'', color:'#7A8BA0', retired:false }); catMgrRender(); const rows=document.querySelectorAll('#catRows .cat-row'); const last=rows[rows.length-1]; if(last) last.querySelector('input[type=text]').focus(); }
+async function catMgrSave(){
+  if(!catDraft) return;
+  const who=taskWhoName(); if(!who){ showToast('Select your name first'); return; }
+  const cats=catDraft.map(c=>({ id:c.id, label:(c.label||'').trim(), color:c.color||'#7A8BA0', retired:!!c.retired })).filter(c=>c.label);
+  if(!cats.some(c=>!c.retired)){ showToast('Keep at least one active category'); return; }
+  const btn=document.getElementById('catSave'); btn.disabled=true;
+  try{
+    await RPDRoster.taskconfig.save({ cats, updatedBy:who, updatedAt:Date.now() });
+    taskCfg={ cats, updatedBy:who, updatedAt:Date.now() };
+    catMgrToggle(false); fillTaskSelects(); renderTasks(); renderRecords();
+    showToast('Categories saved');
+  }catch(e){ showToast('Could not save categories. Try again.'); }
+  btn.disabled=false;
+}
+// Read-only list of open cadet-linked tasks on a cadet's Records card.
+function cadetTaskBlock(name){
+  const open=(tasks||[]).filter(t=>!t.done && t.cadet===name).sort(taskSorter());
+  if(!open.length) return '';
+  const rows=open.map(t=>{ const d=taskDueInfo(t.due); const c=taskCat(t.cat); return `<div class="ctask"><span class="ctask-dot" style="background:${esc(c.color||'#60a5fa')}"></span><span>${esc(t.text)}</span><span class="ctask-sub">${t.assignee===TASK_ANYONE?'Anyone':esc(t.assignee)}${d?' · '+esc(d.text):''}</span></div>`; }).join('');
+  return `<div class="cnotes"><div class="cnotes-h">Open tasks for this cadet</div>${rows}<div class="cnote-empty">Manage these on the Tasks tab.</div></div>`;
+}
+
 function reqCard(r){
   const el=document.createElement('div');
   el.className='note-card req-card'+(r.done?' done':'')+(r.denied?' denied':'');

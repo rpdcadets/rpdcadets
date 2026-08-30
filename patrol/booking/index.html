@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- patrol/booking/index.html | Build v4 | 2026-08-29 | Medical Q5 wording fixed on screen only (PDF form text untouched) -->
+<!-- patrol/booking/index.html | Build v5 | 2026-08-29 | Shrink-to-fit text in PDF fields so long entries are not clipped -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -367,7 +367,7 @@
   <div class="nav"><button data-go="3">&lsaquo; Back</button></div>
 </section>
 
-<footer class="foot">Internal field tool. Renders entirely in your browser. Nothing is saved on this device or the site. &middot; Build v4</footer>
+<footer class="foot">Internal field tool. Renders entirely in your browser. Nothing is saved on this device or the site. &middot; Build v5</footer>
 </main>
 
 <div class="actions">
@@ -392,7 +392,7 @@
 
 <script>
 /* ---------------- constants ---------------- */
-const BUILD = '4';
+const BUILD = '5';
 const PDF_URL = 'GO-803-01.pdf?v=1';
 const DEFAULT_AGENCY = 'RICHARDSON';
 const HANDOFF_TTL_MS = 10 * 60 * 1000;
@@ -577,7 +577,15 @@ async function buildPdf(d){
   const { PDFDocument, StandardFonts } = PDFLib;
   const doc = await PDFDocument.load(await loadBlank());
   const form = doc.getForm(); const helv = await doc.embedFont(StandardFonts.Helvetica);
-  const setText = (name, v) => { if (!v) return; try { const f=form.getTextField(name); f.setText(String(v)); f.updateAppearances(helv); } catch(e){ console.warn('text',name,e); } };
+  const setText = (name, v) => {
+    if (!v) return;
+    try {
+      const f = form.getTextField(name); const text = String(v);
+      const w = f.acroField.getWidgets()[0].getRectangle().width - 4;   // usable width in points
+      let size = 10; while (size > 6 && helv.widthOfTextAtSize(text, size) > w) size -= 0.5;
+      f.setFontSize(size); f.setText(text); f.updateAppearances(helv);
+    } catch(e){ console.warn('text',name,e); }
+  };
   const check   = name => { try { form.getCheckBox(name).check(); } catch(e){ console.warn('check',name,e); } };
   const radio   = (name,v) => { if(!v) return; try { form.getRadioGroup(name).select(v); } catch(e){ console.warn('radio',name,e); } };
   const t = d.text, g = d.groups;

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- patrol/epo/index.html | Build v1 | 2026-08-30 | Emergency Protective Order Packet: fills GO 408-02 Application, GO 408-03 Order (EN/ES), GO 2.01.07-004 Notice, and TCIC form from one entry; merged or separate output; desktop handoff -->
+<!-- patrol/epo/index.html | Build v2 | 2026-08-30 | TCIC OCA now fills from the service number (stray 2024000 default removed from the hosted form). v1: Emergency Protective Order Packet: fills GO 408-02 Application, GO 408-03 Order (EN/ES), GO 2.01.07-004 Notice, and TCIC form from one entry; merged or separate output; desktop handoff -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -255,7 +255,7 @@
   <div class="nav"><button data-go="4">&lsaquo; Back</button></div>
 </section>
 
-<footer class="foot">Internal field tool. Renders entirely in your browser. Nothing is saved on this device or the site. &middot; Build v1</footer>
+<footer class="foot">Internal field tool. Renders entirely in your browser. Nothing is saved on this device or the site. &middot; Build v2</footer>
 </main>
 
 <div class="actions">
@@ -278,8 +278,8 @@
 
 <script>
 /* ---------------- constants ---------------- */
-const BUILD = '1';
-const PDFS = { app:'GO-408-02_Application.pdf?v=1', en:'GO-408-03_Order_English.pdf?v=1', es:'GO-408-03_Order_Spanish.pdf?v=1', notice:'GO-2.01.07-004_Notice.pdf?v=1', tcic:'TCIC_Protective_Order.pdf?v=1' };
+const BUILD = '2';
+const PDFS = { app:'GO-408-02_Application.pdf?v=1', en:'GO-408-03_Order_English.pdf?v=1', es:'GO-408-03_Order_Spanish.pdf?v=1', notice:'GO-2.01.07-004_Notice.pdf?v=1', tcic:'TCIC_Protective_Order.pdf?v=2' };
 const HANDOFF_TTL_MS = 10 * 60 * 1000;
 const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const CODE_PREFIX = 'E';   // the /patrol landing page routes E-codes here
@@ -473,7 +473,7 @@ async function fillTcic(d){
   const va = vAddr(d);
   const circle = spec => { if(!spec) return; const [pg,x0,y0,x1,y1]=spec; doc.getPage(pg-1).drawEllipse({ x:(x0+x1)/2, y:(y0+y1)/2, xScale:(x1-x0)/2+3, yScale:(y1-y0)/2+2.5, borderColor:rgb(0,0,0), borderWidth:1.1 }); };
   const rse = (spec, race, sex, eth) => { circle(spec.race[race]); circle(spec.sex[sex]); circle(spec.eth[eth]); };
-  text('TCIC_Respondent Name', defName(d)); text('TCIC_Respondent Name_2', defName(d)); text('TCIC_Date of Birth', T(d,'dDob'));
+  text('TCIC_OCA', T(d,'svc')); text('TCIC_Respondent Name', defName(d)); text('TCIC_Respondent Name_2', defName(d)); text('TCIC_Date of Birth', T(d,'dDob'));
   text('TCIC_Scars Marks andor Tattoos please describe in detail AKAs', T(d,'dAka') ? 'AKA: '+T(d,'dAka') : '');
   text('TCIC_Relationship to Protected Person Not the additional PPNS', T(d,'vRel'));
   text('TCIC_Respondent Address', T(d,'dStreet')); text('TCIC_City', T(d,'dCity')); text('TCIC_County', T(d,'dCounty')); text('TCIC_State', T(d,'dState')); text('TCIC_Zip', T(d,'dZip'));

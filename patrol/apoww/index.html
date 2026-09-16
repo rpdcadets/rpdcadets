@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- patrol/apoww/index.html | Build v3 | 2026-09-16 | Sections 1 and 2 typed text rendered bold so it stands out from the printed question. v2: Officer line includes badge #; EMS section behind a toggle; hosted PDF v2 seats text on the underlines. v1: APOWW (Notification of Emergency Detention): phone-first fill of the official 2-page form; intro popup; PBKDF2-hardened desktop handoff (A-codes, 20-minute expiry) -->
+<!-- patrol/apoww/index.html | Build v5 | 2026-09-16 | All typed text printed in ALL CAPS on the PDF. v4: Addresses split into street, city, county, state, zip on screen. v3: Sections 1 and 2 typed text rendered bold so it stands out from the printed question. v2: Officer line includes badge #; EMS section behind a toggle; hosted PDF v2 seats text on the underlines. v1: APOWW (Notification of Emergency Detention): phone-first fill of the official 2-page form; intro popup; PBKDF2-hardened desktop handoff (A-codes, 20-minute expiry) -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -126,7 +126,15 @@
       <div class="f"><label class="l" for="pRace">Race</label><input class="field" id="pRace" autocomplete="off"></div>
       <div class="f"><label class="l" for="pGender">Gender</label><input class="field" id="pGender" autocomplete="off"></div>
     </div>
-    <div class="f"><label class="l" for="pAddr">Address</label><input class="field" id="pAddr" autocomplete="off"></div>
+    <div class="f"><label class="l" for="pStreet">Street Address (with number)</label><input class="field" id="pStreet" autocomplete="off"></div>
+    <div class="row">
+      <div class="f" style="flex:2;"><label class="l" for="pCity">City</label><input class="field" id="pCity" autocomplete="off"></div>
+      <div class="f"><label class="l" for="pCounty">County</label><input class="field" id="pCounty" autocomplete="off"></div>
+    </div>
+    <div class="row">
+      <div class="f"><label class="l" for="pState">State</label><input class="field" id="pState" autocomplete="off" maxlength="2" autocapitalize="characters" value="TX"></div>
+      <div class="f"><label class="l" for="pZip">Zip Code</label><input class="field" id="pZip" inputmode="numeric" autocomplete="off"></div>
+    </div>
   </div></div>
   <div class="nav"><button class="primary" data-go="2">Next: Officer &rsaquo;</button></div>
 </section>
@@ -139,8 +147,13 @@
       <div class="f"><label class="l" for="badge">Badge No.</label><input class="field" id="badge" autocomplete="off"></div>
     </div>
     <div class="f"><label class="l" for="agency">Agency</label><input class="field" id="agency" autocomplete="off" value="Richardson Police Department"></div>
-    <div class="f"><label class="l" for="offAddr">Department Address</label><input class="field" id="offAddr" autocomplete="off" value="140 N Greenville Ave, Richardson, TX"></div>
+    <div class="f"><label class="l" for="offStreet">Department Street Address</label><input class="field" id="offStreet" autocomplete="off" value="140 N Greenville Ave"></div>
     <div class="row">
+      <div class="f" style="flex:2;"><label class="l" for="offCity">City</label><input class="field" id="offCity" autocomplete="off" value="Richardson"></div>
+      <div class="f"><label class="l" for="offCounty">County</label><input class="field" id="offCounty" autocomplete="off" value="Dallas"></div>
+    </div>
+    <div class="row">
+      <div class="f"><label class="l" for="offState">State</label><input class="field" id="offState" autocomplete="off" maxlength="2" autocapitalize="characters" value="TX"></div>
       <div class="f"><label class="l" for="offZip">Zip Code</label><input class="field" id="offZip" inputmode="numeric" autocomplete="off" value="75081"></div>
       <div class="f"><label class="l" for="offPhone">Telephone</label><input class="field" id="offPhone" type="tel" autocomplete="off" value="(972) 744-4800"></div>
     </div>
@@ -247,7 +260,7 @@
   <div class="nav"><button data-go="6">&lsaquo; Back</button></div>
 </section>
 
-<footer class="foot">Internal field tool. Renders entirely in your browser. Nothing is saved on this device or the site. &middot; Build v3</footer>
+<footer class="foot">Internal field tool. Renders entirely in your browser. Nothing is saved on this device or the site. &middot; Build v5</footer>
 </main>
 
 <div class="actions">
@@ -277,7 +290,7 @@
 
 <script>
 /* ---------------- constants ---------------- */
-const BUILD = '3';
+const BUILD = '5';
 const PDF_URL = 'APOWW.pdf?v=2';
 const HANDOFF_TTL_MS = 20 * 60 * 1000;
 const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -288,14 +301,14 @@ const firebaseConfig = { apiKey:"AIzaSyDV0vuyGg7gpPXJd2jRqZtUTeKiP3yPxhU", authD
 /* input id -> PDF field name (direct text fills) */
 const TEXT_MAP = {
   caseNo:'Text2', fDate:'Text3', fTime:'Text4',
-  pDob:'DOB', pRace:'Race', pGender:'Gender', pPhone:'Phone Number', pAddr:'Address',
+  pDob:'DOB', pRace:'Race', pGender:'Gender', pPhone:'Phone Number',
   agency:'a peace officer with',
   narrative:'attempts statements or threats observed by me or reliably reported to me may use attachments 5',
   witnesses:'named person being detained are if applicable 2', loc:'Text1',
   adultAge:'If yes age 1', childAge:'If yes age 2', parentsContact:'ParentsGuardians Contact Information if known',
   restraintOther:'Other', originOther:'Other_2', transportOther:'Other_3',
   emsName:'pursuant to a memorandum of understanding between agencies and I have determined that transferring the person for',
-  badge:'BADGE NO', offAddr:'Address_2', offZip:'Zip Code', offPhone:'Telephone'
+  badge:'BADGE NO', offZip:'Zip Code', offPhone:'Telephone'
 };
 const BELIEFS = { b1:'I have reason to believe and do believe that', b2:'I have reason to believe and do believe that the abovenamed person evidences a substantial risk of serious harm to himselfherself', b3:'I have reason to believe and do believe that the risk of harm is imminent unless the abovenamed person is immediately restrained' };
 const CHILD_NOTICE = { noticeYes:'I provided notice to the childs parents or guardians of my intention to file this notification', noticeNo:'I was not able to provide notice to the childs parents or guardians of my intention to file this notification because' };
@@ -314,7 +327,7 @@ const GRID = [
 ];
 const $ = id => document.getElementById(id);
 const status = (msg, cls='') => { const s=$('status'); s.textContent=msg; s.className='status '+cls; };
-const TEXT_IDS = ['caseNo','fDate','fTime','pName','pDob','pRace','pGender','pPhone','pAddr','offName','badge','agency','offAddr','offZip','offPhone','narrative','witnesses','loc','adultAge','childAge','noticeWhy','parentsContact','restraintOther','originOther','transportOther','facility','emsName','emsDate','emsTime'];
+const TEXT_IDS = ['caseNo','fDate','fTime','pName','pDob','pRace','pGender','pPhone','pStreet','pCity','pCounty','pState','pZip','offName','badge','agency','offStreet','offCity','offCounty','offState','offZip','offPhone','narrative','witnesses','loc','adultAge','childAge','noticeWhy','parentsContact','restraintOther','originOther','transportOther','facility','emsName','emsDate','emsTime'];
 const CKS = ['b1','b2','b3','noticeYes','noticeNo'];
 const EMS_IDS = ['emsName','emsDate','emsTime'];
 const GROUPS = ['adult65','child17','restrained'];
@@ -411,7 +424,7 @@ async function buildPdf(d){
   const isMulti = f => { try { return f.isMultiline(); } catch(e){ return false; } };
   const text = (name, v, size) => {
     if (!v) return;
-    try { const f=form.getTextField(name); const s=String(v);
+    try { const f=form.getTextField(name); const s=String(v).toUpperCase();
       if (isMulti(f)){ f.setFontSize(size||9); }
       else { const w=f.acroField.getWidgets()[0].getRectangle().width-4; let sz=size||9.5; while (sz>6 && helv.widthOfTextAtSize(s,sz)>w) sz-=0.5; f.setFontSize(sz); }
       f.setText(s); f.updateAppearances(BOLD.has(name) ? helvBold : helv); }
@@ -422,6 +435,9 @@ async function buildPdf(d){
   const t = d.text;
   Object.entries(TEXT_MAP).forEach(([id,pdf])=>text(pdf, t[id]));
   ['FOR THE BEST INTEREST AND PROTECTION OF','person detained evidences mental','detention of person detained'].forEach(f=>text(f, t.pName));
+  const addr=(st,ci,co,sa,zp)=>[st,ci,co?co+' County':'',[sa,zp].filter(Boolean).join(' ')].map(x=>(x||'').trim()).filter(Boolean).join(', ');
+  text('Address', addr(t.pStreet,t.pCity,t.pCounty,t.pState,t.pZip));
+  text('Address_2', addr(t.offStreet,t.offCity,t.offCounty,t.offState,''));
   text('PEACE OFFICERS PRINTED NAME', t.offName); text('Now comes', [t.offName, t.badge?('#'+t.badge):''].filter(Boolean).join(' '));
   Object.entries(BELIEFS).forEach(([k,f])=>{ if (d.cks[k]) check(f); });
   /* age: one radio covers both YES boxes; NO boxes are separate checkboxes */

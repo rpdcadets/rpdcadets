@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- patrol/apoww/index.html | Build v5 | 2026-09-16 | All typed text printed in ALL CAPS on the PDF. v4: Addresses split into street, city, county, state, zip on screen. v3: Sections 1 and 2 typed text rendered bold so it stands out from the printed question. v2: Officer line includes badge #; EMS section behind a toggle; hosted PDF v2 seats text on the underlines. v1: APOWW (Notification of Emergency Detention): phone-first fill of the official 2-page form; intro popup; PBKDF2-hardened desktop handoff (A-codes, 20-minute expiry) -->
+<!-- patrol/apoww/index.html | Build v6 | 2026-09-16 | Apt # box added to both addresses (omitted from the PDF when blank). v5: All typed text printed in ALL CAPS on the PDF. v4: Addresses split into street, city, county, state, zip on screen. v3: Sections 1 and 2 typed text rendered bold so it stands out from the printed question. v2: Officer line includes badge #; EMS section behind a toggle; hosted PDF v2 seats text on the underlines. v1: APOWW (Notification of Emergency Detention): phone-first fill of the official 2-page form; intro popup; PBKDF2-hardened desktop handoff (A-codes, 20-minute expiry) -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -126,7 +126,10 @@
       <div class="f"><label class="l" for="pRace">Race</label><input class="field" id="pRace" autocomplete="off"></div>
       <div class="f"><label class="l" for="pGender">Gender</label><input class="field" id="pGender" autocomplete="off"></div>
     </div>
-    <div class="f"><label class="l" for="pStreet">Street Address (with number)</label><input class="field" id="pStreet" autocomplete="off"></div>
+    <div class="row">
+      <div class="f" style="flex:3;"><label class="l" for="pStreet">Street Address</label><input class="field" id="pStreet" autocomplete="off"></div>
+      <div class="f"><label class="l" for="pApt">Apt #</label><input class="field" id="pApt" autocomplete="off"></div>
+    </div>
     <div class="row">
       <div class="f" style="flex:2;"><label class="l" for="pCity">City</label><input class="field" id="pCity" autocomplete="off"></div>
       <div class="f"><label class="l" for="pCounty">County</label><input class="field" id="pCounty" autocomplete="off"></div>
@@ -147,7 +150,10 @@
       <div class="f"><label class="l" for="badge">Badge No.</label><input class="field" id="badge" autocomplete="off"></div>
     </div>
     <div class="f"><label class="l" for="agency">Agency</label><input class="field" id="agency" autocomplete="off" value="Richardson Police Department"></div>
-    <div class="f"><label class="l" for="offStreet">Department Street Address</label><input class="field" id="offStreet" autocomplete="off" value="140 N Greenville Ave"></div>
+    <div class="row">
+      <div class="f" style="flex:3;"><label class="l" for="offStreet">Department Street Address</label><input class="field" id="offStreet" autocomplete="off" value="140 N Greenville Ave"></div>
+      <div class="f"><label class="l" for="offApt">Suite/Apt #</label><input class="field" id="offApt" autocomplete="off"></div>
+    </div>
     <div class="row">
       <div class="f" style="flex:2;"><label class="l" for="offCity">City</label><input class="field" id="offCity" autocomplete="off" value="Richardson"></div>
       <div class="f"><label class="l" for="offCounty">County</label><input class="field" id="offCounty" autocomplete="off" value="Dallas"></div>
@@ -260,7 +266,7 @@
   <div class="nav"><button data-go="6">&lsaquo; Back</button></div>
 </section>
 
-<footer class="foot">Internal field tool. Renders entirely in your browser. Nothing is saved on this device or the site. &middot; Build v5</footer>
+<footer class="foot">Internal field tool. Renders entirely in your browser. Nothing is saved on this device or the site. &middot; Build v6</footer>
 </main>
 
 <div class="actions">
@@ -290,7 +296,7 @@
 
 <script>
 /* ---------------- constants ---------------- */
-const BUILD = '5';
+const BUILD = '6';
 const PDF_URL = 'APOWW.pdf?v=2';
 const HANDOFF_TTL_MS = 20 * 60 * 1000;
 const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -327,7 +333,7 @@ const GRID = [
 ];
 const $ = id => document.getElementById(id);
 const status = (msg, cls='') => { const s=$('status'); s.textContent=msg; s.className='status '+cls; };
-const TEXT_IDS = ['caseNo','fDate','fTime','pName','pDob','pRace','pGender','pPhone','pStreet','pCity','pCounty','pState','pZip','offName','badge','agency','offStreet','offCity','offCounty','offState','offZip','offPhone','narrative','witnesses','loc','adultAge','childAge','noticeWhy','parentsContact','restraintOther','originOther','transportOther','facility','emsName','emsDate','emsTime'];
+const TEXT_IDS = ['caseNo','fDate','fTime','pName','pDob','pRace','pGender','pPhone','pStreet','pApt','pCity','pCounty','pState','pZip','offName','badge','agency','offStreet','offApt','offCity','offCounty','offState','offZip','offPhone','narrative','witnesses','loc','adultAge','childAge','noticeWhy','parentsContact','restraintOther','originOther','transportOther','facility','emsName','emsDate','emsTime'];
 const CKS = ['b1','b2','b3','noticeYes','noticeNo'];
 const EMS_IDS = ['emsName','emsDate','emsTime'];
 const GROUPS = ['adult65','child17','restrained'];
@@ -435,9 +441,9 @@ async function buildPdf(d){
   const t = d.text;
   Object.entries(TEXT_MAP).forEach(([id,pdf])=>text(pdf, t[id]));
   ['FOR THE BEST INTEREST AND PROTECTION OF','person detained evidences mental','detention of person detained'].forEach(f=>text(f, t.pName));
-  const addr=(st,ci,co,sa,zp)=>[st,ci,co?co+' County':'',[sa,zp].filter(Boolean).join(' ')].map(x=>(x||'').trim()).filter(Boolean).join(', ');
-  text('Address', addr(t.pStreet,t.pCity,t.pCounty,t.pState,t.pZip));
-  text('Address_2', addr(t.offStreet,t.offCity,t.offCounty,t.offState,''));
+  const addr=(st,ap,ci,co,sa,zp)=>{ ap=(ap||'').trim(); const street=[st,(ap? (/^(apt|suite|ste|unit|#)/i.test(ap)?ap:'Apt '+ap):'')].map(x=>(x||'').trim()).filter(Boolean).join(' '); return [street,ci,co?co+' County':'',[sa,zp].filter(Boolean).join(' ')].map(x=>(x||'').trim()).filter(Boolean).join(', '); };
+  text('Address', addr(t.pStreet,t.pApt,t.pCity,t.pCounty,t.pState,t.pZip));
+  text('Address_2', addr(t.offStreet,t.offApt,t.offCity,t.offCounty,t.offState,''));
   text('PEACE OFFICERS PRINTED NAME', t.offName); text('Now comes', [t.offName, t.badge?('#'+t.badge):''].filter(Boolean).join(' '));
   Object.entries(BELIEFS).forEach(([k,f])=>{ if (d.cks[k]) check(f); });
   /* age: one radio covers both YES boxes; NO boxes are separate checkboxes */

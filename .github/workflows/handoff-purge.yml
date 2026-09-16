@@ -1,10 +1,12 @@
-# handoff-purge.yml  |  Build v2  |  2026-08-30
-# Deletes desktop-handoff records older than 15 minutes from the Firebase
-# "handoff" node (booking slips and EPO packets). This job never touches any
-# other path and never writes to the repo.
+# handoff-purge.yml  |  Build v3  |  2026-09-16
+# Deletes desktop-handoff records older than 25 minutes from the Firebase
+# "handoff" node (booking slips, EPO packets, APOWW forms). Codes expire at
+# 20 minutes in the tools; the extra margin guarantees a valid code is never
+# purged early. This job never touches any other path and never writes to the repo.
 #
 # File location in the repo: .github/workflows/handoff-purge.yml
 # No repo secrets required.
+# v3: cutoff 15 -> 25 minutes to match the 20-minute code lifetime.
 # v2: handle an empty handoff node (Firebase returns null, which crashed v1).
 
 name: Purge stale booking handoff codes
@@ -21,10 +23,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 2
     steps:
-      - name: Delete records older than 15 minutes
+      - name: Delete records older than 25 minutes
         run: |
           DB="https://rpdcadets-quartermaster-default-rtdb.firebaseio.com/handoff"
-          CUTOFF=$(( $(date +%s) * 1000 - 15 * 60 * 1000 ))
+          CUTOFF=$(( $(date +%s) * 1000 - 25 * 60 * 1000 ))
           KEYS=$(curl -sf "$DB.json" | jq -r --argjson c "$CUTOFF" '(. // {}) | to_entries[] | select((.value.at // 0) < $c) | .key')
           if [ -z "$KEYS" ]; then echo "Nothing to purge."; exit 0; fi
           for K in $KEYS; do

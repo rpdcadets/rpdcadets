@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<!-- patrol/apoww/index.html | Build v3 | 2026-09-16 | Sections 1 and 2 typed text rendered bold so it stands out from the printed question. v2: Officer line includes badge #; EMS section behind a toggle; hosted PDF v2 seats text on the underlines. v1: APOWW (Notification of Emergency Detention): phone-first fill of the official 2-page form; intro popup; PBKDF2-hardened desktop handoff (A-codes, 20-minute expiry) -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>APOWW Form</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
+<style>
+  :root{
+    --navy:#0b1f3a; --navy-2:#13294b; --paper:#f4f1ea; --ink:#1a1d24; --line:#c9c2b4;
+    --red:#9b2030; --gold:#b8923a; --field:#fbfaf6; --muted:#5f6675; --ok:#1f6b3b;
+    --warn:#8a5a00; --warnbg:#fdf6e3; --redbg:#fbe9ec;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:"Barlow","Segoe UI",system-ui,sans-serif;
+    background:radial-gradient(circle at 12% -10%, rgba(184,146,58,.10), transparent 40%),radial-gradient(circle at 100% 0%, rgba(155,32,48,.08), transparent 45%),var(--paper);
+    color:var(--ink); line-height:1.4; min-height:100vh; padding-bottom:110px; -webkit-text-size-adjust:100%;
+  }
+  header.masthead{background:linear-gradient(180deg,var(--navy) 0%,var(--navy-2) 100%);border-bottom:3px solid var(--gold);box-shadow:0 2px 0 var(--red) inset, 0 6px 20px rgba(0,0,0,.25);padding:14px 18px 12px;}
+  .masthead .kick{margin:0 0 2px;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);font-weight:600;}
+  .masthead .kick a{color:inherit;text-decoration:none;}
+  .masthead h1{margin:0;font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:26px;letter-spacing:.02em;color:#fff;line-height:1.05;}
+  .masthead .sub{margin-top:3px;font-size:12.5px;color:rgba(255,255,255,.72);}
+  .steps{position:sticky;top:0;z-index:20;display:flex;background:#fff;border-bottom:1px solid var(--line);box-shadow:0 2px 8px rgba(0,0,0,.06);}
+  .steps button{flex:1;padding:10px 1px 8px;border:0;background:none;cursor:pointer;color:var(--muted);font-family:"Barlow Condensed",sans-serif;font-size:13px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;border-bottom:3px solid transparent;}
+  .steps button.active{color:var(--navy);border-bottom-color:var(--gold);}
+  main{max-width:720px;margin:0 auto;padding:14px 14px 0;}
+  .panel{display:none;} .panel.active{display:block;}
+  .card{background:#fff;border:1px solid var(--line);border-radius:8px;margin-bottom:12px;overflow:hidden;}
+  .card-h{background:var(--navy);color:#fff;padding:7px 14px;font-family:"Barlow Condensed",sans-serif;font-size:15px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;}
+  .card-h small{font-family:"Barlow",sans-serif;font-weight:400;letter-spacing:0;text-transform:none;opacity:.8;margin-left:8px;}
+  .card-body{padding:12px 14px 6px;}
+  .row{display:flex;gap:10px;} .row > *{flex:1;min-width:0;}
+  .f{margin-bottom:10px;}
+  label.l{display:block;font-size:12px;font-weight:600;letter-spacing:.03em;text-transform:uppercase;color:var(--muted);margin-bottom:3px;}
+  .field{width:100%;font:inherit;font-size:16px;padding:9px 10px;border:1.5px solid var(--line);border-radius:6px;background:var(--field);color:var(--ink);}
+  .field:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(184,146,58,.22);}
+  .field.bad{border-color:var(--red);background:var(--redbg);}
+  textarea.field{min-height:90px;resize:vertical;}
+  .with-btn{display:flex;gap:6px;}
+  .with-btn .field{flex:1;min-width:0;}
+  .now{font-family:"Barlow Condensed",sans-serif;font-size:15px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:0 14px;border:1.5px solid var(--navy);border-radius:6px;background:#fff;color:var(--navy);cursor:pointer;white-space:nowrap;}
+  .now:active{background:var(--navy);color:#fff;}
+  .chips{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:10px;}
+  .chip{font:inherit;font-size:14.5px;font-weight:500;padding:8px 13px;border:1.5px solid var(--line);border-radius:999px;background:#fff;color:var(--ink);cursor:pointer;user-select:none;-webkit-user-select:none;}
+  .chip.on{background:var(--navy);border-color:var(--navy);color:#fff;}
+  .yn .chip{min-width:58px;text-align:center;}
+  .inline{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;}
+  .inline .lab{font-size:14px;font-weight:500;flex:1;min-width:170px;}
+  .hint{font-size:12px;color:var(--muted);margin:-4px 0 10px;}
+  .note{background:var(--warnbg);border:1.5px solid var(--warn);color:var(--warn);border-radius:6px;padding:9px 12px;font-size:13.5px;margin-bottom:12px;}
+  .cb{display:flex;align-items:flex-start;gap:10px;padding:9px 12px;border:1.5px solid var(--line);border-radius:6px;background:var(--field);margin-bottom:8px;cursor:pointer;}
+  .cb input{width:22px;height:22px;margin:0;flex:none;accent-color:var(--navy);}
+  .cb .t{font-size:14px;line-height:1.3;}
+  .q{padding:11px 0;border-bottom:1px solid #ebe6da;}
+  .q:last-child{border-bottom:0;}
+  .q .qt{font-size:15px;margin-bottom:8px;font-weight:500;}
+  .q .notes{display:none;margin-top:8px;}
+  .q.show .notes{display:block;}
+  .nav{display:flex;gap:10px;margin:4px 0 16px;}
+  .nav button{flex:1;font-family:"Barlow Condensed",sans-serif;font-size:18px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:11px;border:1.5px solid var(--navy);border-radius:6px;background:#fff;color:var(--navy);cursor:pointer;}
+  .nav button.primary{background:var(--navy);color:#fff;}
+  .actions{position:fixed;left:0;right:0;bottom:0;z-index:30;background:#fff;border-top:1px solid var(--line);box-shadow:0 -4px 14px rgba(0,0,0,.08);padding:10px 12px calc(10px + env(safe-area-inset-bottom));}
+  .actions .inner{max-width:720px;margin:0 auto;display:flex;gap:8px;}
+  .btn{flex:1;font-family:"Barlow Condensed",sans-serif;font-size:17px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:12px 6px;border:1.5px solid var(--navy);border-radius:6px;background:#fff;color:var(--navy);cursor:pointer;white-space:nowrap;}
+  .btn-gold{background:var(--gold);border-color:var(--gold);color:var(--navy);}
+  .btn-red{border-color:var(--red);color:var(--red);flex:0 0 auto;padding:12px 14px;}
+  .btn:disabled{opacity:.5;cursor:default;}
+  .status{font-size:13px;text-align:center;color:var(--muted);min-height:16px;margin-top:6px;}
+  .status.err{color:var(--red);font-weight:600;} .status.ok{color:var(--ok);font-weight:600;}
+  .modal{display:none;position:fixed;inset:0;z-index:50;background:rgba(11,31,58,.75);align-items:center;justify-content:center;padding:18px;}
+  .modal.show{display:flex;}
+  .modal .box{background:#fff;border-radius:10px;padding:20px 18px;max-width:460px;width:100%;text-align:center;}
+  .modal h3{margin:0 0 6px;font-family:"Barlow Condensed",sans-serif;font-size:22px;letter-spacing:.04em;text-transform:uppercase;color:var(--navy);}
+  .modal p{margin:0 0 12px;font-size:14.5px;color:var(--ink);text-align:left;line-height:1.45;}
+  .bigcode{font-family:"Barlow Condensed",monospace;font-size:44px;font-weight:700;letter-spacing:.22em;color:var(--navy);background:var(--paper);border:2px solid var(--gold);border-radius:8px;padding:10px 6px 10px 12px;margin:0 0 10px;user-select:all;-webkit-user-select:all;}
+  .linkline{font-size:13px;word-break:break-all;background:var(--field);border:1px solid var(--line);border-radius:6px;padding:8px;margin-bottom:10px;user-select:all;-webkit-user-select:all;}
+  .modal .btn{width:100%;margin-top:6px;}
+  footer.foot{text-align:center;font-size:12px;color:var(--muted);padding:12px 18px 6px;}
+  @media (min-width:560px){ .masthead h1{font-size:30px;} .steps button{font-size:15px;} }
+</style>
+</head>
+<body>
+<header class="masthead">
+  <p class="kick"><a href="/patrol/">&lsaquo; Field Tools</a></p>
+  <h1>APOWW Form</h1>
+  <div class="sub">Notification of Emergency Detention (HSC 573.001). Fill on your phone; signature stays blank for you to sign the print.</div>
+</header>
+
+<div class="steps" id="steps">
+  <button data-step="1" class="active">Person</button>
+  <button data-step="2">Officer</button>
+  <button data-step="3">Facts</button>
+  <button data-step="4">Age</button>
+  <button data-step="5">Scene</button>
+  <button data-step="6">History</button>
+  <button data-step="7">Transport</button>
+</div>
+
+<main>
+<!-- ===== STEP 1: CASE AND PERSON ===== -->
+<section class="panel active" data-panel="1">
+  <div class="card"><div class="card-h">Case</div><div class="card-body">
+    <div class="f"><label class="l" for="caseNo">Case No.</label><input class="field" id="caseNo" autocomplete="off"></div>
+    <div class="row">
+      <div class="f"><label class="l" for="fDate">Date</label>
+        <div class="with-btn"><input class="field usdate" id="fDate" inputmode="numeric" placeholder="MM/DD/YYYY" maxlength="10" autocomplete="off"><button class="now" data-now="date" data-for="fDate">Now</button></div></div>
+      <div class="f"><label class="l" for="fTime">Time</label>
+        <div class="with-btn"><input class="field" id="fTime" inputmode="numeric" placeholder="HH:MM" autocomplete="off"><button class="now" data-now="time" data-for="fTime">Now</button></div></div>
+    </div>
+  </div></div>
+  <div class="card"><div class="card-h">Person Detained</div><div class="card-body">
+    <div class="f"><label class="l" for="pName">Full Name (for the best interest and protection of)</label><input class="field" id="pName" autocomplete="off" autocapitalize="words"></div>
+    <div class="row">
+      <div class="f"><label class="l" for="pDob">DOB</label><input class="field usdate" id="pDob" inputmode="numeric" placeholder="MM/DD/YYYY" maxlength="10" autocomplete="off"></div>
+      <div class="f"><label class="l" for="pPhone">Phone Number</label><input class="field" id="pPhone" type="tel" autocomplete="off"></div>
+    </div>
+    <div class="row">
+      <div class="f"><label class="l" for="pRace">Race</label><input class="field" id="pRace" autocomplete="off"></div>
+      <div class="f"><label class="l" for="pGender">Gender</label><input class="field" id="pGender" autocomplete="off"></div>
+    </div>
+    <div class="f"><label class="l" for="pAddr">Address</label><input class="field" id="pAddr" autocomplete="off"></div>
+  </div></div>
+  <div class="nav"><button class="primary" data-go="2">Next: Officer &rsaquo;</button></div>
+</section>
+
+<!-- ===== STEP 2: OFFICER AND BELIEFS ===== -->
+<section class="panel" data-panel="2">
+  <div class="card"><div class="card-h">Officer</div><div class="card-body">
+    <div class="row">
+      <div class="f" style="flex:2;"><label class="l" for="offName">Printed Name</label><input class="field" id="offName" autocomplete="off" autocapitalize="words"></div>
+      <div class="f"><label class="l" for="badge">Badge No.</label><input class="field" id="badge" autocomplete="off"></div>
+    </div>
+    <div class="f"><label class="l" for="agency">Agency</label><input class="field" id="agency" autocomplete="off" value="Richardson Police Department"></div>
+    <div class="f"><label class="l" for="offAddr">Department Address</label><input class="field" id="offAddr" autocomplete="off" value="140 N Greenville Ave, Richardson, TX"></div>
+    <div class="row">
+      <div class="f"><label class="l" for="offZip">Zip Code</label><input class="field" id="offZip" inputmode="numeric" autocomplete="off" value="75081"></div>
+      <div class="f"><label class="l" for="offPhone">Telephone</label><input class="field" id="offPhone" type="tel" autocomplete="off" value="(972) 744-4800"></div>
+    </div>
+  </div></div>
+  <div class="card"><div class="card-h">Beliefs <small>all three are required for an APOWW</small></div><div class="card-body">
+    <label class="cb"><input type="checkbox" data-ck="b1" checked><span class="t">I have reason to believe and do believe that the person detained evidences mental illness; AND</span></label>
+    <label class="cb"><input type="checkbox" data-ck="b2" checked><span class="t">The above-named person evidences a substantial risk of serious harm to himself/herself or others; AND</span></label>
+    <label class="cb"><input type="checkbox" data-ck="b3" checked><span class="t">The risk of harm is imminent unless the above-named person is immediately restrained.</span></label>
+  </div></div>
+  <div class="nav"><button data-go="1">&lsaquo; Back</button><button class="primary" data-go="3">Next: Facts &rsaquo;</button></div>
+</section>
+
+<!-- ===== STEP 3: FACTS ===== -->
+<section class="panel" data-panel="3">
+  <div class="card"><div class="card-h">1. Basis for beliefs</div><div class="card-body">
+    <div class="f"><label class="l" for="narrative">Recent behavior, severe emotional distress and deterioration, overt acts, attempts, statements, or threats observed by me or reliably reported to me</label><textarea class="field" id="narrative"></textarea></div>
+  </div></div>
+  <div class="card"><div class="card-h">2. Witnesses / reporters <small>(if applicable)</small></div><div class="card-body">
+    <div class="f"><label class="l" for="witnesses">Names, addresses, phone numbers, and relationship of persons who reported or observed, or relevant witnesses</label><textarea class="field" id="witnesses"></textarea></div>
+  </div></div>
+  <div class="card"><div class="card-h">Location of apprehension</div><div class="card-body">
+    <div class="f"><input class="field" id="loc" autocomplete="off"></div>
+  </div></div>
+  <div class="nav"><button data-go="2">&lsaquo; Back</button><button class="primary" data-go="4">Next: Age &rsaquo;</button></div>
+</section>
+
+<!-- ===== STEP 4: AGE ===== -->
+<section class="panel" data-panel="4">
+  <div class="card"><div class="card-h">Age category <small>auto-suggested from DOB, tap to change</small></div><div class="card-body">
+    <div class="inline"><span class="lab">Adult 65 years of age or older</span>
+      <div class="chips yn" data-group="adult65" data-single style="margin:0;"><button class="chip" data-v="yes">Yes</button><button class="chip" data-v="no">No</button></div></div>
+    <div class="f" id="adultAgeWrap" style="display:none;"><label class="l" for="adultAge">If yes, age</label><input class="field" id="adultAge" inputmode="numeric" autocomplete="off"></div>
+    <div class="inline"><span class="lab">Child 17 years of age or younger</span>
+      <div class="chips yn" data-group="child17" data-single style="margin:0;"><button class="chip" data-v="yes">Yes</button><button class="chip" data-v="no">No</button></div></div>
+    <div class="f" id="childAgeWrap" style="display:none;"><label class="l" for="childAge">If yes, age</label><input class="field" id="childAge" inputmode="numeric" autocomplete="off"></div>
+  </div></div>
+  <div class="card" id="childCard" style="display:none;"><div class="card-h">Child notice to parents/guardians</div><div class="card-body">
+    <label class="cb"><input type="checkbox" data-ck="noticeYes"><span class="t">I provided notice to the child's parent(s) or guardian(s) of my intention to file this notification.</span></label>
+    <label class="cb"><input type="checkbox" data-ck="noticeNo"><span class="t">I was not able to provide notice to the child's parent(s) or guardian(s) because:</span></label>
+    <div class="f"><label class="l" for="noticeWhy">Reason (two lines on the form)</label><textarea class="field" id="noticeWhy" style="min-height:60px;"></textarea></div>
+    <div class="f"><label class="l" for="parentsContact">Parent(s)/Guardian(s) Contact Information (if known)</label><input class="field" id="parentsContact" autocomplete="off"></div>
+  </div></div>
+  <div class="nav"><button data-go="3">&lsaquo; Back</button><button class="primary" data-go="5">Next: Scene &rsaquo;</button></div>
+</section>
+
+<!-- ===== STEP 5: RESTRAINT AND ORIGIN ===== -->
+<section class="panel" data-panel="5">
+  <div class="card"><div class="card-h">Use of restraint</div><div class="card-body">
+    <div class="inline"><span class="lab">Was the person physically restrained in any way?</span>
+      <div class="chips yn" data-group="restrained" data-single style="margin:0;"><button class="chip" data-v="yes">Yes</button><button class="chip" data-v="no">No</button></div></div>
+    <div id="restraintWhy" style="display:none;">
+      <label class="l">If yes, reason for physical restraint</label>
+      <div class="chips" data-group="restraintReason">
+        <button class="chip" data-v="Officer Safety">Officer Safety</button>
+        <button class="chip" data-v="Persons Safety">Person's Safety</button>
+        <button class="chip" data-v="undefined">Other</button>
+      </div>
+      <div class="f"><input class="field" id="restraintOther" autocomplete="off" placeholder="Other reason"></div>
+    </div>
+  </div></div>
+  <div class="card"><div class="card-h">Call originated at</div><div class="card-body">
+    <div class="chips" data-group="origin">
+      <button class="chip" data-v="Public Area">Public Area</button>
+      <button class="chip" data-v="Residence">Residence</button>
+      <button class="chip" data-v="SchoolUniversity">School/University</button>
+      <button class="chip" data-v="Group Home">Group Home</button>
+      <button class="chip" data-v="Hospital">Hospital</button>
+      <button class="chip" data-v="undefined_2">Other</button>
+    </div>
+    <div class="f"><input class="field" id="originOther" autocomplete="off" placeholder="Other location"></div>
+  </div></div>
+  <div class="nav"><button data-go="4">&lsaquo; Back</button><button class="primary" data-go="6">Next: History &rsaquo;</button></div>
+</section>
+
+<!-- ===== STEP 6: OBSERVATIONS / HISTORY ===== -->
+<section class="panel" data-panel="6">
+  <div class="note">If YES to any question, provide additional information in its NOTES line.</div>
+  <div class="card"><div class="card-h">Observations / History</div><div class="card-body" id="grid"></div></div>
+  <div class="nav"><button data-go="5">&lsaquo; Back</button><button class="primary" data-go="7">Next: Transport &rsaquo;</button></div>
+</section>
+
+<!-- ===== STEP 7: TRANSPORT ===== -->
+<section class="panel" data-panel="7">
+  <div class="card"><div class="card-h">Transported to</div><div class="card-body">
+    <div class="chips" data-group="transported">
+      <button class="chip" data-v="HospitalEmergency Room">Hospital/Emergency Room</button>
+      <button class="chip" data-v="Mental Health Facility">Mental Health Facility</button>
+      <button class="chip" data-v="undefined_4">Other</button>
+    </div>
+    <div class="f"><input class="field" id="transportOther" autocomplete="off" placeholder="Other"></div>
+    <div class="f"><label class="l" for="facility">Name of facility (temporary admission sought at)</label><input class="field" id="facility" autocomplete="off" placeholder="e.g. Methodist Richardson Medical Center"></div>
+  </div></div>
+  <label class="cb"><input type="checkbox" id="emsToggle"><span class="t">EMS transported the person instead of me <span style="color:var(--muted);">(rare; leave unchecked if you transported)</span></span></label>
+  <div class="card" id="emsCard" style="display:none;"><div class="card-h">EMS transfer</div><div class="card-body">
+    <div class="f"><label class="l" for="emsName">EMS Personnel Name &amp; Agency</label><input class="field" id="emsName" autocomplete="off"></div>
+    <div class="row">
+      <div class="f"><label class="l" for="emsDate">Transport date</label>
+        <div class="with-btn"><input class="field usdate" id="emsDate" inputmode="numeric" placeholder="MM/DD/YYYY" maxlength="10" autocomplete="off"><button class="now" data-now="date" data-for="emsDate">Now</button></div></div>
+      <div class="f"><label class="l" for="emsTime">Time</label>
+        <div class="with-btn"><input class="field" id="emsTime" inputmode="numeric" placeholder="HH:MM" autocomplete="off"><button class="now" data-now="time" data-for="emsTime">Now</button></div></div>
+    </div>
+  </div></div>
+  <div class="hint">The officer signature line stays blank; sign the printed copy. Your printed name, badge, and department contact info fill from the Officer step.</div>
+  <div class="nav"><button data-go="6">&lsaquo; Back</button></div>
+</section>
+
+<footer class="foot">Internal field tool. Renders entirely in your browser. Nothing is saved on this device or the site. &middot; Build v3</footer>
+</main>
+
+<div class="actions">
+  <div class="inner">
+    <button class="btn btn-gold" id="btnPdf">Download PDF</button>
+    <button class="btn" id="btnCode">Desktop code</button>
+    <button class="btn btn-red" id="btnClear" title="Clear all">Clear</button>
+  </div>
+  <div class="status" id="status"></div>
+</div>
+
+<div class="modal show" id="introModal"><div class="box">
+  <h3>APOWW Form</h3>
+  <p>You can use this form to prefill your APOWW and have the nursing staff print it out. Have them go to <strong>rpdcadets.com/patrol</strong> and enter your code; it will download for them to print.</p>
+  <p>You also have the option of downloading the PDF yourself and emailing it to the ER nurse directly.</p>
+  <button class="btn btn-gold" id="introOk">Got it</button>
+</div></div>
+
+<div class="modal" id="codeModal"><div class="box">
+  <h3>Desktop code</h3>
+  <p style="text-align:center;">Give this code to the nursing staff. They open <strong>rpdcadets.com/patrol</strong>, enter it, and the filled APOWW downloads for them to print. Works once, expires in 20 minutes.</p>
+  <div class="bigcode" id="bigCode"></div>
+  <div class="linkline" id="fullLink"></div>
+  <button class="btn" id="copyLink">Copy link</button>
+  <button class="btn btn-gold" id="closeModal">Done</button>
+</div></div>
+
+<script>
+/* ---------------- constants ---------------- */
+const BUILD = '3';
+const PDF_URL = 'APOWW.pdf?v=2';
+const HANDOFF_TTL_MS = 20 * 60 * 1000;
+const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+const CODE_PREFIX = 'A';
+const PBKDF2_ITERS = 300000;
+const firebaseConfig = { apiKey:"AIzaSyDV0vuyGg7gpPXJd2jRqZtUTeKiP3yPxhU", authDomain:"rpdcadets-quartermaster.firebaseapp.com", databaseURL:"https://rpdcadets-quartermaster-default-rtdb.firebaseio.com", projectId:"rpdcadets-quartermaster", storageBucket:"rpdcadets-quartermaster.firebasestorage.app" };
+
+/* input id -> PDF field name (direct text fills) */
+const TEXT_MAP = {
+  caseNo:'Text2', fDate:'Text3', fTime:'Text4',
+  pDob:'DOB', pRace:'Race', pGender:'Gender', pPhone:'Phone Number', pAddr:'Address',
+  agency:'a peace officer with',
+  narrative:'attempts statements or threats observed by me or reliably reported to me may use attachments 5',
+  witnesses:'named person being detained are if applicable 2', loc:'Text1',
+  adultAge:'If yes age 1', childAge:'If yes age 2', parentsContact:'ParentsGuardians Contact Information if known',
+  restraintOther:'Other', originOther:'Other_2', transportOther:'Other_3',
+  emsName:'pursuant to a memorandum of understanding between agencies and I have determined that transferring the person for',
+  badge:'BADGE NO', offAddr:'Address_2', offZip:'Zip Code', offPhone:'Telephone'
+};
+const BELIEFS = { b1:'I have reason to believe and do believe that', b2:'I have reason to believe and do believe that the abovenamed person evidences a substantial risk of serious harm to himselfherself', b3:'I have reason to believe and do believe that the risk of harm is imminent unless the abovenamed person is immediately restrained' };
+const CHILD_NOTICE = { noticeYes:'I provided notice to the childs parents or guardians of my intention to file this notification', noticeNo:'I was not able to provide notice to the childs parents or guardians of my intention to file this notification because' };
+/* Observations grid: label, notes PDF field; row i => YES=Check Box(56+i), NO=(46+i), UNK=(36+i) */
+const GRID = [
+  ['Harm to self or stating an intention to harm self?','NOTESHarm to self or stating an intention to harm self'],
+  ['Previous suicide attempt?','NOTESPrevious suicide attempt'],
+  ['Harm to others or stating an intention to harm others?','NOTESHarm to others or stating an intention to harm others'],
+  ['Previous serious harm or injury to others?','NOTESPrevious serious harm or injury to others'],
+  ['Previous psychiatric hospital treatment?','NOTESPrevious psychiatric hospital treatment'],
+  ['Reported mental health diagnosis?','NOTESReported mental health diagnosis'],
+  ['Prescribed psychiatric medications?','NOTESPrescribed psychiatric medications'],
+  ['Current psychiatric medications taken?','NOTESCurrent psychiatric medications taken'],
+  ['Sleeping difficulty?','fill_25'],
+  ['Substance Use Disorder?','NOTESSubstance Use Disorder']
+];
+const $ = id => document.getElementById(id);
+const status = (msg, cls='') => { const s=$('status'); s.textContent=msg; s.className='status '+cls; };
+const TEXT_IDS = ['caseNo','fDate','fTime','pName','pDob','pRace','pGender','pPhone','pAddr','offName','badge','agency','offAddr','offZip','offPhone','narrative','witnesses','loc','adultAge','childAge','noticeWhy','parentsContact','restraintOther','originOther','transportOther','facility','emsName','emsDate','emsTime'];
+const CKS = ['b1','b2','b3','noticeYes','noticeNo'];
+const EMS_IDS = ['emsName','emsDate','emsTime'];
+const GROUPS = ['adult65','child17','restrained'];
+const MULTI_GROUPS = ['restraintReason','origin','transported'];
+
+/* ---------------- grid UI ---------------- */
+function buildGrid(){
+  $('grid').innerHTML = GRID.map((g,i)=>`
+    <div class="q" id="g${i}">
+      <div class="qt">${g[0]}</div>
+      <div class="chips yn" data-group="grid${i}" data-single>
+        <button class="chip" data-v="yes">Yes</button><button class="chip" data-v="no">No</button><button class="chip" data-v="unk">Unk</button>
+      </div>
+      <div class="notes"><label class="l" for="g${i}n">Notes</label><input class="field" id="g${i}n" autocomplete="off"></div>
+    </div>`).join('');
+}
+/* ---------------- chips ---------------- */
+document.addEventListener('click', e => {
+  const chip = e.target.closest('.chip'); if (!chip) return;
+  e.preventDefault();
+  const grp = chip.closest('.chips');
+  if (grp.hasAttribute('data-single')){ const was = chip.classList.contains('on'); grp.querySelectorAll('.chip').forEach(c=>c.classList.remove('on')); if (!was) chip.classList.add('on'); }
+  else chip.classList.toggle('on');
+  onGroupChange(grp.dataset.group);
+});
+const groupVal  = n => { const on=document.querySelector(`.chips[data-group="${n}"] .chip.on`); return on?on.dataset.v:''; };
+const groupVals = n => [...document.querySelectorAll(`.chips[data-group="${n}"] .chip.on`)].map(c=>c.dataset.v);
+function setGroup(n, vals){ const list=Array.isArray(vals)?vals:[vals]; document.querySelectorAll(`.chips[data-group="${n}"] .chip`).forEach(c=>c.classList.toggle('on', list.includes(c.dataset.v))); onGroupChange(n); }
+function onGroupChange(g){
+  if (!g) return;
+  if (g.startsWith('grid')){ const i=+g.slice(4); $('g'+i).classList.toggle('show', groupVal(g)==='yes'); }
+  if (g==='restrained') $('restraintWhy').style.display = groupVal('restrained')==='yes' ? '' : 'none';
+  if (g==='adult65') $('adultAgeWrap').style.display = groupVal('adult65')==='yes' ? '' : 'none';
+  if (g==='child17'){ const y = groupVal('child17')==='yes'; $('childAgeWrap').style.display = y?'':'none'; $('childCard').style.display = y?'':'none'; }
+}
+/* ---------------- steps, dates ---------------- */
+function showStep(n){
+  document.querySelectorAll('#steps button').forEach(b=>b.classList.toggle('active', b.dataset.step==n));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('active', p.dataset.panel==n));
+  window.scrollTo({top:0});
+}
+document.querySelectorAll('#steps button').forEach(b=>b.addEventListener('click',()=>showStep(b.dataset.step)));
+document.querySelectorAll('[data-go]').forEach(b=>b.addEventListener('click',()=>showStep(b.dataset.go)));
+const DATE_RE = /^(0[1-9]|1[0-2])\/(0[1-9]|[12]\d|3[01])\/(19|20)\d{2}$/;
+document.querySelectorAll('.usdate').forEach(el=>{
+  el.addEventListener('input', ()=>{ const d=el.value.replace(/\D/g,'').slice(0,8); el.value = d.length>4 ? d.slice(0,2)+'/'+d.slice(2,4)+'/'+d.slice(4) : d.length>2 ? d.slice(0,2)+'/'+d.slice(2) : d; el.classList.remove('bad'); });
+  el.addEventListener('blur', ()=>{ el.classList.toggle('bad', el.value!=='' && !DATE_RE.test(el.value)); });
+});
+const pad = n => String(n).padStart(2,'0');
+document.querySelectorAll('.now').forEach(b=>b.addEventListener('click',()=>{
+  const d=new Date();
+  $(b.dataset.for).value = b.dataset.now==='date' ? `${pad(d.getMonth()+1)}/${pad(d.getDate())}/${d.getFullYear()}` : `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  if (b.dataset.for==='fDate') suggestAge();
+}));
+/* age auto-suggest from DOB */
+function ageFromDob(dob){ if(!DATE_RE.test(dob)) return null; const [m,dd,y]=dob.split('/').map(Number); const n=new Date(); let a=n.getFullYear()-y; if (n.getMonth()+1<m || (n.getMonth()+1===m && n.getDate()<dd)) a--; return a; }
+function suggestAge(){
+  const a = ageFromDob($('pDob').value); if (a===null) return;
+  if (a>=65){ setGroup('adult65','yes'); setGroup('child17','no'); $('adultAge').value=a; }
+  else if (a<=17){ setGroup('child17','yes'); setGroup('adult65','no'); $('childAge').value=a; }
+  else { setGroup('adult65','no'); setGroup('child17','no'); }
+}
+$('pDob').addEventListener('blur', suggestAge);
+$('emsToggle').addEventListener('change', ()=>{ $('emsCard').style.display = $('emsToggle').checked ? '' : 'none'; });
+
+/* ---------------- collect / restore ---------------- */
+function collect(){
+  const d = { text:{}, cks:{}, groups:{}, multi:{}, grid:[], ems:$('emsToggle').checked };
+  TEXT_IDS.forEach(id=>d.text[id]=$(id).value);
+  if (!d.ems) EMS_IDS.forEach(id=>d.text[id]='');
+  CKS.forEach(k=>d.cks[k]=document.querySelector(`[data-ck="${k}"]`).checked);
+  GROUPS.forEach(g=>d.groups[g]=groupVal(g));
+  MULTI_GROUPS.forEach(g=>d.multi[g]=groupVals(g));
+  GRID.forEach((g,i)=>d.grid.push({ a:groupVal('grid'+i), n:$('g'+i+'n').value }));
+  return d;
+}
+function restore(d){
+  TEXT_IDS.forEach(id=>{ $(id).value = (d.text||{})[id] || ''; });
+  $('emsToggle').checked = !!d.ems; $('emsToggle').dispatchEvent(new Event('change'));
+  CKS.forEach(k=>{ document.querySelector(`[data-ck="${k}"]`).checked = !!(d.cks||{})[k]; });
+  GROUPS.forEach(g=>setGroup(g,(d.groups||{})[g]||''));
+  MULTI_GROUPS.forEach(g=>setGroup(g,(d.multi||{})[g]||[]));
+  (d.grid||[]).forEach((r,i)=>{ setGroup('grid'+i, r.a||''); $('g'+i+'n').value=r.n||''; });
+}
+
+/* ---------------- PDF ---------------- */
+let pdfCache=null;
+async function loadBlank(){ if (pdfCache) return pdfCache; const r=await fetch(PDF_URL,{cache:'no-store'}); if(!r.ok) throw new Error('Could not load the blank form ('+r.status+')'); pdfCache=await r.arrayBuffer(); return pdfCache; }
+async function buildPdf(d){
+  const { PDFDocument, StandardFonts } = PDFLib;
+  const doc = await PDFDocument.load(await loadBlank());
+  const form = doc.getForm(); const helv = await doc.embedFont(StandardFonts.Helvetica); const helvBold = await doc.embedFont(StandardFonts.HelveticaBold);
+  const BOLD = new Set([TEXT_MAP.narrative, TEXT_MAP.witnesses]);
+  const isMulti = f => { try { return f.isMultiline(); } catch(e){ return false; } };
+  const text = (name, v, size) => {
+    if (!v) return;
+    try { const f=form.getTextField(name); const s=String(v);
+      if (isMulti(f)){ f.setFontSize(size||9); }
+      else { const w=f.acroField.getWidgets()[0].getRectangle().width-4; let sz=size||9.5; while (sz>6 && helv.widthOfTextAtSize(s,sz)>w) sz-=0.5; f.setFontSize(sz); }
+      f.setText(s); f.updateAppearances(BOLD.has(name) ? helvBold : helv); }
+    catch(e){ console.warn('text',name,e.message); }
+  };
+  const check = name => { try { form.getCheckBox(name).check(); } catch(e){ console.warn('check',name,e.message); } };
+  const radio = (name,v) => { if(!v) return; try { form.getRadioGroup(name).select(v); } catch(e){ console.warn('radio',name,e.message); } };
+  const t = d.text;
+  Object.entries(TEXT_MAP).forEach(([id,pdf])=>text(pdf, t[id]));
+  ['FOR THE BEST INTEREST AND PROTECTION OF','person detained evidences mental','detention of person detained'].forEach(f=>text(f, t.pName));
+  text('PEACE OFFICERS PRINTED NAME', t.offName); text('Now comes', [t.offName, t.badge?('#'+t.badge):''].filter(Boolean).join(' '));
+  Object.entries(BELIEFS).forEach(([k,f])=>{ if (d.cks[k]) check(f); });
+  /* age: one radio covers both YES boxes; NO boxes are separate checkboxes */
+  if (d.groups.adult65==='yes') radio('CHILD 17 YEARS OF AGE OR YOUNGER','YES');
+  if (d.groups.child17==='yes') radio('CHILD 17 YEARS OF AGE OR YOUNGER','YES_2');
+  if (d.groups.adult65==='no') check('NO');
+  if (d.groups.child17==='no') check('NO If yes age');
+  if (d.groups.child17==='yes'){
+    Object.entries(CHILD_NOTICE).forEach(([k,f])=>{ if (d.cks[k]) check(f); });
+    const why=(t.noticeWhy||'').trim();
+    if (why){ const parts=splitToWidth(why, helv, 9, 520); text('1', parts[0], 9); text('2', parts.slice(1).join(' '), 9); }
+  }
+  radio('Was the person physically restrained in any way', d.groups.restrained==='yes'?'YES_3': d.groups.restrained==='no'?'NO_2':'');
+  if (d.groups.restrained==='yes') (d.multi.restraintReason||[]).forEach(check);
+  (d.multi.origin||[]).forEach(check);
+  d.grid.forEach((r,i)=>{ if (r.a==='yes') check('Check Box'+(56+i)); else if (r.a==='no') check('Check Box'+(46+i)); else if (r.a==='unk') check('Check Box'+(36+i)); if (r.n) text(GRID[i][1], r.n, 8); });
+  (d.multi.transported||[]).forEach(check);
+  /* facility name: first slot at end of line 1, remainder on the wide line-2 field */
+  const fac=(t.facility||'').trim();
+  if (fac){ const parts=splitToWidth(fac, helv, 9, 96); text('For the above reasons I present this notification to seek temporary admission to the name of facility', parts[0], 9); text('inpatient mental health facility or hospital facility for the', parts.slice(1).join(' '), 9); }
+  /* EMS date across three slots, time HH:MM, A/P left blank for 24h times */
+  if (DATE_RE.test(t.emsDate||'')){ const [m,dd,y]=t.emsDate.split('/'); text('for transport on date',m); text('If applicable I have transferred the person detained to Emergency Medical Services Personnel Name  Agency',dd); text('undefined_5',y.slice(2)); }
+  text('at time', t.emsTime);
+  return doc.save({updateFieldAppearances:false});
+}
+function splitToWidth(s, font, size, firstWidth){
+  const words=s.split(/\s+/); let first=''; let i=0;
+  while (i<words.length){ const cand=first?first+' '+words[i]:words[i]; if (font.widthOfTextAtSize(cand,size)>firstWidth) break; first=cand; i++; }
+  if (!first){ first=words[0]||''; i=1; }
+  return [first, words.slice(i).join(' ')].filter(Boolean).length ? [first, words.slice(i).join(' ')] : [s,''];
+}
+function fileName(d){ const n=(d.text.pName||'Unknown').replace(/[^A-Za-z0-9]+/g,'_').replace(/^_|_$/g,''); const dt=(d.text.fDate||'').replace(/\D/g,'')||'undated'; return `APOWW_${n||'Unknown'}_${dt}.pdf`; }
+const isTouch = () => matchMedia('(pointer:coarse)').matches;
+async function deliver(bytes, fname, allowShare=true){
+  const blob=new Blob([bytes],{type:'application/pdf'}); const file=new File([blob],fname,{type:'application/pdf'});
+  if (allowShare && isTouch() && navigator.canShare && navigator.canShare({files:[file]})){
+    try { await navigator.share({files:[file], title:fname}); return 'shared'; } catch(e){ if (e.name==='AbortError') return 'cancelled'; }
+  }
+  const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=fname; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url),60000); return 'downloaded';
+}
+async function doPdf(){
+  $('btnPdf').disabled=true; status('Building PDF...');
+  try { const d=collect(); const how=await deliver(await buildPdf(d), fileName(d)); status(how==='cancelled'?'':'PDF ready.', 'ok'); }
+  catch(e){ console.error(e); status('PDF failed: '+e.message, 'err'); }
+  $('btnPdf').disabled=false;
+}
+
+/* ---------------- handoff (PBKDF2-hardened, 20-minute, A-codes) ---------------- */
+let db=null; function getDb(){ if(!db){ firebase.initializeApp(firebaseConfig); db=firebase.database(); } return db; }
+const enc=new TextEncoder(), dec=new TextDecoder();
+const hex=u8=>[...u8].map(b=>b.toString(16).padStart(2,'0')).join(''); const b64=u8=>btoa(String.fromCharCode(...u8)); const unb64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+async function keysFor(code){
+  const base = await crypto.subtle.importKey('raw', enc.encode(code), 'PBKDF2', false, ['deriveBits']);
+  const bits = new Uint8Array(await crypto.subtle.deriveBits({name:'PBKDF2', hash:'SHA-256', salt: enc.encode('rpd-handoff-v2'), iterations: PBKDF2_ITERS}, base, 512));
+  return { id: hex(bits.slice(0,32)), key: await crypto.subtle.importKey('raw', bits.slice(32), 'AES-GCM', false, ['encrypt','decrypt']) };
+}
+function makeCode(){ const a=new Uint8Array(7); crypto.getRandomValues(a); return CODE_PREFIX+[...a].map(b=>CODE_ALPHABET[b%CODE_ALPHABET.length]).join(''); }
+async function doCode(){
+  $('btnCode').disabled=true; status('Creating code...');
+  try { const code=makeCode(); const {id,key}=await keysFor(code); const iv=crypto.getRandomValues(new Uint8Array(12));
+    const ct=new Uint8Array(await crypto.subtle.encrypt({name:'AES-GCM',iv},key,enc.encode(JSON.stringify(collect()))));
+    await getDb().ref('handoff/'+id).set({iv:b64(iv),ct:b64(ct),at:Date.now()});
+    $('bigCode').textContent=code; $('fullLink').textContent=location.origin+'/patrol/apoww/#'+code; $('codeModal').classList.add('show'); status(''); }
+  catch(e){ console.error(e); status('Could not create code: '+e.message,'err'); }
+  $('btnCode').disabled=false;
+}
+$('copyLink').addEventListener('click', async()=>{ try{ await navigator.clipboard.writeText($('fullLink').textContent); $('copyLink').textContent='Copied'; setTimeout(()=>$('copyLink').textContent='Copy link',1500);}catch(e){} });
+$('closeModal').addEventListener('click', ()=>$('codeModal').classList.remove('show'));
+async function pickup(code){
+  status('Fetching APOWW for code '+code+'...');
+  try { const {id,key}=await keysFor(code); const ref=getDb().ref('handoff/'+id); const snap=await ref.get();
+    if(!snap.exists()) throw new Error('That code was not found. It may have expired (20 minutes) or already been used.');
+    const v=snap.val(); if(Date.now()-(v.at||0)>HANDOFF_TTL_MS){ try{await ref.remove();}catch(e){} throw new Error('That code has expired. Ask the officer for a new one.'); }
+    const plain=dec.decode(await crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(v.iv)},key,unb64(v.ct))); try{ await ref.remove(); }catch(e){}
+    const d=JSON.parse(plain); restore(d); await deliver(await buildPdf(d), fileName(d), false);
+    status('APOWW downloaded. Open it and print. The code has been used up.','ok'); }
+  catch(e){ console.error(e); status(e.message,'err'); }
+  history.replaceState(null,'',location.pathname+location.search);
+}
+async function sweep(){ try{ const snap=await getDb().ref('handoff').get(); if(!snap.exists()) return; const cutoff=Date.now()-HANDOFF_TTL_MS; const dead={}; snap.forEach(ch=>{ if(((ch.val()||{}).at||0)<cutoff) dead[ch.key]=null; }); if(Object.keys(dead).length) await getDb().ref('handoff').update(dead); }catch(e){ console.warn('sweep skipped',e); } }
+
+/* ---------------- buttons, clear, self-refresh, init ---------------- */
+$('btnPdf').addEventListener('click', doPdf);
+$('btnCode').addEventListener('click', doCode);
+$('introOk').addEventListener('click', ()=>$('introModal').classList.remove('show'));
+let clearing=false;
+$('btnClear').addEventListener('click', ()=>{ if(confirm('Clear everything on this form?')){ clearing=true; location.replace(location.pathname+location.search); } });
+window.addEventListener('beforeunload', e=>{ if(!clearing && ($('pName').value.trim())){ e.preventDefault(); e.returnValue=''; } });
+async function newerBuildLive(){
+  try { const r=await fetch(location.pathname+'?cb='+Date.now(),{cache:'no-store'}); if(!r.ok) return false;
+    const m=(await r.text()).match(/Build v(\d+)/); if(!m||m[1]===BUILD) return false;
+    if(new URLSearchParams(location.search).get('fresh')===m[1]) return false;
+    location.replace(location.pathname+'?fresh='+m[1]+location.hash); return true; } catch(e){ return false; }
+}
+function init(){
+  buildGrid();
+  const hashCode=location.hash.replace('#','').toUpperCase().replace(/[^A-Z0-9]/g,'');
+  if (hashCode.length===8){ $('introModal').classList.remove('show'); pickup(hashCode).then(sweep); } else { sweep(); }
+}
+newerBuildLive().then(r=>{ if(!r) init(); });
+</script>
+</body>
+</html>

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- patrol/booking/index.html | Build v6 | 2026-08-30 | Desktop codes now start with B so the /patrol code box can route them (E-codes go to the EPO tool) -->
+<!-- patrol/booking/index.html | Build v7 | 2026-09-16 | PBKDF2-hardened handoff keys, 20-minute code expiry. v6: Desktop codes start with B so the /patrol code box can route them (E-codes go to the EPO tool) -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -367,7 +367,7 @@
   <div class="nav"><button data-go="3">&lsaquo; Back</button></div>
 </section>
 
-<footer class="foot">Internal field tool. Renders entirely in your browser. Nothing is saved on this device or the site. &middot; Build v6</footer>
+<footer class="foot">Internal field tool. Renders entirely in your browser. Nothing is saved on this device or the site. &middot; Build v7</footer>
 </main>
 
 <div class="actions">
@@ -382,7 +382,7 @@
 <div class="modal" id="codeModal">
   <div class="box">
     <h3>Desktop code</h3>
-    <p>On the desktop, open <strong>rpdcadets.com/patrol</strong> and enter this code. Works once, expires in 10 minutes.</p>
+    <p>On the desktop, open <strong>rpdcadets.com/patrol</strong> and enter this code. Works once, expires in 20 minutes.</p>
     <div class="bigcode" id="bigCode"></div>
     <div class="linkline" id="fullLink"></div>
     <button class="btn" id="copyLink">Copy link</button>
@@ -392,10 +392,10 @@
 
 <script>
 /* ---------------- constants ---------------- */
-const BUILD = '6';
+const BUILD = '7';
 const PDF_URL = 'GO-803-01.pdf?v=1';
 const DEFAULT_AGENCY = 'RICHARDSON';
-const HANDOFF_TTL_MS = 10 * 60 * 1000;
+const HANDOFF_TTL_MS = 20 * 60 * 1000;
 const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no 0/O/1/I
 const firebaseConfig = {
   apiKey: "AIzaSyDV0vuyGg7gpPXJd2jRqZtUTeKiP3yPxhU",
@@ -632,14 +632,14 @@ async function doPdf(){
 let db = null;
 function getDb(){ if (!db){ firebase.initializeApp(firebaseConfig); db = firebase.database(); } return db; }
 const enc = new TextEncoder(), dec = new TextDecoder();
-async function sha256(s){ return new Uint8Array(await crypto.subtle.digest('SHA-256', enc.encode(s))); }
+
 const hex = u8 => [...u8].map(b=>b.toString(16).padStart(2,'0')).join('');
 const b64 = u8 => btoa(String.fromCharCode(...u8));
 const unb64 = s => Uint8Array.from(atob(s), c=>c.charCodeAt(0));
 async function keysFor(code){
-  const id = hex(await sha256('rpd-handoff-id:'+code));
-  const key = await crypto.subtle.importKey('raw', await sha256('rpd-handoff-key:'+code), 'AES-GCM', false, ['encrypt','decrypt']);
-  return { id, key };
+  const base = await crypto.subtle.importKey('raw', enc.encode(code), 'PBKDF2', false, ['deriveBits']);
+  const bits = new Uint8Array(await crypto.subtle.deriveBits({name:'PBKDF2', hash:'SHA-256', salt: enc.encode('rpd-handoff-v2'), iterations: 300000}, base, 512));
+  return { id: hex(bits.slice(0,32)), key: await crypto.subtle.importKey('raw', bits.slice(32), 'AES-GCM', false, ['encrypt','decrypt']) };
 }
 function makeCode(){ const a=new Uint8Array(7); crypto.getRandomValues(a); return 'B'+[...a].map(b=>CODE_ALPHABET[b % CODE_ALPHABET.length]).join(''); }
 async function doCode(){
@@ -664,7 +664,7 @@ async function pickup(code){
     const { id, key } = await keysFor(code);
     const ref = getDb().ref('handoff/'+id);
     const snap = await ref.get();
-    if (!snap.exists()) throw new Error('That code was not found. It may have expired (10 minutes) or already been used.');
+    if (!snap.exists()) throw new Error('That code was not found. It may have expired (20 minutes) or already been used.');
     const v = snap.val();
     if (Date.now() - (v.at||0) > HANDOFF_TTL_MS){ try{ await ref.remove(); }catch(e){} throw new Error('That code has expired. Create a new one on the phone.'); }
     const plain = dec.decode(await crypto.subtle.decrypt({name:'AES-GCM', iv:unb64(v.iv)}, key, unb64(v.ct)));

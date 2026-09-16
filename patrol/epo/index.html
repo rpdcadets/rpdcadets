@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- patrol/epo/index.html | Build v4 | 2026-09-02 | PCO codes on TCIC no longer circled (jail request; entering agency circles from the signed Order). v3 2026-08-30: Notice name/SV# fields corrected (hosted Notice v2). v2: TCIC OCA now fills from the service number (stray 2024000 default removed from the hosted form). v1: Emergency Protective Order Packet: fills GO 408-02 Application, GO 408-03 Order (EN/ES), GO 2.01.07-004 Notice, and TCIC form from one entry; merged or separate output; desktop handoff -->
+<!-- patrol/epo/index.html | Build v6 | 2026-09-16 | Notice name/SV# corrected again in the hosted PDF (the Aug 30 fix never reached GitHub); cache-buster bumped. v5: Adds Civil Standby Order to the packet; Application offense/service-number fields corrected (hosted app v2); Court County chosen explicitly (Dallas/Collin) instead of inheriting a party's county. v4 2026-09-02: PCO codes on TCIC no longer circled (jail request; entering agency circles from the signed Order). v3 2026-08-30: Notice name/SV# fields corrected (hosted Notice v2). v2: TCIC OCA now fills from the service number (stray 2024000 default removed from the hosted form). v1: Emergency Protective Order Packet: fills GO 408-02 Application, GO 408-03 Order (EN/ES), GO 2.01.07-004 Notice, and TCIC form from one entry; merged or separate output; desktop handoff -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -104,6 +104,11 @@
     <div class="f"><label class="l" for="svc">Service Number</label><input class="field" id="svc" autocomplete="off"></div>
     <div class="hint">Fills SV#, Service Number, Cause No., and Ref# on every Order page.</div>
     <div class="f"><label class="l" for="offense">Offense</label><input class="field" id="offense" autocomplete="off" placeholder="e.g. Assault Family Violence, PC 22.01(a)(1)"></div>
+    <label class="l">Court County</label>
+    <div class="chips" data-group="courtCounty" data-single>
+      <button class="chip" data-v="Dallas">Dallas</button><button class="chip" data-v="Collin">Collin</button>
+    </div>
+    <div class="hint">The magistrate court's county on the Order header. Richardson sits in Dallas and Collin only; the parties' home counties never fill this, even for out-of-state visitors.</div>
   </div></div>
   <div class="card"><div class="card-h">Defendant</div><div class="card-body">
     <div class="f"><label class="l" for="dLast">Last</label><input class="field" id="dLast" autocomplete="off" autocapitalize="words"></div>
@@ -249,13 +254,13 @@
       <button class="chip on" data-v="merged">One merged PDF for printing</button>
       <button class="chip" data-v="separate">Separate PDFs</button>
     </div>
-    <div class="hint">Merged order: Application, Order (English), Order (Spanish if checked), 4-Hour Notice, TCIC. Every field stays editable.</div>
+    <div class="hint">Merged order: Application, Order (English), Order (Spanish if checked), 4-Hour Notice, Civil Standby Order, TCIC. Every field stays editable.</div><div class="hint">Civil Standby: case number, defendant name, and the protected address fill in; the grant/deny boxes and everything else stay blank for the magistrate.</div>
     <div class="hint">TCIC: names, DOBs, addresses, employer, and children fill in; race, sex, ethnicity, and order type are circled. PCO codes stay blank for the entering agency to circle from the signed Order.</div>
   </div></div>
   <div class="nav"><button data-go="4">&lsaquo; Back</button></div>
 </section>
 
-<footer class="foot">Internal field tool. Renders entirely in your browser. Nothing is saved on this device or the site. &middot; Build v4</footer>
+<footer class="foot">Internal field tool. Renders entirely in your browser. Nothing is saved on this device or the site. &middot; Build v6</footer>
 </main>
 
 <div class="actions">
@@ -278,8 +283,8 @@
 
 <script>
 /* ---------------- constants ---------------- */
-const BUILD = '4';
-const PDFS = { app:'GO-408-02_Application.pdf?v=1', en:'GO-408-03_Order_English.pdf?v=1', es:'GO-408-03_Order_Spanish.pdf?v=1', notice:'GO-2.01.07-004_Notice.pdf?v=2', tcic:'TCIC_Protective_Order.pdf?v=2' };
+const BUILD = '6';
+const PDFS = { app:'GO-408-02_Application.pdf?v=2', en:'GO-408-03_Order_English.pdf?v=1', es:'GO-408-03_Order_Spanish.pdf?v=1', notice:'GO-2.01.07-004_Notice.pdf?v=3', tcic:'TCIC_Protective_Order.pdf?v=2', standby:'Civil-Standby-Order.pdf?v=1' };
 const HANDOFF_TTL_MS = 10 * 60 * 1000;
 const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const CODE_PREFIX = 'E';   // the /patrol landing page routes E-codes here
@@ -317,7 +322,7 @@ const TCIC = {
 const $ = id => document.getElementById(id);
 const status = (msg, cls='') => { const s=$('status'); s.textContent=msg; s.className='status '+cls; };
 const TEXT_IDS = ['svc','offense','dLast','dFirst','dMiddle','dDob','dStreet','dCity','dState','dZip','dCounty','dAka','vLast','vFirst','vDob','vRel','vStreet','vCity','vState','vZip','vCounty','res2','empName','empStreet','empCity','empState','empZip','ccName','ccAddr','schName','schAddr','otherText'];
-const GROUPS = ['dRace','dSex','dEth','vRace','vSex','vEth','h24','h48','epo','outMode'];
+const GROUPS = ['dRace','dSex','dEth','vRace','vSex','vEth','h24','h48','epo','outMode','courtCounty'];
 
 /* ---------------- protected persons ---------------- */
 let personCount = 0;
@@ -415,6 +420,7 @@ function renderSummary(){
     ['Victim',`${T(d,'vLast')}, ${T(d,'vFirst')} ${rs(d.groups.vRace,d.groups.vSex)} DOB ${T(d,'vDob')} (${T(d,'vRel')})`],
     ['Protected persons', d.persons.length ? d.persons.map(p=>`${p.last}, ${p.first}${ageOn(p.dob)!==null&&ageOn(p.dob)<18?' (child)':''}`).join('; ') : 'none'],
     ['Victim address', joinAddr(va.street,va.city,va.state,va.zip) || 'blank'],
+    ['Court County', d.groups.courtCounty||'Dallas'],
     ['Application', `24h: ${d.groups.h24||'blank'}, 48h: ${d.groups.h48||'blank'}, EPO: ${d.groups.epo||'blank'}`],
     ['Spanish Order in packet', d.spanish?'Yes':'No'], ['TCIC PCO codes', 'left blank (circled at entry from the signed Order)'] ];
   $('summary').innerHTML = rows.map(([k,v])=>`<div><b>${k}:</b> ${v}</div>`).join('');
@@ -453,7 +459,7 @@ async function fillOrder(d, lang){
   const m = ORD[lang], P = m.p, t = (k,v)=>text(P+k, v), c = k=>check(P+k);
   const va = vAddr(d);
   t(m.ref, T(d,'svc')); t(m.dLast, T(d,'dLast')); t(m.dFirst, [T(d,'dFirst'),T(d,'dMiddle')].filter(Boolean).join(' ')); t(m.dDob, T(d,'dDob')); t(m.dRS, rs(d.groups.dRace,d.groups.dSex));
-  t(m.dAddr, joinAddr(T(d,'dStreet'),T(d,'dCity'),T(d,'dState'),T(d,'dZip'))); t(m.dCounty, T(d,'dCounty')); t(m.topCounty, T(d,'dCounty'));
+  t(m.dAddr, joinAddr(T(d,'dStreet'),T(d,'dCity'),T(d,'dState'),T(d,'dZip'))); t(m.dCounty, T(d,'dCounty')); t(m.topCounty, d.groups.courtCounty || 'Dallas');
   t(m.vLast, T(d,'vLast')); t(m.vFirst, T(d,'vFirst')); t(m.vDob, T(d,'vDob')); t(m.vRS, rs(d.groups.vRace,d.groups.vSex)); t(m.vRel, T(d,'vRel'));
   t(m.vAddr, joinAddr(va.street,va.city,va.state,va.zip)); t(m.vCounty, va.county);
   d.persons.slice(0,3).forEach((p,i)=>{ const f=m.pp[i]; t(f.last,p.last); t(f.first,p.first); t(f.dob,p.dob); t(f.rs,rs(p.race,p.sex)); t(f.rel,p.rel); });
@@ -466,6 +472,13 @@ async function fillOrder(d, lang){
 async function fillNotice(d){
   const { PDFDocument, StandardFonts } = PDFLib; const doc = await PDFDocument.load(await loadBlank('notice')); const helv = await doc.embedFont(StandardFonts.Helvetica); const { text } = helpers(doc, helv);
   text('NOT_Name', defName(d)); text('NOT_SV', T(d,'svc'));
+  return doc.save({updateFieldAppearances:false});
+}
+async function fillStandby(d){
+  const { PDFDocument, StandardFonts } = PDFLib; const doc = await PDFDocument.load(await loadBlank('standby')); const helv = await doc.embedFont(StandardFonts.Helvetica); const { text } = helpers(doc, helv);
+  text('CS_Case', T(d,'svc')); text('CS_Name', defName(d));
+  const va = vAddr(d);
+  text('CS_Addr1', va.street); text('CS_Addr2', [va.city, [va.state, va.zip].filter(Boolean).join(' ')].filter(Boolean).join(', '));
   return doc.save({updateFieldAppearances:false});
 }
 async function fillTcic(d){
@@ -513,13 +526,13 @@ async function deliver(files, allowShare=true){   // files: [{name, bytes}]
 }
 async function build(d, allowShare){
   status('Building packet...');
-  const app = await fillApp(d), en = await fillOrder(d,'en'), notice = await fillNotice(d), tcic = await fillTcic(d);
+  const app = await fillApp(d), en = await fillOrder(d,'en'), notice = await fillNotice(d), standby = await fillStandby(d), tcic = await fillTcic(d);
   const es = (d.spanish || d.groups.outMode==='separate') ? await fillOrder(d,'es') : null;
   const b = base(d);
   if (d.groups.outMode==='separate'){
-    return deliver([ {name:`EPO_1_Application_${b}.pdf`,bytes:app}, {name:`EPO_2_Order_English_${b}.pdf`,bytes:en}, {name:`EPO_3_Order_Spanish_${b}.pdf`,bytes:es}, {name:`EPO_4_Notice_4hr_${b}.pdf`,bytes:notice}, {name:`EPO_5_TCIC_${b}.pdf`,bytes:tcic} ], allowShare);
+    return deliver([ {name:`EPO_1_Application_${b}.pdf`,bytes:app}, {name:`EPO_2_Order_English_${b}.pdf`,bytes:en}, {name:`EPO_3_Order_Spanish_${b}.pdf`,bytes:es}, {name:`EPO_4_Notice_4hr_${b}.pdf`,bytes:notice}, {name:`EPO_5_Civil_Standby_${b}.pdf`,bytes:standby}, {name:`EPO_6_TCIC_${b}.pdf`,bytes:tcic} ], allowShare);
   }
-  const parts = [app, en]; if (d.spanish) parts.push(es); parts.push(notice, tcic);
+  const parts = [app, en]; if (d.spanish) parts.push(es); parts.push(notice, standby, tcic);
   return deliver([ {name:`EPO_Packet_${b}.pdf`, bytes: await mergeAll(parts)} ], allowShare);
 }
 async function doPdf(){
@@ -573,6 +586,7 @@ async function newerBuildLive(){
     location.replace(location.pathname+'?fresh='+m[1]+location.hash); return true; } catch(e){ return false; }
 }
 function init(){
+  if (!groupVal('courtCounty')) setGroup('courtCounty','Dallas');
   const hashCode=location.hash.replace('#','').toUpperCase().replace(/[^A-Z0-9]/g,'');
   if (hashCode.length===8){ pickup(hashCode).then(sweep); } else { sweep(); }
 }

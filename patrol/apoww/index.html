@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- patrol/apoww/index.html | Build v6 | 2026-09-16 | Apt # box added to both addresses (omitted from the PDF when blank). v5: All typed text printed in ALL CAPS on the PDF. v4: Addresses split into street, city, county, state, zip on screen. v3: Sections 1 and 2 typed text rendered bold so it stands out from the printed question. v2: Officer line includes badge #; EMS section behind a toggle; hosted PDF v2 seats text on the underlines. v1: APOWW (Notification of Emergency Detention): phone-first fill of the official 2-page form; intro popup; PBKDF2-hardened desktop handoff (A-codes, 20-minute expiry) -->
+<!-- patrol/apoww/index.html | Build v7 | 2026-09-16 | Long text auto-shrinks to fit; anything that still overflows continues on a generated attachment page marked (SEE ATTACHED). v6: Apt # box added to both addresses (omitted from the PDF when blank). v5: All typed text printed in ALL CAPS on the PDF. v4: Addresses split into street, city, county, state, zip on screen. v3: Sections 1 and 2 typed text rendered bold so it stands out from the printed question. v2: Officer line includes badge #; EMS section behind a toggle; hosted PDF v2 seats text on the underlines. v1: APOWW (Notification of Emergency Detention): phone-first fill of the official 2-page form; intro popup; PBKDF2-hardened desktop handoff (A-codes, 20-minute expiry) -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -175,7 +175,8 @@
 <!-- ===== STEP 3: FACTS ===== -->
 <section class="panel" data-panel="3">
   <div class="card"><div class="card-h">1. Basis for beliefs</div><div class="card-body">
-    <div class="f"><label class="l" for="narrative">Recent behavior, severe emotional distress and deterioration, overt acts, attempts, statements, or threats observed by me or reliably reported to me</label><textarea class="field" id="narrative"></textarea></div>
+    <div class="f"><label class="l" for="narrative">Recent behavior, severe emotional distress and deterioration, overt acts, attempts, statements, or threats observed by me or reliably reported to me</label><textarea class="field" id="narrative" style="min-height:140px;"></textarea></div>
+    <div class="hint">Write as much as you need. The form box holds roughly 1,200 characters; anything beyond that automatically continues on an attached page marked (SEE ATTACHED).</div>
   </div></div>
   <div class="card"><div class="card-h">2. Witnesses / reporters <small>(if applicable)</small></div><div class="card-body">
     <div class="f"><label class="l" for="witnesses">Names, addresses, phone numbers, and relationship of persons who reported or observed, or relevant witnesses</label><textarea class="field" id="witnesses"></textarea></div>
@@ -266,7 +267,7 @@
   <div class="nav"><button data-go="6">&lsaquo; Back</button></div>
 </section>
 
-<footer class="foot">Internal field tool. Renders entirely in your browser. Nothing is saved on this device or the site. &middot; Build v6</footer>
+<footer class="foot">Internal field tool. Renders entirely in your browser. Nothing is saved on this device or the site. &middot; Build v7</footer>
 </main>
 
 <div class="actions">
@@ -296,7 +297,7 @@
 
 <script>
 /* ---------------- constants ---------------- */
-const BUILD = '6';
+const BUILD = '7';
 const PDF_URL = 'APOWW.pdf?v=2';
 const HANDOFF_TTL_MS = 20 * 60 * 1000;
 const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -428,18 +429,23 @@ async function buildPdf(d){
   const form = doc.getForm(); const helv = await doc.embedFont(StandardFonts.Helvetica); const helvBold = await doc.embedFont(StandardFonts.HelveticaBold);
   const BOLD = new Set([TEXT_MAP.narrative, TEXT_MAP.witnesses]);
   const isMulti = f => { try { return f.isMultiline(); } catch(e){ return false; } };
-  const text = (name, v, size) => {
+  const overflow = [];   // {title, text} blocks that go to an attachment page
+  const text = (name, v, size, title) => {
     if (!v) return;
-    try { const f=form.getTextField(name); const s=String(v).toUpperCase();
-      if (isMulti(f)){ f.setFontSize(size||9); }
-      else { const w=f.acroField.getWidgets()[0].getRectangle().width-4; let sz=size||9.5; while (sz>6 && helv.widthOfTextAtSize(s,sz)>w) sz-=0.5; f.setFontSize(sz); }
-      f.setText(s); f.updateAppearances(BOLD.has(name) ? helvBold : helv); }
+    try { const f=form.getTextField(name); let s=String(v).toUpperCase(); const font = BOLD.has(name) ? helvBold : helv;
+      if (isMulti(f)){
+        const r=f.acroField.getWidgets()[0].getRectangle(); const fit=fitMultiline(s, font, r.width-10, r.height-6, size||9);
+        f.setFontSize(fit.size); s=fit.lines.join('\n');
+        if (fit.rest){ overflow.push({ title: title||name, text: fit.rest }); }
+      } else { const w=f.acroField.getWidgets()[0].getRectangle().width-4; let sz=size||9.5; while (sz>6 && font.widthOfTextAtSize(s,sz)>w) sz-=0.5; f.setFontSize(sz); }
+      f.setText(s); f.updateAppearances(font); }
     catch(e){ console.warn('text',name,e.message); }
   };
   const check = name => { try { form.getCheckBox(name).check(); } catch(e){ console.warn('check',name,e.message); } };
   const radio = (name,v) => { if(!v) return; try { form.getRadioGroup(name).select(v); } catch(e){ console.warn('radio',name,e.message); } };
   const t = d.text;
-  Object.entries(TEXT_MAP).forEach(([id,pdf])=>text(pdf, t[id]));
+  const TITLES = { narrative:'SECTION 1: BASIS FOR BELIEFS (CONTINUED)', witnesses:'SECTION 2: WITNESSES / REPORTING PERSONS (CONTINUED)', noticeWhy:'REASON NOTICE TO PARENTS COULD NOT BE PROVIDED (CONTINUED)' };
+  Object.entries(TEXT_MAP).forEach(([id,pdf])=>text(pdf, t[id], undefined, TITLES[id]));
   ['FOR THE BEST INTEREST AND PROTECTION OF','person detained evidences mental','detention of person detained'].forEach(f=>text(f, t.pName));
   const addr=(st,ap,ci,co,sa,zp)=>{ ap=(ap||'').trim(); const street=[st,(ap? (/^(apt|suite|ste|unit|#)/i.test(ap)?ap:'Apt '+ap):'')].map(x=>(x||'').trim()).filter(Boolean).join(' '); return [street,ci,co?co+' County':'',[sa,zp].filter(Boolean).join(' ')].map(x=>(x||'').trim()).filter(Boolean).join(', '); };
   text('Address', addr(t.pStreet,t.pApt,t.pCity,t.pCounty,t.pState,t.pZip));
@@ -459,7 +465,7 @@ async function buildPdf(d){
   radio('Was the person physically restrained in any way', d.groups.restrained==='yes'?'YES_3': d.groups.restrained==='no'?'NO_2':'');
   if (d.groups.restrained==='yes') (d.multi.restraintReason||[]).forEach(check);
   (d.multi.origin||[]).forEach(check);
-  d.grid.forEach((r,i)=>{ if (r.a==='yes') check('Check Box'+(56+i)); else if (r.a==='no') check('Check Box'+(46+i)); else if (r.a==='unk') check('Check Box'+(36+i)); if (r.n) text(GRID[i][1], r.n, 8); });
+  d.grid.forEach((r,i)=>{ if (r.a==='yes') check('Check Box'+(56+i)); else if (r.a==='no') check('Check Box'+(46+i)); else if (r.a==='unk') check('Check Box'+(36+i)); if (r.n) text(GRID[i][1], r.n, 8, 'NOTES: '+GRID[i][0].replace(/\?$/,'').toUpperCase()+' (CONTINUED)'); });
   (d.multi.transported||[]).forEach(check);
   /* facility name: first slot at end of line 1, remainder on the wide line-2 field */
   const fac=(t.facility||'').trim();
@@ -467,7 +473,37 @@ async function buildPdf(d){
   /* EMS date across three slots, time HH:MM, A/P left blank for 24h times */
   if (DATE_RE.test(t.emsDate||'')){ const [m,dd,y]=t.emsDate.split('/'); text('for transport on date',m); text('If applicable I have transferred the person detained to Emergency Medical Services Personnel Name  Agency',dd); text('undefined_5',y.slice(2)); }
   text('at time', t.emsTime);
+  if (overflow.length) addAttachment(doc, helv, helvBold, overflow, t);
   return doc.save({updateFieldAppearances:false});
+}
+function wrapLines(s, font, size, maxW){
+  const out=[];
+  for (const para of s.split(/\r?\n/)){
+    const words=para.split(/\s+/).filter(Boolean); let line='';
+    for (const w of words){ const cand=line?line+' '+w:w;
+      if (font.widthOfTextAtSize(cand,size)<=maxW) line=cand;
+      else { if (line) out.push(line); let piece=w; while (font.widthOfTextAtSize(piece,size)>maxW){ let k=piece.length; while(k>1 && font.widthOfTextAtSize(piece.slice(0,k),size)>maxW) k--; out.push(piece.slice(0,k)); piece=piece.slice(k); } line=piece; } }
+    out.push(line);
+  }
+  return out;
+}
+function fitMultiline(s, font, maxW, maxH, startSize){
+  for (let size=startSize; size>=7; size-=0.5){ const lines=wrapLines(s,font,size,maxW); if (lines.length*size*1.18<=maxH) return {size, lines, rest:''}; }
+  const size=7.5, lh=size*1.18; const lines=wrapLines(s,font,size,maxW); const keep=Math.max(1, Math.floor(maxH/lh)-1);
+  const shown=lines.slice(0,keep); shown.push('(SEE ATTACHED)');
+  return { size, lines: shown, rest: lines.slice(keep).join(' ') };
+}
+function addAttachment(doc, helv, helvBold, blocks, t){
+  const W=612, H=792, M=54, maxW=W-2*M; let page=doc.addPage(PDFLib.PageSizes.Letter); let y=H-M;
+  const line=(txt,font,size,gap)=>{ if (y<M+size){ page=doc.addPage(PDFLib.PageSizes.Letter); y=H-M; } page.drawText(txt,{x:M,y:y-size,size,font}); y-=size+(gap||3); };
+  line('NOTIFICATION OF EMERGENCY DETENTION - ATTACHMENT', helvBold, 13, 6);
+  line(('CASE NO. '+(t.caseNo||'')+'    PERSON DETAINED: '+(t.pName||'')+'    OFFICER: '+(t.offName||'')+(t.badge?' #'+t.badge:'')).toUpperCase(), helv, 9, 12);
+  for (const b of blocks){
+    line(b.title.toUpperCase(), helvBold, 10, 4);
+    for (const l of wrapLines(b.text.toUpperCase(), helv, 10, maxW)) line(l, helv, 10, 2);
+    y-=10;
+  }
+  line('THIS PAGE IS A CONTINUATION OF THE ATTACHED NOTIFICATION OF EMERGENCY DETENTION.', helv, 8, 2);
 }
 function splitToWidth(s, font, size, firstWidth){
   const words=s.split(/\s+/); let first=''; let i=0;

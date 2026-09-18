@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<!-- patrol/notice/index.html | Build v1 | 2026-09-18 | New tool. Prints the English/Spanish feedback notice on the in-car Zebra ZQ520. Three print paths for field testing: direct serial over paired Bluetooth (Web Serial), Bluetooth LE (Web Bluetooth), and the standard Windows print dialog. ZPL or CPCL output. Printer test slip with ruler, font samples, and accent check. Read-only printer info query. No printer settings are written or saved. -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Feedback Notice</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#0b1f3a; --navy-2:#13294b; --paper:#f4f1ea; --ink:#1a1d24;
+    --line:#c9c2b4; --red:#9b2030; --gold:#b8923a; --field:#fbfaf6; --muted:#5f6675; --ok:#1f6b3a;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:"Barlow","Segoe UI",system-ui,sans-serif;
+    background:
+      radial-gradient(circle at 12% -10%, rgba(184,146,58,.10), transparent 40%),
+      radial-gradient(circle at 100% 0%, rgba(155,32,48,.08), transparent 45%),
+      var(--paper);
+    color:var(--ink); line-height:1.45; min-height:100vh;
+    display:flex; flex-direction:column;
+  }
+  header.masthead{
+    background:linear-gradient(180deg,var(--navy) 0%,var(--navy-2) 100%);
+    border-bottom:3px solid var(--gold);
+    box-shadow:0 2px 0 var(--red) inset, 0 6px 20px rgba(0,0,0,.25);
+    padding:18px 24px 14px;
+  }
+  .masthead .kick{margin:0 0 2px;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);font-weight:600;}
+  .masthead h1{margin:0;font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:32px;letter-spacing:.02em;color:#fff;line-height:1.05;}
+  .masthead .sub{margin-top:4px;font-size:13px;color:rgba(255,255,255,.72);}
+  .masthead a{color:var(--gold);text-decoration:none;font-size:13px;}
+  main{flex:1;width:100%;max-width:640px;margin:0 auto;padding:20px 18px 40px;}
+  h2{font-family:"Barlow Condensed",sans-serif;font-size:22px;letter-spacing:.04em;text-transform:uppercase;color:var(--navy);margin:0 0 10px;}
+  .interim{font-size:12.5px;color:var(--muted);border-left:3px solid var(--gold);padding:4px 10px;margin:0 0 18px;}
+  .card{background:#fff;border:1px solid var(--line);border-radius:8px;padding:16px 18px;margin-bottom:22px;box-shadow:0 1px 2px rgba(0,0,0,.05);}
+  .slip{
+    background:#fff;border:1px dashed var(--line);border-radius:4px;padding:16px 14px;margin:0 0 16px;
+    font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.4;color:#000;
+  }
+  .slip p{margin:0 0 12px;} .slip p:last-child{margin-bottom:0;}
+  .lbl{font-family:"Barlow Condensed",sans-serif;font-size:13px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0 0 6px;}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 16px;}
+  .chip{
+    font-family:"Barlow Condensed",sans-serif;font-size:18px;font-weight:700;letter-spacing:.04em;
+    min-height:48px;min-width:56px;padding:8px 16px;border:1.5px solid var(--line);border-radius:8px;
+    background:var(--field);color:var(--navy);cursor:pointer;
+  }
+  .chip.on{background:var(--navy);border-color:var(--navy);color:#fff;}
+  .chip:focus-visible,.btn:focus-visible{outline:3px solid var(--gold);outline-offset:2px;}
+  .btn{
+    display:block;width:100%;font-family:"Barlow Condensed",sans-serif;font-size:24px;font-weight:700;letter-spacing:.08em;
+    text-transform:uppercase;min-height:60px;padding:12px 18px;border:0;border-radius:8px;background:var(--gold);color:var(--navy);cursor:pointer;
+  }
+  .btn:disabled{opacity:.45;cursor:default;}
+  .btn.sec{font-size:18px;min-height:50px;background:#fff;border:1.5px solid var(--navy);color:var(--navy);margin-top:10px;}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .status{font-size:14px;margin-top:12px;min-height:20px;color:var(--muted);}
+  .status.ok{color:var(--ok);font-weight:600;} .status.bad{color:var(--red);font-weight:600;}
+  .hint{font-size:13px;color:var(--muted);margin:0 0 14px;}
+  details summary{cursor:pointer;font-family:"Barlow Condensed",sans-serif;font-size:22px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--navy);}
+  details[open] summary{margin-bottom:12px;}
+  #log{
+    width:100%;height:190px;margin-top:12px;font-family:Consolas,Menlo,monospace;font-size:12px;line-height:1.35;
+    border:1px solid var(--line);border-radius:6px;background:var(--field);color:var(--ink);padding:8px;resize:vertical;
+  }
+  footer.foot{text-align:center;font-size:12px;color:var(--muted);padding:14px 18px 22px;border-top:1px solid var(--line);}
+  @media print{
+    @page{size:4in 3in;margin:0.1in;}
+    header,footer,.noprint{display:none !important;}
+    body{background:#fff;display:block;min-height:0;}
+    main{max-width:none;padding:0;margin:0;}
+    .card{border:0;box-shadow:none;padding:0;margin:0;}
+    .slip{border:0;padding:0;margin:0;font-size:9.5pt;}
+  }
+</style>
+</head>
+<body>
+<header class="masthead">
+  <p class="kick">Public Safety &middot; Field Tools</p>
+  <h1>Feedback Notice</h1>
+  <div class="sub">Prints the English and Spanish feedback notice on the in-car printer. <a href="/patrol/">&lsaquo; All tools</a></div>
+</header>
+
+<main>
+  <p class="interim noprint">Interim tool. Runs entirely in this browser. Nothing is stored or sent anywhere except to the printer.</p>
+
+  <div class="card">
+    <h2 class="noprint">Notice</h2>
+    <div class="slip" id="slip">
+      <p id="slipEn"></p>
+      <p id="slipEs"></p>
+    </div>
+    <div class="noprint">
+      <p class="lbl">Copies</p>
+      <div class="chips" id="copies">
+        <button type="button" class="chip on" data-n="1">1</button>
+        <button type="button" class="chip" data-n="2">2</button>
+        <button type="button" class="chip" data-n="3">3</button>
+        <button type="button" class="chip" data-n="4">4</button>
+      </div>
+      <button type="button" class="btn" id="printBtn">Print Notice</button>
+      <div class="status" id="status"></div>
+    </div>
+  </div>
+
+  <div class="card noprint">
+    <details open>
+      <summary>Printer setup and test</summary>
+      <p class="hint">Pair the printer in Windows Bluetooth settings first. Then pick a method, print the test slip, and see which one produces paper. Your choice is remembered on this computer.</p>
+
+      <p class="lbl">Print method</p>
+      <div class="chips" id="method">
+        <button type="button" class="chip on" data-m="serial">1. Direct</button>
+        <button type="button" class="chip" data-m="ble">2. Bluetooth LE</button>
+        <button type="button" class="chip" data-m="dialog">3. Windows dialog</button>
+      </div>
+
+      <p class="lbl">Printer language (methods 1 and 2)</p>
+      <div class="chips" id="lang">
+        <button type="button" class="chip on" data-l="zpl">ZPL</button>
+        <button type="button" class="chip" data-l="cpcl">CPCL</button>
+      </div>
+
+      <button type="button" class="btn sec" id="testBtn">Print test slip</button>
+      <div class="row">
+        <button type="button" class="btn sec" id="infoBtn">Read printer info</button>
+        <button type="button" class="btn sec" id="forgetBtn">Choose different printer</button>
+      </div>
+      <textarea id="log" readonly aria-label="Log"></textarea>
+      <button type="button" class="btn sec" id="copyLogBtn">Copy log</button>
+    </details>
+  </div>
+</main>
+
+<footer class="foot">Build v1</footer>
+
+<script>
+(function(){
+  'use strict';
+
+  // Notice wording reproduced verbatim from the current printed slip. Do not edit without approval.
+  var NOTICE_EN = 'If you would like to provide feedback regarding a Richardson Police Officers professional demeanor, please contact our Department.  Compliments, complaints or racial profiling complaints may be submitted to 200 N Greenville Ave, Richardson, TX 75081 or AskRichardsonPolice@cor.gov or 972-744-4800.';
+  var NOTICE_ES = 'Si desea brindar comentarios sobre la conducta profesional de un oficial de policia de Richardson, por favor comuniquese con nuestro Departamento. Para elogios, quejas o quejas por discriminacion racial se pueden enviar a 200 N Greenville Ave, Richardson, TX 75081 o AskRichardsonPolice@cor.gov o 972-744-4800.';
+
+  var DOTS_WIDE = 832;          // ZQ520: 4 inch head at 203 dpi
+  var MARGIN = 24;
+  var FONT_H = 24;              // notice font height in dots
+  var LINE_GAP = 4;
+
+  var ZEBRA_BLE_SERVICE = '38eb4a80-c570-11e3-9507-0002a5d5c51b';
+  var ZEBRA_BLE_WRITE   = '38eb4a82-c570-11e3-9507-0002a5d5c51b';
+
+  var state = { copies:1, method:'serial', lang:'zpl', bleDevice:null, busy:false };
+
+  function $(id){ return document.getElementById(id); }
+  function log(msg){
+    var t = new Date().toLocaleTimeString();
+    var el = $('log'); el.value += '[' + t + '] ' + msg + '\n'; el.scrollTop = el.scrollHeight;
+  }
+  function setStatus(msg, cls){ var s = $('status'); s.textContent = msg || ''; s.className = 'status' + (cls ? ' ' + cls : ''); }
+  function sleep(ms){ return new Promise(function(r){ setTimeout(r, ms); }); }
+  function enc(str){ return new TextEncoder().encode(str); }
+
+  $('slipEn').textContent = NOTICE_EN;
+  $('slipEs').textContent = NOTICE_ES;
+
+  // ---------- preferences (method and language only, no case data) ----------
+  try{
+    var m = localStorage.getItem('rpd_print_method'); if(m === 'serial' || m === 'ble' || m === 'dialog') state.method = m;
+    var l = localStorage.getItem('rpd_print_lang'); if(l === 'zpl' || l === 'cpcl') state.lang = l;
+  }catch(e){}
+
+  function bindChips(groupId, attr, key, store){
+    var group = $(groupId);
+    function paint(){
+      Array.prototype.forEach.call(group.querySelectorAll('.chip'), function(c){
+        c.classList.toggle('on', String(c.getAttribute(attr)) === String(state[key]));
+      });
+    }
+    group.addEventListener('click', function(ev){
+      var c = ev.target.closest('.chip'); if(!c) return;
+      var v = c.getAttribute(attr);
+      state[key] = (key === 'copies') ? parseInt(v, 10) : v;
+      if(store){ try{ localStorage.setItem(store, v); }catch(e){} }
+      paint();
+    });
+    paint();
+  }
+  bindChips('copies', 'data-n', 'copies', null);
+  bindChips('method', 'data-m', 'method', 'rpd_print_method');
+  bindChips('lang',   'data-l', 'lang',   'rpd_print_lang');
+
+  // ---------- ZPL builders ----------
+  function zplSafe(s){ return s.replace(/[\^~\\]/g, ' '); }
+
+  function zplNotice(copies){
+    var usable = DOTS_WIDE - MARGIN * 2;
+    var perLine = Math.floor(usable / (FONT_H * 0.55));           // conservative estimate, ^FB does the real wrapping
+    var lines = Math.ceil(NOTICE_EN.length / perLine) + 1 + Math.ceil(NOTICE_ES.length / perLine) + 1;
+    var lineH = FONT_H + LINE_GAP;
+    var top = 40, bottom = 70;
+    var ll = top + lines * lineH + bottom;
+    var text = zplSafe(NOTICE_EN) + '\\&\\&' + zplSafe(NOTICE_ES);
+    return '^XA^CI28^LH0,0^LL' + ll +
+           '^FO' + MARGIN + ',' + top + '^A0N,' + FONT_H + ',' + FONT_H +
+           '^FB' + usable + ',' + (lines + 4) + ',' + LINE_GAP + ',L,0^FD' + text + '^FS' +
+           '^PQ' + copies + '^XZ';
+  }
+
+  function zplTest(pathName){
+    var y = 30, z = '^XA^CI28^LH0,0';
+    var body = '';
+    function line(h, txt){ body += '^FO' + MARGIN + ',' + y + '^A0N,' + h + ',' + h + '^FD' + zplSafe(txt) + '^FS'; y += h + 10; }
+    line(36, 'PRINTER TEST  Build v1');
+    line(24, 'Path: ' + pathName + '   Language: ZPL');
+    line(24, new Date().toLocaleString());
+    y += 6;
+    // ruler: full width bar plus a tick and label every 100 dots
+    body += '^FO0,' + y + '^GB' + DOTS_WIDE + ',3,3^FS';
+    for(var x = 0; x <= 800; x += 100){
+      body += '^FO' + x + ',' + y + '^GB3,30,3^FS';
+      body += '^FO' + (x + 6) + ',' + (y + 10) + '^A0N,20,20^FD' + x + '^FS';
+    }
+    body += '^FO' + (DOTS_WIDE - 3) + ',' + y + '^GB3,30,3^FS';
+    y += 50;
+    line(20, 'Size 20: The quick brown fox jumps over the lazy dog 0123456789');
+    line(24, 'Size 24: The quick brown fox jumps over the lazy dog 0123456789');
+    line(28, 'Size 28: The quick brown fox jumps over the lazy dog 01234');
+    line(32, 'Size 32: The quick brown fox jumps over the lazy');
+    line(24, 'Accents: policía comuníquese discriminación ñ ¿ ¡');
+    line(24, 'Right edge check: the last tick above should read 800.');
+    y += 60;
+    return z + '^LL' + y + body + '^PQ1^XZ';
+  }
+
+  // ---------- CPCL builders (ASCII only, fixed pitch font 7) ----------
+  function wrap(text, n){
+    var words = text.replace(/\s+/g, ' ').trim().split(' '), out = [], cur = '';
+    words.forEach(function(w){
+      if((cur + ' ' + w).trim().length > n){ out.push(cur); cur = w; } else { cur = (cur + ' ' + w).trim(); }
+    });
+    if(cur) out.push(cur);
+    return out;
+  }
+  function cpclFromLines(lines, copies){
+    var lh = 28, top = 20, bottom = 60;
+    var h = top + lines.length * lh + bottom;
+    var s = '! 0 200 200 ' + h + ' ' + copies + '\r\nJOURNAL\r\n';
+    lines.forEach(function(t, i){ if(t) s += 'TEXT 7 0 ' + MARGIN + ' ' + (top + i * lh) + ' ' + t + '\r\n'; });
+    return s + 'PRINT\r\n';
+  }
+  function cpclNotice(copies){
+    var lines = wrap(NOTICE_EN, 62).concat([''], wrap(NOTICE_ES, 62));
+    return cpclFromLines(lines, copies);
+  }
+  function cpclTest(pathName){
+    return cpclFromLines([
+      'PRINTER TEST  Build v1',
+      'Path: ' + pathName + '   Language: CPCL',
+      new Date().toLocaleString(),
+      '',
+      '0........1.........2.........3.........4.........5.........6....',
+      '0123456789012345678901234567890123456789012345678901234567890123',
+      'If the row above is cut off, note the last digit you can read.'
+    ], 1);
+  }
+
+  function buildJob(kind, pathName){
+    if(state.lang === 'cpcl') return kind === 'test' ? cpclTest(pathName) : cpclNotice(state.copies);
+    return kind === 'test' ? zplTest(pathName) : zplNotice(state.copies);
+  }
+
+  // ---------- Path 1: Web Serial over paired Bluetooth ----------
+  async function getSerialPort(){
+    if(!('serial' in navigator)) throw new Error('This browser does not support direct printing. Use Chrome or Edge on the squad computer.');
+    var ports = await navigator.serial.getPorts();
+    if(ports.length){ log('Using remembered printer (' + ports.length + ' saved).'); return ports[0]; }
+    log('Asking Chrome for a printer. Pick the one matching the serial number on your printer.');
+    return await navigator.serial.requestPort();
+  }
+
+  async function readFor(port, ms){
+    var out = '', reader = port.readable.getReader(), done = false;
+    var timer = setTimeout(function(){ done = true; reader.cancel().catch(function(){}); }, ms);
+    try{
+      while(!done){
+        var r = await reader.read();
+        if(r.value) out += new TextDecoder().decode(r.value);
+        if(r.done) break;
+      }
+    }catch(e){} finally{ clearTimeout(timer); try{ reader.releaseLock(); }catch(e){} }
+    return out;
+  }
+
+  async function serialSend(bytes, queries){
+    var port = await getSerialPort();
+    try{ await port.open({ baudRate:115200, bufferSize:65536 }); }
+    catch(e){
+      if(e && e.name === 'InvalidStateError'){ try{ await port.close(); }catch(x){} await port.open({ baudRate:115200, bufferSize:65536 }); }
+      else throw e;
+    }
+    var replies = [];
+    try{
+      var writer = port.writable.getWriter();
+      if(bytes){ await writer.write(bytes); log('Sent ' + bytes.length + ' bytes over serial.'); }
+      if(queries){
+        for(var i = 0; i < queries.length; i++){
+          await writer.write(enc('! U1 getvar "' + queries[i] + '"\r\n'));
+          writer.releaseLock();
+          var ans = await readFor(port, 1200);
+          replies.push(queries[i] + ' = ' + (ans.trim() || '(no reply)'));
+          writer = port.writable.getWriter();
+        }
+      }
+      writer.releaseLock();
+      await sleep(800);           // let the Bluetooth link drain before closing
+    } finally {
+      try{ await port.close(); }catch(e){}
+    }
+    return replies;
+  }
+
+  // ---------- Path 2: Web Bluetooth (LE) ----------
+  async function bleSend(bytes){
+    if(!('bluetooth' in navigator)) throw new Error('This browser does not support Bluetooth LE printing.');
+    if(!state.bleDevice){
+      log('Asking Chrome for a Bluetooth LE printer. Pick the one matching your printer serial number.');
+      state.bleDevice = await navigator.bluetooth.requestDevice({ acceptAllDevices:true, optionalServices:[ZEBRA_BLE_SERVICE] });
+    }
+    var server = await state.bleDevice.gatt.connect();
+    try{
+      var svc = await server.getPrimaryService(ZEBRA_BLE_SERVICE);
+      var ch = await svc.getCharacteristic(ZEBRA_BLE_WRITE);
+      var size = 128, i = 0;
+      while(i < bytes.length){
+        var part = bytes.slice(i, i + size);
+        try{ await ch.writeValueWithResponse(part); i += part.length; }
+        catch(e){
+          if(size > 20){ log('Chunk of ' + size + ' refused, retrying at 20 bytes.'); size = 20; }
+          else throw e;
+        }
+      }
+      log('Sent ' + bytes.length + ' bytes over Bluetooth LE.');
+      await sleep(500);
+    } finally {
+      try{ state.bleDevice.gatt.disconnect(); }catch(e){}
+    }
+  }
+
+  // ---------- dispatcher ----------
+  function explain(e){
+    var n = e && e.name, msg = (e && e.message) || String(e);
+    if(n === 'NotFoundError') return 'No printer was picked. If the list was empty, the printer is off, not paired, or this method is not available on it.';
+    if(n === 'SecurityError') return 'Chrome blocked this method on this computer (likely a city browser policy). Try the next method.';
+    if(n === 'NetworkError') return 'Could not open the printer. Make sure it is on, in range, and not in use by another program. (' + msg + ')';
+    return msg;
+  }
+
+  async function run(kind){
+    if(state.busy) return;
+    state.busy = true; $('printBtn').disabled = true; $('testBtn').disabled = true;
+    setStatus('Printing...');
+    try{
+      if(state.method === 'dialog'){
+        log('Opening the Windows print dialog. Pick the Zebra printer. Copies are set in the dialog.');
+        window.print();
+        setStatus('Print dialog opened.', 'ok');
+      } else {
+        var pathName = state.method === 'serial' ? 'DIRECT SERIAL' : 'BLUETOOTH LE';
+        var bytes = enc(buildJob(kind, pathName));
+        if(state.method === 'serial') await serialSend(bytes, null); else await bleSend(bytes);
+        setStatus('Sent to printer.', 'ok');
+        log('Done. If no paper came out, try the other language chip, then the next method.');
+      }
+    }catch(e){
+      var why = explain(e);
+      setStatus(why, 'bad'); log('ERROR (' + ((e && e.name) || 'Error') + '): ' + why);
+    } finally {
+      state.busy = false; $('printBtn').disabled = false; $('testBtn').disabled = false;
+    }
+  }
+
+  $('printBtn').addEventListener('click', function(){ run('notice'); });
+  $('testBtn').addEventListener('click', function(){ run('test'); });
+
+  $('infoBtn').addEventListener('click', async function(){
+    if(state.busy) return; state.busy = true;
+    try{
+      log('Reading printer settings (read only, nothing is changed)...');
+      var r = await serialSend(null, ['device.languages', 'ezpl.print_width', 'ezpl.media_type', 'zpl.label_length', 'bluetooth.le.controller_mode', 'appl.name']);
+      r.forEach(function(x){ log('  ' + x); });
+    }catch(e){ log('ERROR (' + ((e && e.name) || 'Error') + '): ' + explain(e)); }
+    finally{ state.busy = false; }
+  });
+
+  $('forgetBtn').addEventListener('click', async function(){
+    try{
+      state.bleDevice = null;
+      if('serial' in navigator){
+        var ports = await navigator.serial.getPorts();
+        for(var i = 0; i < ports.length; i++){ if(ports[i].forget) await ports[i].forget(); }
+      }
+      log('Forgot the saved printer. The next print will ask you to pick one.');
+    }catch(e){ log('ERROR: ' + explain(e)); }
+  });
+
+  $('copyLogBtn').addEventListener('click', function(){
+    var el = $('log'); el.select();
+    if(navigator.clipboard){ navigator.clipboard.writeText(el.value).then(function(){ log('Log copied.'); }, function(){ document.execCommand('copy'); }); }
+    else { document.execCommand('copy'); }
+  });
+
+  log('Ready. Serial support: ' + ('serial' in navigator ? 'yes' : 'NO') + '. Bluetooth LE support: ' + ('bluetooth' in navigator ? 'yes' : 'NO') + '.');
+})();
+</script>
+</body>
+</html>

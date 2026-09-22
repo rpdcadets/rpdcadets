@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- traffic/index.html | Build v3 | 2026-09-22 | Copies selector removed (printer does not cut between copies; tap Print again for another). v2: Third mode "Feedback Notice": draws the English/Spanish feedback slip with the City wordmark and prints it on the in-car Zebra via /patrol/print.js (direct serial over paired Bluetooth, CPCL bitmap). Barcode column hidden in that mode. v1: DL/ID + VIN barcode generator. -->
+<!-- traffic/index.html | Build v4 | 2026-09-22 | Step-by-step printer setup and troubleshooting inside the collapsed section. v3: Copies selector removed (printer does not cut between copies; tap Print again for another). v2: Third mode "Feedback Notice": draws the English/Spanish feedback slip with the City wordmark and prints it on the in-car Zebra via /patrol/print.js (direct serial over paired Bluetooth, CPCL bitmap). Barcode column hidden in that mode. v1: DL/ID + VIN barcode generator. -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -199,7 +199,11 @@
   .fb-status{font-size:13px;margin-top:10px;min-height:18px;color:#54606f;}
   .fb-status.ok{color:#1f6b3a;font-weight:600;} .fb-status.bad{color:#9b2030;font-weight:600;}
   .fb-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
-  #fbTrouble{margin-top:14px;} #fbTrouble summary{cursor:pointer;font-size:12.5px;font-weight:600;color:#54606f;}
+  #fbTrouble{margin-top:14px;}
+  .fb-steps{font-size:13.5px;line-height:1.5;color:var(--ink,#1a1d24);margin:10px 0 4px;}
+  .fb-steps-h{margin:8px 0 4px;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#54606f;}
+  .fb-steps ol,.fb-steps ul{margin:0 0 8px;padding-left:22px;}
+  .fb-steps li{margin:0 0 5px;} #fbTrouble summary{cursor:pointer;font-size:12.5px;font-weight:600;color:#54606f;}
   #fbLog{width:100%;height:120px;margin-top:8px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px;border:1px solid var(--line);border-radius:6px;background:#fbfaf6;padding:8px;resize:vertical;}
   .mode-btn.active{background:var(--navy);color:#fff;}
   .mode-btn:not(.active):hover{background:#f0eee7;color:var(--navy);}
@@ -270,12 +274,30 @@
     <div class="card" id="fbPanel" style="display:none;">
       <div class="card-h">Traffic Feedback Notice</div>
       <div class="card-body">
-        <div class="use-note">Prints the English/Spanish feedback notice slip on your in-car printer. First time on this computer: pair the printer in Windows Bluetooth settings, tap Print, and pick the printer from Chrome's list. After that it is remembered.</div>
+        <div class="use-note">Prints the English/Spanish feedback notice slip on your in-car printer. First time on this computer? Open <b>Printer setup and troubleshooting</b> below for the steps.</div>
         <canvas id="fbSlip" class="fb-preview" width="832" height="200" aria-label="Notice preview"></canvas>
         <button type="button" class="fb-print" id="fbPrintBtn">Print Notice</button>
         <div class="fb-status" id="fbStatus"></div>
         <details id="fbTrouble">
           <summary>Printer setup and troubleshooting</summary>
+          <div class="fb-steps">
+            <p class="fb-steps-h">First-time setup on this computer (about 2 minutes)</p>
+            <ol>
+              <li>Turn the printer on. Note the serial number on its bottom label (starts with <b>XXRBJ</b>).</li>
+              <li>On the computer open <b>Settings</b>, then <b>Bluetooth &amp; devices</b>, then <b>Add device</b>, then <b>Bluetooth</b>.</li>
+              <li>Pick the entry that matches the printer serial number. When it says <b>Connected</b>, tap <b>Done</b>.</li>
+              <li>Come back here and tap <b>Print Notice</b>. Chrome shows a small popup asking which device to use. That is a one-time permission, not a settings change.</li>
+              <li>In the popup, pick the entry with the printer serial number (it may also say "Standard Serial over Bluetooth link"), then tap <b>Connect</b>. The slip prints.</li>
+            </ol>
+            <p class="fb-steps-h">After setup</p>
+            <ul>
+              <li>Print Notice is one tap. Chrome remembers the printer on this computer.</li>
+              <li>Nothing prints? Make sure the printer is on and has paper, then try again.</li>
+              <li>Popup list empty? The printer is off or not paired. Repeat steps 1 to 3.</li>
+              <li>Picked the wrong device? Tap <b>Choose different printer</b> below, then Print Notice again.</li>
+              <li>Printer replaced or swapped cars? Same thing: Choose different printer, then pair the new one.</li>
+            </ul>
+          </div>
           <div class="fb-row">
             <button type="button" class="fb-sec" id="fbForgetBtn">Choose different printer</button>
             <button type="button" class="fb-sec" id="fbInfoBtn">Read printer info</button>

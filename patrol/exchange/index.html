@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<!-- patrol/exchange/index.html | Build v2 | 2026-09-22 | QR now points to the accident report page. v1: New tool. Driver Information Exchange slip for crashes: any number of units, each with driver, vehicle, and liability insurance; header with service number, date/time, location, officer. Slip is drawn on a canvas to match the old Brazos layout (city wordmark, title, courtesy text, contact paragraph, address block with QR code, boxed sections) and printed on the in-car Zebra via /patrol/print.js. VIN check-digit validation. Nothing stored. -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Driver Exchange</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<style>
+  :root{
+    --navy:#0b1f3a; --navy-2:#13294b; --paper:#f4f1ea; --ink:#1a1d24;
+    --line:#c9c2b4; --red:#9b2030; --gold:#b8923a; --field:#fbfaf6; --muted:#5f6675; --ok:#1f6b3a;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:"Barlow","Segoe UI",system-ui,sans-serif;
+    background:
+      radial-gradient(circle at 12% -10%, rgba(184,146,58,.10), transparent 40%),
+      radial-gradient(circle at 100% 0%, rgba(155,32,48,.08), transparent 45%),
+      var(--paper);
+    color:var(--ink); line-height:1.45; min-height:100vh; display:flex; flex-direction:column;
+  }
+  header.masthead{
+    background:linear-gradient(180deg,var(--navy) 0%,var(--navy-2) 100%);
+    border-bottom:3px solid var(--gold);
+    box-shadow:0 2px 0 var(--red) inset, 0 6px 20px rgba(0,0,0,.25);
+    padding:18px 24px 14px;
+  }
+  .masthead .kick{margin:0 0 2px;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);font-weight:600;}
+  .masthead h1{margin:0;font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:32px;letter-spacing:.02em;color:#fff;line-height:1.05;}
+  .masthead .sub{margin-top:4px;font-size:13px;color:rgba(255,255,255,.72);}
+  .masthead a{color:var(--gold);text-decoration:none;font-size:13px;}
+  .wrap{flex:1;width:100%;max-width:1120px;margin:0 auto;padding:20px 18px 40px;display:grid;grid-template-columns:1fr 440px;gap:22px;align-items:start;}
+  @media(max-width:900px){.wrap{grid-template-columns:1fr;} .out{position:static;}}
+  .out{position:sticky;top:16px;}
+  .interim{font-size:12.5px;color:var(--muted);border-left:3px solid var(--gold);padding:4px 10px;margin:0 0 16px;grid-column:1/-1;}
+  .card{background:#fff;border:1px solid var(--line);border-radius:8px;padding:16px 18px;margin-bottom:16px;box-shadow:0 1px 2px rgba(0,0,0,.05);}
+  .card h2{font-family:"Barlow Condensed",sans-serif;font-size:22px;letter-spacing:.04em;text-transform:uppercase;color:var(--navy);margin:0 0 12px;display:flex;align-items:center;gap:10px;}
+  .card h2 .rm{margin-left:auto;font-family:"Barlow",sans-serif;font-size:13px;font-weight:600;letter-spacing:0;text-transform:none;color:var(--red);background:none;border:1px solid var(--red);border-radius:6px;padding:4px 10px;cursor:pointer;}
+  .g{display:grid;gap:10px 12px;grid-template-columns:repeat(6,1fr);}
+  .f{display:flex;flex-direction:column;}
+  .f label{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:3px;}
+  .f input{font-family:"Barlow",sans-serif;font-size:17px;padding:9px 10px;border:1.5px solid var(--line);border-radius:6px;background:var(--field);color:var(--ink);min-width:0;width:100%;}
+  .f input:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(184,146,58,.25);}
+  .f input.bad{border-color:var(--red);}
+  .f .hint{font-size:11.5px;color:var(--muted);margin-top:3px;min-height:14px;}
+  .f .hint.bad{color:var(--red);font-weight:600;}
+  .c6{grid-column:span 6;} .c4{grid-column:span 4;} .c3{grid-column:span 3;} .c2{grid-column:span 2;}
+  @media(max-width:600px){.c4,.c3{grid-column:span 6;} .c2{grid-column:span 3;}}
+  .sect{font-family:"Barlow Condensed",sans-serif;font-size:15px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin:14px 0 6px;grid-column:1/-1;}
+  .sect:first-child{margin-top:0;}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;grid-column:1/-1;}
+  .chip{font-family:"Barlow Condensed",sans-serif;font-size:16px;font-weight:700;letter-spacing:.04em;min-height:40px;padding:6px 14px;border:1.5px solid var(--line);border-radius:8px;background:var(--field);color:var(--navy);cursor:pointer;}
+  .btn{display:block;width:100%;font-family:"Barlow Condensed",sans-serif;font-size:24px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;min-height:60px;padding:12px 18px;border:0;border-radius:8px;background:var(--gold);color:var(--navy);cursor:pointer;}
+  .btn:disabled{opacity:.45;cursor:default;}
+  .btn.sec{font-size:18px;min-height:50px;background:#fff;border:1.5px solid var(--navy);color:var(--navy);margin-top:10px;}
+  .btn.add{background:var(--navy);color:#fff;font-size:20px;min-height:52px;margin-bottom:16px;}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .preview{display:block;width:100%;height:auto;border:1px dashed var(--line);border-radius:4px;background:#fff;margin:0 0 14px;}
+  .status{font-size:14px;margin-top:12px;min-height:20px;color:var(--muted);}
+  .status.ok{color:var(--ok);font-weight:600;} .status.bad{color:var(--red);font-weight:600;}
+  .note{font-size:13px;color:var(--muted);margin:0 0 12px;}
+  details summary{cursor:pointer;font-size:13px;font-weight:600;color:var(--muted);}
+  .steps{font-size:13.5px;line-height:1.5;margin:10px 0 4px;} .steps p{margin:8px 0 4px;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);}
+  .steps ol,.steps ul{margin:0 0 8px;padding-left:22px;} .steps li{margin:0 0 5px;}
+  #log{width:100%;height:110px;margin-top:8px;font-family:Consolas,Menlo,monospace;font-size:11.5px;border:1px solid var(--line);border-radius:6px;background:var(--field);padding:8px;resize:vertical;}
+  footer.foot{text-align:center;font-size:12px;color:var(--muted);padding:14px 18px 22px;border-top:1px solid var(--line);}
+</style>
+</head>
+<body>
+<header class="masthead">
+  <p class="kick">Public Safety &middot; Field Tools</p>
+  <h1>Driver Information Exchange</h1>
+  <div class="sub">Type each unit's driver, vehicle, and insurance, then print one slip per driver on the in-car printer. <a href="/patrol/">&lsaquo; All tools</a></div>
+</header>
+
+<div class="wrap">
+  <p class="interim">Interim tool. Runs entirely in this browser. Nothing is stored or sent anywhere except to the printer.</p>
+
+  <div class="in">
+    <div class="card">
+      <h2>Crash</h2>
+      <div class="g">
+        <div class="f c3"><label>Service number</label><input id="svc" inputmode="numeric" autocomplete="off" placeholder="2026000XXXXX"></div>
+        <div class="f c3"><label>Date / time</label><input id="dt" autocomplete="off"><div class="hint">Filled with now. Edit if needed.</div></div>
+        <div class="f c6"><label>Location</label><input id="loc" autocomplete="off" placeholder="900 S Coit Rd"></div>
+        <div class="f c4"><label>Officer (last name)</label><input id="offName" autocomplete="off" placeholder="REYES"></div>
+        <div class="f c2"><label>Badge</label><input id="offBadge" inputmode="numeric" autocomplete="off" placeholder="1293"></div>
+      </div>
+    </div>
+
+    <div id="units"></div>
+    <button type="button" class="btn add" id="addUnit">+ Add another unit</button>
+  </div>
+
+  <div class="out">
+    <div class="card">
+      <canvas id="slip" class="preview" width="832" height="300" aria-label="Slip preview"></canvas>
+      <p class="note">Print once per driver. The printer does not cut between copies, so tap Print again for each copy.</p>
+      <button type="button" class="btn" id="printBtn">Print Slip</button>
+      <div class="status" id="status"></div>
+      <button type="button" class="btn sec" id="clearBtn">Clear everything</button>
+      <details style="margin-top:14px;">
+        <summary>Printer setup and troubleshooting</summary>
+        <div class="steps">
+          <p>First-time setup on this computer (about 2 minutes)</p>
+          <ol>
+            <li>Turn the printer on. Note the serial number on its bottom label (starts with <b>XXRBJ</b>).</li>
+            <li>On the computer open <b>Settings</b>, then <b>Bluetooth &amp; devices</b>, then <b>Add device</b>, then <b>Bluetooth</b>.</li>
+            <li>Pick the entry that matches the printer serial number. When it says <b>Connected</b>, tap <b>Done</b>.</li>
+            <li>Come back here and tap <b>Print Slip</b>. Chrome shows a small popup asking which device to use. That is a one-time permission, not a settings change.</li>
+            <li>In the popup, pick the entry with the printer serial number (it may also say "Standard Serial over Bluetooth link"), then tap <b>Connect</b>. The slip prints.</li>
+          </ol>
+          <p>After setup</p>
+          <ul>
+            <li>Print is one tap. Chrome remembers the printer on this computer.</li>
+            <li>Nothing prints? Make sure the printer is on and has paper, then try again.</li>
+            <li>Popup list empty? The printer is off or not paired. Repeat steps 1 to 3.</li>
+            <li>Picked the wrong device, or swapped cars? Tap <b>Choose different printer</b>, then Print again.</li>
+          </ul>
+        </div>
+        <div class="row2">
+          <button type="button" class="btn sec" id="forgetBtn">Choose different printer</button>
+          <button type="button" class="btn sec" id="infoBtn">Read printer info</button>
+        </div>
+        <textarea id="log" readonly aria-label="Printer log"></textarea>
+      </details>
+    </div>
+  </div>
+</div>
+
+<footer class="foot">Build v2</footer>
+
+<script src="/patrol/print.js"></script>
+<script>
+(function(){
+  'use strict';
+
+  var LOGO_SRC = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAXwAAABNAQAAAACNzeLbAAADtElEQVR4nJWWv27cRhDGf7tkQhaCj0UKFYGPqtKqdCHgWAjIa+QZXNmNbxEX9mPkMRJAQNaIC5UukyII3SndnpOCp5A7KbjkkTzqRE1zy739Zr7Z+bdKANGQVCyRnQY+aGCvFwFAxIRVIgvEIbbHbhcB6oOx1eiv9ejLb8VvRMQx8FX1WrZOqkhWTvxabCQ2EZeIS+Q3f6kHgN4brOKuAcCBh3vcPZ9qPIzu5qduUUJZAHhAQPhssG8A4nQAcOHXX0D0c3d5lUmduX7Ju7+RiYWOnnLw8SuAugIoUuIz0tRg0PEAMLgx3reqLMQQW5AMsGgNsBYpA+OxVHVA1UBsY9AKEilh7UDGp3cZKoeaQtMU5KBLNGbVUl9ZMO3JJoMs+E9dGSC/Dc5ptt3dvOhVx3m3+pLRZADnrX+vhreUHJYFOFi1qhRA0vk3vFaLDSvTbf25gq/BQ0kJXI0Al93CDTHJDQAZ1AXP0UAX7D7oqYHKt0YNQF04lAMyNEgXrz6GsYWr/wBWNTyHO/O7o7ozrQ/+OF5Ak7bOWFbsL/gl5/UFpGiou3j1maFLyNWAoKbQFBpi9CHlDgvl4FwDZO2lnHEZcxmDBhFHqDTLZlCUv07L2W/bJiBlB2AEeKAJaCgD2/2c70ei6cN7C8UiQIh2s+A0gAiRiLQN8FEXxCkRnVTAPuWogmZk1+dSSkjkR31oE2PXOfQ4oCYjVOTZIgDkwUBXxyclbjPoEwA/tHuf81MIcWyl9aPr3uVpSg64B+DZAkYgJSIOWDqBxCppx9ayGaexhPx7tYgRYiIRmE64E7mkohrFkjyCNpdiBFgvI4QOiqNyKQBSPFwtPI/yeuWaWM02sxnZaU/G0iAHSoQMn4qoXFSxl4LbQd/VNTmQP6gxflNQI83IwryEgr0Bi+/nWQwFMR/nEP+cycYKBg/f94C2AzdB3SjcHkD9Ma7ECSUVM5WX8P7QHsEhMnwyRIdE24lnK29FXojvct9pNzHTDO0DXCMx6v5ASU0a2M6MATeA4a/+u1Qi48yOBpQ2IkpqtlJtO0qlZjCU4aiNZ4AdRBroG1KQUVDkO/D0gQ6A8xGgORj8UPhrUyv4pt+ziUyd6Mp7J55NVW/2svb9E1VbAMYv9S+ddRU4GPVj/6eZtKMaTk1Tp0lHyok8XW+eleP0VjX8+zBgroGVJ6aj0zPVuT41sGcrzlE+DfCMu6cB1MMG0LMN49t6ZvOEBSLzsIkFb6TJtT5RYrNskBzEPomROH3xRAP/A5T+gAkcvdhCAAAAAElFTkSuQmCC';
+  var QR_URL = 'https://www.richardsonpolice.net/i-want-to/find/accident-report';
+
+  // Slip wording reproduced from the current printed form. Do not edit without approval.
+  var INTRO = "It is a driver's responsibility to exchange information (such as driver, vehicle, and insurance information) with any other drivers involved in a motor vehicle crash (Texas Transportation Code 550.023).  The Richardson Police Department is providing this Driver Information Exchange form as a courtesy for providing that important data to you. The decision as to which party is at fault and who will be responsible for damages or injuries is made by your insurance carrier or through civil court proceedings. Neither the Driver Information Exchange form nor the Richardson Police Department have any control over which party will pay for the losses incurred in your crash.";
+  var CONTACT = "If you need to contact this Officer, please call the Richardson Police Department at 972-744-4800.  The operator will forward your information to the officer.";
+  var ADDR = ['Richardson Police Department', '200 N Greenville Ave', 'Richardson, TX 75081', 'www.richardsonpolice.net'];
+
+  function $(id){ return document.getElementById(id); }
+  function log(msg){ var el = $('log'); el.value += '[' + new Date().toLocaleTimeString() + '] ' + msg + '\n'; el.scrollTop = el.scrollHeight; }
+  function setStatus(msg, cls){ var s = $('status'); s.textContent = msg || ''; s.className = 'status' + (cls ? ' ' + cls : ''); }
+  if(window.RPDPrint) RPDPrint.log = log;
+
+  function pad(n){ return (n < 10 ? '0' : '') + n; }
+  function nowStr(){ var d = new Date(); return pad(d.getMonth()+1) + '/' + pad(d.getDate()) + '/' + d.getFullYear() + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes()); }
+  $('dt').value = nowStr();
+
+  // ---------- VIN check digit ----------
+  function vinValid(v){
+    v = (v || '').toUpperCase();
+    if(v.length !== 17 || /[IOQ]/.test(v) || /[^A-Z0-9]/.test(v)) return false;
+    var map = {A:1,B:2,C:3,D:4,E:5,F:6,G:7,H:8,J:1,K:2,L:3,M:4,N:5,P:7,R:9,S:2,T:3,U:4,V:5,W:6,X:7,Y:8,Z:9};
+    var wt = [8,7,6,5,4,3,2,10,0,9,8,7,6,5,4,3,2], sum = 0;
+    for(var i = 0; i < 17; i++){ var ch = v[i]; sum += (/\d/.test(ch) ? +ch : map[ch]) * wt[i]; }
+    var r = sum % 11, cd = r === 10 ? 'X' : String(r);
+    return v[8] === cd;
+  }
+
+  // ---------- units ----------
+  var unitSeq = 0;
+  var FIELDS = [
+    ['sect', 'Driver'],
+    ['last', 'Last name', 'c3', 'text', 'upper'], ['first', 'First name', 'c3', 'text', 'upper'],
+    ['dl', "Driver's license no.", 'c4', 'text', 'upper'], ['dlst', 'State', 'c2', 'text', 'upper', 'TX'],
+    ['sect', 'Vehicle'],
+    ['vin', 'VIN', 'c6', 'text', 'upper'],
+    ['plate', 'License plate', 'c4', 'text', 'upper'], ['plst', 'State', 'c2', 'text', 'upper', 'TX'],
+    ['make', 'Make', 'c2', 'text'], ['model', 'Model', 'c2', 'text'], ['year', 'Year', 'c2', 'numeric'],
+    ['color', 'Color', 'c6', 'text', 'upper'],
+    ['sect', 'Liability insurance'],
+    ['ins', 'Company', 'c4', 'text', 'upper'], ['insph', 'Phone', 'c2', 'tel'],
+    ['policy', 'Policy #', 'c6', 'text', 'upper']
+  ];
+  var COLORS = ['WHITE','BLACK','GRAY','SILVER','BLUE','RED','GREEN','TAN','BROWN','GOLD','MAROON','ORANGE','YELLOW'];
+
+  function addUnit(){
+    unitSeq++;
+    var n = $('units').children.length + 1;
+    var card = document.createElement('div'); card.className = 'card unit'; card.dataset.id = unitSeq;
+    var h = '<h2><span class="uname">Unit ' + pad(n) + '</span><button type="button" class="rm">Remove</button></h2><div class="g">';
+    FIELDS.forEach(function(f){
+      if(f[0] === 'sect'){ h += '<div class="sect">' + f[1] + '</div>'; return; }
+      var inputmode = f[3] === 'numeric' ? 'numeric' : (f[3] === 'tel' ? 'tel' : 'text');
+      h += '<div class="f ' + f[2] + '"><label>' + f[1] + '</label><input data-k="' + f[0] + '" inputmode="' + inputmode + '" autocomplete="off"' +
+           (f[4] === 'upper' ? ' style="text-transform:uppercase"' : '') + (f[5] ? ' value="' + f[5] + '"' : '') + '>' +
+           (f[0] === 'vin' ? '<div class="hint"></div>' : '') + '</div>';
+      if(f[0] === 'color'){
+        h += '<div class="chips">' + COLORS.map(function(c){ return '<button type="button" class="chip" data-color="' + c + '">' + c + '</button>'; }).join('') + '</div>';
+      }
+    });
+    h += '</div>';
+    card.innerHTML = h;
+    $('units').appendChild(card);
+    card.querySelector('.rm').addEventListener('click', function(){
+      if($('units').children.length === 1){ card.querySelectorAll('input').forEach(function(i){ i.value = i.dataset.k === 'dlst' || i.dataset.k === 'plst' ? 'TX' : ''; }); }
+      else card.remove();
+      renumber(); draw();
+    });
+    card.addEventListener('click', function(ev){
+      var ch = ev.target.closest('.chip'); if(!ch) return;
+      card.querySelector('input[data-k="color"]').value = ch.dataset.color; draw();
+    });
+    card.querySelectorAll('input').forEach(function(i){ i.addEventListener('input', function(){
+      if(i.dataset.k === 'vin'){
+        var v = i.value.trim().toUpperCase(), hint = i.parentNode.querySelector('.hint');
+        if(!v){ hint.textContent = ''; hint.className = 'hint'; i.classList.remove('bad'); }
+        else if(v.length < 17){ hint.textContent = (17 - v.length) + ' more characters'; hint.className = 'hint'; i.classList.remove('bad'); }
+        else if(vinValid(v)){ hint.textContent = 'VIN check digit OK'; hint.className = 'hint'; i.classList.remove('bad'); }
+        else { hint.textContent = 'Check digit does not match. Double-check the VIN (I, O, Q are never used).'; hint.className = 'hint bad'; i.classList.add('bad'); }
+      }
+      draw();
+    }); });
+    renumber(); draw();
+    if(n > 1) card.scrollIntoView({ behavior:'smooth', block:'start' });
+  }
+  function renumber(){ Array.prototype.forEach.call($('units').children, function(c, i){ c.querySelector('.uname').textContent = 'Unit ' + pad(i + 1); }); }
+  function readUnits(){
+    return Array.prototype.map.call($('units').children, function(c){
+      var o = {}; c.querySelectorAll('input').forEach(function(i){ o[i.dataset.k] = i.value.trim(); }); return o;
+    });
+  }
+  $('addUnit').addEventListener('click', addUnit);
+  ['svc','dt','loc','offName','offBadge'].forEach(function(id){ $(id).addEventListener('input', draw); });
+  $('clearBtn').addEventListener('click', function(){
+    if(!confirm('Clear all fields?')) return;
+    ['svc','loc','offName','offBadge'].forEach(function(id){ $(id).value = ''; });
+    $('dt').value = nowStr();
+    $('units').innerHTML = ''; addUnit(); addUnit();
+    setStatus('');
+  });
+
+  // ---------- drawing ----------
+  var W = 832, M = 30;
+  var logo = new Image(); logo.onload = draw; logo.onerror = draw; logo.src = LOGO_SRC;
+  var qrCanvas = null;
+  function makeQR(){
+    try{
+      var q = qrcode(0, 'M'); q.addData(QR_URL); q.make();
+      var n = q.getModuleCount(), scale = 6, size = n * scale;
+      var c = document.createElement('canvas'); c.width = size; c.height = size;
+      var x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, size, size); x.fillStyle = '#000';
+      for(var r = 0; r < n; r++) for(var col = 0; col < n; col++) if(q.isDark(r, col)) x.fillRect(col * scale, r * scale, scale, scale);
+      qrCanvas = c;
+    }catch(e){ qrCanvas = null; }
+  }
+  if(window.qrcode) makeQR();
+
+  function wrapText(ctx, text, maxW){
+    var words = text.replace(/\s+/g, ' ').trim().split(' '), lines = [], cur = '';
+    words.forEach(function(w){ var t = cur ? cur + ' ' + w : w; if(ctx.measureText(t).width > maxW && cur){ lines.push(cur); cur = w; } else { cur = t; } });
+    if(cur) lines.push(cur); return lines;
+  }
+  function up(s){ return (s || '').toUpperCase(); }
+
+  // A cell: label in small caps at top-left, value bold below. Returns nothing; caller manages y.
+  function cell(ctx, x, y, w, h, label, value){
+    ctx.strokeStyle = '#000'; ctx.lineWidth = 2; ctx.strokeRect(x, y, w, h);
+    ctx.fillStyle = '#000'; ctx.textBaseline = 'top';
+    ctx.font = '12px Arial, Helvetica, sans-serif'; ctx.fillText(label.toUpperCase(), x + 6, y + 4);
+    ctx.font = 'bold 20px Arial, Helvetica, sans-serif';
+    var v = value || '';
+    while(v && ctx.measureText(v).width > w - 12) v = v.slice(0, -1);
+    ctx.fillText(v, x + 6, y + 20);
+  }
+  function bar(ctx, x, y, w, h, text, size){
+    ctx.strokeStyle = '#000'; ctx.lineWidth = 2; ctx.strokeRect(x, y, w, h);
+    ctx.fillStyle = '#000'; ctx.font = 'bold ' + size + 'px Arial, Helvetica, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(text, x + w / 2, y + h / 2 + 1); ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+  }
+
+  function draw(){
+    var c = $('slip'), ctx = c.getContext('2d');
+    var units = readUnits();
+    var H = 46;   // cell height
+    // estimate height first
+    ctx.font = '20px Arial, Helvetica, sans-serif';
+    var introL = wrapText(ctx, INTRO, W - 2 * M), contactL = wrapText(ctx, CONTACT, W - 2 * M);
+    var logoH = logo.naturalWidth ? Math.round(logo.naturalHeight * 300 / logo.naturalWidth) : 60;
+    var qrSize = 190;
+    var headerH = 20 + logoH + 16 + 30 + 30 + 18 + introL.length * 24 + 18 + contactL.length * 24 + 22 + Math.max(qrSize, 4 * 26) + 26;
+    var crashH = H * 3 + 14;
+    var unitH = 36 + 30 + H * 2 + 30 + H * 3 + 30 + H * 2 + 16;
+    var total = headerH + crashH + units.length * unitH + 60;
+    c.width = W; c.height = Math.ceil(total / 8) * 8;
+    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);
+    ctx.fillStyle = '#000'; ctx.textBaseline = 'top';
+
+    var y = 20;
+    if(logo.naturalWidth) ctx.drawImage(logo, Math.round((W - 300) / 2), y, 300, logoH);
+    y += logoH + 16;
+    ctx.font = 'bold 26px Arial, Helvetica, sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('RICHARDSON POLICE DEPARTMENT', W / 2, y); y += 30;
+    ctx.fillText('DRIVER INFORMATION EXCHANGE', W / 2, y); y += 30 + 18;
+    ctx.textAlign = 'left'; ctx.font = '20px Arial, Helvetica, sans-serif';
+    introL.forEach(function(t){ ctx.fillText(t, M, y); y += 24; }); y += 18;
+    contactL.forEach(function(t){ ctx.fillText(t, M, y); y += 24; }); y += 22;
+    var blockTop = y;
+    ctx.font = 'bold 20px Arial, Helvetica, sans-serif';
+    ADDR.forEach(function(t){ ctx.fillText(t, M + 10, y); y += 26; });
+    if(qrCanvas) ctx.drawImage(qrCanvas, W - M - qrSize - 10, blockTop - 6, qrSize, qrSize);
+    y = blockTop + Math.max(qrSize, 4 * 26) + 26;
+
+    // crash block
+    var x0 = M, cw = W - 2 * M, half = Math.round(cw / 2);
+    cell(ctx, x0, y, half, H, 'Service number:', up($('svc').value));
+    cell(ctx, x0 + half, y, cw - half, H, 'Date/Time:', $('dt').value); y += H;
+    cell(ctx, x0, y, cw, H, 'Location:', up($('loc').value)); y += H;
+    var off = [up($('offName').value), $('offBadge').value.trim()].filter(Boolean).join(' ');
+    cell(ctx, x0, y, cw, H, 'Officer:', off); y += H + 14;
+
+    units.forEach(function(u, i){
+      bar(ctx, x0, y, cw, 30, 'UNIT ' + pad(i + 1), 18); y += 36;
+      bar(ctx, x0, y, cw, 26, 'DRIVER INFORMATION', 17); y += 26;
+      var name = [up(u.last), up(u.first)].filter(Boolean).join(' ');
+      cell(ctx, x0, y, Math.round(cw * .66), H, 'Last name, First name', name);
+      cell(ctx, x0 + Math.round(cw * .66), y, cw - Math.round(cw * .66), H, 'State', up(u.dlst)); y += H;
+      cell(ctx, x0, y, cw, H, "Driver's license no.", up(u.dl)); y += H;
+      bar(ctx, x0, y, cw, 26, 'VEHICLE INFORMATION', 17); y += 26;
+      var a = Math.round(cw * .55), b = Math.round(cw * .28);
+      cell(ctx, x0, y, a, H, 'VIN', up(u.vin));
+      cell(ctx, x0 + a, y, b, H, 'License plate', up(u.plate));
+      cell(ctx, x0 + a + b, y, cw - a - b, H, 'State', up(u.plst)); y += H;
+      cell(ctx, x0, y, a, H, 'Make', u.make);
+      cell(ctx, x0 + a, y, b, H, 'Color', up(u.color));
+      cell(ctx, x0 + a + b, y, cw - a - b, H, 'Year', u.year); y += H;
+      cell(ctx, x0, y, a + b, H, 'Model', u.model);
+      cell(ctx, x0 + a + b, y, cw - a - b, H, '', ''); y += H;
+      bar(ctx, x0, y, cw, 26, 'LIABILITY INSURANCE INFO', 17); y += 26;
+      cell(ctx, x0, y, half, H, 'Company', up(u.ins));
+      cell(ctx, x0 + half, y, cw - half, H, 'Phone', u.insph); y += H;
+      cell(ctx, x0, y, cw, H, 'Policy #', up(u.policy)); y += H + 16;
+    });
+  }
+  window.exDraw = draw;
+
+  // ---------- print ----------
+  var busy = false;
+  $('printBtn').addEventListener('click', async function(){
+    if(busy) return;
+    if(!window.RPDPrint){ setStatus('Print engine did not load. Check your connection and reload.', 'bad'); return; }
+    busy = true; $('printBtn').disabled = true; setStatus('Printing...');
+    try{ draw(); await RPDPrint.printCanvas($('slip'), 1); setStatus('Sent to printer. Tap again for the next driver.', 'ok'); }
+    catch(e){ var why = RPDPrint.explain(e); setStatus(why, 'bad'); log('ERROR (' + ((e && e.name) || 'Error') + '): ' + why); }
+    finally{ busy = false; $('printBtn').disabled = false; }
+  });
+  $('infoBtn').addEventListener('click', async function(){
+    if(busy || !window.RPDPrint) return; busy = true;
+    try{ log('Reading printer settings (read only)...'); (await RPDPrint.info()).forEach(function(x){ log('  ' + x); }); }
+    catch(e){ log('ERROR: ' + RPDPrint.explain(e)); } finally{ busy = false; }
+  });
+  $('forgetBtn').addEventListener('click', async function(){
+    if(!window.RPDPrint) return;
+    try{ await RPDPrint.forget(); log('Forgot the saved printer. The next print will ask you to pick one.'); }
+    catch(e){ log('ERROR: ' + RPDPrint.explain(e)); }
+  });
+
+  addUnit(); addUnit();
+  if(document.fonts && document.fonts.ready) document.fonts.ready.then(draw);
+  log('Ready. Direct printing ' + ((window.RPDPrint && RPDPrint.supported()) ? 'available.' : 'NOT available in this browser. Use Chrome or Edge on the squad computer.'));
+})();
+</script>
+</body>
+</html>

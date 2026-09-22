@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- traffic/index.html | Build v3 | 2026-09-22 | Copies selector removed (printer does not cut between copies; tap Print again for another). v2: Third mode "Feedback Notice": draws the English/Spanish feedback slip with the City wordmark and prints it on the in-car Zebra via /patrol/print.js (direct serial over paired Bluetooth, CPCL bitmap). Barcode column hidden in that mode. v1: DL/ID + VIN barcode generator. -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -189,7 +190,17 @@
     font-size:17px;padding:13px 10px;color:#7a8492;text-transform:uppercase;
     transition:background .15s,color .15s;
   }
-  .mode-btn:first-child{border-right:1px solid var(--line);}
+  .mode-btn:not(:last-child){border-right:1px solid var(--line);}
+  .wrap.fb-only{grid-template-columns:1fr;max-width:720px;}
+  .fb-preview{display:block;width:100%;height:auto;border:1px dashed var(--line);border-radius:6px;background:#fff;margin:0 0 14px;}
+  .fb-print{width:100%;font-family:"Bebas Neue",Impact,sans-serif;font-size:24px;letter-spacing:.08em;min-height:58px;border:0;border-radius:8px;background:var(--gold);color:#23282f;cursor:pointer;}
+  .fb-print:disabled{opacity:.45;cursor:default;}
+  .fb-sec{width:100%;font-family:"Bebas Neue",Impact,sans-serif;font-size:17px;letter-spacing:.06em;min-height:46px;border:1.5px solid var(--navy);border-radius:8px;background:#fff;color:var(--navy);cursor:pointer;margin-top:8px;}
+  .fb-status{font-size:13px;margin-top:10px;min-height:18px;color:#54606f;}
+  .fb-status.ok{color:#1f6b3a;font-weight:600;} .fb-status.bad{color:#9b2030;font-weight:600;}
+  .fb-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+  #fbTrouble{margin-top:14px;} #fbTrouble summary{cursor:pointer;font-size:12.5px;font-weight:600;color:#54606f;}
+  #fbLog{width:100%;height:120px;margin-top:8px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px;border:1px solid var(--line);border-radius:6px;background:#fbfaf6;padding:8px;resize:vertical;}
   .mode-btn.active{background:var(--navy);color:#fff;}
   .mode-btn:not(.active):hover{background:#f0eee7;color:var(--navy);}
   .combo-list{
@@ -252,6 +263,26 @@
     <div class="mode-switch">
       <button class="mode-btn active" id="modeDL" data-mode="dl">DL / ID</button>
       <button class="mode-btn" id="modeVIN" data-mode="vin">VIN</button>
+      <button class="mode-btn" id="modeFB" data-mode="fb">Feedback Notice</button>
+    </div>
+
+    <!-- Feedback Notice panel -->
+    <div class="card" id="fbPanel" style="display:none;">
+      <div class="card-h">Traffic Feedback Notice</div>
+      <div class="card-body">
+        <div class="use-note">Prints the English/Spanish feedback notice slip on your in-car printer. First time on this computer: pair the printer in Windows Bluetooth settings, tap Print, and pick the printer from Chrome's list. After that it is remembered.</div>
+        <canvas id="fbSlip" class="fb-preview" width="832" height="200" aria-label="Notice preview"></canvas>
+        <button type="button" class="fb-print" id="fbPrintBtn">Print Notice</button>
+        <div class="fb-status" id="fbStatus"></div>
+        <details id="fbTrouble">
+          <summary>Printer setup and troubleshooting</summary>
+          <div class="fb-row">
+            <button type="button" class="fb-sec" id="fbForgetBtn">Choose different printer</button>
+            <button type="button" class="fb-sec" id="fbInfoBtn">Read printer info</button>
+          </div>
+          <textarea id="fbLog" readonly aria-label="Printer log"></textarea>
+        </details>
+      </div>
     </div>
 
     <!-- VIN panel -->
@@ -963,11 +994,16 @@ document.querySelectorAll(".chip").forEach(chip=>{
 // mode switch
 function setMode(mode){
   currentMode = mode;
-  const isVIN = mode === "vin";
+  const isVIN = mode === "vin", isFB = mode === "fb";
   $("vinPanel").style.display = isVIN ? "" : "none";
-  $("dlPanel").style.display  = isVIN ? "none" : "";
+  $("dlPanel").style.display  = (isVIN || isFB) ? "none" : "";
+  $("fbPanel").style.display  = isFB ? "" : "none";
+  document.querySelector(".output-col").style.display = isFB ? "none" : "";
+  document.querySelector(".wrap").classList.toggle("fb-only", isFB);
   $("modeVIN").classList.toggle("active", isVIN);
-  $("modeDL").classList.toggle("active", !isVIN);
+  $("modeDL").classList.toggle("active", !isVIN && !isFB);
+  $("modeFB").classList.toggle("active", isFB);
+  if(isFB){ fbDraw(); return; }
   $("outputStamp").textContent = isVIN ? "VIN Barcode" : "PDF417 Output";
   $("rawCardTitle").textContent = isVIN ? "Encoded VIN string" : "Raw AAMVA payload";
   $("rawHint").style.display = isVIN ? "none" : "";
@@ -975,6 +1011,7 @@ function setMode(mode){
 }
 $("modeDL").addEventListener("click", ()=>setMode("dl"));
 $("modeVIN").addEventListener("click", ()=>setMode("vin"));
+$("modeFB").addEventListener("click", ()=>setMode("fb"));
 
 document.querySelectorAll(".field").forEach(el=>{
   el.addEventListener("input", render);
@@ -982,6 +1019,67 @@ document.querySelectorAll(".field").forEach(el=>{
 });
 
 render();
+</script>
+<script src="/patrol/print.js"></script>
+<script>
+(function(){
+  'use strict';
+  // Notice wording reproduced verbatim from the current printed slip. Do not edit without approval.
+  var NOTICE_EN = 'If you would like to provide feedback regarding a Richardson Police Officers professional demeanor, please contact our Department.  Compliments, complaints or racial profiling complaints may be submitted to 200 N Greenville Ave, Richardson, TX 75081 or AskRichardsonPolice@cor.gov or 972-744-4800.';
+  var NOTICE_ES = 'Si desea brindar comentarios sobre la conducta profesional de un oficial de policia de Richardson, por favor comuniquese con nuestro Departamento. Para elogios, quejas o quejas por discriminacion racial se pueden enviar a 200 N Greenville Ave, Richardson, TX 75081 o AskRichardsonPolice@cor.gov o 972-744-4800.';
+  var LOGO_SRC = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAXwAAABNAQAAAACNzeLbAAADtElEQVR4nJWWv27cRhDGf7tkQhaCj0UKFYGPqtKqdCHgWAjIa+QZXNmNbxEX9mPkMRJAQNaIC5UukyII3SndnpOCp5A7KbjkkTzqRE1zy739Zr7Z+bdKANGQVCyRnQY+aGCvFwFAxIRVIgvEIbbHbhcB6oOx1eiv9ejLb8VvRMQx8FX1WrZOqkhWTvxabCQ2EZeIS+Q3f6kHgN4brOKuAcCBh3vcPZ9qPIzu5qduUUJZAHhAQPhssG8A4nQAcOHXX0D0c3d5lUmduX7Ju7+RiYWOnnLw8SuAugIoUuIz0tRg0PEAMLgx3reqLMQQW5AMsGgNsBYpA+OxVHVA1UBsY9AKEilh7UDGp3cZKoeaQtMU5KBLNGbVUl9ZMO3JJoMs+E9dGSC/Dc5ptt3dvOhVx3m3+pLRZADnrX+vhreUHJYFOFi1qhRA0vk3vFaLDSvTbf25gq/BQ0kJXI0Al93CDTHJDQAZ1AXP0UAX7D7oqYHKt0YNQF04lAMyNEgXrz6GsYWr/wBWNTyHO/O7o7ozrQ/+OF5Ak7bOWFbsL/gl5/UFpGiou3j1maFLyNWAoKbQFBpi9CHlDgvl4FwDZO2lnHEZcxmDBhFHqDTLZlCUv07L2W/bJiBlB2AEeKAJaCgD2/2c70ei6cN7C8UiQIh2s+A0gAiRiLQN8FEXxCkRnVTAPuWogmZk1+dSSkjkR31oE2PXOfQ4oCYjVOTZIgDkwUBXxyclbjPoEwA/tHuf81MIcWyl9aPr3uVpSg64B+DZAkYgJSIOWDqBxCppx9ayGaexhPx7tYgRYiIRmE64E7mkohrFkjyCNpdiBFgvI4QOiqNyKQBSPFwtPI/yeuWaWM02sxnZaU/G0iAHSoQMn4qoXFSxl4LbQd/VNTmQP6gxflNQI83IwryEgr0Bi+/nWQwFMR/nEP+cycYKBg/f94C2AzdB3SjcHkD9Ma7ECSUVM5WX8P7QHsEhMnwyRIdE24lnK29FXojvct9pNzHTDO0DXCMx6v5ASU0a2M6MATeA4a/+u1Qi48yOBpQ2IkpqtlJtO0qlZjCU4aiNZ4AdRBroG1KQUVDkO/D0gQ6A8xGgORj8UPhrUyv4pt+ziUyd6Mp7J55NVW/2svb9E1VbAMYv9S+ddRU4GPVj/6eZtKMaTk1Tp0lHyok8XW+eleP0VjX8+zBgroGVJ6aj0zPVuT41sGcrzlE+DfCMu6cB1MMG0LMN49t6ZvOEBSLzsIkFb6TJtT5RYrNskBzEPomROH3xRAP/A5T+gAkcvdhCAAAAAElFTkSuQmCC';
+  var W = 832, MARGIN = 26, FONT = '21px Arial, Helvetica, sans-serif', LINE_H = 26, PARA_GAP = 22;
+  var TOP = 22, LOGO_W = 380, LOGO_GAP = 24, BOTTOM = 90;
+  var busy = false;
+  function g(id){ return document.getElementById(id); }
+  function log(msg){ var el = g('fbLog'); el.value += '[' + new Date().toLocaleTimeString() + '] ' + msg + '\n'; el.scrollTop = el.scrollHeight; }
+  function setStatus(msg, cls){ var s = g('fbStatus'); s.textContent = msg || ''; s.className = 'fb-status' + (cls ? ' ' + cls : ''); }
+  if(window.RPDPrint) RPDPrint.log = log;
+
+  function wrapText(ctx, text, maxW){
+    var words = text.replace(/\s+/g, ' ').trim().split(' '), lines = [], cur = '';
+    words.forEach(function(w){ var t = cur ? cur + ' ' + w : w; if(ctx.measureText(t).width > maxW && cur){ lines.push(cur); cur = w; } else { cur = t; } });
+    if(cur) lines.push(cur);
+    return lines;
+  }
+  var logo = new Image();
+  window.fbDraw = function(){
+    var c = g('fbSlip'), ctx = c.getContext('2d');
+    ctx.font = FONT;
+    var maxW = W - MARGIN * 2, en = wrapText(ctx, NOTICE_EN, maxW), es = wrapText(ctx, NOTICE_ES, maxW);
+    var logoH = logo.naturalWidth ? Math.round(logo.naturalHeight * LOGO_W / logo.naturalWidth) : 0;
+    var y = TOP + (logoH ? logoH + LOGO_GAP : 0);
+    var h = Math.ceil((y + en.length * LINE_H + PARA_GAP + es.length * LINE_H + BOTTOM) / 8) * 8;
+    c.width = W; c.height = h;
+    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, h);
+    if(logoH) ctx.drawImage(logo, Math.round((W - LOGO_W) / 2), TOP, LOGO_W, logoH);
+    ctx.fillStyle = '#000'; ctx.font = FONT; ctx.textBaseline = 'top';
+    en.forEach(function(t){ ctx.fillText(t, MARGIN, y); y += LINE_H; });
+    y += PARA_GAP;
+    es.forEach(function(t){ ctx.fillText(t, MARGIN, y); y += LINE_H; });
+  };
+  logo.onload = fbDraw; logo.onerror = fbDraw; logo.src = LOGO_SRC;
+
+  g('fbPrintBtn').addEventListener('click', async function(){
+    if(busy) return;
+    if(!window.RPDPrint){ setStatus('Print engine did not load. Check your connection and reload.', 'bad'); return; }
+    busy = true; g('fbPrintBtn').disabled = true; setStatus('Printing...');
+    try{ fbDraw(); await RPDPrint.printCanvas(g('fbSlip'), 1); setStatus('Sent to printer.', 'ok'); }
+    catch(e){ var why = RPDPrint.explain(e); setStatus(why, 'bad'); log('ERROR (' + ((e && e.name) || 'Error') + '): ' + why); }
+    finally{ busy = false; g('fbPrintBtn').disabled = false; }
+  });
+  g('fbInfoBtn').addEventListener('click', async function(){
+    if(busy || !window.RPDPrint) return; busy = true;
+    try{ log('Reading printer settings (read only)...'); (await RPDPrint.info()).forEach(function(x){ log('  ' + x); }); }
+    catch(e){ log('ERROR: ' + RPDPrint.explain(e)); } finally{ busy = false; }
+  });
+  g('fbForgetBtn').addEventListener('click', async function(){
+    if(!window.RPDPrint) return;
+    try{ await RPDPrint.forget(); log('Forgot the saved printer. The next print will ask you to pick one.'); }
+    catch(e){ log('ERROR: ' + RPDPrint.explain(e)); }
+  });
+  log('Ready. Direct printing ' + ((window.RPDPrint && RPDPrint.supported()) ? 'available.' : 'NOT available in this browser. Use Chrome or Edge on the squad computer.'));
+})();
 </script>
 </body>
 </html>

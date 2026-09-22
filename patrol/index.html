@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- patrol/index.html | Build v6 | 2026-09-22 | Traffic Stop card now mentions the Traffic Feedback Notice mode. v5: New card copy; APOWW card (draft) above EPO; code box routes A-codes to /patrol/apoww; 20-minute expiry wording. v4: EPO card marked DRAFT -->
+<!-- patrol/index.html | Build v7 | 2026-09-22 | Driver Information Exchange card (draft) added at the bottom. v6: Traffic Stop card mentions the Traffic Feedback Notice mode. v5: New card copy; APOWW card (draft) above EPO; code box routes A-codes to /patrol/apoww; 20-minute expiry wording. v4: EPO card marked DRAFT -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -93,6 +93,11 @@
       <div class="name">Emergency Protective Order Packet <span style="color:var(--red);font-size:15px;letter-spacing:.05em;">(DRAFT - DO NOT USE)</span></div>
       <div class="desc">Every required EPO form in one place. Type the information once and it fills the matching fields on all of them, plus two extra forms the jail asked for to make their side easier.</div>
     </a>
+    <a class="tool" href="/patrol/exchange/">
+      <span class="go">&rsaquo;</span>
+      <div class="name">Driver Information Exchange <span style="color:var(--red);font-size:15px;letter-spacing:.05em;">(DRAFT - DO NOT USE)</span></div>
+      <div class="desc">Crash driver exchange slip. Add as many units as were involved, type driver, vehicle, and insurance for each, and print one slip per driver on your in-car printer.</div>
+    </a>
   </div>
 
   <h2>Desktop code</h2>
@@ -106,10 +111,10 @@
   </div>
 </main>
 
-<footer class="foot">Internal field tools &middot; Build v6</footer>
+<footer class="foot">Internal field tools &middot; Build v7</footer>
 
 <script>
-  const BUILD = '6';
+  const BUILD = '7';
   (async () => {
     try {
       const r = await fetch(location.pathname + '?cb=' + Date.now(), {cache:'no-store'}); if (!r.ok) return;

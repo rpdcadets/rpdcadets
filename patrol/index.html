@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- patrol/index.html | Build v5 | 2026-09-16 | New card copy; APOWW card (draft) above EPO; code box routes A-codes to /patrol/apoww; 20-minute expiry wording. v4: EPO card marked DRAFT -->
+<!-- patrol/index.html | Build v6 | 2026-09-22 | Traffic Stop card now mentions the Traffic Feedback Notice mode. v5: New card copy; APOWW card (draft) above EPO; code box routes A-codes to /patrol/apoww; 20-minute expiry wording. v4: EPO card marked DRAFT -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -76,7 +76,7 @@
     <a class="tool" href="/traffic/">
       <span class="go">&rsaquo;</span>
       <div class="name">Traffic Stop / Citations</div>
-      <div class="desc">Use this on your squad car computer when someone has no scannable DL/ID. Type their information and it generates a barcode you can scan straight into your Brazos.</div>
+      <div class="desc">Use this on your squad car computer when someone has no scannable DL/ID. Type their information and it generates a barcode you can scan straight into your Brazos. Also has the Traffic Feedback Notice, which prints the English/Spanish feedback notice slip on your in-car printer.</div>
     </a>
     <a class="tool" href="/patrol/booking/">
       <span class="go">&rsaquo;</span>
@@ -106,10 +106,10 @@
   </div>
 </main>
 
-<footer class="foot">Internal field tools &middot; Build v5</footer>
+<footer class="foot">Internal field tools &middot; Build v6</footer>
 
 <script>
-  const BUILD = '5';
+  const BUILD = '6';
   (async () => {
     try {
       const r = await fetch(location.pathname + '?cb=' + Date.now(), {cache:'no-store'}); if (!r.ok) return;

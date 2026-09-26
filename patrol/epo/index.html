@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- patrol/epo/index.html | Build v7 | 2026-09-16 | PBKDF2-hardened handoff keys, 20-minute code expiry. v6: Notice name/SV# corrected again in the hosted PDF (the Aug 30 fix never reached GitHub); cache-buster bumped. v5: Adds Civil Standby Order to the packet; Application offense/service-number fields corrected (hosted app v2); Court County chosen explicitly (Dallas/Collin) instead of inheriting a party's county. v4 2026-09-02: PCO codes on TCIC no longer circled (jail request; entering agency circles from the signed Order). v3 2026-08-30: Notice name/SV# fields corrected (hosted Notice v2). v2: TCIC OCA now fills from the service number (stray 2024000 default removed from the hosted form). v1: Emergency Protective Order Packet: fills GO 408-02 Application, GO 408-03 Order (EN/ES), GO 2.01.07-004 Notice, and TCIC form from one entry; merged or separate output; desktop handoff -->
+<!-- patrol/epo/index.html | Build v10 | 2026-09-26 | Relationship list limited to family, household, and dating relationships (Friend/Neighbor/Co-worker/Acquaintance/Stranger removed; Foster parent/child added). v9: Relationship fields are dropdowns (gender-neutral list plus Other with a text box); the printed word is gendered from the Sex chips (Child + female victim = Daughter) and the TCIC field gets the inverse (Mother/Father) automatically, editable. v8: two relationship fields. v7: PBKDF2-hardened handoff keys, 20-minute code expiry. v6: Notice name/SV# corrected again in the hosted PDF (the Aug 30 fix never reached GitHub); cache-buster bumped. v5: Adds Civil Standby Order to the packet; Application offense/service-number fields corrected (hosted app v2); Court County chosen explicitly (Dallas/Collin) instead of inheriting a party's county. v4 2026-09-02: PCO codes on TCIC no longer circled (jail request; entering agency circles from the signed Order). v3 2026-08-30: Notice name/SV# fields corrected (hosted Notice v2). v2: TCIC OCA now fills from the service number (stray 2024000 default removed from the hosted form). v1: Emergency Protective Order Packet: fills GO 408-02 Application, GO 408-03 Order (EN/ES), GO 2.01.07-004 Notice, and TCIC form from one entry; merged or separate output; desktop handoff -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -146,7 +146,10 @@
     </div>
     <div class="row">
       <div class="f"><label class="l" for="vDob">DOB</label><input class="field usdate" id="vDob" inputmode="numeric" placeholder="MM/DD/YYYY" maxlength="10" autocomplete="off"></div>
-      <div class="f"><label class="l" for="vRel">Relationship to Defendant</label><input class="field" id="vRel" autocomplete="off" placeholder="e.g. Spouse, Dating partner"></div>
+      <div class="f"><label class="l" for="vRelSel">Victim's relationship to Defendant</label><select class="field" id="vRelSel"><option value="">Select...</option><option value="Spouse">Spouse</option><option value="Ex-spouse">Ex-spouse</option><option value="Common law spouse">Common law spouse</option><option value="Dating partner">Dating partner</option><option value="Former dating partner">Former dating partner</option><option value="Parent">Parent</option><option value="Child">Child</option><option value="Stepparent">Stepparent</option><option value="Stepchild">Stepchild</option><option value="Sibling">Sibling</option><option value="Stepsibling">Stepsibling</option><option value="Grandparent">Grandparent</option><option value="Grandchild">Grandchild</option><option value="Aunt/Uncle">Aunt/Uncle</option><option value="Niece/Nephew">Niece/Nephew</option><option value="Foster parent">Foster parent</option><option value="Foster child">Foster child</option><option value="In-law">In-law</option><option value="Cousin">Cousin</option><option value="Co-parent (child in common)">Co-parent (child in common)</option><option value="Household member">Household member</option><option value="Former household member">Former household member</option><option value="Roommate">Roommate</option><option value="Other">Other</option></select><input class="field" id="vRelOther" autocomplete="off" placeholder="Type the relationship" style="display:none;margin-top:6px;"><input type="hidden" id="vRel"></div>
+    </div>
+    <div class="row">
+      <div class="f"><label class="l" for="dRelSel">Defendant's relationship to Victim (TCIC)</label><select class="field" id="dRelSel"><option value="">Select...</option><option value="Spouse">Spouse</option><option value="Ex-spouse">Ex-spouse</option><option value="Common law spouse">Common law spouse</option><option value="Dating partner">Dating partner</option><option value="Former dating partner">Former dating partner</option><option value="Parent">Parent</option><option value="Child">Child</option><option value="Stepparent">Stepparent</option><option value="Stepchild">Stepchild</option><option value="Sibling">Sibling</option><option value="Stepsibling">Stepsibling</option><option value="Grandparent">Grandparent</option><option value="Grandchild">Grandchild</option><option value="Aunt/Uncle">Aunt/Uncle</option><option value="Niece/Nephew">Niece/Nephew</option><option value="Foster parent">Foster parent</option><option value="Foster child">Foster child</option><option value="In-law">In-law</option><option value="Cousin">Cousin</option><option value="Co-parent (child in common)">Co-parent (child in common)</option><option value="Household member">Household member</option><option value="Former household member">Former household member</option><option value="Roommate">Roommate</option><option value="Other">Other</option></select><input class="field" id="dRelOther" autocomplete="off" placeholder="Type the relationship" style="display:none;margin-top:6px;"><input type="hidden" id="dRel"><div class="hint" id="dRelHint" style="min-height:14px;"></div></div>
     </div>
     <label class="l">Race</label>
     <div class="chips" data-group="vRace" data-single>
@@ -260,7 +263,7 @@
   <div class="nav"><button data-go="4">&lsaquo; Back</button></div>
 </section>
 
-<footer class="foot">Internal field tool. Renders entirely in your browser. Nothing is saved on this device or the site. &middot; Build v7</footer>
+<footer class="foot">Internal field tool. Renders entirely in your browser. Nothing is saved on this device or the site. &middot; Build v10</footer>
 </main>
 
 <div class="actions">
@@ -283,7 +286,7 @@
 
 <script>
 /* ---------------- constants ---------------- */
-const BUILD = '7';
+const BUILD = '10';
 const PDFS = { app:'GO-408-02_Application.pdf?v=2', en:'GO-408-03_Order_English.pdf?v=1', es:'GO-408-03_Order_Spanish.pdf?v=1', notice:'GO-2.01.07-004_Notice.pdf?v=3', tcic:'TCIC_Protective_Order.pdf?v=2', standby:'Civil-Standby-Order.pdf?v=1' };
 const HANDOFF_TTL_MS = 20 * 60 * 1000;
 const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -321,7 +324,7 @@ const TCIC = {
 
 const $ = id => document.getElementById(id);
 const status = (msg, cls='') => { const s=$('status'); s.textContent=msg; s.className='status '+cls; };
-const TEXT_IDS = ['svc','offense','dLast','dFirst','dMiddle','dDob','dStreet','dCity','dState','dZip','dCounty','dAka','vLast','vFirst','vDob','vRel','vStreet','vCity','vState','vZip','vCounty','res2','empName','empStreet','empCity','empState','empZip','ccName','ccAddr','schName','schAddr','otherText'];
+const TEXT_IDS = ['svc','offense','dLast','dFirst','dMiddle','dDob','dStreet','dCity','dState','dZip','dCounty','dAka','vLast','vFirst','vDob','vRel','dRel','vStreet','vCity','vState','vZip','vCounty','res2','empName','empStreet','empCity','empState','empZip','ccName','ccAddr','schName','schAddr','otherText'];
 const GROUPS = ['dRace','dSex','dEth','vRace','vSex','vEth','h24','h48','epo','outMode','courtCounty'];
 
 /* ---------------- protected persons ---------------- */
@@ -384,6 +387,48 @@ function wireDates(root){
 wireDates(document);
 $('vSame').addEventListener('change', ()=>{ $('vAddrWrap').style.display = $('vSame').checked ? 'none' : ''; });
 
+/* ---------------- relationships ---------------- */
+// Dropdowns hold gender-neutral choices. The printed word is gendered from the Sex chips:
+// Order gets the victim's relationship (Child + female victim = Daughter); TCIC gets the inverse
+// (defendant's relationship to victim: Mother/Father from the defendant's sex). Officer can override.
+const REL_GENDER = { 'Spouse':['Husband','Wife'], 'Ex-spouse':['Ex-husband','Ex-wife'], 'Common law spouse':['Common law husband','Common law wife'],
+  'Dating partner':['Boyfriend','Girlfriend'], 'Former dating partner':['Ex-boyfriend','Ex-girlfriend'], 'Parent':['Father','Mother'], 'Child':['Son','Daughter'],
+  'Stepparent':['Stepfather','Stepmother'], 'Stepchild':['Stepson','Stepdaughter'], 'Sibling':['Brother','Sister'], 'Stepsibling':['Stepbrother','Stepsister'],
+  'Grandparent':['Grandfather','Grandmother'], 'Grandchild':['Grandson','Granddaughter'], 'Aunt/Uncle':['Uncle','Aunt'], 'Niece/Nephew':['Nephew','Niece'] };
+const REL_INV = { 'Parent':'Child', 'Child':'Parent', 'Foster parent':'Foster child', 'Foster child':'Foster parent', 'Stepparent':'Stepchild', 'Stepchild':'Stepparent', 'Grandparent':'Grandchild', 'Grandchild':'Grandparent', 'Aunt/Uncle':'Niece/Nephew', 'Niece/Nephew':'Aunt/Uncle' };
+function relWord(generic, sex){ const g = REL_GENDER[generic]; return g ? (sex === 'M' ? g[0] : sex === 'F' ? g[1] : generic) : generic; }
+let dRelAuto = true;   // true until the officer changes the TCIC dropdown themselves
+function relSide(prefix, sexGroup){
+  const selv = $(prefix + 'RelSel').value, other = $(prefix + 'RelOther');
+  other.style.display = selv === 'Other' ? '' : 'none';
+  $(prefix + 'Rel').value = selv === 'Other' ? other.value.trim() : (selv ? relWord(selv, groupVal(sexGroup)) : '');
+}
+function syncRel(){
+  relSide('v', 'vSex');
+  if(dRelAuto){
+    const vs = $('vRelSel').value, hint = $('dRelHint');
+    if(!vs){ $('dRelSel').value = ''; hint.textContent = ''; }
+    else if(vs === 'Other'){ $('dRelSel').value = 'Other'; hint.textContent = 'Type the defendant\'s relationship to the victim.'; }
+    else { $('dRelSel').value = REL_INV[vs] || vs; hint.textContent = 'Suggested from the victim field. Change it if wrong.'; }
+  }
+  relSide('d', 'dSex');
+}
+$('vRelSel').addEventListener('change', syncRel);
+$('vRelOther').addEventListener('input', syncRel);
+$('dRelSel').addEventListener('change', () => { dRelAuto = !$('dRelSel').value; $('dRelHint').textContent = ''; syncRel(); });
+$('dRelOther').addEventListener('input', () => relSide('d', 'dSex'));
+document.querySelectorAll('.chips[data-group="dSex"] .chip, .chips[data-group="vSex"] .chip').forEach(c => c.addEventListener('click', () => setTimeout(syncRel, 0)));
+// After a handoff, put the stored words back into the dropdowns.
+function relFromWord(prefix, word){
+  word = (word || '').trim(); const sel = $(prefix + 'RelSel'), other = $(prefix + 'RelOther');
+  if(!word){ sel.value = ''; other.value = ''; other.style.display = 'none'; return; }
+  let hit = '';
+  Object.keys(REL_GENDER).forEach(k => { if(k.toLowerCase() === word.toLowerCase() || REL_GENDER[k].some(w => w.toLowerCase() === word.toLowerCase())) hit = k; });
+  if(!hit) [...sel.options].forEach(o => { if(o.value && o.value.toLowerCase() === word.toLowerCase()) hit = o.value; });
+  if(hit){ sel.value = hit; other.value = ''; other.style.display = 'none'; }
+  else { sel.value = 'Other'; other.value = word; other.style.display = ''; }
+}
+
 /* ---------------- collect / restore ---------------- */
 function collect(){
   const d = { text:{}, groups:{}, ord:{}, offType:groupVals('offType'), spanish:$('spanish').checked, vSame:$('vSame').checked, persons:[] };
@@ -399,6 +444,7 @@ function collect(){
 function restore(d){
   Object.entries(d.text||{}).forEach(([id,v])=>{ if($(id)) $(id).value=v||''; });
   Object.entries(d.groups||{}).forEach(([g,v])=>setGroup(g,v||''));
+  relFromWord('v', $('vRel').value); relFromWord('d', $('dRel').value); dRelAuto = !$('dRel').value.trim(); if(dRelAuto) syncRel();
   setGroup('offType', d.offType||[]);
   ORD_KEYS.forEach(k=>{ document.querySelector(`[data-ord="${k}"]`).checked = !!(d.ord||{})[k]; });
   $('spanish').checked = !!d.spanish; $('vSame').checked = !!d.vSame; $('vSame').dispatchEvent(new Event('change'));
@@ -488,7 +534,7 @@ async function fillTcic(d){
   const rse = (spec, race, sex, eth) => { circle(spec.race[race]); circle(spec.sex[sex]); circle(spec.eth[eth]); };
   text('TCIC_OCA', T(d,'svc')); text('TCIC_Respondent Name', defName(d)); text('TCIC_Respondent Name_2', defName(d)); text('TCIC_Date of Birth', T(d,'dDob'));
   text('TCIC_Scars Marks andor Tattoos please describe in detail AKAs', T(d,'dAka') ? 'AKA: '+T(d,'dAka') : '');
-  text('TCIC_Relationship to Protected Person Not the additional PPNS', T(d,'vRel'));
+  text('TCIC_Relationship to Protected Person Not the additional PPNS', T(d,'dRel') || T(d,'vRel'));
   text('TCIC_Respondent Address', T(d,'dStreet')); text('TCIC_City', T(d,'dCity')); text('TCIC_County', T(d,'dCounty')); text('TCIC_State', T(d,'dState')); text('TCIC_Zip', T(d,'dZip'));
   text('TCIC_Protected Person Name', [T(d,'vLast'),T(d,'vFirst')].filter(Boolean).join(', ')); text('TCIC_Date of Birth_2', T(d,'vDob'));
   text('TCIC_Protected Person Address', va.street); text('TCIC_City_2', va.city); text('TCIC_County_2', va.county); text('TCIC_State_2', va.state); text('TCIC_Zip_2', va.zip);

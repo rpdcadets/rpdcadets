@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- traffic/index.html | Build v4 | 2026-09-22 | Step-by-step printer setup and troubleshooting inside the collapsed section. v3: Copies selector removed (printer does not cut between copies; tap Print again for another). v2: Third mode "Feedback Notice": draws the English/Spanish feedback slip with the City wordmark and prints it on the in-car Zebra via /patrol/print.js (direct serial over paired Bluetooth, CPCL bitmap). Barcode column hidden in that mode. v1: DL/ID + VIN barcode generator. -->
+<!-- traffic/index.html | Build v5 | 2026-09-26 | Setup step 3 now covers the Bluetooth PIN and the checkmark button on the printer. v4: Step-by-step printer setup and troubleshooting inside the collapsed section. v3: Copies selector removed (printer does not cut between copies; tap Print again for another). v2: Third mode "Feedback Notice": draws the English/Spanish feedback slip with the City wordmark and prints it on the in-car Zebra via /patrol/print.js (direct serial over paired Bluetooth, CPCL bitmap). Barcode column hidden in that mode. v1: DL/ID + VIN barcode generator. -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -285,7 +285,7 @@
             <ol>
               <li>Turn the printer on. Note the serial number on its bottom label (starts with <b>XXRBJ</b>).</li>
               <li>On the computer open <b>Settings</b>, then <b>Bluetooth &amp; devices</b>, then <b>Add device</b>, then <b>Bluetooth</b>.</li>
-              <li>Pick the entry that matches the printer serial number. When it says <b>Connected</b>, tap <b>Done</b>.</li>
+              <li>Pick the entry that matches the printer serial number and tap <b>Connect</b>. A PIN pops up on the computer: press the <b>checkmark button on the printer</b> to accept it. When the computer says <b>Connected</b>, tap <b>Done</b>.</li>
               <li>Come back here and tap <b>Print Notice</b>. Chrome shows a small popup asking which device to use. That is a one-time permission, not a settings change.</li>
               <li>In the popup, pick the entry with the printer serial number (it may also say "Standard Serial over Bluetooth link"), then tap <b>Connect</b>. The slip prints.</li>
             </ol>

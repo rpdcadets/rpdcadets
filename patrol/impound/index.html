@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- patrol/impound/index.html | Build v3 | 2026-09-26 | Setup step 3 now covers the Bluetooth PIN and the checkmark button on the printer. v2: Wrecker address and phone now labeled on the slip. v1: New tool. Electronic Vehicle Impound: replaces the Brazos Towed Vehicle Receipt and the paper Vehicle Impound Report (GO 4.01.02-004). Sections: incident, vehicle, hold, owner/driver/lien holder, tow, inventory (hubcaps, radio, keys, front/rear/trunk), condition, signatures. Slip drawn on a canvas with the city wordmark and printed on the in-car Zebra via /patrol/print.js. Officer-typed values print in ALL CAPS. VIN check-digit validation. Nothing stored. -->
+<!-- patrol/impound/index.html | Build v5 | 2026-09-26 | When Hold is Yes, the receipt prints write-in lines for Hold Released By / Date and Release Notified By ID# / Date. v4: Tow truck LP field removed (not tracked). v3: Setup step 3 now covers the Bluetooth PIN and the checkmark button on the printer. v2: Wrecker address and phone now labeled on the slip. v1: New tool. Electronic Vehicle Impound: replaces the Brazos Towed Vehicle Receipt and the paper Vehicle Impound Report (GO 4.01.02-004). Sections: incident, vehicle, hold, owner/driver/lien holder, tow, inventory (hubcaps, radio, keys, front/rear/trunk), condition, signatures. Slip drawn on a canvas with the city wordmark and printed on the in-car Zebra via /patrol/print.js. Officer-typed values print in ALL CAPS. VIN check-digit validation. Nothing stored. -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -154,7 +154,6 @@
         <div class="f c6"><label>Towed by (company)</label><input id="wname" autocomplete="off"></div>
         <div class="f c4"><label>Company address</label><input id="waddr" autocomplete="off"></div>
         <div class="f c2"><label>Company phone</label><input id="wphone" inputmode="tel" autocomplete="off"></div>
-        <div class="f c3"><label>Tow truck LP</label><input id="wlp" autocomplete="off"></div>
         <div class="f c3"><label>Wrecker notified at</label><input id="wtime" autocomplete="off" placeholder="HH:MM"></div>
         <div class="f c6"><label>Special towing instructions</label><input id="special" autocomplete="off"></div>
       </div>
@@ -213,7 +212,7 @@
   </div>
 </div>
 
-<footer class="foot">Build v3</footer>
+<footer class="foot">Build v5</footer>
 
 <script src="/patrol/print.js"></script>
 <script>
@@ -338,6 +337,16 @@
       wrapText(ctx, value, CW - 20).forEach(function(l){ if(!measureOnly) ctx.fillText(l, M + 20, y); y += 24; });
       y += 4;
     }
+    // blank write-in lines: cols = array of [label, widthFraction]
+    function blanks(cols){
+      var x = M; y += 6;
+      cols.forEach(function(c){
+        var w = Math.round(CW * c[1]);
+        if(!measureOnly){ font(LABEL); ctx.fillText(c[0] + ':', x, y); var lw = ctx.measureText(c[0] + ': ').width; ctx.fillRect(x + lw, y + 22, w - lw - 14, 2); }
+        x += w;
+      });
+      y += 34;
+    }
     function sig(label){
       y += 30;
       if(!measureOnly){ font(LABEL); ctx.fillText(label + ':', M, y); var lw = ctx.measureText(label + ': ').width; ctx.fillRect(M + lw, y + 22, CW - lw, 2); }
@@ -358,7 +367,11 @@
 
     head('VEHICLE');
     row([['HOLD', sel.hold, .3], ['Hold Reason', sel.hold === 'YES' ? up(v('holdReason')) : '', .7]]);
-    if(sel.hold === 'YES' && (v('holdBy') || v('holdById'))) row([['Hold Requested By', up([v('holdBy'), v('holdById')].filter(Boolean).join(' ')), 1]]);
+    if(sel.hold === 'YES'){
+      row([['Hold Requested By', up([v('holdBy'), v('holdById')].filter(Boolean).join(' ')), 1]]);
+      blanks([['Hold Released By', .6], ['Date', .4]]);
+      blanks([['Release Notified By / ID#', .6], ['Date', .4]]);
+    }
     row([['Veh Yr', up(v('vyr')), .3], ['Veh Tag', up(v('tag')), .4], ['State', up(v('tagst')), .3]]);
     row([['Make', up(v('vmk')), .3], ['Model', up(v('vmod')), .4], ['Mileage', up(v('miles')), .3]]);
     row([['Color', up(v('vcol')), .3], ['Type', up(v('vsty')), .7]]);
@@ -381,7 +394,7 @@
     row([['Towed From', up([v('loc'), v('lcity')].filter(Boolean).join(', ')), 1]]);
     row([['Towed By', up(v('wname')), 1]]);
     if(v('waddr') || v('wphone')) row([['Address', up(v('waddr')), .62], ['Phone', up(v('wphone')), .38]]);
-    row([['Tow Truck LP', up(v('wlp')), .5], ['Wrecker Notified', up(v('wtime')), .5]]);
+    row([['Wrecker Notified', up(v('wtime')), 1]]);
     if(v('special')) row([['Special Towing', up(v('special')), 1]]);
     rule();
 

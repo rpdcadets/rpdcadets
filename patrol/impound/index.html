@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<!-- patrol/impound/index.html | Build v3 | 2026-09-26 | Setup step 3 now covers the Bluetooth PIN and the checkmark button on the printer. v2: Wrecker address and phone now labeled on the slip. v1: New tool. Electronic Vehicle Impound: replaces the Brazos Towed Vehicle Receipt and the paper Vehicle Impound Report (GO 4.01.02-004). Sections: incident, vehicle, hold, owner/driver/lien holder, tow, inventory (hubcaps, radio, keys, front/rear/trunk), condition, signatures. Slip drawn on a canvas with the city wordmark and printed on the in-car Zebra via /patrol/print.js. Officer-typed values print in ALL CAPS. VIN check-digit validation. Nothing stored. -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Electronic Vehicle Impound</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#0b1f3a; --navy-2:#13294b; --paper:#f4f1ea; --ink:#1a1d24;
+    --line:#c9c2b4; --red:#9b2030; --gold:#b8923a; --field:#fbfaf6; --muted:#5f6675; --ok:#1f6b3a;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:"Barlow","Segoe UI",system-ui,sans-serif;
+    background:
+      radial-gradient(circle at 12% -10%, rgba(184,146,58,.10), transparent 40%),
+      radial-gradient(circle at 100% 0%, rgba(155,32,48,.08), transparent 45%),
+      var(--paper);
+    color:var(--ink); line-height:1.45; min-height:100vh; display:flex; flex-direction:column;
+  }
+  header.masthead{
+    background:linear-gradient(180deg,var(--navy) 0%,var(--navy-2) 100%);
+    border-bottom:3px solid var(--gold);
+    box-shadow:0 2px 0 var(--red) inset, 0 6px 20px rgba(0,0,0,.25);
+    padding:18px 24px 14px;
+  }
+  .masthead .kick{margin:0 0 2px;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);font-weight:600;}
+  .masthead h1{margin:0;font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:32px;letter-spacing:.02em;color:#fff;line-height:1.05;}
+  .masthead .sub{margin-top:4px;font-size:13px;color:rgba(255,255,255,.72);}
+  .masthead a{color:var(--gold);text-decoration:none;font-size:13px;}
+  .wrap{flex:1;width:100%;max-width:1120px;margin:0 auto;padding:20px 18px 40px;display:grid;grid-template-columns:1fr 440px;gap:22px;align-items:start;}
+  @media(max-width:900px){.wrap{grid-template-columns:1fr;} .out{position:static;}}
+  .out{position:sticky;top:16px;}
+  .interim{font-size:12.5px;color:var(--muted);border-left:3px solid var(--gold);padding:4px 10px;margin:0 0 16px;grid-column:1/-1;}
+  .card{background:#fff;border:1px solid var(--line);border-radius:8px;padding:16px 18px;margin-bottom:16px;box-shadow:0 1px 2px rgba(0,0,0,.05);}
+  .card h2{font-family:"Barlow Condensed",sans-serif;font-size:22px;letter-spacing:.04em;text-transform:uppercase;color:var(--navy);margin:0 0 12px;}
+  .g{display:grid;gap:10px 12px;grid-template-columns:repeat(6,1fr);}
+  .f{display:flex;flex-direction:column;}
+  .f label{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:3px;}
+  .f input,.f textarea{font-family:"Barlow",sans-serif;font-size:17px;padding:9px 10px;border:1.5px solid var(--line);border-radius:6px;background:var(--field);color:var(--ink);min-width:0;width:100%;}
+  .f textarea{min-height:70px;resize:vertical;}
+  .f input:focus,.f textarea:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(184,146,58,.25);}
+  .f input.bad{border-color:var(--red);}
+  .f .hint{font-size:11.5px;color:var(--muted);margin-top:3px;min-height:14px;}
+  .f .hint.bad{color:var(--red);font-weight:600;}
+  .c6{grid-column:span 6;} .c4{grid-column:span 4;} .c3{grid-column:span 3;} .c2{grid-column:span 2;} .c1{grid-column:span 1;}
+  @media(max-width:600px){.c4,.c3{grid-column:span 6;} .c2{grid-column:span 3;} .c1{grid-column:span 2;}}
+  .sect{font-family:"Barlow Condensed",sans-serif;font-size:15px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin:10px 0 2px;grid-column:1/-1;}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;grid-column:1/-1;}
+  .chips.inl{grid-column:span 6;}
+  .chip{font-family:"Barlow Condensed",sans-serif;font-size:16px;font-weight:700;letter-spacing:.04em;min-height:42px;padding:6px 14px;border:1.5px solid var(--line);border-radius:8px;background:var(--field);color:var(--navy);cursor:pointer;}
+  .chip.on{background:var(--navy);border-color:var(--navy);color:#fff;}
+  .btn{display:block;width:100%;font-family:"Barlow Condensed",sans-serif;font-size:24px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;min-height:60px;padding:12px 18px;border:0;border-radius:8px;background:var(--gold);color:var(--navy);cursor:pointer;}
+  .btn:disabled{opacity:.45;cursor:default;}
+  .btn.sec{font-size:18px;min-height:50px;background:#fff;border:1.5px solid var(--navy);color:var(--navy);margin-top:10px;}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .preview{display:block;width:100%;height:auto;border:1px dashed var(--line);border-radius:4px;background:#fff;margin:0 0 14px;}
+  .status{font-size:14px;margin-top:12px;min-height:20px;color:var(--muted);}
+  .status.ok{color:var(--ok);font-weight:600;} .status.bad{color:var(--red);font-weight:600;}
+  .note{font-size:13px;color:var(--muted);margin:0 0 12px;}
+  details summary{cursor:pointer;font-size:13px;font-weight:600;color:var(--muted);}
+  .steps{font-size:13.5px;line-height:1.5;margin:10px 0 4px;} .steps p{margin:8px 0 4px;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);}
+  .steps ol,.steps ul{margin:0 0 8px;padding-left:22px;} .steps li{margin:0 0 5px;}
+  #log{width:100%;height:110px;margin-top:8px;font-family:Consolas,Menlo,monospace;font-size:11.5px;border:1px solid var(--line);border-radius:6px;background:var(--field);padding:8px;resize:vertical;}
+  footer.foot{text-align:center;font-size:12px;color:var(--muted);padding:14px 18px 22px;border-top:1px solid var(--line);}
+</style>
+</head>
+<body>
+<header class="masthead">
+  <p class="kick">Public Safety &middot; Field Tools</p>
+  <h1>Electronic Vehicle Impound</h1>
+  <div class="sub">Type the impound, then print the towed vehicle receipt on the in-car printer. Print one for the wrecker and one for the file. <a href="/patrol/">&lsaquo; All tools</a></div>
+</header>
+
+<div class="wrap">
+  <p class="interim">Interim tool. Runs entirely in this browser. Nothing is stored or sent anywhere except to the printer.</p>
+
+  <div class="in">
+    <div class="card">
+      <h2>Incident</h2>
+      <div class="g">
+        <div class="f c3"><label>Incident no.</label><input id="incident" inputmode="numeric" autocomplete="off" placeholder="2026000XXXXX"></div>
+        <div class="f c3"><label>Date / time</label><input id="dt" autocomplete="off"><div class="hint">Filled with now. Edit if needed.</div></div>
+        <div class="f c4"><label>Officer (last name)</label><input id="offName" autocomplete="off"></div>
+        <div class="f c2"><label>ID #</label><input id="offId" inputmode="numeric" autocomplete="off"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Vehicle</h2>
+      <div class="g">
+        <div class="f c1"><label>Year</label><input id="vyr" inputmode="numeric" autocomplete="off"></div>
+        <div class="f c2"><label>Make</label><input id="vmk" autocomplete="off"></div>
+        <div class="f c3"><label>Model</label><input id="vmod" autocomplete="off"></div>
+        <div class="f c2"><label>Type / style</label><input id="vsty" autocomplete="off" placeholder="4-DOOR"></div>
+        <div class="chips inl c4" id="styleChips"></div>
+        <div class="f c2"><label>Color</label><input id="vcol" autocomplete="off"></div>
+        <div class="chips inl c4" id="colorChips"></div>
+        <div class="f c3"><label>Tag</label><input id="tag" autocomplete="off"></div>
+        <div class="f c1"><label>State</label><input id="tagst" autocomplete="off" value="TX"></div>
+        <div class="f c2"><label>Mileage</label><input id="miles" inputmode="numeric" autocomplete="off"></div>
+        <div class="f c6"><label>VIN</label><input id="vin" autocomplete="off" maxlength="17"><div class="hint" id="vinHint"></div></div>
+        <div class="f c6"><label>Damage</label><textarea id="damage" rows="2" placeholder="Existing damage noted before tow"></textarea></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Hold</h2>
+      <div class="g">
+        <div class="sect">Hold placed</div>
+        <div class="chips" data-set="hold"><button type="button" class="chip on" data-v="NO">No</button><button type="button" class="chip" data-v="YES">Yes</button></div>
+        <div class="f c3"><label>Hold reason</label><input id="holdReason" autocomplete="off" placeholder="Seizure, evidence..."></div>
+        <div class="f c2"><label>Hold requested by</label><input id="holdBy" autocomplete="off"></div>
+        <div class="f c1"><label>ID #</label><input id="holdById" inputmode="numeric" autocomplete="off"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Owner</h2>
+      <div class="g">
+        <div class="f c6"><label>Registered owner</label><input id="owner" autocomplete="off"></div>
+        <div class="f c6"><label>Address</label><input id="oaddr" autocomplete="off"></div>
+        <div class="f c3"><label>City</label><input id="ocity" autocomplete="off"></div>
+        <div class="f c1"><label>State</label><input id="ost" autocomplete="off" value="TX"></div>
+        <div class="f c2"><label>Zip</label><input id="ozip" inputmode="numeric" autocomplete="off"></div>
+        <div class="f c3"><label>Phone</label><input id="ophone" inputmode="tel" autocomplete="off"></div>
+        <div class="sect">Owner notified</div>
+        <div class="chips" data-set="notified"><button type="button" class="chip on" data-v="NO">No</button><button type="button" class="chip" data-v="YES">Yes</button></div>
+        <div class="f c6"><label>How notified</label><input id="howNotified" autocomplete="off" placeholder="In person, phone, left message..."></div>
+        <div class="sect">Driver / occupant (if different from owner)</div>
+        <div class="f c6"><label>Name</label><input id="driver" autocomplete="off"></div>
+        <div class="f c6"><label>Address (with city / zip)</label><input id="daddr" autocomplete="off"></div>
+        <div class="sect">Lien holder (if any)</div>
+        <div class="f c6"><label>Name</label><input id="lien" autocomplete="off"></div>
+        <div class="f c6"><label>Address (with city / zip)</label><input id="laddr" autocomplete="off"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Tow</h2>
+      <div class="g">
+        <div class="sect">Tow reason</div>
+        <div class="chips" data-set="reason"><button type="button" class="chip" data-v="CRASH">Crash</button><button type="button" class="chip" data-v="ARREST">Arrest</button><button type="button" class="chip" data-v="ABANDONED">Abandoned</button><button type="button" class="chip" data-v="SEIZURE">Seizure</button><button type="button" class="chip" data-v="OTHER">Other</button></div>
+        <div class="f c6"><label>Reason detail (optional)</label><input id="reasonDetail" autocomplete="off"></div>
+        <div class="f c6"><label>Towed from (location)</label><input id="loc" autocomplete="off"></div>
+        <div class="f c3"><label>City</label><input id="lcity" autocomplete="off" value="RICHARDSON"></div>
+        <div class="f c3"><label>Tow result</label><input id="result" autocomplete="off" value="VEHICLE TOWED"></div>
+        <div class="sect">Wrecker</div>
+        <div class="chips" id="wreckerChips"><button type="button" class="chip" data-w="SIGNATURE TOWING|1204 MUNICIPAL, PLANO, TX 75074|972-423-4010">Signature Towing</button></div>
+        <div class="f c6"><label>Towed by (company)</label><input id="wname" autocomplete="off"></div>
+        <div class="f c4"><label>Company address</label><input id="waddr" autocomplete="off"></div>
+        <div class="f c2"><label>Company phone</label><input id="wphone" inputmode="tel" autocomplete="off"></div>
+        <div class="f c3"><label>Tow truck LP</label><input id="wlp" autocomplete="off"></div>
+        <div class="f c3"><label>Wrecker notified at</label><input id="wtime" autocomplete="off" placeholder="HH:MM"></div>
+        <div class="f c6"><label>Special towing instructions</label><input id="special" autocomplete="off"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Inventory</h2>
+      <div class="g">
+        <div class="sect">Hubcaps missing</div>
+        <div class="chips" data-multi="hubcaps"><button type="button" class="chip" data-v="FR">FR</button><button type="button" class="chip" data-v="RR">RR</button><button type="button" class="chip" data-v="LF">LF</button><button type="button" class="chip" data-v="LR">LR</button><button type="button" class="chip" data-v="NONE">None</button></div>
+        <div class="sect">Radio in dash</div>
+        <div class="chips" data-set="radio"><button type="button" class="chip" data-v="YES">Yes</button><button type="button" class="chip" data-v="NO">No</button></div>
+        <div class="sect">Keys in vehicle</div>
+        <div class="chips" data-set="keys"><button type="button" class="chip" data-v="YES">Yes</button><button type="button" class="chip" data-v="NO">No</button></div>
+        <div class="f c6"><label>Front</label><textarea id="invFront" rows="2"></textarea></div>
+        <div class="f c6"><label>Rear</label><textarea id="invRear" rows="2"></textarea></div>
+        <div class="f c6"><label>Trunk / other</label><textarea id="invTrunk" rows="2"></textarea></div>
+        <div class="f c6"><label>Condition</label><textarea id="condition" rows="2"></textarea></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="out">
+    <div class="card">
+      <canvas id="slip" class="preview" width="832" height="300" aria-label="Slip preview"></canvas>
+      <p class="note">The printer does not cut between copies. Tap Print once per copy you need.</p>
+      <button type="button" class="btn" id="printBtn">Print Receipt</button>
+      <div class="status" id="status"></div>
+      <button type="button" class="btn sec" id="clearBtn">Clear everything</button>
+      <details style="margin-top:14px;">
+        <summary>Printer setup and troubleshooting</summary>
+        <div class="steps">
+          <p>First-time setup on this computer (about 2 minutes)</p>
+          <ol>
+            <li>Turn the printer on. Note the serial number on its bottom label (starts with <b>XXRBJ</b>).</li>
+            <li>On the computer open <b>Settings</b>, then <b>Bluetooth &amp; devices</b>, then <b>Add device</b>, then <b>Bluetooth</b>.</li>
+            <li>Pick the entry that matches the printer serial number and tap <b>Connect</b>. A PIN pops up on the computer: press the <b>checkmark button on the printer</b> to accept it. When the computer says <b>Connected</b>, tap <b>Done</b>.</li>
+            <li>Come back here and tap <b>Print Receipt</b>. Chrome shows a small popup asking which device to use. That is a one-time permission, not a settings change.</li>
+            <li>In the popup, pick the entry with the printer serial number (it may also say "Standard Serial over Bluetooth link"), then tap <b>Connect</b>. The slip prints.</li>
+          </ol>
+          <p>After setup</p>
+          <ul>
+            <li>Print is one tap. Chrome remembers the printer on this computer.</li>
+            <li>Nothing prints? Make sure the printer is on and has paper, then try again.</li>
+            <li>Popup list empty? The printer is off or not paired. Repeat steps 1 to 3.</li>
+            <li>Picked the wrong device, or swapped cars? Tap <b>Choose different printer</b>, then Print again.</li>
+          </ul>
+        </div>
+        <div class="row2">
+          <button type="button" class="btn sec" id="forgetBtn">Choose different printer</button>
+          <button type="button" class="btn sec" id="infoBtn">Read printer info</button>
+        </div>
+        <textarea id="log" readonly aria-label="Printer log"></textarea>
+      </details>
+    </div>
+  </div>
+</div>
+
+<footer class="foot">Build v3</footer>
+
+<script src="/patrol/print.js"></script>
+<script>
+(function(){
+  'use strict';
+  var LOGO_SRC = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAXwAAABNAQAAAACNzeLbAAADtElEQVR4nJWWv27cRhDGf7tkQhaCj0UKFYGPqtKqdCHgWAjIa+QZXNmNbxEX9mPkMRJAQNaIC5UukyII3SndnpOCp5A7KbjkkTzqRE1zy739Zr7Z+bdKANGQVCyRnQY+aGCvFwFAxIRVIgvEIbbHbhcB6oOx1eiv9ejLb8VvRMQx8FX1WrZOqkhWTvxabCQ2EZeIS+Q3f6kHgN4brOKuAcCBh3vcPZ9qPIzu5qduUUJZAHhAQPhssG8A4nQAcOHXX0D0c3d5lUmduX7Ju7+RiYWOnnLw8SuAugIoUuIz0tRg0PEAMLgx3reqLMQQW5AMsGgNsBYpA+OxVHVA1UBsY9AKEilh7UDGp3cZKoeaQtMU5KBLNGbVUl9ZMO3JJoMs+E9dGSC/Dc5ptt3dvOhVx3m3+pLRZADnrX+vhreUHJYFOFi1qhRA0vk3vFaLDSvTbf25gq/BQ0kJXI0Al93CDTHJDQAZ1AXP0UAX7D7oqYHKt0YNQF04lAMyNEgXrz6GsYWr/wBWNTyHO/O7o7ozrQ/+OF5Ak7bOWFbsL/gl5/UFpGiou3j1maFLyNWAoKbQFBpi9CHlDgvl4FwDZO2lnHEZcxmDBhFHqDTLZlCUv07L2W/bJiBlB2AEeKAJaCgD2/2c70ei6cN7C8UiQIh2s+A0gAiRiLQN8FEXxCkRnVTAPuWogmZk1+dSSkjkR31oE2PXOfQ4oCYjVOTZIgDkwUBXxyclbjPoEwA/tHuf81MIcWyl9aPr3uVpSg64B+DZAkYgJSIOWDqBxCppx9ayGaexhPx7tYgRYiIRmE64E7mkohrFkjyCNpdiBFgvI4QOiqNyKQBSPFwtPI/yeuWaWM02sxnZaU/G0iAHSoQMn4qoXFSxl4LbQd/VNTmQP6gxflNQI83IwryEgr0Bi+/nWQwFMR/nEP+cycYKBg/f94C2AzdB3SjcHkD9Ma7ECSUVM5WX8P7QHsEhMnwyRIdE24lnK29FXojvct9pNzHTDO0DXCMx6v5ASU0a2M6MATeA4a/+u1Qi48yOBpQ2IkpqtlJtO0qlZjCU4aiNZ4AdRBroG1KQUVDkO/D0gQ6A8xGgORj8UPhrUyv4pt+ziUyd6Mp7J55NVW/2svb9E1VbAMYv9S+ddRU4GPVj/6eZtKMaTk1Tp0lHyok8XW+eleP0VjX8+zBgroGVJ6aj0zPVuT41sGcrzlE+DfCMu6cB1MMG0LMN49t6ZvOEBSLzsIkFb6TJtT5RYrNskBzEPomROH3xRAP/A5T+gAkcvdhCAAAAAElFTkSuQmCC';
+  var ADDR = ['Richardson Police Department', '200 N. Greenville Ave.', 'Richardson, TX 75081', '972-744-4800'];
+  var AGREE = 'I am signing in receipt of the described vehicle and its contents as an agent of the designated towing company.';
+
+  function $(id){ return document.getElementById(id); }
+  function v(id){ return $(id).value.trim(); }
+  function up(s){ return (s || '').toUpperCase(); }
+  function log(msg){ var el = $('log'); el.value += '[' + new Date().toLocaleTimeString() + '] ' + msg + '\n'; el.scrollTop = el.scrollHeight; }
+  function setStatus(msg, cls){ var s = $('status'); s.textContent = msg || ''; s.className = 'status' + (cls ? ' ' + cls : ''); }
+  if(window.RPDPrint) RPDPrint.log = log;
+  function pad(n){ return (n < 10 ? '0' : '') + n; }
+  function nowStr(){ var d = new Date(), h = d.getHours(), ap = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12; return pad(d.getMonth()+1) + '/' + pad(d.getDate()) + '/' + d.getFullYear() + '  ' + pad(h) + ':' + pad(d.getMinutes()) + ' ' + ap; }
+  $('dt').value = nowStr();
+
+  // ---------- chips ----------
+  var sel = { hold:'NO', notified:'NO', reason:'', radio:'', keys:'' }, multi = { hubcaps:[] };
+  document.querySelectorAll('.chips[data-set]').forEach(function(g){
+    g.addEventListener('click', function(ev){
+      var c = ev.target.closest('.chip'); if(!c) return;
+      sel[g.dataset.set] = c.dataset.v;
+      g.querySelectorAll('.chip').forEach(function(x){ x.classList.toggle('on', x === c); });
+      draw();
+    });
+  });
+  document.querySelectorAll('.chips[data-multi]').forEach(function(g){
+    g.addEventListener('click', function(ev){
+      var c = ev.target.closest('.chip'); if(!c) return;
+      var key = g.dataset.multi, val = c.dataset.v, arr = multi[key];
+      if(val === 'NONE'){ multi[key] = c.classList.contains('on') ? [] : ['NONE']; }
+      else { arr = arr.filter(function(x){ return x !== 'NONE'; }); var i = arr.indexOf(val); if(i >= 0) arr.splice(i, 1); else arr.push(val); multi[key] = arr; }
+      g.querySelectorAll('.chip').forEach(function(x){ x.classList.toggle('on', multi[key].indexOf(x.dataset.v) >= 0); });
+      draw();
+    });
+  });
+  function fillChips(id, list, target){
+    var g = $(id); g.innerHTML = list.map(function(c){ return '<button type="button" class="chip" data-v="' + c + '">' + c + '</button>'; }).join('');
+    g.addEventListener('click', function(ev){ var c = ev.target.closest('.chip'); if(!c) return; $(target).value = c.dataset.v; draw(); });
+  }
+  fillChips('styleChips', ['4-DOOR','2-DOOR','SUV','PICKUP','VAN','MOTORCYCLE','TRAILER'], 'vsty');
+  fillChips('colorChips', ['WHITE','BLACK','GRAY','SILVER','BLUE','RED','GREEN','TAN','BROWN','GOLD','MAROON'], 'vcol');
+  $('wreckerChips').addEventListener('click', function(ev){
+    var c = ev.target.closest('.chip'); if(!c) return;
+    var p = c.dataset.w.split('|'); $('wname').value = p[0]; $('waddr').value = p[1]; $('wphone').value = p[2]; draw();
+  });
+
+  // ---------- VIN ----------
+  function vinValid(x){
+    x = (x || '').toUpperCase();
+    if(x.length !== 17 || /[IOQ]/.test(x) || /[^A-Z0-9]/.test(x)) return false;
+    var map = {A:1,B:2,C:3,D:4,E:5,F:6,G:7,H:8,J:1,K:2,L:3,M:4,N:5,P:7,R:9,S:2,T:3,U:4,V:5,W:6,X:7,Y:8,Z:9};
+    var wt = [8,7,6,5,4,3,2,10,0,9,8,7,6,5,4,3,2], sum = 0;
+    for(var i = 0; i < 17; i++){ var ch = x[i]; sum += (/\d/.test(ch) ? +ch : map[ch]) * wt[i]; }
+    var r = sum % 11; return x[8] === (r === 10 ? 'X' : String(r));
+  }
+  $('vin').addEventListener('input', function(){
+    var x = v('vin').toUpperCase(), h = $('vinHint'), i = $('vin');
+    if(!x){ h.textContent = ''; h.className = 'hint'; i.classList.remove('bad'); }
+    else if(x.length < 17){ h.textContent = (17 - x.length) + ' more characters'; h.className = 'hint'; i.classList.remove('bad'); }
+    else if(vinValid(x)){ h.textContent = 'VIN check digit OK'; h.className = 'hint'; i.classList.remove('bad'); }
+    else { h.textContent = 'Check digit does not match. Double-check the VIN (I, O, Q are never used).'; h.className = 'hint bad'; i.classList.add('bad'); }
+  });
+
+  document.querySelectorAll('input, textarea').forEach(function(i){ if(i.id !== 'log') i.addEventListener('input', draw); });
+  $('clearBtn').addEventListener('click', function(){
+    if(!confirm('Clear all fields?')) return;
+    document.querySelectorAll('.in input, .in textarea').forEach(function(i){ i.value = ''; });
+    $('tagst').value = 'TX'; $('ost').value = 'TX'; $('lcity').value = 'RICHARDSON'; $('result').value = 'VEHICLE TOWED'; $('dt').value = nowStr();
+    sel = { hold:'NO', notified:'NO', reason:'', radio:'', keys:'' }; multi = { hubcaps:[] };
+    document.querySelectorAll('.chip').forEach(function(c){ c.classList.toggle('on', (c.dataset.v === 'NO') && !!c.closest('[data-set="hold"],[data-set="notified"]')); });
+    $('vinHint').textContent = ''; $('vin').classList.remove('bad'); setStatus(''); draw();
+  });
+
+  // ---------- drawing ----------
+  var W = 832, M = 28, CW = W - 2 * M;
+  var logo = new Image(); logo.onload = draw; logo.onerror = draw; logo.src = LOGO_SRC;
+
+  function wrapText(ctx, text, maxW){
+    var out = [];
+    String(text || '').split(/\r?\n/).forEach(function(para){
+      var words = para.replace(/\s+/g, ' ').trim().split(' '), cur = '';
+      words.forEach(function(w){ var t = cur ? cur + ' ' + w : w; if(ctx.measureText(t).width > maxW && cur){ out.push(cur); cur = w; } else { cur = t; } });
+      out.push(cur);
+    });
+    return out;
+  }
+
+  // Render plan: a list of ops with a dry-run pass to measure height.
+  function render(ctx, measureOnly){
+    var y = 18;
+    function font(f){ ctx.font = f; }
+    var LABEL = 'bold 19px Arial, Helvetica, sans-serif', VAL = '19px Arial, Helvetica, sans-serif', HEAD = 'bold 22px Arial, Helvetica, sans-serif';
+    function text(t, x, f){ if(!measureOnly){ font(f); ctx.fillText(t, x, y); } }
+    function rule(){ y += 6; if(!measureOnly){ ctx.fillRect(M, y, CW, 3); } y += 12; }
+    function head(t){ y += 2; text(t, M, HEAD); y += 30; }
+    // one row of label: value pairs; cols = array of [label, value, widthFraction]
+    function row(cols){
+      var x = M;
+      cols.forEach(function(c){
+        var w = Math.round(CW * c[2]);
+        if(!measureOnly){
+          var lab = c[0] ? c[0] + ': ' : '';
+          font(LABEL); if(lab) ctx.fillText(c[0] + ':', x, y);
+          var lw = lab ? ctx.measureText(lab).width : 0;
+          font('bold ' + VAL); var val = c[1] || '';
+          while(val && ctx.measureText(val).width > w - lw - 8) val = val.slice(0, -1);
+          ctx.fillText(val, x + lw, y);
+        }
+        x += w;
+      });
+      y += 27;
+    }
+    // multi-line block: label on its own line, then wrapped value
+    function block(label, value){
+      if(!value) return;
+      text(label + ':', M, LABEL); y += 26;
+      font('bold ' + VAL);
+      wrapText(ctx, value, CW - 20).forEach(function(l){ if(!measureOnly) ctx.fillText(l, M + 20, y); y += 24; });
+      y += 4;
+    }
+    function sig(label){
+      y += 30;
+      if(!measureOnly){ font(LABEL); ctx.fillText(label + ':', M, y); var lw = ctx.measureText(label + ': ').width; ctx.fillRect(M + lw, y + 22, CW - lw, 2); }
+      y += 30;
+    }
+
+    // header
+    var logoH = logo.naturalWidth ? Math.round(logo.naturalHeight * 300 / logo.naturalWidth) : 60;
+    if(!measureOnly && logo.naturalWidth) ctx.drawImage(logo, Math.round((W - 300) / 2), y, 300, logoH);
+    y += logoH + 16;
+    if(!measureOnly){ font('bold 28px Arial, Helvetica, sans-serif'); ctx.textAlign = 'center'; ctx.fillText('TOWED VEHICLE RECEIPT', W / 2, y); ctx.textAlign = 'left'; }
+    y += 40;
+    ADDR.forEach(function(t){ text(t, M, LABEL); y += 25; });
+    y += 8;
+    row([['Incident No.', up(v('incident')), .55], ['Date/Time', up(v('dt')), .45]]);
+    row([['Officer', up([v('offName'), v('offId')].filter(Boolean).join(' ')), 1]]);
+    rule();
+
+    head('VEHICLE');
+    row([['HOLD', sel.hold, .3], ['Hold Reason', sel.hold === 'YES' ? up(v('holdReason')) : '', .7]]);
+    if(sel.hold === 'YES' && (v('holdBy') || v('holdById'))) row([['Hold Requested By', up([v('holdBy'), v('holdById')].filter(Boolean).join(' ')), 1]]);
+    row([['Veh Yr', up(v('vyr')), .3], ['Veh Tag', up(v('tag')), .4], ['State', up(v('tagst')), .3]]);
+    row([['Make', up(v('vmk')), .3], ['Model', up(v('vmod')), .4], ['Mileage', up(v('miles')), .3]]);
+    row([['Color', up(v('vcol')), .3], ['Type', up(v('vsty')), .7]]);
+    row([['VIN', up(v('vin')), 1]]);
+    block('Damage', up(v('damage')));
+    rule();
+
+    head('OWNER INFO');
+    row([['Owner', up(v('owner')), 1]]);
+    row([['Address', up(v('oaddr')), 1]]);
+    row([['City', up(v('ocity')), .45], ['State', up(v('ost')), .2], ['Zip', up(v('ozip')), .35]]);
+    row([['Phone Number', up(v('ophone')), .5], ['Owner Notified', sel.notified, .5]]);
+    if(v('howNotified')) row([['How Notified', up(v('howNotified')), 1]]);
+    if(v('driver')){ row([['Driver/Occupant', up(v('driver')), 1]]); if(v('daddr')) row([['Address', up(v('daddr')), 1]]); }
+    if(v('lien')){ row([['Lien Holder', up(v('lien')), 1]]); if(v('laddr')) row([['Address', up(v('laddr')), 1]]); }
+    rule();
+
+    head('TOW');
+    row([['Tow Reason', up([sel.reason, v('reasonDetail')].filter(Boolean).join(' - ')), .55], ['Tow Result', up(v('result')), .45]]);
+    row([['Towed From', up([v('loc'), v('lcity')].filter(Boolean).join(', ')), 1]]);
+    row([['Towed By', up(v('wname')), 1]]);
+    if(v('waddr') || v('wphone')) row([['Address', up(v('waddr')), .62], ['Phone', up(v('wphone')), .38]]);
+    row([['Tow Truck LP', up(v('wlp')), .5], ['Wrecker Notified', up(v('wtime')), .5]]);
+    if(v('special')) row([['Special Towing', up(v('special')), 1]]);
+    rule();
+
+    head('INVENTORY');
+    row([['Hubcaps Missing', multi.hubcaps.join(', '), .5], ['Radio in Dash', sel.radio, .25], ['Keys in Vehicle', sel.keys, .25]]);
+    block('Front', up(v('invFront')));
+    block('Rear', up(v('invRear')));
+    block('Trunk/Other', up(v('invTrunk')));
+    block('Condition', up(v('condition')));
+    rule();
+
+    font('16px Arial, Helvetica, sans-serif');
+    wrapText(ctx, AGREE, CW).forEach(function(l){ if(!measureOnly){ ctx.font = '16px Arial, Helvetica, sans-serif'; ctx.textAlign = 'center'; ctx.fillText(l, W / 2, y); ctx.textAlign = 'left'; } y += 21; });
+    sig('Tow Company Representative');
+    y += 6;
+    if(!measureOnly){ font(LABEL); ctx.fillText('Tow Requested By: ', M, y); var lw = ctx.measureText('Tow Requested By: ').width; font('bold ' + VAL); ctx.fillText(up('Police Officer ' + [v('offName'), v('offId')].filter(Boolean).join(' ')), M + lw, y); }
+    y += 27;
+    sig('Officer Signature');
+    y += 50;
+    return y;
+  }
+
+  function draw(){
+    var c = $('slip'), ctx = c.getContext('2d');
+    ctx.textBaseline = 'top';
+    var h = render(ctx, true);
+    c.width = W; c.height = Math.ceil(h / 8) * 8;
+    ctx = c.getContext('2d'); ctx.textBaseline = 'top';
+    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);
+    ctx.fillStyle = '#000';
+    render(ctx, false);
+  }
+  window.imDraw = draw;
+
+  // ---------- print ----------
+  var busy = false;
+  $('printBtn').addEventListener('click', async function(){
+    if(busy) return;
+    if(!window.RPDPrint){ setStatus('Print engine did not load. Check your connection and reload.', 'bad'); return; }
+    busy = true; $('printBtn').disabled = true; setStatus('Printing...');
+    try{ draw(); await RPDPrint.printCanvas($('slip'), 1); setStatus('Sent to printer. Tap again for another copy.', 'ok'); }
+    catch(e){ var why = RPDPrint.explain(e); setStatus(why, 'bad'); log('ERROR (' + ((e && e.name) || 'Error') + '): ' + why); }
+    finally{ busy = false; $('printBtn').disabled = false; }
+  });
+  $('infoBtn').addEventListener('click', async function(){
+    if(busy || !window.RPDPrint) return; busy = true;
+    try{ log('Reading printer settings (read only)...'); (await RPDPrint.info()).forEach(function(x){ log('  ' + x); }); }
+    catch(e){ log('ERROR: ' + RPDPrint.explain(e)); } finally{ busy = false; }
+  });
+  $('forgetBtn').addEventListener('click', async function(){
+    if(!window.RPDPrint) return;
+    try{ await RPDPrint.forget(); log('Forgot the saved printer. The next print will ask you to pick one.'); }
+    catch(e){ log('ERROR: ' + RPDPrint.explain(e)); }
+  });
+
+  draw();
+  if(document.fonts && document.fonts.ready) document.fonts.ready.then(draw);
+  log('Ready. Direct printing ' + ((window.RPDPrint && RPDPrint.supported()) ? 'available.' : 'NOT available in this browser. Use Chrome or Edge on the squad computer.'));
+})();
+</script>
+</body>
+</html>

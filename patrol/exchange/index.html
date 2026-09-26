@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- patrol/exchange/index.html | Build v2 | 2026-09-22 | QR now points to the accident report page. v1: New tool. Driver Information Exchange slip for crashes: any number of units, each with driver, vehicle, and liability insurance; header with service number, date/time, location, officer. Slip is drawn on a canvas to match the old Brazos layout (city wordmark, title, courtesy text, contact paragraph, address block with QR code, boxed sections) and printed on the in-car Zebra via /patrol/print.js. VIN check-digit validation. Nothing stored. -->
+<!-- patrol/exchange/index.html | Build v4 | 2026-09-26 | Setup step 3 now covers the Bluetooth PIN and the checkmark button on the printer. v3: Everything prints in ALL CAPS; driver phone field per unit; optional witnesses (name and phone) with their own Add button, printed after the units. v2: QR now points to the accident report page. v1: New tool. Driver Information Exchange slip for crashes: any number of units, each with driver, vehicle, and liability insurance; header with service number, date/time, location, officer. Slip is drawn on a canvas to match the old Brazos layout (city wordmark, title, courtesy text, contact paragraph, address block with QR code, boxed sections) and printed on the in-car Zebra via /patrol/print.js. VIN check-digit validation. Nothing stored. -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -48,8 +48,10 @@
   .f input.bad{border-color:var(--red);}
   .f .hint{font-size:11.5px;color:var(--muted);margin-top:3px;min-height:14px;}
   .f .hint.bad{color:var(--red);font-weight:600;}
-  .c6{grid-column:span 6;} .c4{grid-column:span 4;} .c3{grid-column:span 3;} .c2{grid-column:span 2;}
-  @media(max-width:600px){.c4,.c3{grid-column:span 6;} .c2{grid-column:span 3;}}
+  .c6{grid-column:span 6;} .c4{grid-column:span 4;} .c3{grid-column:span 3;} .c2{grid-column:span 2;} .c1{grid-column:span 1;}
+  @media(max-width:600px){.c4,.c3{grid-column:span 6;} .c2{grid-column:span 3;} .c1{grid-column:span 2;}}
+  .addrow{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;} .addrow .btn.add{margin-bottom:0;}
+  .btn.add.wit{background:#fff;color:var(--navy);border:1.5px solid var(--navy);}
   .sect{font-family:"Barlow Condensed",sans-serif;font-size:15px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin:14px 0 6px;grid-column:1/-1;}
   .sect:first-child{margin-top:0;}
   .chips{display:flex;flex-wrap:wrap;gap:6px;grid-column:1/-1;}
@@ -93,7 +95,11 @@
     </div>
 
     <div id="units"></div>
-    <button type="button" class="btn add" id="addUnit">+ Add another unit</button>
+    <div id="witnesses"></div>
+    <div class="addrow">
+      <button type="button" class="btn add" id="addUnit">+ Add another unit</button>
+      <button type="button" class="btn add wit" id="addWit">+ Add witness</button>
+    </div>
   </div>
 
   <div class="out">
@@ -110,7 +116,7 @@
           <ol>
             <li>Turn the printer on. Note the serial number on its bottom label (starts with <b>XXRBJ</b>).</li>
             <li>On the computer open <b>Settings</b>, then <b>Bluetooth &amp; devices</b>, then <b>Add device</b>, then <b>Bluetooth</b>.</li>
-            <li>Pick the entry that matches the printer serial number. When it says <b>Connected</b>, tap <b>Done</b>.</li>
+            <li>Pick the entry that matches the printer serial number and tap <b>Connect</b>. A PIN pops up on the computer: press the <b>checkmark button on the printer</b> to accept it. When the computer says <b>Connected</b>, tap <b>Done</b>.</li>
             <li>Come back here and tap <b>Print Slip</b>. Chrome shows a small popup asking which device to use. That is a one-time permission, not a settings change.</li>
             <li>In the popup, pick the entry with the printer serial number (it may also say "Standard Serial over Bluetooth link"), then tap <b>Connect</b>. The slip prints.</li>
           </ol>
@@ -132,7 +138,7 @@
   </div>
 </div>
 
-<footer class="foot">Build v2</footer>
+<footer class="foot">Build v4</footer>
 
 <script src="/patrol/print.js"></script>
 <script>
@@ -172,7 +178,7 @@
   var FIELDS = [
     ['sect', 'Driver'],
     ['last', 'Last name', 'c3', 'text', 'upper'], ['first', 'First name', 'c3', 'text', 'upper'],
-    ['dl', "Driver's license no.", 'c4', 'text', 'upper'], ['dlst', 'State', 'c2', 'text', 'upper', 'TX'],
+    ['dl', "Driver's license no.", 'c3', 'text', 'upper'], ['dlst', 'State', 'c1', 'text', 'upper', 'TX'], ['phone', 'Phone', 'c2', 'tel'],
     ['sect', 'Vehicle'],
     ['vin', 'VIN', 'c6', 'text', 'upper'],
     ['plate', 'License plate', 'c4', 'text', 'upper'], ['plst', 'State', 'c2', 'text', 'upper', 'TX'],
@@ -224,7 +230,27 @@
     renumber(); draw();
     if(n > 1) card.scrollIntoView({ behavior:'smooth', block:'start' });
   }
-  function renumber(){ Array.prototype.forEach.call($('units').children, function(c, i){ c.querySelector('.uname').textContent = 'Unit ' + pad(i + 1); }); }
+  var witSeq = 0;
+  function addWitness(){
+    witSeq++;
+    var card = document.createElement('div'); card.className = 'card witness';
+    card.innerHTML = '<h2><span class="wname">Witness</span><button type="button" class="rm">Remove</button></h2><div class="g">' +
+      '<div class="f c4"><label>Name</label><input data-k="name" autocomplete="off" style="text-transform:uppercase"></div>' +
+      '<div class="f c2"><label>Phone</label><input data-k="phone" inputmode="tel" autocomplete="off"></div></div>';
+    $('witnesses').appendChild(card);
+    card.querySelector('.rm').addEventListener('click', function(){ card.remove(); renumber(); draw(); });
+    card.querySelectorAll('input').forEach(function(i){ i.addEventListener('input', draw); });
+    renumber(); draw();
+    card.scrollIntoView({ behavior:'smooth', block:'start' });
+  }
+  function readWitnesses(){
+    return Array.prototype.map.call($('witnesses').children, function(c){
+      var o = {}; c.querySelectorAll('input').forEach(function(i){ o[i.dataset.k] = i.value.trim(); }); return o;
+    });
+  }
+  $('addWit').addEventListener('click', addWitness);
+  function renumber(){
+    Array.prototype.forEach.call($('witnesses').children, function(c, i){ c.querySelector('.wname').textContent = 'Witness ' + pad(i + 1); }); Array.prototype.forEach.call($('units').children, function(c, i){ c.querySelector('.uname').textContent = 'Unit ' + pad(i + 1); }); }
   function readUnits(){
     return Array.prototype.map.call($('units').children, function(c){
       var o = {}; c.querySelectorAll('input').forEach(function(i){ o[i.dataset.k] = i.value.trim(); }); return o;
@@ -236,7 +262,7 @@
     if(!confirm('Clear all fields?')) return;
     ['svc','loc','offName','offBadge'].forEach(function(id){ $(id).value = ''; });
     $('dt').value = nowStr();
-    $('units').innerHTML = ''; addUnit(); addUnit();
+    $('units').innerHTML = ''; $('witnesses').innerHTML = ''; addUnit(); addUnit();
     setStatus('');
   });
 
@@ -281,7 +307,7 @@
 
   function draw(){
     var c = $('slip'), ctx = c.getContext('2d');
-    var units = readUnits();
+    var units = readUnits(), wits = readWitnesses();
     var H = 46;   // cell height
     // estimate height first
     ctx.font = '20px Arial, Helvetica, sans-serif';
@@ -291,7 +317,8 @@
     var headerH = 20 + logoH + 16 + 30 + 30 + 18 + introL.length * 24 + 18 + contactL.length * 24 + 22 + Math.max(qrSize, 4 * 26) + 26;
     var crashH = H * 3 + 14;
     var unitH = 36 + 30 + H * 2 + 30 + H * 3 + 30 + H * 2 + 16;
-    var total = headerH + crashH + units.length * unitH + 60;
+    var witH = 36 + H + 16;
+    var total = headerH + crashH + units.length * unitH + wits.length * witH + 60;
     c.width = W; c.height = Math.ceil(total / 8) * 8;
     ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);
     ctx.fillStyle = '#000'; ctx.textBaseline = 'top';
@@ -314,9 +341,9 @@
     // crash block
     var x0 = M, cw = W - 2 * M, half = Math.round(cw / 2);
     cell(ctx, x0, y, half, H, 'Service number:', up($('svc').value));
-    cell(ctx, x0 + half, y, cw - half, H, 'Date/Time:', $('dt').value); y += H;
+    cell(ctx, x0 + half, y, cw - half, H, 'Date/Time:', up($('dt').value)); y += H;
     cell(ctx, x0, y, cw, H, 'Location:', up($('loc').value)); y += H;
-    var off = [up($('offName').value), $('offBadge').value.trim()].filter(Boolean).join(' ');
+    var off = up([$('offName').value.trim(), $('offBadge').value.trim()].filter(Boolean).join(' '));
     cell(ctx, x0, y, cw, H, 'Officer:', off); y += H + 14;
 
     units.forEach(function(u, i){
@@ -325,21 +352,27 @@
       var name = [up(u.last), up(u.first)].filter(Boolean).join(' ');
       cell(ctx, x0, y, Math.round(cw * .66), H, 'Last name, First name', name);
       cell(ctx, x0 + Math.round(cw * .66), y, cw - Math.round(cw * .66), H, 'State', up(u.dlst)); y += H;
-      cell(ctx, x0, y, cw, H, "Driver's license no.", up(u.dl)); y += H;
+      cell(ctx, x0, y, half, H, "Driver's license no.", up(u.dl));
+      cell(ctx, x0 + half, y, cw - half, H, 'Phone', up(u.phone)); y += H;
       bar(ctx, x0, y, cw, 26, 'VEHICLE INFORMATION', 17); y += 26;
       var a = Math.round(cw * .55), b = Math.round(cw * .28);
       cell(ctx, x0, y, a, H, 'VIN', up(u.vin));
       cell(ctx, x0 + a, y, b, H, 'License plate', up(u.plate));
       cell(ctx, x0 + a + b, y, cw - a - b, H, 'State', up(u.plst)); y += H;
-      cell(ctx, x0, y, a, H, 'Make', u.make);
+      cell(ctx, x0, y, a, H, 'Make', up(u.make));
       cell(ctx, x0 + a, y, b, H, 'Color', up(u.color));
-      cell(ctx, x0 + a + b, y, cw - a - b, H, 'Year', u.year); y += H;
-      cell(ctx, x0, y, a + b, H, 'Model', u.model);
+      cell(ctx, x0 + a + b, y, cw - a - b, H, 'Year', up(u.year)); y += H;
+      cell(ctx, x0, y, a + b, H, 'Model', up(u.model));
       cell(ctx, x0 + a + b, y, cw - a - b, H, '', ''); y += H;
       bar(ctx, x0, y, cw, 26, 'LIABILITY INSURANCE INFO', 17); y += 26;
       cell(ctx, x0, y, half, H, 'Company', up(u.ins));
-      cell(ctx, x0 + half, y, cw - half, H, 'Phone', u.insph); y += H;
+      cell(ctx, x0 + half, y, cw - half, H, 'Phone', up(u.insph)); y += H;
       cell(ctx, x0, y, cw, H, 'Policy #', up(u.policy)); y += H + 16;
+    });
+    wits.forEach(function(w, i){
+      bar(ctx, x0, y, cw, 30, 'WITNESS ' + pad(i + 1), 18); y += 36;
+      cell(ctx, x0, y, Math.round(cw * .6), H, 'Name', up(w.name));
+      cell(ctx, x0 + Math.round(cw * .6), y, cw - Math.round(cw * .6), H, 'Phone', up(w.phone)); y += H + 16;
     });
   }
   window.exDraw = draw;

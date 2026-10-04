@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- reference.html | Build v2 | 10/03/26 | Questionnaire expanded and reworded. "Can't say" is now "Don't know" everywhere (the old wording read as if the reference was not allowed to answer). New questions: Finishes what they start (rating), Academic effort (school references), a Judgment and attitude section (leader or follower around friends, how they talk about police, losing their temper, trust alone in your home), two more boxes on the concerns list (unusual interest in weapons or violence, hostility toward a group of people), one area to grow, and an optional "anyone else we should talk to". Intro now says about five minutes. Text answers are tagged t:1 so /admin (Build v33) lays them out full width. Responses already submitted are unaffected: each one stores the questions it was asked. Prior v1 notes: New page: applicant reference questionnaire. Opens only from a one-time link (rpdcadets.com/reference#CODE) minted in /admin. Screen 1 explains why the answers matter, screen 2 is the questionnaire, screen 3 is the thank-you. Answers are encrypted in the reference's browser with the reference public key and can be opened only with the full advisor passcode. Pairs with roster.js v30 (RPDRoster.references). COUPLING: REF_SALT, REF_ITER, and the derive recipe are duplicated from roster.js and must change together. -->
+<!-- reference.html | Build v3 | 10/03/26 | New question shown only when the reference picks School Resource Officer: "Have you ever had any official contact with the applicant in a law enforcement capacity?" (No / Yes; Yes requires an explanation and is highlighted as worth a look in /admin). It appears at the top of the Concerns section. Nothing else changed. Prior v2 notes: Questionnaire expanded and reworded. "Can't say" is now "Don't know" everywhere (the old wording read as if the reference was not allowed to answer). New questions: Finishes what they start (rating), Academic effort (school references), a Judgment and attitude section (leader or follower around friends, how they talk about police, losing their temper, trust alone in your home), two more boxes on the concerns list (unusual interest in weapons or violence, hostility toward a group of people), one area to grow, and an optional "anyone else we should talk to". Intro now says about five minutes. Text answers are tagged t:1 so /admin (Build v33) lays them out full width. Responses already submitted are unaffected: each one stores the questions it was asked. Prior v1 notes: New page: applicant reference questionnaire. Opens only from a one-time link (rpdcadets.com/reference#CODE) minted in /admin. Screen 1 explains why the answers matter, screen 2 is the questionnaire, screen 3 is the thank-you. Answers are encrypted in the reference's browser with the reference public key and can be opened only with the full advisor passcode. Pairs with roster.js v30 (RPDRoster.references). COUPLING: REF_SALT, REF_ITER, and the derive recipe are duplicated from roster.js and must change together. -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -149,11 +149,11 @@ textarea::placeholder,input::placeholder{color:#6f7f96}
   </div>
 
   <div class="foot">Richardson Police Department Public Safety Cadets<br><a href="mailto:advisors@rpdcadets.com">advisors@rpdcadets.com</a></div>
-  <div class="build">Build v2</div>
+  <div class="build">Build v3</div>
 </div>
 
 <script>
-console.log('[reference] Build v2');
+console.log('[reference] Build v3');
 /* ====== CONFIG ====== */
 // Same Firebase project as the rest of the site. This page deliberately does
 // NOT load roster.js (its seed carries cadet names, which must never ship in
@@ -217,7 +217,8 @@ async function envelope(plainJson, pubJwkTxt){
    type: one (single chip) | rate (five-point) | multi | text
    flag(value) -> 0 none, 1 worth a look, 2 concern (highlighted in /admin)
    explainIf(value) -> true when the follow-up box is required
-   show(typeGroup) -> limits a question to school, employer, or personal references */
+   show(typeGroup) -> limits a question to school, employer, or personal references
+   ('sro' limits it to School Resource Officers only) */
 const DK = "Don't know";   // was "Can't say" in Build v1, which read as "not allowed to say"
 const RATE = ['Excellent','Good','Fair','Poor',DK];
 const rateFlag = v => v==='Poor' ? 2 : (v==='Fair' ? 1 : 0);
@@ -264,6 +265,8 @@ const QUESTIONS = [
     flag:v=> v==='No'?2:0, explainIf:v=> v==='No', explainLabel:'Please explain' },
 
   { sec:'Concerns' },
+  { k:'leContact', type:'one', q:'Have you ever had any official contact with the applicant in a law enforcement capacity?', opts:['No','Yes'], show:'sro',
+    flag:v=> v==='Yes'?1:0, explainIf:v=> v==='Yes', explainLabel:'Please describe the contact' },
   { k:'aware', type:'multi', q:'Are you aware of any of the following involving the applicant?', sub:'Tap all that apply.',
     opts:['Serious dishonesty','Discipline at school or work','Trouble with the law','Alcohol, drug, or vape use','Fighting, threats, or bullying','Concerning social media','Unusual interest in weapons or violence','Hostility toward a group of people',NONE],
     flag:v=> (v.length && !(v.length===1 && v[0]===NONE)) ? 2 : 0,
@@ -358,7 +361,12 @@ function onChip(b){
   if(it.explainIf){ document.getElementById('more_'+k).classList.toggle('on', !!it.explainIf(ans[k])); }
   if(k==='rel') syncTypeQuestions();
 }
-function isShown(it){ return !it.show || it.show===relGroup(ans.rel||''); }
+// show:'sro' is the one question tied to a single choice instead of a group
+function isShown(it){
+  if(!it.show) return true;
+  if(it.show==='sro') return ans.rel==='School Resource Officer';
+  return it.show===relGroup(ans.rel||'');
+}
 function syncTypeQuestions(){
   QUESTIONS.forEach(it=>{ if(it.k && it.show){ document.getElementById('q_'+it.k).style.display = isShown(it) ? '' : 'none'; } });
 }

@@ -1,4 +1,4 @@
-/* patrol/print.js | Build v4 | 2026-10-04 | Picker hint wording. v3: Auto language: asks the printer device.languages on each job and sends the bitmap as ZPL (^GFA) when the printer is in a zpl mode, else CPCL (EG). Field finding: the 10/2026 e-citation rollout set printers to hybrid_xml_zpl; the September units were line_print. v2: Drain before close: after a job, send a status query and wait (up to 30 s) for the printer's reply so the Windows COM buffer empties before the port closes (fixes silent drops of large jobs on the 'Serial Printer (COMx)' path after the 10/2026 MDC update). Open retried 3 times. v1: 2026-09-22
+/* patrol/print.js | Build v5 | 2026-10-04 | Language query made patient: settle 800 ms after open, flush, ask with a 4 s window, retry once, and remember the answer per computer (localStorage rpd_printer_lang) so later prints do not depend on a reply. Raw reply logged. v4: Picker hint wording. v3: Auto language: asks the printer device.languages on each job and sends the bitmap as ZPL (^GFA) when the printer is in a zpl mode, else CPCL (EG). Field finding: the 10/2026 e-citation rollout set printers to hybrid_xml_zpl; the September units were line_print. v2: Drain before close: after a job, send a status query and wait (up to 30 s) for the printer's reply so the Windows COM buffer empties before the port closes (fixes silent drops of large jobs on the 'Serial Printer (COMx)' path after the 10/2026 MDC update). Open retried 3 times. v1: 2026-09-22
    Shared print engine for the in-car Zebra ZQ520 (4 inch, 203 dpi, line-print mode).
    Path: Chrome Web Serial over the printer's paired Bluetooth (Serial Port Profile). No driver, no install.
    Language: CPCL or ZPL, chosen per printer. Slips are drawn on a canvas in the browser and sent as a 1-bit bitmap (EG command),
@@ -127,11 +127,26 @@
   function canvasToCPCL(canvas, copies){ return rowsToCPCL(canvasToRows(canvas), copies); }
 
   var langCache = null;
+  try{ langCache = localStorage.getItem('rpd_printer_lang') || null; }catch(e){}
+  async function askOnce(port, windowMs){
+    await writeAll(port, enc('\r\n! U1 getvar "device.languages"\r\n'));
+    var raw = await readFor(port, windowMs, true);
+    if(raw) raw += await readFor(port, 300);
+    return raw;
+  }
   async function queryLanguage(port){
     try{
-      await writeAll(port, enc('\r\n! U1 getvar "device.languages"\r\n'));
-      var ans = (await readFor(port, 1500)).replace(/["\s]/g, '').toLowerCase();
-      if(ans) langCache = ans;
+      await sleep(800);                    // let the Bluetooth link settle after the port opens
+      await readFor(port, 200);            // flush anything stale
+      var raw = await askOnce(port, 4000);
+      if(!raw.trim()){ log('No language reply yet, asking again...'); raw = await askOnce(port, 4000); }
+      var ans = raw.replace(/["\s]/g, '').toLowerCase();
+      if(/^[a-z_,]+$/.test(ans) && ans.length < 40){
+        langCache = ans;
+        try{ localStorage.setItem('rpd_printer_lang', ans); }catch(e){}
+      } else if(raw.trim()){
+        log('Unreadable language reply: ' + JSON.stringify(raw.slice(0, 40)));
+      }
     }catch(e){}
     return langCache || '';
   }

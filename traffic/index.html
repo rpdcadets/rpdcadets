@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- traffic/index.html | Build v5 | 2026-09-26 | Setup step 3 now covers the Bluetooth PIN and the checkmark button on the printer. v4: Step-by-step printer setup and troubleshooting inside the collapsed section. v3: Copies selector removed (printer does not cut between copies; tap Print again for another). v2: Third mode "Feedback Notice": draws the English/Spanish feedback slip with the City wordmark and prints it on the in-car Zebra via /patrol/print.js (direct serial over paired Bluetooth, CPCL bitmap). Barcode column hidden in that mode. v1: DL/ID + VIN barcode generator. -->
+<!-- traffic/index.html | Build v6 | 2026-10-04 | Setup steps: pick the "Serial Printer (COMx)" entry, not the serial-number entry (MDC update 10/2026). v5: Setup step 3 now covers the Bluetooth PIN and the checkmark button on the printer. v4: Step-by-step printer setup and troubleshooting inside the collapsed section. v3: Copies selector removed (printer does not cut between copies; tap Print again for another). v2: Third mode "Feedback Notice": draws the English/Spanish feedback slip with the City wordmark and prints it on the in-car Zebra via /patrol/print.js (direct serial over paired Bluetooth, CPCL bitmap). Barcode column hidden in that mode. v1: DL/ID + VIN barcode generator. -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -287,14 +287,14 @@
               <li>On the computer open <b>Settings</b>, then <b>Bluetooth &amp; devices</b>, then <b>Add device</b>, then <b>Bluetooth</b>.</li>
               <li>Pick the entry that matches the printer serial number and tap <b>Connect</b>. A PIN pops up on the computer: press the <b>checkmark button on the printer</b> to accept it. When the computer says <b>Connected</b>, tap <b>Done</b>.</li>
               <li>Come back here and tap <b>Print Notice</b>. Chrome shows a small popup asking which device to use. That is a one-time permission, not a settings change.</li>
-              <li>In the popup, pick the entry with the printer serial number (it may also say "Standard Serial over Bluetooth link"), then tap <b>Connect</b>. The slip prints.</li>
+              <li>In the popup, scroll to the entry labeled <b>Serial Printer (COM&#8203;x)</b> and pick it, then tap <b>Connect</b>. Do <b>not</b> pick the entry that shows only the printer serial number; it looks right but does not deliver the job. The slip prints after a few seconds.</li>
             </ol>
             <p class="fb-steps-h">After setup</p>
             <ul>
               <li>Print Notice is one tap. Chrome remembers the printer on this computer.</li>
               <li>Nothing prints? Make sure the printer is on and has paper, then try again.</li>
               <li>Popup list empty? The printer is off or not paired. Repeat steps 1 to 3.</li>
-              <li>Picked the wrong device? Tap <b>Choose different printer</b> below, then Print Notice again.</li>
+              <li>Says "Sent to printer" but nothing comes out, or picked the wrong device? Tap <b>Choose different printer</b> below, then Print Notice again and pick the <b>Serial Printer</b> entry.</li>
               <li>Printer replaced or swapped cars? Same thing: Choose different printer, then pair the new one.</li>
             </ul>
           </div>

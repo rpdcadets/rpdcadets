@@ -1,24 +1,16 @@
 <!DOCTYPE html>
-<!-- traffic/index.html | Build v6 | 2026-10-04 | Setup steps: pick the "Serial Printer (COMx)" entry, not the serial-number entry (MDC update 10/2026). v5: Setup step 3 now covers the Bluetooth PIN and the checkmark button on the printer. v4: Step-by-step printer setup and troubleshooting inside the collapsed section. v3: Copies selector removed (printer does not cut between copies; tap Print again for another). v2: Third mode "Feedback Notice": draws the English/Spanish feedback slip with the City wordmark and prints it on the in-car Zebra via /patrol/print.js (direct serial over paired Bluetooth, CPCL bitmap). Barcode column hidden in that mode. v1: DL/ID + VIN barcode generator. -->
+<!-- traffic/index.html | Build v9 | 2026-10-04 | Setup steps assume the MDC is already paired (e-citation rollout paired every car); pairing is now the fallback. v8: Setup step 5 wording: "Serial Printer" plus a COM number, with an example. v7: Renamed "Traffic Stop Notice" and reduced to the Feedback Notice only: the DL/ID and VIN barcode modes were removed because Brazos is retired and the new e-citation client does not use them. Slip drawn on a canvas with the City wordmark and printed via /patrol/print.js (auto ZPL/CPCL). v6: setup steps for the Serial Printer entry. v1 to v5: DL/ID + VIN barcode generator with Feedback Notice mode. -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DL/ID Barcode Generator &mdash; AAMVA PDF417</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/bwip-js/4.7.0/bwip-js-min.js"></script>
+<meta name="robots" content="noindex, nofollow">
+<title>Traffic Stop Notice</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --navy:#0b1f3a;
-    --navy-2:#13294b;
-    --paper:#f4f1ea;
-    --ink:#1a1d24;
-    --line:#c9c2b4;
-    --red:#9b2030;
-    --gold:#b8923a;
-    --field:#fbfaf6;
-    --ok:#1f6b3b;
-    --warn:#8a5a00;
-    --warnbg:#fdf6e3;
+    --navy:#0b1f3a; --navy-2:#13294b; --paper:#f4f1ea; --ink:#1a1d24;
+    --line:#c9c2b4; --red:#9b2030; --gold:#b8923a; --field:#fbfaf6; --muted:#5f6675; --ok:#1f6b3a;
   }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;}
@@ -28,9 +20,7 @@
       radial-gradient(circle at 12% -10%, rgba(184,146,58,.10), transparent 40%),
       radial-gradient(circle at 100% 0%, rgba(155,32,48,.08), transparent 45%),
       var(--paper);
-    color:var(--ink);
-    line-height:1.45;
-    min-height:100vh;
+    color:var(--ink); line-height:1.45; min-height:100vh; display:flex; flex-direction:column;
   }
   header.masthead{
     background:linear-gradient(180deg,var(--navy) 0%,var(--navy-2) 100%);
@@ -38,1010 +28,82 @@
     box-shadow:0 2px 0 var(--red) inset, 0 6px 20px rgba(0,0,0,.25);
     padding:18px 24px 14px;
   }
-  .masthead .kick{
-    font-family:"Bebas Neue",Impact,sans-serif;
-    letter-spacing:.14em;
-    color:var(--gold);
-    font-size:13px;
-    text-transform:uppercase;
-    margin:0 0 2px;
-  }
-  .masthead h1{
-    font-family:"Bebas Neue",Impact,sans-serif;
-    color:#fff;
-    margin:0;
-    font-size:30px;
-    letter-spacing:.04em;
-    font-weight:400;
-  }
-  .masthead .sub{
-    color:#9fb0c8;
-    font-size:12.5px;
-    margin-top:2px;
-  }
-  .wrap{
-    max-width:1080px;
-    margin:0 auto;
-    padding:22px 20px 60px;
-    display:grid;
-    grid-template-columns:1fr 380px;
-    gap:24px;
-    align-items:start;
-  }
-  @media(max-width:880px){
-    .wrap{grid-template-columns:1fr;}
-    .output-col{order:-1;}
-  }
-  .card{
-    background:#fff;
-    border:1px solid var(--line);
-    border-radius:10px;
-    box-shadow:0 1px 0 #fff inset, 0 4px 14px rgba(11,31,58,.06);
-  }
-  .card .card-h{
-    font-family:"Bebas Neue",Impact,sans-serif;
-    letter-spacing:.08em;
-    font-size:16px;
-    color:var(--navy);
-    padding:12px 16px;
-    border-bottom:1px solid var(--line);
-    display:flex;align-items:center;gap:8px;
-    text-transform:uppercase;
-  }
-  .card .card-h::before{
-    content:"";width:9px;height:9px;border-radius:2px;
-    background:var(--red);transform:rotate(45deg);display:inline-block;
-  }
-  .card-body{padding:16px;}
-  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px 14px;}
-  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px 14px;}
-  @media(max-width:520px){.grid2,.grid3{grid-template-columns:1fr;}}
-  label{display:block;font-size:11.5px;font-weight:600;letter-spacing:.03em;
-    text-transform:uppercase;color:#54606f;margin-bottom:4px;}
-  .field{
-    width:100%;padding:9px 10px;font-size:14px;font-family:inherit;
-    border:1px solid var(--line);border-radius:6px;background:var(--field);
-    color:var(--ink);transition:border-color .15s,box-shadow .15s;
-  }
-  .field:focus{outline:none;border-color:var(--navy);
-    box-shadow:0 0 0 3px rgba(19,41,75,.12);}
-  .row{margin-bottom:13px;}
-  .hint{font-size:11px;color:#7a8492;margin-top:3px;}
-  .section-note{font-size:12px;color:#54606f;margin:-2px 0 14px;}
-  select.field{appearance:none;-webkit-appearance:none;padding-right:30px;
-    background-image:
-    linear-gradient(45deg,transparent 50%,#54606f 50%),
-    linear-gradient(135deg,#54606f 50%,transparent 50%);
-    background-position:calc(100% - 15px) 55%,calc(100% - 10px) 55%;
-    background-size:5px 5px,5px 5px;background-repeat:no-repeat;}
-
-  /* output column */
-  .output-col{position:sticky;top:18px;display:flex;flex-direction:column;gap:18px;}
-  .barcode-stage{
-    background:#fff;border:1px solid var(--line);border-radius:10px;
-    padding:20px 16px;text-align:center;
-    box-shadow:0 4px 14px rgba(11,31,58,.06);
-  }
-  .barcode-stage canvas{max-width:100%;height:auto;image-rendering:pixelated;}
-  .placeholder{color:#9aa3b0;font-size:13px;padding:40px 10px;}
-  .stamp{
-    font-family:"Bebas Neue",Impact,sans-serif;letter-spacing:.1em;
-    color:var(--navy);font-size:14px;margin:0 0 12px;text-transform:uppercase;
-    border-bottom:1px dashed var(--line);padding-bottom:8px;
-  }
-  .btnrow{display:flex;gap:10px;margin-top:14px;}
+  .masthead .kick{margin:0 0 2px;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);font-weight:600;}
+  .masthead h1{margin:0;font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:32px;letter-spacing:.02em;color:#fff;line-height:1.05;}
+  .masthead .sub{margin-top:4px;font-size:13px;color:rgba(255,255,255,.72);}
+  .masthead a{color:var(--gold);text-decoration:none;font-size:13px;}
+  main{flex:1;width:100%;max-width:640px;margin:0 auto;padding:20px 18px 40px;}
+  .interim{font-size:12.5px;color:var(--muted);border-left:3px solid var(--gold);padding:4px 10px;margin:0 0 18px;}
+  .card{background:#fff;border:1px solid var(--line);border-radius:8px;padding:16px 18px;margin-bottom:22px;box-shadow:0 1px 2px rgba(0,0,0,.05);}
+  .preview{display:block;width:100%;height:auto;border:1px dashed var(--line);border-radius:4px;background:#fff;margin:0 0 16px;}
   .btn{
-    flex:1;border:none;border-radius:7px;padding:11px 12px;
-    font-family:"Bebas Neue",Impact,sans-serif;letter-spacing:.06em;
-    font-size:15px;cursor:pointer;text-transform:uppercase;
-    transition:transform .08s,filter .15s;
+    display:block;width:100%;font-family:"Barlow Condensed",sans-serif;font-size:24px;font-weight:700;letter-spacing:.08em;
+    text-transform:uppercase;min-height:60px;padding:12px 18px;border:0;border-radius:8px;background:var(--gold);color:var(--navy);cursor:pointer;
   }
-  .btn:active{transform:translateY(1px);}
-  .btn-primary{background:var(--navy);color:#fff;}
-  .btn-primary:hover{filter:brightness(1.12);}
-  .btn-gold{background:var(--gold);color:#23282f;}
-  .btn-gold:hover{filter:brightness(1.06);}
-  .btn-ghost{background:#eceae3;color:var(--navy);}
-  .btn-ghost:hover{filter:brightness(.97);}
-  .raw{
-    font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace;
-    font-size:11px;background:#0d1626;color:#cfe0f5;border-radius:8px;
-    padding:12px;white-space:pre-wrap;word-break:break-all;
-    max-height:200px;overflow:auto;margin-top:10px;
-  }
-  .raw .ctrl{color:#e8a33d;}
-  .toolbar{
-    display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;
-    padding:14px 16px;border-bottom:1px solid var(--line);background:#faf8f3;
-  }
-  .toolbar .row{margin-bottom:0;}
-  .toolbar .row{min-width:130px;}
-  .notice{
-    background:var(--warnbg);border:1px solid #e8d7a0;border-left:4px solid var(--gold);
-    color:#5a4a16;font-size:12.5px;border-radius:6px;padding:11px 13px;margin:0 0 18px;
-  }
-  .notice b{color:#4a3c10;}
-  details.help{margin-top:14px;border:1px solid var(--line);border-radius:8px;background:#faf8f3;}
-  details.help summary{cursor:pointer;padding:11px 14px;font-weight:600;
-    font-size:13px;color:var(--navy);}
-  details.help .inner{padding:0 14px 14px;font-size:12.5px;color:#4a525e;}
-  details.help code{background:#e9e6dd;padding:1px 5px;border-radius:4px;font-size:11.5px;}
-  .status{font-size:12px;margin-top:8px;min-height:16px;}
-  .status.ok{color:var(--ok);}
-  .status.err{color:var(--red);}
-  .preset-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
-  .chip{
-    border:1px solid var(--line);background:#fff;border-radius:20px;
-    padding:5px 13px;font-size:12px;cursor:pointer;color:var(--navy);
-    transition:background .12s;
-  }
-  .chip:hover{background:#f0eee7;}
-  footer.foot{
-    text-align:center;color:#8a93a0;font-size:11.5px;padding:0 20px 40px;
-  }
-  .mode-switch{
-    display:flex;gap:0;margin-bottom:16px;border:1px solid var(--line);
-    border-radius:9px;overflow:hidden;background:#fff;
-    box-shadow:0 2px 8px rgba(11,31,58,.05);
-  }
-  .mode-btn{
-    flex:1;border:none;background:#fff;cursor:pointer;
-    font-family:"Bebas Neue",Impact,sans-serif;letter-spacing:.07em;
-    font-size:17px;padding:13px 10px;color:#7a8492;text-transform:uppercase;
-    transition:background .15s,color .15s;
-  }
-  .mode-btn:not(:last-child){border-right:1px solid var(--line);}
-  .wrap.fb-only{grid-template-columns:1fr;max-width:720px;}
-  .fb-preview{display:block;width:100%;height:auto;border:1px dashed var(--line);border-radius:6px;background:#fff;margin:0 0 14px;}
-  .fb-print{width:100%;font-family:"Bebas Neue",Impact,sans-serif;font-size:24px;letter-spacing:.08em;min-height:58px;border:0;border-radius:8px;background:var(--gold);color:#23282f;cursor:pointer;}
-  .fb-print:disabled{opacity:.45;cursor:default;}
-  .fb-sec{width:100%;font-family:"Bebas Neue",Impact,sans-serif;font-size:17px;letter-spacing:.06em;min-height:46px;border:1.5px solid var(--navy);border-radius:8px;background:#fff;color:var(--navy);cursor:pointer;margin-top:8px;}
-  .fb-status{font-size:13px;margin-top:10px;min-height:18px;color:#54606f;}
-  .fb-status.ok{color:#1f6b3a;font-weight:600;} .fb-status.bad{color:#9b2030;font-weight:600;}
-  .fb-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
-  #fbTrouble{margin-top:14px;}
-  .fb-steps{font-size:13.5px;line-height:1.5;color:var(--ink,#1a1d24);margin:10px 0 4px;}
-  .fb-steps-h{margin:8px 0 4px;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#54606f;}
-  .fb-steps ol,.fb-steps ul{margin:0 0 8px;padding-left:22px;}
-  .fb-steps li{margin:0 0 5px;} #fbTrouble summary{cursor:pointer;font-size:12.5px;font-weight:600;color:#54606f;}
-  #fbLog{width:100%;height:120px;margin-top:8px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px;border:1px solid var(--line);border-radius:6px;background:#fbfaf6;padding:8px;resize:vertical;}
-  .mode-btn.active{background:var(--navy);color:#fff;}
-  .mode-btn:not(.active):hover{background:#f0eee7;color:var(--navy);}
-  .combo-list{
-    position:absolute;left:0;right:0;top:100%;z-index:30;
-    background:#fff;border:1px solid var(--line);border-radius:7px;
-    margin-top:3px;max-height:210px;overflow-y:auto;
-    box-shadow:0 8px 24px rgba(11,31,58,.16);
-  }
-  .combo-item{
-    padding:8px 11px;font-size:13.5px;cursor:pointer;color:var(--ink);
-    border-bottom:1px solid #f0eee7;
-  }
-  .combo-item:last-child{border-bottom:none;}
-  .combo-item:hover,.combo-item.active{background:var(--navy);color:#fff;}
-  .combo-item .code{font-weight:700;margin-right:8px;}
-  .combo-empty{padding:9px 11px;font-size:12.5px;color:#9aa3b0;}
-  .vd-headline{
-    font-family:"Bebas Neue",Impact,sans-serif;font-size:21px;letter-spacing:.02em;
-    color:var(--navy);line-height:1.1;margin:0 0 10px;
-  }
-  .vd-grid{display:grid;grid-template-columns:auto 1fr;gap:5px 14px;font-size:13px;}
-  .vd-grid dt{color:#7a8492;font-weight:600;white-space:nowrap;}
-  .vd-grid dd{margin:0;color:var(--ink);}
-  .vd-loading{color:#7a8492;font-size:13px;padding:10px 4px;}
-  .vd-error{color:var(--red);font-size:13px;padding:10px 4px;}
-  .vin-decode-section{
-    margin-top:18px;padding-top:16px;border-top:1px solid var(--line);
-  }
-  .vin-decode-head{
-    font-family:"Bebas Neue",Impact,sans-serif;letter-spacing:.08em;font-size:16px;
-    color:var(--navy);text-transform:uppercase;display:flex;align-items:center;gap:8px;
-    margin-bottom:12px;
-  }
-  .vin-decode-head::before{
-    content:"";width:9px;height:9px;border-radius:2px;background:var(--red);
-    transform:rotate(45deg);display:inline-block;
-  }
-  .vin-decode-tag{
-    font-family:"Barlow",sans-serif;font-weight:600;font-size:11px;letter-spacing:0;
-    text-transform:none;color:#9aa3b0;
-  }
-  .use-note{
-    background:#eef3fa;border-bottom:1px solid var(--line);
-    border-left:4px solid var(--navy);
-    color:#2c3e52;font-size:13px;line-height:1.45;
-    padding:12px 16px;border-radius:10px 10px 0 0;
-  }
+  .btn:disabled{opacity:.45;cursor:default;}
+  .btn.sec{font-size:18px;min-height:50px;background:#fff;border:1.5px solid var(--navy);color:var(--navy);margin-top:10px;}
+  .btn:focus-visible{outline:3px solid var(--gold);outline-offset:2px;}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .status{font-size:14px;margin-top:12px;min-height:20px;color:var(--muted);}
+  .status.ok{color:var(--ok);font-weight:600;} .status.bad{color:var(--red);font-weight:600;}
+  .note{font-size:13px;color:var(--muted);margin:0 0 12px;}
+  details summary{cursor:pointer;font-size:13px;font-weight:600;color:var(--muted);}
+  .steps{font-size:13.5px;line-height:1.5;margin:10px 0 4px;} .steps p{margin:8px 0 4px;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);}
+  .steps ol,.steps ul{margin:0 0 8px;padding-left:22px;} .steps li{margin:0 0 5px;}
+  #log{width:100%;height:120px;margin-top:8px;font-family:Consolas,Menlo,monospace;font-size:11.5px;border:1px solid var(--line);border-radius:6px;background:var(--field);padding:8px;resize:vertical;}
+  footer.foot{text-align:center;font-size:12px;color:var(--muted);padding:14px 18px 22px;border-top:1px solid var(--line);}
 </style>
 </head>
 <body>
 <header class="masthead">
   <p class="kick">Public Safety &middot; Field Tools</p>
-  <h1>Barcode Generator</h1>
-  <div class="sub">DL / ID (AAMVA PDF417) &amp; VIN &mdash; type the data, scan into Brazos/Tyler</div>
+  <h1>Traffic Stop Notice</h1>
+  <div class="sub">Prints the English/Spanish feedback notice slip on the in-car printer. <a href="/patrol/">&lsaquo; All tools</a></div>
 </header>
 
-<div class="wrap">
-  <!-- LEFT: input -->
-  <div class="input-col">
-    <div class="mode-switch">
-      <button class="mode-btn active" id="modeDL" data-mode="dl">DL / ID</button>
-      <button class="mode-btn" id="modeVIN" data-mode="vin">VIN</button>
-      <button class="mode-btn" id="modeFB" data-mode="fb">Feedback Notice</button>
-    </div>
+<main>
+  <p class="interim">Interim tool. Runs entirely in this browser. Nothing is stored or sent anywhere except to the printer.</p>
 
-    <!-- Feedback Notice panel -->
-    <div class="card" id="fbPanel" style="display:none;">
-      <div class="card-h">Traffic Feedback Notice</div>
-      <div class="card-body">
-        <div class="use-note">Prints the English/Spanish feedback notice slip on your in-car printer. First time on this computer? Open <b>Printer setup and troubleshooting</b> below for the steps.</div>
-        <canvas id="fbSlip" class="fb-preview" width="832" height="200" aria-label="Notice preview"></canvas>
-        <button type="button" class="fb-print" id="fbPrintBtn">Print Notice</button>
-        <div class="fb-status" id="fbStatus"></div>
-        <details id="fbTrouble">
-          <summary>Printer setup and troubleshooting</summary>
-          <div class="fb-steps">
-            <p class="fb-steps-h">First-time setup on this computer (about 2 minutes)</p>
-            <ol>
-              <li>Turn the printer on. Note the serial number on its bottom label (starts with <b>XXRBJ</b>).</li>
-              <li>On the computer open <b>Settings</b>, then <b>Bluetooth &amp; devices</b>, then <b>Add device</b>, then <b>Bluetooth</b>.</li>
-              <li>Pick the entry that matches the printer serial number and tap <b>Connect</b>. A PIN pops up on the computer: press the <b>checkmark button on the printer</b> to accept it. When the computer says <b>Connected</b>, tap <b>Done</b>.</li>
-              <li>Come back here and tap <b>Print Notice</b>. Chrome shows a small popup asking which device to use. That is a one-time permission, not a settings change.</li>
-              <li>In the popup, scroll to the entry labeled <b>Serial Printer (COM&#8203;x)</b> and pick it, then tap <b>Connect</b>. Do <b>not</b> pick the entry that shows only the printer serial number; it looks right but does not deliver the job. The slip prints after a few seconds.</li>
-            </ol>
-            <p class="fb-steps-h">After setup</p>
-            <ul>
-              <li>Print Notice is one tap. Chrome remembers the printer on this computer.</li>
-              <li>Nothing prints? Make sure the printer is on and has paper, then try again.</li>
-              <li>Popup list empty? The printer is off or not paired. Repeat steps 1 to 3.</li>
-              <li>Says "Sent to printer" but nothing comes out, or picked the wrong device? Tap <b>Choose different printer</b> below, then Print Notice again and pick the <b>Serial Printer</b> entry.</li>
-              <li>Printer replaced or swapped cars? Same thing: Choose different printer, then pair the new one.</li>
-            </ul>
-          </div>
-          <div class="fb-row">
-            <button type="button" class="fb-sec" id="fbForgetBtn">Choose different printer</button>
-            <button type="button" class="fb-sec" id="fbInfoBtn">Read printer info</button>
-          </div>
-          <textarea id="fbLog" readonly aria-label="Printer log"></textarea>
-        </details>
+  <div class="card">
+    <canvas id="slip" class="preview" width="832" height="200" aria-label="Notice preview"></canvas>
+    <p class="note">The printer does not cut between copies. Tap Print once per slip you need.</p>
+    <button type="button" class="btn" id="printBtn">Print Notice</button>
+    <div class="status" id="status"></div>
+    <details style="margin-top:14px;">
+      <summary>Printer setup and troubleshooting</summary>
+      <div class="steps">
+        <p>First time on this computer (about 30 seconds)</p>
+        <ol>
+          <li>Turn the printer on. The MDC is already paired to it.</li>
+          <li>Tap <b>Print Notice</b>. Chrome shows a small popup asking which device to use. That is a one-time permission, not a settings change.</li>
+          <li>In the popup, scroll down to the entry that says <b>Serial Printer</b> followed by a COM number (for example <b>Serial Printer (COM8)</b>; the number is different on each car). Pick it and tap <b>Connect</b>. Do <b>not</b> pick the entry that shows only the printer serial number; it looks right but does not deliver the job. The slip prints after a few seconds.</li>
+        </ol>
+        <p>No "Serial Printer" entry in the list? Pair the printer first</p>
+        <ol>
+          <li>Note the serial number on the printer's bottom label (starts with <b>XXRBJ</b>).</li>
+          <li>On the computer open <b>Settings</b>, then <b>Bluetooth &amp; devices</b>, then <b>Add device</b>, then <b>Bluetooth</b>.</li>
+          <li>Pick the entry that matches the printer serial number and tap <b>Connect</b>. A PIN pops up on the computer: press the <b>checkmark button on the printer</b> to accept it. When the computer says <b>Connected</b>, tap <b>Done</b>. Then come back here and do the three steps above.</li>
+        </ol>
+        <p>After setup</p>
+        <ul>
+          <li>Print Notice is one tap. Chrome remembers the printer on this computer.</li>
+          <li>Nothing prints? Make sure the printer is on and has paper, then try again.</li>
+          <li>Popup has no Serial Printer entry? The printer is off, or this MDC is not paired to it. See the pairing steps above.</li>
+          <li>Says "Sent to printer" but nothing comes out, or picked the wrong device? Tap <b>Choose different printer</b> below, then Print Notice again and pick the <b>Serial Printer</b> entry.</li>
+          <li>Printer replaced or swapped cars? Same thing: Choose different printer, then pair the new one.</li>
+        </ul>
       </div>
-    </div>
-
-    <!-- VIN panel -->
-    <div class="card" id="vinPanel" style="display:none;">
-      <div class="card-h">Vehicle Identification Number</div>
-      <div class="card-body">
-        <div class="preset-bar">
-          <span style="font-size:11.5px;color:#54606f;align-self:center;">Quick fill:</span>
-          <button class="chip" data-preset="vinsample">Sample VIN</button>
-          <button class="chip" data-preset="vinclear">Clear</button>
-        </div>
-        <div class="grid2" style="align-items:start;">
-          <div class="row" style="margin-bottom:0;">
-            <label>VIN (17 characters)</label>
-            <input id="VIN" class="field" maxlength="18" autocomplete="off"
-                   placeholder="1GYEC63857R351214"
-                   style="text-transform:uppercase;font-family:'SF Mono',ui-monospace,Menlo,monospace;letter-spacing:.04em;">
-            <div class="hint" id="vinHint" style="min-height:16px;">&nbsp;</div>
-          </div>
-          <div class="row" style="margin-bottom:0;">
-            <label>Barcode format</label>
-            <select id="vinFormat" class="field">
-              <option value="code128" selected>Code 128 (default)</option>
-              <option value="code39">Code 39</option>
-            </select>
-            <div class="hint" style="min-height:16px;">Match what Brazos expects. 128 is the common default.</div>
-          </div>
-        </div>
-
-        <div id="vinDecodeCard" class="vin-decode-section">
-          <div class="vin-decode-head">Vehicle lookup <span class="vin-decode-tag">NHTSA &middot; reference only</span></div>
-          <div id="vinDecodeBody">
-            <div class="placeholder" style="padding:14px 4px;">Enter a full 17-character VIN to look up the vehicle.</div>
-          </div>
-        </div>
+      <div class="row">
+        <button type="button" class="btn sec" id="forgetBtn">Choose different printer</button>
+        <button type="button" class="btn sec" id="infoBtn">Read printer info</button>
       </div>
-    </div>
-
-    <!-- DL/ID panel -->
-    <div class="card" id="dlPanel">
-      <!-- Card type (DL) and issuer (Texas) are fixed structural values; no real
-           card exists, so the officer never selects them. -->
-      <input type="hidden" id="cardType" value="DL">
-      <input type="hidden" id="iin" value="636015">
-      <div class="use-note">Use this when a subject has no driver license or ID to scan. Enter their information below to generate a barcode you can scan into Brazos.</div>
-      <div class="toolbar">
-        <div class="row" style="flex:1;">
-          <label>AAMVA version</label>
-          <select id="version" class="field">
-            <option value="10">10 &mdash; 2020 std</option>
-            <option value="09" selected>09 &mdash; 2016 std (default)</option>
-            <option value="08">08 &mdash; 2013 std</option>
-            <option value="07">07 &mdash; 2012 std</option>
-            <option value="06">06 &mdash; 2011 std</option>
-            <option value="05">05 &mdash; 2010 std</option>
-            <option value="03">03 &mdash; 2009 std</option>
-            <option value="01">01 &mdash; 2005 std</option>
-          </select>
-          <div class="hint">Only change this if a test scan into Brazos shows missing or wrong fields.</div>
-        </div>
-      </div>
-
-      <div class="card-body">
-        <div class="preset-bar">
-          <span style="font-size:11.5px;color:#54606f;align-self:center;">Quick fill (fake test data):</span>
-          <button class="chip" data-preset="tx">TX sample</button>
-          <button class="chip" data-preset="clear">Clear all</button>
-        </div>
-
-        <div class="grid3">
-          <div class="row">
-            <label>First name (DAC)</label>
-            <input id="DAC" class="field" maxlength="40" autocomplete="off">
-          </div>
-          <div class="row">
-            <label>Middle name (DAD)</label>
-            <input id="DAD" class="field" maxlength="40" autocomplete="off">
-          </div>
-          <div class="row">
-            <label>Last name (DCS)</label>
-            <input id="DCS" class="field" maxlength="40" autocomplete="off">
-          </div>
-        </div>
-
-        <div class="grid2">
-          <div class="row">
-            <label>Date of birth (DBB)</label>
-            <input id="DBB" class="field" type="date" autocomplete="off">
-          </div>
-          <div class="row">
-            <label>Sex (DBC)</label>
-            <select id="DBC" class="field">
-              <option value="1">Male (1)</option>
-              <option value="2">Female (2)</option>
-              <option value="9">Not specified (9)</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="card-h" style="border-top:1px solid var(--line);margin:6px -16px 14px;padding-left:16px;">Address</div>
-        <div class="row">
-          <label>Street (DAG)</label>
-          <input id="DAG" class="field" maxlength="35" autocomplete="off">
-        </div>
-        <div class="grid3">
-          <div class="row">
-            <label>City (DAI)</label>
-            <input id="DAI" class="field" maxlength="20" autocomplete="off">
-          </div>
-          <div class="row" style="position:relative;">
-            <label>State (DAJ)</label>
-            <input type="hidden" id="DAJ" value="TX">
-            <input id="DAJ_search" class="field" autocomplete="off" value="TX"
-                   placeholder="Type to search" role="combobox"
-                   aria-autocomplete="list" aria-expanded="false"
-                   style="text-transform:uppercase;">
-            <div id="DAJ_list" class="combo-list" style="display:none;"></div>
-          </div>
-          <div class="row">
-            <label>ZIP (DAK)</label>
-            <input id="DAK" class="field" maxlength="11" autocomplete="off" placeholder="75081">
-          </div>
-        </div>
-
-        <div class="card-h" style="border-top:1px solid var(--line);margin:6px -16px 14px;padding-left:16px;">Physical description</div>
-        <div class="grid3">
-          <div class="row">
-            <label>Height</label>
-            <input type="hidden" id="DAU">
-            <div style="display:flex;gap:6px;">
-              <select id="DAU_ft" class="field" style="flex:1;">
-                <option value="">ft</option>
-                <option value="3">3'</option>
-                <option value="4">4'</option>
-                <option value="5">5'</option>
-                <option value="6">6'</option>
-                <option value="7">7'</option>
-              </select>
-              <select id="DAU_in" class="field" style="flex:1;">
-                <option value="">in</option>
-                <option value="0">0"</option><option value="1">1"</option>
-                <option value="2">2"</option><option value="3">3"</option>
-                <option value="4">4"</option><option value="5">5"</option>
-                <option value="6">6"</option><option value="7">7"</option>
-                <option value="8">8"</option><option value="9">9"</option>
-                <option value="10">10"</option><option value="11">11"</option>
-              </select>
-            </div>
-            <div class="hint" id="DAU_hint">&nbsp;</div>
-          </div>
-          <div class="row">
-            <label>Eye color (DAY)</label>
-            <select id="DAY" class="field">
-              <option value="">&mdash;</option>
-              <option>BLK</option><option>BLU</option><option>BRO</option>
-              <option>GRY</option><option>GRN</option><option>HAZ</option>
-              <option>MAR</option><option>PNK</option><option>DIC</option>
-            </select>
-          </div>
-          <div class="row">
-            <label>Hair color (DAZ)</label>
-            <select id="DAZ" class="field">
-              <option value="">&mdash;</option>
-              <option>BAL</option><option>BLK</option><option>BLN</option>
-              <option>BRO</option><option>GRY</option><option>RED</option>
-              <option>SDY</option><option>WHI</option>
-            </select>
-          </div>
-        </div>
-        <div class="grid2">
-          <div class="row">
-            <label>Weight in lbs (DAW)</label>
-            <input id="DAW" class="field" maxlength="3" placeholder="180" autocomplete="off">
-          </div>
-          <div class="row">
-            <label>Country (DCG)</label>
-            <select id="DCG" class="field">
-              <option value="USA" selected>USA</option>
-              <option value="CAN">CAN</option>
-            </select>
-          </div>
-        </div>
-      </div>
-    </div>
+      <textarea id="log" readonly aria-label="Printer log"></textarea>
+    </details>
   </div>
+</main>
 
-  <!-- RIGHT: output -->
-  <div class="output-col">
-    <div class="barcode-stage">
-      <p class="stamp" id="outputStamp">PDF417 Output</p>
-      <div id="barcodeHolder">
-        <div class="placeholder">Fill in the fields &mdash; the barcode<br>updates automatically.</div>
-      </div>
-      <div id="status" class="status"></div>
-      <div class="btnrow">
-        <button class="btn btn-gold" id="dlBtn">Download PNG</button>
-        <button class="btn btn-ghost" id="copyBtn">Copy image</button>
-      </div>
-    </div>
+<footer class="foot">Internal field tool. Renders entirely in your browser. Nothing is saved on this device or the site. &middot; Build v9</footer>
 
-    <!-- VIN decode reference moved into the left VIN panel -->
-
-    <div class="card">
-      <div class="card-h" id="rawCardTitle">Raw AAMVA payload</div>
-      <div class="card-body" style="padding:12px;">
-        <div class="hint" id="rawHint" style="margin-bottom:4px;">Control characters shown in <span style="color:#e8a33d;">gold</span>.</div>
-        <div id="raw" class="raw">&mdash;</div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<footer class="foot">
-  Internal field tool. Renders entirely in your browser &mdash; no data is uploaded or stored anywhere.
-</footer>
-
-<script>
-// ---- AAMVA element ordering (the order fields appear in the DL subfile) ----
-// Canonical AAMVA DL subfile ordering. DAQ (license number) must lead the
-// subfile and DCF (document discriminator) must be present, or strict parsers
-// desync and drop the field right after the DL tag (the last name). The name
-// truncation flags DDE/DDF/DDG immediately follow their names.
-const FIELD_ORDER = [
-  "DAQ","DCS","DDE","DAC","DDF","DAD","DDG",
-  "DBB","DBC","DAY","DAU","DAG","DAI","DAJ","DAK",
-  "DCF","DCG","DAW","DAZ"
-];
-
-// Structural fields that must appear even when empty, to keep strict parsers
-// (like Brazos) synced. Emitted as e.g. "DAQ\n" with no value.
-const ALWAYS_EMIT_EMPTY = new Set(["DAQ","DCF"]);
-
-const $ = id => document.getElementById(id);
-
-// Convert the feet + inches dropdowns into AAMVA DAU format: "NNN in" (total
-// inches, 3-digit zero-padded). Returns "" if either part is unset. Also keeps
-// the hidden #DAU and the live hint in sync.
-function computeHeight(){
-  const ftEl = $("DAU_ft"), inEl = $("DAU_in"), hidden = $("DAU"), hint = $("DAU_hint");
-  if(!ftEl || !inEl) return (hidden ? hidden.value : "");
-  const ft = ftEl.value, inch = inEl.value;
-  if(ft === "" || inch === ""){
-    if(hidden) hidden.value = "";
-    if(hint){ hint.textContent = "\u00a0"; hint.style.color = ""; }
-    return "";
-  }
-  const total = parseInt(ft,10)*12 + parseInt(inch,10);
-  const dau = String(total).padStart(3,"0") + " in";
-  if(hidden) hidden.value = dau;
-  if(hint){ hint.textContent = ft + "'" + inch + '" = ' + total + " in (" + dau + ")"; hint.style.color = "#7a8492"; }
-  return dau;
-}
-
-// date input (yyyy-mm-dd) -> AAMVA MMDDCCYY
-function fmtDate(v){
-  if(!v) return "";
-  const [y,m,d] = v.split("-");
-  if(!y||!m||!d) return "";
-  return `${m}${d}${y}`;
-}
-
-function collect(){
-  const f = {};
-  const txt = (id)=> ($(id)?.value || "").trim();
-  // DAQ (license number) and DCF (document discriminator) are mandatory leading/
-  // structural fields. No real values exist, so they are emitted as EMPTY fields
-  // (present in the structure to keep the parser synced, but with nothing for the
-  // scanner to display). See ALWAYS_EMIT_EMPTY in buildPayload.
-  f.DAQ = "";
-  f.DCS = txt("DCS").toUpperCase();
-  f.DAC = txt("DAC").toUpperCase();
-  f.DAD = txt("DAD").toUpperCase();
-  // Name truncation indicators (N = not truncated). Required by strict parsers.
-  if(f.DCS) f.DDE = "N";
-  if(f.DAC) f.DDF = "N";
-  if(f.DAD) f.DDG = "N";
-  f.DBB = fmtDate(txt("DBB"));
-  f.DBC = txt("DBC");
-  f.DAY = txt("DAY");
-  f.DAU = computeHeight();
-  f.DAG = txt("DAG").toUpperCase();
-  f.DAI = txt("DAI").toUpperCase();
-  // DAJ = Address Jurisdiction Code (residence state) per AAMVA. Encoding it to
-  // test whether Brazos maps it to an ADDRESS state field (correct) vs the
-  // handheld "DL state" field.
-  f.DAJ = txt("DAJ").toUpperCase();
-  f.DAK = txt("DAK");
-  f.DCF = "";
-  f.DCG = txt("DCG");
-  f.DAW = txt("DAW");
-  f.DAZ = txt("DAZ");
-  return f;
-}
-
-// Build the AAMVA payload string.
-// Header: @ \n \x1e \r ANSI {IIN}{ver}{jver}{numEntries}
-//   then subfile designator: {type}{offset:4}{length:4}
-//   then subfile body: each "KEYvalue\n", ending with \r (segment terminator)
-function buildPayload(){
-  const f = collect();
-  const iin = $("iin").value;
-  const ver = $("version").value;        // 2-char
-  const jver = "00";                      // jurisdiction version
-  const type = $("cardType").value;       // DL or ID
-  const numEntries = "01";
-
-  // Build subfile body
-  let body = type;                        // subfile starts with its own type tag
-  const seen = new Set();
-  for(const key of FIELD_ORDER){
-    if(seen.has(key)) continue;
-    seen.add(key);
-    const val = f[key];
-    if(ALWAYS_EMIT_EMPTY.has(key)){
-      // present-but-empty: keeps parser synced, nothing for scanner to display
-      body += key + (val || "") + "\n";
-    } else if(val !== undefined && val !== ""){
-      body += key + val + "\n";
-    }
-  }
-  body += "\r";                           // segment terminator
-
-  // Header is fixed-length up to the subfile designators.
-  // "@" + LF + RS + CR + "ANSI " + IIN(6) + ver(2) + jver(2) + entries(2)
-  const headerFixed = "@\n\x1e\rANSI " + iin + ver + jver + numEntries;
-  // One subfile designator: type(2) + offset(4) + length(4) = 10 chars
-  const designatorLen = 10;
-  const offset = headerFixed.length + designatorLen;
-  const length = body.length;
-
-  const designator = type +
-    String(offset).padStart(4,"0") +
-    String(length).padStart(4,"0");
-
-  return headerFixed + designator + body;
-}
-
-function renderRaw(payload){
-  // visualize control chars
-  const html = payload
-    .replace(/&/g,"&amp;").replace(/</g,"&lt;")
-    .replace(/\x40/, '<span class="ctrl">@</span>')
-    .replace(/\n/g, '<span class="ctrl">\u240a</span>\n')
-    .replace(/\x1e/g, '<span class="ctrl">\u241e</span>')
-    .replace(/\r/g, '<span class="ctrl">\u240d</span>');
-  $("raw").innerHTML = html;
-}
-
-let lastCanvas = null;
-let currentMode = "dl";
-
-function render(){
-  if(typeof bwipjs === "undefined"){
-    $("barcodeHolder").innerHTML = '<div class="placeholder">Barcode library failed to load.<br>Check your internet connection and reload.</div>';
-    return;
-  }
-  if(currentMode === "vin"){ renderVIN(); }
-  else { renderDL(); }
-}
-
-function renderDL(){
-  const payload = buildPayload();
-  renderRaw(payload);
-
-  const holder = $("barcodeHolder");
-  const status = $("status");
-
-  // require at least a name before drawing
-  const f = collect();
-  if(!f.DCS && !f.DAC){
-    holder.innerHTML = '<div class="placeholder">Fill in the fields &mdash; the barcode<br>updates automatically.</div>';
-    status.textContent = "";
-    lastCanvas = null;
-    return;
-  }
-
-  const canvas = document.createElement("canvas");
-  try{
-    bwipjs.toCanvas(canvas, {
-      bcid: "pdf417",
-      text: payload,
-      columns: 12,           // typical for DL barcodes
-      eclevel: 5,            // AAMVA recommends ECC level 5
-      rowmult: 2,
-      scale: 3,
-      padding: 6,
-      backgroundcolor: "FFFFFF"
-    });
-    holder.innerHTML = "";
-    holder.appendChild(canvas);
-    lastCanvas = canvas;
-    status.className = "status ok";
-    status.textContent = "\u2713 Barcode generated \u00b7 " + payload.length + " bytes encoded";
-  }catch(e){
-    holder.innerHTML = '<div class="placeholder">Could not render: ' + e + '</div>';
-    status.className = "status err";
-    status.textContent = "Error: " + e;
-    lastCanvas = null;
-  }
-}
-
-function renderVIN(){
-  const holder = $("barcodeHolder");
-  const status = $("status");
-  const hint = $("vinHint");
-  const vin = ($("VIN").value || "").trim().toUpperCase();
-  const fmt = $("vinFormat").value;
-
-  // raw panel shows the encoded VIN string
-  $("raw").textContent = vin || "\u2014";
-
-  // length + character validation feedback
-  const n = vin.length;
-  const short = 17 - n;
-  if(n === 0){
-    hint.textContent = "\u00a0";
-    hint.style.color = "";
-  } else if(n < 17){
-    hint.textContent = "Not enough \u2014 " + short + " more character" + (short===1?"":"s") + " needed (" + n + "/17).";
-    hint.style.color = "var(--warn)";
-  } else if(n > 17){
-    const over = n - 17;
-    hint.textContent = "Too many \u2014 remove " + over + " character" + (over===1?"":"s") + " (" + n + "/17).";
-    hint.style.color = "var(--red)";
-  } else if(/[IOQ]/.test(vin)){
-    hint.textContent = "Check VIN \u2014 real VINs never contain I, O, or Q.";
-    hint.style.color = "var(--warn)";
-  } else {
-    hint.textContent = "\u2713 17 characters \u2014 looks valid.";
-    hint.style.color = "var(--ok)";
-  }
-
-  // vehicle lookup (debounced, only on full 17-char VIN)
-  scheduleVinDecode(vin);
-
-  if(!vin){
-    holder.innerHTML = '<div class="placeholder">Enter a VIN &mdash; the barcode<br>updates automatically.</div>';
-    status.textContent = "";
-    lastCanvas = null;
-    return;
-  }
-
-  const canvas = document.createElement("canvas");
-  try{
-    bwipjs.toCanvas(canvas, {
-      bcid: fmt,             // code128 or code39
-      text: vin,
-      scale: 3,
-      height: 18,
-      includetext: true,
-      textxalign: "center",
-      textsize: 11,
-      padding: 6,
-      backgroundcolor: "FFFFFF"
-    });
-    holder.innerHTML = "";
-    holder.appendChild(canvas);
-    lastCanvas = canvas;
-    status.className = "status ok";
-    status.textContent = "\u2713 VIN barcode generated \u00b7 " + (fmt === "code39" ? "Code 39" : "Code 128");
-  }catch(e){
-    holder.innerHTML = '<div class="placeholder">Could not render: ' + e + '</div>';
-    status.className = "status err";
-    status.textContent = "Error: " + e;
-    lastCanvas = null;
-  }
-}
-
-// ---- NHTSA vehicle lookup (free, no key, reference only) ----
-let vinDecodeTimer = null;
-let vinDecodeCache = {};   // vin -> html string
-let vinDecodeLast = "";    // last vin we rendered, to avoid redundant work
-
-function scheduleVinDecode(vin){
-  const body = $("vinDecodeBody");
-  if(!body) return;
-  clearTimeout(vinDecodeTimer);
-
-  if(vin.length !== 17){
-    vinDecodeLast = "";
-    body.innerHTML = '<div class="placeholder" style="padding:18px 6px;">Enter a full 17-character VIN<br>to look up the vehicle.</div>';
-    return;
-  }
-  if(vin === vinDecodeLast) return;      // already shown
-  if(vinDecodeCache[vin]){
-    vinDecodeLast = vin;
-    body.innerHTML = vinDecodeCache[vin];
-    return;
-  }
-  body.innerHTML = '<div class="vd-loading">Looking up vehicle\u2026</div>';
-  vinDecodeTimer = setTimeout(()=>decodeVin(vin), 450);
-}
-
-async function decodeVin(vin){
-  const body = $("vinDecodeBody");
-  const url = "https://vpic.nhtsa.dot.gov/api/vehicles/DecodeVinValues/" +
-              encodeURIComponent(vin) + "?format=json";
-  try{
-    const res = await fetch(url);
-    if(!res.ok) throw new Error("HTTP " + res.status);
-    const data = await res.json();
-    const r = (data.Results && data.Results[0]) || {};
-    const year  = r.ModelYear || "";
-    const make  = r.Make || "";
-    const model = r.Model || "";
-    const trim  = r.Trim || r.Series || "";
-    const body_ = r.BodyClass || "";
-    const engine = [r.DisplacementL ? (r.DisplacementL + "L") : "",
-                    r.EngineCylinders ? (r.EngineCylinders + "-cyl") : "",
-                    r.FuelTypePrimary || ""].filter(Boolean).join(" ");
-    const drive = r.DriveType || "";
-    const made  = [r.PlantCity, r.PlantState, r.PlantCountry].filter(Boolean).join(", ");
-    const err   = (r.ErrorText || "").trim();
-
-    // headline
-    const headline = [year, make, model].filter(Boolean).join(" ").trim();
-
-    if(!make && !model && !year){
-      const msg = (err && err !== "0 - VIN decoded clean. Check Digit (9th position) is correct")
-        ? err : "No vehicle data found for this VIN.";
-      const html = '<div class="vd-error">' + escapeHtml(msg) + '</div>';
-      vinDecodeCache[vin] = html;
-      vinDecodeLast = vin;
-      body.innerHTML = html;
-      return;
-    }
-
-    const rows = [];
-    if(trim)   rows.push(["Trim", trim]);
-    if(body_)  rows.push(["Body", body_]);
-    if(engine) rows.push(["Engine", engine]);
-    if(drive)  rows.push(["Drive", drive]);
-    if(made)   rows.push(["Built", made]);
-
-    let html = '<div class="vd-headline">' + escapeHtml(headline || "Vehicle") + '</div>';
-    if(rows.length){
-      html += '<dl class="vd-grid">' +
-        rows.map(([k,v])=>'<dt>'+escapeHtml(k)+'</dt><dd>'+escapeHtml(v)+'</dd>').join("") +
-        '</dl>';
-    }
-    vinDecodeCache[vin] = html;
-    vinDecodeLast = vin;
-    body.innerHTML = html;
-  }catch(e){
-    vinDecodeLast = "";   // allow retry
-    body.innerHTML = '<div class="vd-error">Lookup unavailable (no connection or service down).</div>';
-  }
-}
-
-function escapeHtml(s){
-  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
-}
-
-// download
-$("dlBtn").addEventListener("click", ()=>{
-  if(!lastCanvas){ return; }
-  const a = document.createElement("a");
-  let name;
-  if(currentMode === "vin"){
-    name = "VIN_" + (($("VIN").value || "barcode").replace(/[^a-z0-9]/gi,"_"));
-  } else {
-    name = "DLID_" + (($("DCS").value || "barcode").replace(/[^a-z0-9]/gi,"_"));
-  }
-  a.download = name + ".png";
-  a.href = lastCanvas.toDataURL("image/png");
-  a.click();
-});
-
-// copy image to clipboard
-$("copyBtn").addEventListener("click", async ()=>{
-  if(!lastCanvas) return;
-  try{
-    lastCanvas.toBlob(async (blob)=>{
-      await navigator.clipboard.write([new ClipboardItem({"image/png":blob})]);
-      const s = $("status"); s.className="status ok"; s.textContent="\u2713 Image copied to clipboard";
-    });
-  }catch(e){
-    const s = $("status"); s.className="status err"; s.textContent="Copy failed: "+e;
-  }
-});
-
-// ---- searchable State combobox ----
-const STATES = [
-  ["AL","Alabama"],["AK","Alaska"],["AZ","Arizona"],["AR","Arkansas"],
-  ["CA","California"],["CO","Colorado"],["CT","Connecticut"],["DE","Delaware"],
-  ["DC","District of Columbia"],["FL","Florida"],["GA","Georgia"],["HI","Hawaii"],
-  ["ID","Idaho"],["IL","Illinois"],["IN","Indiana"],["IA","Iowa"],
-  ["KS","Kansas"],["KY","Kentucky"],["LA","Louisiana"],["ME","Maine"],
-  ["MD","Maryland"],["MA","Massachusetts"],["MI","Michigan"],["MN","Minnesota"],
-  ["MS","Mississippi"],["MO","Missouri"],["MT","Montana"],["NE","Nebraska"],
-  ["NV","Nevada"],["NH","New Hampshire"],["NJ","New Jersey"],["NM","New Mexico"],
-  ["NY","New York"],["NC","North Carolina"],["ND","North Dakota"],["OH","Ohio"],
-  ["OK","Oklahoma"],["OR","Oregon"],["PA","Pennsylvania"],["RI","Rhode Island"],
-  ["SC","South Carolina"],["SD","South Dakota"],["TN","Tennessee"],["TX","Texas"],
-  ["UT","Utah"],["VT","Vermont"],["VA","Virginia"],["WA","Washington"],
-  ["WV","West Virginia"],["WI","Wisconsin"],["WY","Wyoming"]
-];
-
-(function(){
-  const search = $("DAJ_search");
-  const hidden = $("DAJ");
-  const list = $("DAJ_list");
-  let activeIdx = -1;
-  let filtered = [];
-
-  function commit(code, label){
-    hidden.value = code;
-    search.value = code;
-    close();
-    render();
-  }
-  function close(){
-    list.style.display = "none";
-    search.setAttribute("aria-expanded","false");
-    activeIdx = -1;
-  }
-  function open(){
-    list.style.display = "";
-    search.setAttribute("aria-expanded","true");
-  }
-  function draw(){
-    const q = search.value.trim().toUpperCase();
-    // match on code prefix OR name prefix OR name contains
-    filtered = STATES.filter(([code,name])=>{
-      const N = name.toUpperCase();
-      return code.startsWith(q) || N.startsWith(q) || N.includes(q);
-    });
-    if(q === ""){ filtered = STATES.slice(); }
-    if(filtered.length === 0){
-      list.innerHTML = '<div class="combo-empty">No match</div>';
-      open(); return;
-    }
-    list.innerHTML = filtered.map(([code,name],i)=>
-      '<div class="combo-item'+(i===activeIdx?' active':'')+'" data-code="'+code+'">'+
-      '<span class="code">'+code+'</span>'+name+'</div>'
-    ).join("");
-    [...list.querySelectorAll(".combo-item")].forEach((el,i)=>{
-      el.addEventListener("mousedown",(e)=>{ // mousedown beats blur
-        e.preventDefault();
-        const [c,n] = filtered[i];
-        commit(c,n);
-      });
-    });
-    open();
-  }
-
-  search.addEventListener("focus", ()=>{ search.select(); draw(); });
-  search.addEventListener("input", ()=>{ activeIdx = -1; draw(); });
-  search.addEventListener("keydown",(e)=>{
-    if(list.style.display === "none" && e.key !== "ArrowDown") return;
-    if(e.key === "ArrowDown"){ e.preventDefault(); if(list.style.display==="none")draw(); activeIdx=Math.min(activeIdx+1,filtered.length-1); draw(); }
-    else if(e.key === "ArrowUp"){ e.preventDefault(); activeIdx=Math.max(activeIdx-1,0); draw(); }
-    else if(e.key === "Enter"){
-      e.preventDefault();
-      const pick = filtered[activeIdx >= 0 ? activeIdx : 0];
-      if(pick) commit(pick[0],pick[1]);
-    } else if(e.key === "Escape"){ close(); }
-  });
-  search.addEventListener("blur", ()=>{
-    // on blur, snap to a valid state: exact code match, else keep prior hidden value
-    setTimeout(()=>{
-      const v = search.value.trim().toUpperCase();
-      const exact = STATES.find(([c])=>c===v);
-      if(exact){ hidden.value = exact[0]; search.value = exact[0]; }
-      else { search.value = hidden.value; } // revert to last valid
-      close();
-      render();
-    }, 120);
-  });
-})();
-
-// presets
-document.querySelectorAll(".chip").forEach(chip=>{
-  chip.addEventListener("click", ()=>{
-    const p = chip.dataset.preset;
-    if(p==="clear"){
-      // clear DL data fields only; preserve the AAMVA version selection
-      $("dlPanel").querySelectorAll(".field").forEach(el=>{
-        if(el.id === "version") return;        // keep tuned version
-        if(el.tagName==="SELECT"){ el.selectedIndex = 0; }
-        else el.value="";
-      });
-      $("DCG").value="USA";
-      $("DAJ").value="TX"; $("DAJ_search").value="TX";   // restore default state
-      computeHeight();   // resync hidden DAU + hint to blank
-      render(); return;
-    }
-    if(p==="tx"){
-      $("DAC").value="SAMPLEFIRST"; $("DAD").value="SAMPLEMIDDLE"; $("DCS").value="SAMPLELAST";
-      $("DBB").value="1985-03-14"; $("DBC").value="1";
-      $("DAG").value="123 SAMPLE ST"; $("DAI").value="RICHARDSON";
-      $("DAJ").value="TX"; $("DAJ_search").value="TX"; $("DAK").value="75081";
-      $("DAU_ft").value="5"; $("DAU_in").value="10"; computeHeight();
-      $("DAY").value="BRO"; $("DAZ").value="BRO";
-      $("DAW").value="180";
-      render(); return;
-    }
-    if(p==="vinsample"){
-      $("VIN").value="1GYEC63857R351214";
-      render(); return;
-    }
-    if(p==="vinclear"){
-      $("VIN").value="";
-      render(); return;
-    }
-  });
-});
-
-// mode switch
-function setMode(mode){
-  currentMode = mode;
-  const isVIN = mode === "vin", isFB = mode === "fb";
-  $("vinPanel").style.display = isVIN ? "" : "none";
-  $("dlPanel").style.display  = (isVIN || isFB) ? "none" : "";
-  $("fbPanel").style.display  = isFB ? "" : "none";
-  document.querySelector(".output-col").style.display = isFB ? "none" : "";
-  document.querySelector(".wrap").classList.toggle("fb-only", isFB);
-  $("modeVIN").classList.toggle("active", isVIN);
-  $("modeDL").classList.toggle("active", !isVIN && !isFB);
-  $("modeFB").classList.toggle("active", isFB);
-  if(isFB){ fbDraw(); return; }
-  $("outputStamp").textContent = isVIN ? "VIN Barcode" : "PDF417 Output";
-  $("rawCardTitle").textContent = isVIN ? "Encoded VIN string" : "Raw AAMVA payload";
-  $("rawHint").style.display = isVIN ? "none" : "";
-  render();
-}
-$("modeDL").addEventListener("click", ()=>setMode("dl"));
-$("modeVIN").addEventListener("click", ()=>setMode("vin"));
-$("modeFB").addEventListener("click", ()=>setMode("fb"));
-
-document.querySelectorAll(".field").forEach(el=>{
-  el.addEventListener("input", render);
-  el.addEventListener("change", render);
-});
-
-render();
-</script>
 <script src="/patrol/print.js"></script>
 <script>
 (function(){
@@ -1053,9 +115,9 @@ render();
   var W = 832, MARGIN = 26, FONT = '21px Arial, Helvetica, sans-serif', LINE_H = 26, PARA_GAP = 22;
   var TOP = 22, LOGO_W = 380, LOGO_GAP = 24, BOTTOM = 90;
   var busy = false;
-  function g(id){ return document.getElementById(id); }
-  function log(msg){ var el = g('fbLog'); el.value += '[' + new Date().toLocaleTimeString() + '] ' + msg + '\n'; el.scrollTop = el.scrollHeight; }
-  function setStatus(msg, cls){ var s = g('fbStatus'); s.textContent = msg || ''; s.className = 'fb-status' + (cls ? ' ' + cls : ''); }
+  function $(id){ return document.getElementById(id); }
+  function log(msg){ var el = $('log'); el.value += '[' + new Date().toLocaleTimeString() + '] ' + msg + '\n'; el.scrollTop = el.scrollHeight; }
+  function setStatus(msg, cls){ var s = $('status'); s.textContent = msg || ''; s.className = 'status' + (cls ? ' ' + cls : ''); }
   if(window.RPDPrint) RPDPrint.log = log;
 
   function wrapText(ctx, text, maxW){
@@ -1065,8 +127,8 @@ render();
     return lines;
   }
   var logo = new Image();
-  window.fbDraw = function(){
-    var c = g('fbSlip'), ctx = c.getContext('2d');
+  function draw(){
+    var c = $('slip'), ctx = c.getContext('2d');
     ctx.font = FONT;
     var maxW = W - MARGIN * 2, en = wrapText(ctx, NOTICE_EN, maxW), es = wrapText(ctx, NOTICE_ES, maxW);
     var logoH = logo.naturalWidth ? Math.round(logo.naturalHeight * LOGO_W / logo.naturalWidth) : 0;
@@ -1079,23 +141,25 @@ render();
     en.forEach(function(t){ ctx.fillText(t, MARGIN, y); y += LINE_H; });
     y += PARA_GAP;
     es.forEach(function(t){ ctx.fillText(t, MARGIN, y); y += LINE_H; });
-  };
-  logo.onload = fbDraw; logo.onerror = fbDraw; logo.src = LOGO_SRC;
+  }
+  logo.onload = draw; logo.onerror = draw; logo.src = LOGO_SRC;
+  draw();
+  if(document.fonts && document.fonts.ready) document.fonts.ready.then(draw);
 
-  g('fbPrintBtn').addEventListener('click', async function(){
+  $('printBtn').addEventListener('click', async function(){
     if(busy) return;
     if(!window.RPDPrint){ setStatus('Print engine did not load. Check your connection and reload.', 'bad'); return; }
-    busy = true; g('fbPrintBtn').disabled = true; setStatus('Printing...');
-    try{ fbDraw(); await RPDPrint.printCanvas(g('fbSlip'), 1); setStatus('Sent to printer.', 'ok'); }
+    busy = true; $('printBtn').disabled = true; setStatus('Printing...');
+    try{ draw(); await RPDPrint.printCanvas($('slip'), 1); setStatus('Sent to printer.', 'ok'); }
     catch(e){ var why = RPDPrint.explain(e); setStatus(why, 'bad'); log('ERROR (' + ((e && e.name) || 'Error') + '): ' + why); }
-    finally{ busy = false; g('fbPrintBtn').disabled = false; }
+    finally{ busy = false; $('printBtn').disabled = false; }
   });
-  g('fbInfoBtn').addEventListener('click', async function(){
+  $('infoBtn').addEventListener('click', async function(){
     if(busy || !window.RPDPrint) return; busy = true;
     try{ log('Reading printer settings (read only)...'); (await RPDPrint.info()).forEach(function(x){ log('  ' + x); }); }
     catch(e){ log('ERROR: ' + RPDPrint.explain(e)); } finally{ busy = false; }
   });
-  g('fbForgetBtn').addEventListener('click', async function(){
+  $('forgetBtn').addEventListener('click', async function(){
     if(!window.RPDPrint) return;
     try{ await RPDPrint.forget(); log('Forgot the saved printer. The next print will ask you to pick one.'); }
     catch(e){ log('ERROR: ' + RPDPrint.explain(e)); }

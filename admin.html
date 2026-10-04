@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- admin.html  |  Build v32  |  updated 2026-10-03  |  pairs with roster.js v30  |  New tool: Applicants & References (full advisor passcode only). Lists observers marked Applied; type in each reference from the paper application and the tool mints a one-time link (rpdcadets.com/reference#CODE) with a Copy link button for pasting into the Outlook email template; tracks Not sent / Sent / Reminder sent / Received / Unable to reach / Link expired; shows the decrypted responses with flagged answers highlighted and builds a letterhead PDF per reference or one file per applicant (pdf-lib, footer label CADET/REFCHECK V1). Responses are locked under a separate advisor-only key, so the sergeant and limited tiers cannot open them. Accept and add to roster: confirm name, pick squad, rank defaults to Probationary, join date defaults to today; adds the roster entry, copies observer contact info into Cadet Records (blank fields only), carries sergeant notes into cadet notes, removes the observer entry, and keeps the reference file on hold until deleted. Hub tile shows a badge for unread responses. Also bumped the roster.js cache-buster from 26 to 30. Prior v31 notes: Ride-Along Log now merges the Trackers inbox on open (cadet-submitted rides appear tagged "Trackers" and count toast shows how many arrived); add, edit, and delete maintain the roster/raIndex duplicate ledger so a deleted entry frees the cadet to resubmit; approving a sergeant ride-along proposal also claims its ledger hash. Prior v30 notes: Act. Sgt. rank dropdown; itemized six-waiver panel; per-cadet sergeant note lines; merged Sergeant Notes panel; waiver-item proposals in Pending Approvals. -->
+<!-- admin.html  |  Build v33  |  updated 2026-10-03  |  pairs with roster.js v30  |  Applicants & References: supports the longer questionnaire (reference.html Build v2). Free-text answers are recognized by their own tag (t:1) so new text questions lay out full width on screen and in the PDF; the PDF now sets short one-line answers two across and uses slightly tighter rows so a clean response still fits one page. No other tool changed. Prior v32 notes: New tool: Applicants & References (full advisor passcode only). Lists observers marked Applied; type in each reference from the paper application and the tool mints a one-time link (rpdcadets.com/reference#CODE) with a Copy link button for pasting into the Outlook email template; tracks Not sent / Sent / Reminder sent / Received / Unable to reach / Link expired; shows the decrypted responses with flagged answers highlighted and builds a letterhead PDF per reference or one file per applicant (pdf-lib, footer label CADET/REFCHECK V1). Responses are locked under a separate advisor-only key, so the sergeant and limited tiers cannot open them. Accept and add to roster: confirm name, pick squad, rank defaults to Probationary, join date defaults to today; adds the roster entry, copies observer contact info into Cadet Records (blank fields only), carries sergeant notes into cadet notes, removes the observer entry, and keeps the reference file on hold until deleted. Hub tile shows a badge for unread responses. Also bumped the roster.js cache-buster from 26 to 30. Prior v31 notes: Ride-Along Log now merges the Trackers inbox on open (cadet-submitted rides appear tagged "Trackers" and count toast shows how many arrived); add, edit, and delete maintain the roster/raIndex duplicate ledger so a deleted entry frees the cadet to resubmit; approving a sergeant ride-along proposal also claims its ledger hash. Prior v30 notes: Act. Sgt. rank dropdown; itemized six-waiver panel; per-cadet sergeant note lines; merged Sergeant Notes panel; waiver-item proposals in Pending Approvals. -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -649,7 +649,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
     <button class="lock-btn" id="goBtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg><span id="goLabel">Unlock</span></button>
     <div class="lock-error" id="lockErr">Incorrect passcode.</div>
     <div class="lock-home"><a href="index.html">← Return to Home</a></div>
-    <div style="margin-top:16px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v32</div>
+    <div style="margin-top:16px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v33</div>
   </div>
 </div>
 
@@ -679,7 +679,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
       <button class="back-link" id="rosterBack"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Admin Console</button>
       <div class="bar">
         <div class="status-pill" id="pill"><span class="dot"></span><span id="pillText">Synced</span></div>
-        <span style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v32</span>
+        <span style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v33</span>
         <button class="btn ghost" id="syncMembersBtn" title="One-time: pull titles and alumni from the Members page into the shared roster">Sync members data</button>
         <button class="btn add" id="addBtn">+ Add Person</button>
       </div>
@@ -966,7 +966,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
 
 <script src="roster.js?v=30"></script>
 <script>
-console.log('[admin] Build v32');
+console.log('[admin] Build v33');
 const SESSION_KEY = 'rpd761_admin_auth';   // advisor-only; NOT shared with cadet pages
 const TIER_KEY = 'rpd761_admin_tier';      // 'full' (golden) or 'ltd' (limited advisor)
 const LIMITED_TOOLS = ['records','ridealongs','donations'];
@@ -3731,6 +3731,7 @@ function apHoldHtml(key, app){
     </div>
   </div>`;
 }
+function apIsText(x){ return x.t===1 || x.k==='strength' || x.k==='other'; }
 function apAnswersHtml(a){
   if(!a) return '<div class="ap-ans"><p class="ap-note">Opening\u2026</p></div>';
   if(a._err) return '<div class="ap-ans"><p class="ap-note" style="color:#f8a3a3">This response could not be opened.</p></div>';
@@ -3743,7 +3744,7 @@ function apAnswersHtml(a){
   let sec=null, open=false;
   items.forEach(x=>{
     if(x.s!==sec){ if(open) html+='</div>'; sec=x.s; html+=`<div class="ap-ans-sec">${escapeHtmlA(sec||'')}</div><div>`; open=true; }
-    const txt=(x.k==='strength'||x.k==='other');
+    const txt=apIsText(x);
     html+=`<div class="ap-row${x.f?' f'+x.f:''}${txt?' txt':''}"><div>${escapeHtmlA(x.q)}</div><div class="ap-a">${escapeHtmlA(x.a)}</div>${x.n?`<div class="ap-n">${escapeHtmlA(x.n)}</div>`:''}</div>`;
   });
   if(open) html+='</div>';
@@ -4047,14 +4048,14 @@ async function apBuildPdf(PDFLib, logoBytes, applicant, list){
   function newPage(){ page=doc.addPage(); page.setSize(W,H); pages.push(page); header(); }
   function need(h){ if(y-h < BOTTOM){ newPage(); page.drawText(apPdfSafe(applicant)+' / reference from '+apPdfSafe(cur.ans.refName||cur.ref.name)+' (continued)', { x:L, y, size:8, font:FI, color:BG }); y-=16; } }
   function section(title){
-    need(38); y-=7;
+    need(36); y-=6;
     page.drawText(apPdfSafe(title).toUpperCase(), { x:L, y, size:9.5, font:FB, color:NAVY });
     page.drawLine({ start:{x:L,y:y-4}, end:{x:R,y:y-4}, thickness:0.5, color:GOLD });
-    y-=16;
+    y-=15;
   }
-  const LEAD=12, QW=300, AX=L+QW+18, AW=R-AX-6, PAD=5;
+  const LEAD=11.5, QW=300, AX=L+QW+18, AW=R-AX-6, PAD=4, GAP=10, HALF=(CW-GAP)/2;
   function row(x, shade){
-    const txt=(x.k==='strength'||x.k==='other');
+    const txt=apIsText(x);
     const ql=apWrap(F, 9, x.q, txt ? CW-16 : QW);
     const al=apWrap(txt?F:FB, 9, x.a, txt ? CW-16 : AW);
     const nl=x.n ? apWrap(FI, 9, x.n, CW-30) : [];
@@ -4078,6 +4079,23 @@ async function apBuildPdf(PDFLib, logoBytes, applicant, list){
     if(nl.length){ yy-=3; nl.forEach(t=>{ page.drawText(t, { x:L+22, y:yy, size:9, font:FI, color:INK }); yy-=LEAD; }); }
     y-=h;
   }
+  // Short one-line answers with no explanation are set two across.
+  function compact(x){
+    if(apIsText(x) || x.n) return false;
+    const q=apPdfSafe(x.q), a=apPdfSafe(x.a);
+    if(q.indexOf('\n')>=0 || a.indexOf('\n')>=0) return false;
+    return F.widthOfTextAtSize(q, 9) + FB.widthOfTextAtSize(a, 9) + 28 <= HALF;
+  }
+  function cell(x, x0, shade){
+    const h=LEAD+PAD, rb=y-h+9+PAD/2;
+    const fill = x.f===2 ? FLAG : (x.f===1 ? LOOK : (shade ? TINT : null));
+    if(fill) page.drawRectangle({ x:x0, y:rb, width:HALF, height:h, color:fill });
+    if(x.f) page.drawRectangle({ x:x0, y:rb, width:3, height:h, color: x.f===2 ? RED : AMBER });
+    const a=apPdfSafe(x.a);
+    page.drawText(apPdfSafe(x.q), { x:x0+8, y, size:9, font:F, color:INK });
+    page.drawText(a, { x:x0+HALF-8-FB.widthOfTextAtSize(a, 9), y, size:9, font:FB, color: x.f===2 ? RED : INK });
+  }
+  function pair(a, b, shade){ need(LEAD+PAD); cell(a, L, shade); if(b) cell(b, L+HALF+GAP, shade); y-=LEAD+PAD; }
   for(const item of list){
     cur=item; newPage();
     const a=item.ans, r=item.ref, items=a.items||[];
@@ -4103,8 +4121,15 @@ async function apBuildPdf(PDFLib, logoBytes, applicant, list){
     rtext('FLAGGED ANSWERS', R-10, y-2, 7, FB, BG);
     rtext(String(concerns), R-10, y-16, 12, FB, concerns?RED:NAVY);
     y-=46;
-    let sec=null, n=0;
-    items.forEach(x=>{ if(x.s!==sec){ sec=x.s; section(sec||''); n=0; } row(x, n%2===1); n++; });
+    let sec=null, n=0, prevPair=false;
+    for(let i=0;i<items.length;i++){
+      const x=items[i], nx=items[i+1];
+      if(x.s!==sec){ sec=x.s; section(sec||''); n=0; prevPair=false; }
+      const nextOk = !!nx && nx.s===x.s && compact(nx);
+      if(compact(x) && (nextOk || prevPair)){ pair(x, nextOk ? nx : null, n%2===1); if(nextOk) i++; prevPair=true; }
+      else { row(x, n%2===1); prevPair=false; }
+      n++;
+    }
     // sign-off
     need(34); y-=20;
     page.drawText('Reviewed by:', { x:L, y, size:9, font:F, color:INK });

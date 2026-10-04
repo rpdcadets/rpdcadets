@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- reference.html | Build v1 | 10/03/26 | New page: applicant reference questionnaire. Opens only from a one-time link (rpdcadets.com/reference#CODE) minted in /admin. Screen 1 explains why the answers matter, screen 2 is the questionnaire, screen 3 is the thank-you. Answers are encrypted in the reference's browser with the reference public key and can be opened only with the full advisor passcode. Pairs with roster.js v30 (RPDRoster.references). COUPLING: REF_SALT, REF_ITER, and the derive recipe are duplicated from roster.js and must change together. -->
+<!-- reference.html | Build v2 | 10/03/26 | Questionnaire expanded and reworded. "Can't say" is now "Don't know" everywhere (the old wording read as if the reference was not allowed to answer). New questions: Finishes what they start (rating), Academic effort (school references), a Judgment and attitude section (leader or follower around friends, how they talk about police, losing their temper, trust alone in your home), two more boxes on the concerns list (unusual interest in weapons or violence, hostility toward a group of people), one area to grow, and an optional "anyone else we should talk to". Intro now says about five minutes. Text answers are tagged t:1 so /admin (Build v33) lays them out full width. Responses already submitted are unaffected: each one stores the questions it was asked. Prior v1 notes: New page: applicant reference questionnaire. Opens only from a one-time link (rpdcadets.com/reference#CODE) minted in /admin. Screen 1 explains why the answers matter, screen 2 is the questionnaire, screen 3 is the thank-you. Answers are encrypted in the reference's browser with the reference public key and can be opened only with the full advisor passcode. Pairs with roster.js v30 (RPDRoster.references). COUPLING: REF_SALT, REF_ITER, and the derive recipe are duplicated from roster.js and must change together. -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -70,6 +70,7 @@ h1{font-family:'Bebas Neue',sans-serif;font-size:40px;letter-spacing:2px;line-he
 textarea,input[type=text],input[type=tel]{background:var(--input-bg);border:1px solid var(--input-border);border-radius:9px;padding:12px 13px;color:var(--white);font-family:'Barlow',sans-serif;font-size:16px;outline:none;width:100%}
 textarea{resize:vertical;min-height:92px;line-height:1.5}
 textarea:focus,input:focus{border-color:var(--input-focus);background:rgba(255,255,255,0.06)}
+textarea::placeholder,input::placeholder{color:#6f7f96}
 .btn-main{width:100%;margin-top:26px;padding:16px;background:var(--red);color:var(--white);border:none;border-radius:10px;font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:16px;letter-spacing:2.5px;text-transform:uppercase;cursor:pointer;box-shadow:0 4px 20px rgba(192,57,43,0.3)}
 .btn-main:hover{background:var(--red-glow)}
 .btn-main:focus-visible{outline:2px solid var(--gold-light);outline-offset:3px}
@@ -125,7 +126,7 @@ textarea:focus,input:focus{border-color:var(--input-focus);background:rgba(255,2
       <p>Cadets in this program train alongside Richardson police officers. They learn police tactics and procedures, ride in patrol cars, and may see or hear confidential information about real people and real cases.</p>
       <p class="strong">In the wrong hands, that knowledge can put officers and the public at risk. We have to be confident that every cadet we accept can be trusted with it.</p>
       <p>You know this applicant in a way we cannot. Please answer honestly, even if it is uncomfortable. Your responses are confidential and will not be shared with the applicant.</p>
-      <p class="fine">The questionnaire takes about three minutes.</p>
+      <p class="fine">The questionnaire takes about five minutes. Almost every question is a single tap.</p>
     </div>
     <button type="button" class="btn-main" id="nextBtn">Next</button>
   </div>
@@ -148,11 +149,11 @@ textarea:focus,input:focus{border-color:var(--input-focus);background:rgba(255,2
   </div>
 
   <div class="foot">Richardson Police Department Public Safety Cadets<br><a href="mailto:advisors@rpdcadets.com">advisors@rpdcadets.com</a></div>
-  <div class="build">Build v1</div>
+  <div class="build">Build v2</div>
 </div>
 
 <script>
-console.log('[reference] Build v1');
+console.log('[reference] Build v2');
 /* ====== CONFIG ====== */
 // Same Firebase project as the rest of the site. This page deliberately does
 // NOT load roster.js (its seed carries cadet names, which must never ship in
@@ -217,7 +218,8 @@ async function envelope(plainJson, pubJwkTxt){
    flag(value) -> 0 none, 1 worth a look, 2 concern (highlighted in /admin)
    explainIf(value) -> true when the follow-up box is required
    show(typeGroup) -> limits a question to school, employer, or personal references */
-const RATE = ['Excellent','Good','Fair','Poor',"Can't say"];
+const DK = "Don't know";   // was "Can't say" in Build v1, which read as "not allowed to say"
+const RATE = ['Excellent','Good','Fair','Poor',DK];
 const rateFlag = v => v==='Poor' ? 2 : (v==='Fair' ? 1 : 0);
 const REL_OPTS = ['Teacher or school staff','School Resource Officer','Employer or supervisor','Coach or activity leader','Faith or youth leader','Family friend or neighbor','Relative','Other'];
 function relGroup(rel){
@@ -235,32 +237,44 @@ const QUESTIONS = [
   { k:'often', type:'one', q:'How often do you interact with them?', opts:['Daily','Weekly','Monthly','Rarely'],
     flag:v=> v==='Rarely'?1:0 },
 
-  { sec:'How would you rate the applicant?', sub:"Tap one for each. Choose \u201CCan't say\u201D if you have not seen it firsthand." },
+  { sec:'How would you rate the applicant?', sub:"Tap one for each. Choose \u201CDon't know\u201D if you have not seen it firsthand." },
   { k:'honesty',    type:'rate', q:'Honesty and trustworthiness' },
   { k:'reliable',   type:'rate', q:'Reliability and showing up on time' },
+  { k:'follow',     type:'rate', q:'Finishes what they start' },
   { k:'rules',      type:'rate', q:'Respect for rules and authority' },
   { k:'peers',      type:'rate', q:'How they treat peers' },
   { k:'maturity',   type:'rate', q:'Maturity and self-control' },
   { k:'correction', type:'rate', q:'How they take correction' },
   { k:'schoolAtt',  type:'rate', q:'Attendance at school', show:'school' },
   { k:'schoolBeh',  type:'rate', q:'Behavior in class or on campus', show:'school' },
+  { k:'schoolEff',  type:'rate', q:'Academic effort', show:'school' },
   { k:'workAtt',    type:'rate', q:'Attendance at work', show:'employer' },
-  { k:'rehire',     type:'one',  q:'Would you hire them again?', opts:['Yes','No',"Can't say"], show:'employer',
+  { k:'rehire',     type:'one',  q:'Would you hire them again?', opts:['Yes','No',DK], show:'employer',
     flag:v=> v==='No'?2:0, explainIf:v=> v==='No', explainLabel:'Please explain' },
   { k:'stress',     type:'rate', q:'How they handle stress or conflict', show:'personal' },
 
+  { sec:'Judgment and attitude' },
+  { k:'peer', type:'one', q:'Around friends, is the applicant more of a leader or a follower?', opts:['Leads','Holds their own','Easily influenced',DK],
+    flag:v=> v==='Easily influenced'?1:0 },
+  { k:'police', type:'one', q:'How does the applicant talk about police or law enforcement?', opts:['Positively','Neutral','Negatively',DK],
+    flag:v=> v==='Negatively'?2:0, explainIf:v=> v==='Negatively', explainLabel:'Please explain' },
+  { k:'temper', type:'one', q:'Have you seen the applicant lose their temper?', opts:['Never','Rarely','Sometimes','Often'],
+    flag:v=> v==='Often'?2:(v==='Sometimes'?1:0), explainIf:v=> v==='Sometimes' || v==='Often', explainLabel:'Please describe what happened' },
+  { k:'home', type:'one', q:'Would you trust the applicant alone in your home?', opts:['Yes','No',DK],
+    flag:v=> v==='No'?2:0, explainIf:v=> v==='No', explainLabel:'Please explain' },
+
   { sec:'Concerns' },
   { k:'aware', type:'multi', q:'Are you aware of any of the following involving the applicant?', sub:'Tap all that apply.',
-    opts:['Serious dishonesty','Discipline at school or work','Trouble with the law','Alcohol, drug, or vape use','Fighting, threats, or bullying','Concerning social media',NONE],
+    opts:['Serious dishonesty','Discipline at school or work','Trouble with the law','Alcohol, drug, or vape use','Fighting, threats, or bullying','Concerning social media','Unusual interest in weapons or violence','Hostility toward a group of people',NONE],
     flag:v=> (v.length && !(v.length===1 && v[0]===NONE)) ? 2 : 0,
     explainIf:v=> v.length>0 && !(v.length===1 && v[0]===NONE), explainLabel:'Please explain what you know' },
   { k:'trust', type:'one', q:'Cadets are exposed to police tactics, training, and confidential information. Do you trust this applicant to keep sensitive information private and to use what they learn responsibly?',
-    opts:['Yes, without hesitation','Yes, with some reservations','No',"Can't say"],
-    flag:v=> (v==='No' || v==='Yes, with some reservations') ? 2 : (v==="Can't say" ? 1 : 0),
+    opts:['Yes, without hesitation','Yes, with some reservations','No',DK],
+    flag:v=> (v==='No' || v==='Yes, with some reservations') ? 2 : (v===DK ? 1 : 0),
     explainIf:v=> v==='No' || v==='Yes, with some reservations', explainLabel:'Please explain' },
   { k:'assoc', type:'one', q:'Are you aware of anyone close to the applicant who is involved in criminal activity or who might misuse this kind of information?',
-    opts:['No','Yes',"Can't say"],
-    flag:v=> v==='Yes' ? 2 : (v==="Can't say" ? 1 : 0),
+    opts:['No','Yes',DK],
+    flag:v=> v==='Yes' ? 2 : (v===DK ? 1 : 0),
     explainIf:v=> v==='Yes', explainLabel:'Please explain' },
 
   { sec:'Your recommendation' },
@@ -269,7 +283,9 @@ const QUESTIONS = [
     flag:v=> (v==='Recommend with reservations' || v==='Do not recommend') ? 2 : 0,
     explainIf:v=> v==='Recommend with reservations' || v==='Do not recommend', explainLabel:'Please explain' },
   { k:'strength', type:'text', q:'What is their biggest strength?', max:600 },
+  { k:'grow', type:'text', q:'What is one area where the applicant needs to grow?', max:600 },
   { k:'other', type:'text', q:'Is there anything else we should know?', optional:true, max:1500 },
+  { k:'whoElse', type:'text', q:'Is there anyone else who knows the applicant well that we should talk to?', optional:true, max:400, ph:'Name and how to reach them' },
 
   { sec:'About you' },
   { k:'refName', type:'text', q:'Your name', single:true, max:120 },
@@ -307,7 +323,7 @@ function buildForm(){
     if(it.type==='text'){
       body = it.single
         ? `<input type="${it.tel?'tel':'text'}" id="in_${it.k}" maxlength="${it.max||200}"${it.tel?' autocomplete="tel" inputmode="tel"':''} aria-label="${esc(it.q)}">`
-        : `<textarea id="in_${it.k}" maxlength="${it.max||1000}" aria-label="${esc(it.q)}"></textarea>`;
+        : `<textarea id="in_${it.k}" maxlength="${it.max||1000}" aria-label="${esc(it.q)}"${it.ph?` placeholder="${esc(it.ph)}"`:''}></textarea>`;
     } else {
       const opts = it.type==='rate' ? RATE : it.opts;
       body = `<div class="chips${it.type==='rate'?' rate':''}" role="group" aria-label="${esc(it.q)}">` +
@@ -378,6 +394,7 @@ function collect(){
     let f = 0;
     if(it.type==='rate') f = rateFlag(raw); else if(it.flag) f = it.flag(raw);
     const row = { s:sec, k:it.k, q:it.q, a };
+    if(it.type==='text') row.t = 1;                        // free text: /admin lays these out full width
     if(note) row.n = note;
     if(f) row.f = f;
     items.push(row);

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- patrol/exchange/index.html | Build v7 | 2026-10-04 | Setup steps assume the MDC is already paired; pairing is now the fallback. v6: Setup step 5 wording: "Serial Printer" plus a COM number, with an example. v5: Setup steps: pick the "Serial Printer (COMx)" entry, not the serial-number entry. v4: Setup step 3 now covers the Bluetooth PIN and the checkmark button on the printer. v3: Everything prints in ALL CAPS; driver phone field per unit; optional witnesses (name and phone) with their own Add button, printed after the units. v2: QR now points to the accident report page. v1: New tool. Driver Information Exchange slip for crashes: any number of units, each with driver, vehicle, and liability insurance; header with service number, date/time, location, officer. Slip is drawn on a canvas to match the old Brazos layout (city wordmark, title, courtesy text, contact paragraph, address block with QR code, boxed sections) and printed on the in-car Zebra via /patrol/print.js. VIN check-digit validation. Nothing stored. -->
+<!-- patrol/exchange/index.html | Build v8 | 2026-10-04 | Compatibility mode switch in troubleshooting. v7: Setup steps assume the MDC is already paired; pairing is now the fallback. v6: Setup step 5 wording: "Serial Printer" plus a COM number, with an example. v5: Setup steps: pick the "Serial Printer (COMx)" entry, not the serial-number entry. v4: Setup step 3 now covers the Bluetooth PIN and the checkmark button on the printer. v3: Everything prints in ALL CAPS; driver phone field per unit; optional witnesses (name and phone) with their own Add button, printed after the units. v2: QR now points to the accident report page. v1: New tool. Driver Information Exchange slip for crashes: any number of units, each with driver, vehicle, and liability insurance; header with service number, date/time, location, officer. Slip is drawn on a canvas to match the old Brazos layout (city wordmark, title, courtesy text, contact paragraph, address block with QR code, boxed sections) and printed on the in-car Zebra via /patrol/print.js. VIN check-digit validation. Nothing stored. -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -136,13 +136,15 @@
           <button type="button" class="btn sec" id="forgetBtn">Choose different printer</button>
           <button type="button" class="btn sec" id="infoBtn">Read printer info</button>
         </div>
+        <button type="button" class="btn sec" id="modeBtn">Compatibility mode: Off</button>
+        <p class="note" style="margin-top:6px;">Compatibility mode sends the slip uncompressed. Slower, but turn it on if slips stop printing on a particular printer.</p>
         <textarea id="log" readonly aria-label="Printer log"></textarea>
       </details>
     </div>
   </div>
 </div>
 
-<footer class="foot">Build v7</footer>
+<footer class="foot">Build v8</footer>
 
 <script src="/patrol/print.js"></script>
 <script>
@@ -404,6 +406,9 @@
 
   addUnit(); addUnit();
   if(document.fonts && document.fonts.ready) document.fonts.ready.then(draw);
+  function paintMode(){ if(window.RPDPrint && RPDPrint.getMode) $('modeBtn').textContent = 'Compatibility mode: ' + (RPDPrint.getMode() === 'eg' ? 'On' : 'Off'); }
+  $('modeBtn').addEventListener('click', function(){ if(!window.RPDPrint) return; RPDPrint.setMode(RPDPrint.getMode() === 'eg' ? 'pcx' : 'eg'); paintMode(); log('Compatibility mode ' + (RPDPrint.getMode() === 'eg' ? 'on' : 'off') + '.'); });
+  paintMode();
   log('Ready. Direct printing ' + ((window.RPDPrint && RPDPrint.supported()) ? 'available.' : 'NOT available in this browser. Use Chrome or Edge on the squad computer.'));
 })();
 </script>

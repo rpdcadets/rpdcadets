@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- admin.html  |  Build v31  |  updated 2026-07-23  |  pairs with roster.js v26  |  Ride-Along Log now merges the Trackers inbox on open (cadet-submitted rides appear tagged "Trackers" and count toast shows how many arrived); add, edit, and delete maintain the roster/raIndex duplicate ledger so a deleted entry frees the cadet to resubmit; approving a sergeant ride-along proposal also claims its ledger hash. Prior v30 notes: Act. Sgt. rank dropdown; itemized six-waiver panel; per-cadet sergeant note lines; merged Sergeant Notes panel; waiver-item proposals in Pending Approvals. -->
+<!-- admin.html  |  Build v32  |  updated 2026-10-03  |  pairs with roster.js v30  |  New tool: Applicants & References (full advisor passcode only). Lists observers marked Applied; type in each reference from the paper application and the tool mints a one-time link (rpdcadets.com/reference#CODE) with a Copy link button for pasting into the Outlook email template; tracks Not sent / Sent / Reminder sent / Received / Unable to reach / Link expired; shows the decrypted responses with flagged answers highlighted and builds a letterhead PDF per reference or one file per applicant (pdf-lib, footer label CADET/REFCHECK V1). Responses are locked under a separate advisor-only key, so the sergeant and limited tiers cannot open them. Accept and add to roster: confirm name, pick squad, rank defaults to Probationary, join date defaults to today; adds the roster entry, copies observer contact info into Cadet Records (blank fields only), carries sergeant notes into cadet notes, removes the observer entry, and keeps the reference file on hold until deleted. Hub tile shows a badge for unread responses. Also bumped the roster.js cache-buster from 26 to 30. Prior v31 notes: Ride-Along Log now merges the Trackers inbox on open (cadet-submitted rides appear tagged "Trackers" and count toast shows how many arrived); add, edit, and delete maintain the roster/raIndex duplicate ledger so a deleted entry frees the cadet to resubmit; approving a sergeant ride-along proposal also claims its ledger hash. Prior v30 notes: Act. Sgt. rank dropdown; itemized six-waiver panel; per-cadet sergeant note lines; merged Sergeant Notes panel; waiver-item proposals in Pending Approvals. -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -557,6 +557,81 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
 .don-reveal.on{color:var(--gold);border-color:rgba(197,165,90,0.4)}
 .don-reveal .real{letter-spacing:0.5px}
 @media(max-width:640px){.don-row{flex-wrap:wrap}.don-c.date{width:100%}.don-c.rcpt,.don-c.amt{width:auto;margin-left:auto}}
+
+/* APPLICANTS & REFERENCES (Build v32) */
+.ap-filter{display:flex;gap:6px}
+.ap-fchip{background:rgba(255,255,255,0.03);border:1px solid var(--card-border);color:var(--text-muted);border-radius:20px;padding:8px 15px;font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:600;letter-spacing:1px;text-transform:uppercase;cursor:pointer}
+.ap-fchip.on{background:rgba(212,169,82,0.12);border-color:var(--gold);color:var(--gold-light)}
+.ap-search{flex:1;min-width:160px;background:var(--input-bg);border:1px solid var(--input-border);border-radius:9px;padding:10px 14px;color:var(--white);font-family:'Barlow',sans-serif;font-size:14px;outline:none}
+.ap-pill{display:inline-block;font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;border-radius:4px;padding:2px 7px;margin-left:8px;vertical-align:middle;border:1px solid var(--card-border);color:var(--text-muted);white-space:nowrap}
+.ap-pill.st-applied,.ap-pill.ok{border-color:rgba(39,174,96,0.55);color:#6fdc9d}
+.ap-pill.st-accepted{border-color:rgba(39,174,96,0.7);color:#8ee7b1;background:rgba(39,174,96,0.1)}
+.ap-pill.st-rejected,.ap-pill.st-nli{border-color:rgba(220,38,38,0.5);color:#f8a3a3}
+.ap-pill.part{border-color:rgba(212,169,82,0.5);color:var(--gold-light)}
+.ap-pill.new{border-color:var(--red);color:#fff;background:var(--red)}
+.ap-kv{display:grid;grid-template-columns:repeat(3,1fr);gap:10px 14px;margin-top:14px}
+.ap-kv div span{display:block;font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);margin-bottom:2px}
+.ap-kv div b{font-weight:500;font-size:13.5px;overflow-wrap:anywhere}
+.ap-h{font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin:22px 0 10px;padding-top:16px;border-top:1px solid var(--card-border)}
+.ap-ref{background:rgba(255,255,255,0.02);border:1px solid var(--card-border);border-radius:10px;padding:13px 14px;margin-bottom:8px}
+.ap-ref-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap}
+.ap-ref-name{font-size:15px;font-weight:600}
+.ap-ref-rel{font-size:12.5px;color:var(--text-muted);margin-left:6px;font-weight:400}
+.ap-ref-contact{font-size:13px;color:#b6c2d4;margin-top:5px;display:flex;flex-wrap:wrap;gap:4px 14px;align-items:center}
+.ap-copy{background:none;border:none;border-bottom:1px dashed rgba(240,214,138,0.5);color:var(--gold-light);font-family:'Barlow',sans-serif;font-size:13px;cursor:pointer;padding:0;overflow-wrap:anywhere;text-align:left}
+.ap-copy:hover{color:#fff}
+.ap-st{font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;border-radius:20px;padding:4px 11px;border:1px solid var(--card-border);color:var(--text-muted);white-space:nowrap}
+.ap-st.sent,.ap-st.remind{border-color:rgba(212,169,82,0.55);color:var(--gold-light)}
+.ap-st.received{border-color:var(--green);color:#8ee7b1;background:rgba(39,174,96,0.12)}
+.ap-st.unreach,.ap-st.expired{border-color:rgba(220,38,38,0.55);color:#f8a3a3}
+.ap-acts{display:flex;flex-wrap:wrap;gap:6px;margin-top:11px}
+.ap-btn{background:rgba(255,255,255,0.03);border:1px solid var(--card-border);color:#c6d0de;border-radius:8px;padding:9px 13px;font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:600;letter-spacing:1px;text-transform:uppercase;cursor:pointer}
+.ap-btn:hover{color:#fff;border-color:rgba(255,255,255,0.22)}
+.ap-btn:disabled{opacity:.5;cursor:wait}
+.ap-btn.main{background:var(--red);border-color:var(--red);color:#fff}
+.ap-btn.main:hover{background:var(--red-glow)}
+.ap-btn.gold{border-color:rgba(212,169,82,0.55);color:var(--gold-light)}
+.ap-btn.on{background:rgba(220,38,38,0.12);border-color:rgba(220,38,38,0.55);color:#f8a3a3}
+.ap-btn.danger{color:#f8a3a3}
+.ap-btn.accept{background:rgba(39,174,96,0.14);border-color:var(--green);color:#b8f1cf;padding:12px 18px;font-size:13px}
+.ap-btn.accept:hover{background:rgba(39,174,96,0.24)}
+.ap-form{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.ap-form input{background:var(--input-bg);border:1px solid var(--input-border);border-radius:8px;padding:10px 12px;color:var(--white);font-family:'Barlow',sans-serif;font-size:14px;outline:none;min-width:0}
+.ap-form input:focus{border-color:var(--input-focus)}
+.ap-form .ap-form-acts{grid-column:1/-1;display:flex;gap:6px;flex-wrap:wrap}
+.ap-foot{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:20px;padding-top:16px;border-top:1px solid var(--card-border)}
+.ap-note{font-size:12.5px;color:var(--text-muted);line-height:1.55}
+.ap-ans{margin-top:12px;border-top:1px solid var(--card-border);padding-top:12px}
+.ap-ans-sum{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px;font-size:13.5px}
+.ap-ans-sum b{font-weight:600}
+.ap-ans-sec{font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted);margin:14px 0 6px}
+.ap-row{display:grid;grid-template-columns:1fr auto;gap:4px 14px;padding:8px 10px;border-radius:7px;font-size:13.5px;line-height:1.45;border-left:3px solid transparent}
+.ap-row:nth-child(odd){background:rgba(255,255,255,0.02)}
+.ap-row .ap-a{font-weight:600;text-align:right;max-width:260px;overflow-wrap:anywhere}
+.ap-row .ap-n{grid-column:1/-1;color:#dbe3ee;font-size:13px;white-space:pre-wrap;overflow-wrap:anywhere}
+.ap-row.f1{border-left-color:var(--amber);background:rgba(217,119,6,0.09)}
+.ap-row.f2{border-left-color:var(--red-abs);background:rgba(220,38,38,0.12)}
+.ap-row.f2 .ap-a{color:#ffb4b4}
+.ap-row.txt{grid-template-columns:1fr}
+.ap-row.txt .ap-a{text-align:left;max-width:none;font-weight:400;white-space:pre-wrap}
+.ap-hold-h{font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--text-muted);margin:30px 0 6px;display:flex;align-items:center;gap:12px}
+.ap-hold-h::after{content:'';flex:1;height:1px;background:var(--card-border)}
+.ap-modal{display:none;position:fixed;inset:0;background:rgba(6,11,22,0.86);z-index:1500;align-items:center;justify-content:center;padding:20px}
+.ap-modal.show{display:flex}
+.ap-modal-card{background:var(--navy);border:1px solid rgba(212,169,82,0.3);border-radius:16px;padding:26px 24px 22px;max-width:440px;width:100%;max-height:92vh;overflow:auto}
+.ap-modal-card h3{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:1.5px;margin-bottom:6px}
+.ap-modal-card p{font-size:13.5px;color:#b6c2d4;line-height:1.55;margin-bottom:14px}
+.ap-modal-card label{display:block;font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);margin:12px 0 5px}
+.ap-modal-card input,.ap-modal-card select{width:100%;background:var(--input-bg);border:1px solid var(--input-border);border-radius:8px;padding:11px 12px;color:var(--white);font-family:'Barlow',sans-serif;font-size:15px;outline:none}
+.ap-modal-card select option{background:var(--navy)}
+.ap-modal-card input[type=date]{color-scheme:dark}
+.ap-sq{display:flex;flex-wrap:wrap;gap:6px}
+.ap-sq button{flex:1 1 0;min-width:84px;min-height:44px;background:var(--input-bg);border:1px solid var(--input-border);color:#c6d0de;border-radius:9px;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:600;letter-spacing:1px;text-transform:uppercase;cursor:pointer}
+.ap-sq button.on{background:rgba(212,169,82,0.16);border-color:var(--gold);color:#fff}
+.ap-modal-acts{display:flex;gap:8px;margin-top:20px}
+.ap-modal-acts .ap-btn{flex:1;padding:13px}
+.ap-modal-err{min-height:18px;margin-top:10px;font-size:13px;color:#ff9a8f}
+@media(max-width:600px){.ap-kv{grid-template-columns:1fr 1fr}.ap-form{grid-template-columns:1fr}.ap-row{grid-template-columns:1fr}.ap-row .ap-a{text-align:left;max-width:none}}
 </style>
 </head>
 <body>
@@ -574,7 +649,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
     <button class="lock-btn" id="goBtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg><span id="goLabel">Unlock</span></button>
     <div class="lock-error" id="lockErr">Incorrect passcode.</div>
     <div class="lock-home"><a href="index.html">← Return to Home</a></div>
-    <div style="margin-top:16px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v31</div>
+    <div style="margin-top:16px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v32</div>
   </div>
 </div>
 
@@ -604,7 +679,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
       <button class="back-link" id="rosterBack"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Admin Console</button>
       <div class="bar">
         <div class="status-pill" id="pill"><span class="dot"></span><span id="pillText">Synced</span></div>
-        <span style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v31</span>
+        <span style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v32</span>
         <button class="btn ghost" id="syncMembersBtn" title="One-time: pull titles and alumni from the Members page into the shared roster">Sync members data</button>
         <button class="btn add" id="addBtn">+ Add Person</button>
       </div>
@@ -842,13 +917,56 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
     </div>
   </div>
 
+  <!-- APPLICANTS & REFERENCES (Build v32; full advisor passcode only) -->
+  <div class="view" id="applicantsView">
+    <div class="page-header">
+      <div class="section-label">Applicants</div>
+      <h1 class="section-title">Applicants &amp; References</h1>
+      <p class="page-desc">Send reference links, read the responses, and move an accepted applicant onto the roster.</p>
+    </div>
+    <div class="container">
+      <button class="back-link" id="apBack"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Admin Console</button>
+      <div class="bar">
+        <div class="ap-filter">
+          <button type="button" class="ap-fchip on" data-apf="applied">Applied</button>
+          <button type="button" class="ap-fchip" data-apf="all">All observers</button>
+        </div>
+        <input type="text" id="apSearch" class="ap-search" placeholder="Search name&hellip;">
+      </div>
+      <div class="rec-warning">Reference responses open only with the full advisor passcode. Sergeants see a count of how many references are in, never the answers, the links, or who the references are. Copy a reference's link, paste it into your Outlook template, and send it from your own email.</div>
+      <div id="apRows"></div>
+      <div id="apHold"></div>
+    </div>
+  </div>
+
+  <!-- ACCEPT TO ROSTER (Applicants tool) -->
+  <div class="ap-modal" id="apModal" role="dialog" aria-modal="true" aria-labelledby="apModalTitle">
+    <div class="ap-modal-card">
+      <h3 id="apModalTitle">Accept and add to roster</h3>
+      <p>This adds the applicant to the roster, copies their contact info into Cadet Records, carries over the sergeant notes, and removes them from the Observers list.</p>
+      <label for="apAccName">Name as it should appear on the roster</label>
+      <input type="text" id="apAccName" autocomplete="off">
+      <label>Squad</label>
+      <div class="ap-sq" id="apAccSquad"></div>
+      <label for="apAccRank">Rank</label>
+      <select id="apAccRank"></select>
+      <label for="apAccJoin">Join date</label>
+      <input type="date" id="apAccJoin">
+      <div class="ap-modal-err" id="apAccErr" role="alert"></div>
+      <div class="ap-modal-acts">
+        <button type="button" class="ap-btn" id="apAccCancel">Cancel</button>
+        <button type="button" class="ap-btn main" id="apAccGo">Add to roster</button>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <div class="toast" id="toast"></div>
 
-<script src="roster.js?v=26"></script>
+<script src="roster.js?v=30"></script>
 <script>
-console.log('[admin] Build v31');
+console.log('[admin] Build v32');
 const SESSION_KEY = 'rpd761_admin_auth';   // advisor-only; NOT shared with cadet pages
 const TIER_KEY = 'rpd761_admin_tier';      // 'full' (golden) or 'ltd' (limited advisor)
 const LIMITED_TOOLS = ['records','ridealongs','donations'];
@@ -902,6 +1020,14 @@ const TOOLS = [
     badge: true,
     icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>',
     open: openApprovals
+  },
+  {
+    id: 'applicants',
+    name: 'Applicants & References',
+    desc: 'Send reference links for observers who applied, read the responses, print them for the folder, and move an accepted applicant onto the roster.',
+    badge: true, badgeId: 'refBadge',
+    icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M16 11l2 2 4-4"/></svg>',
+    open: openApplicants
   },
   {
     id: 'donations',
@@ -998,7 +1124,7 @@ function enterApp(){
   document.getElementById('app').classList.add('on');
   if(typeof buildNav==='function') buildNav();
   buildHub();
-  if(TIER === 'full') refreshAprBadge();
+  if(TIER === 'full'){ refreshAprBadge(); refreshRefBadge(); }
   RPDRoster.subscribe(arr => {
     // Never let an incoming snapshot overwrite edits that haven't saved yet,
     // or yank a field the user is actively editing. Pending writes are our own.
@@ -1028,7 +1154,7 @@ function buildHub(){
     const el = document.createElement(t.soon ? 'div' : 'button');
     el.className = 'tool-card' + (t.soon ? ' soon' : '');
     el.innerHTML = (t.soon ? '<span class="soon-tag">Soon</span>' : '') +
-      (t.badge ? '<span class="tool-badge" id="aprBadge" style="display:none"></span>' : '') +
+      (t.badge ? '<span class="tool-badge" id="' + (t.badgeId || 'aprBadge') + '" style="display:none"></span>' : '') +
       `<div class="tool-ico">${t.icon}</div><div class="tool-name">${t.name}</div><div class="tool-desc">${t.desc}</div>`;
     if(!t.soon && t.open) el.addEventListener('click', t.open);
     grid.appendChild(el);
@@ -3350,6 +3476,671 @@ window.addEventListener('beforeunload', ()=>{ if(dirty && saveTimer) flushSave()
   const role = sessionStorage.getItem(TIER_KEY) === 'ltd' ? 'ltd' : 'advisor';
   RPDRoster.connect({ passcode: saved, role }).then(res=>{ if(res.ok){ TIER = role==='ltd'?'ltd':'full'; enterApp(); } }).catch(()=>{});
 })();
+
+/* ══════════ APPLICANTS & REFERENCES (Build v32; full advisor only) ══════════
+   Observers who have applied, their reference checks, and the Accept button.
+   Storage (see roster.js v30, RPDRoster.references):
+     - apVault  advisor-only: per applicant, the list of references with each
+                one-time link code. Sergeants cannot open it.
+     - observer entry (records tier) gets a mirror, data.refs = [{id, u}], that
+       holds nothing but opaque ids so /sgt can show "References 2 of 3".
+     - apDone   { id: ms } markers written by the public /reference page.
+   Every vault change re-reads the vault first, same clobber protection as
+   the observers list. */
+let apObs = [];
+let apVault = { v:1, apps:{} };
+let apDone = {};
+let apFilter = 'applied';
+let apReady = false;
+const apOpen = new Set();      // expanded applicant cards
+const apAnsOpen = new Set();   // reference ids with the answers panel open
+const apAns = {};              // reference id -> decrypted answers
+const apEdit = {};             // obsId -> rid being edited ('new' for the add form)
+const AP_LINK_DAYS = 30;
+const AP_STATUS = { visited:'Visited', groupme:'GroupMe', applied:'Applied', accepted:'Accepted to Post', rejected:'Rejected', nli:'No Longer Interested' };
+const AP_PDF_LABEL = 'CADET/REFCHECK V1';
+const apRand = p => p + '_' + Math.random().toString(36).slice(2, 9);
+function apToday(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function apFmt(ms){ if(!ms) return ''; const d=new Date(ms); return isNaN(d)?'':d.toLocaleDateString('en-US',{month:'short',day:'numeric'}); }
+function apFmtLong(ms){ if(!ms) return ''; const d=new Date(ms); return isNaN(d)?'':d.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}); }
+function apHeardText(d){
+  if(!d.heard) return '';
+  if(d.heard==='Current Cadet') return 'Current Cadet' + (d.heardCadet ? ': '+d.heardCadet : '');
+  if(d.heard==='Other') return 'Other' + (d.heardOther ? ': '+d.heardOther : '');
+  return d.heard;
+}
+async function apCopyText(t){
+  try{ await navigator.clipboard.writeText(t); return true; }
+  catch(e){
+    const ta=document.createElement('textarea'); ta.value=t; ta.setAttribute('readonly',''); ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.select(); let ok=false;
+    try{ ok=document.execCommand('copy'); }catch(_){}
+    ta.remove(); return ok;
+  }
+}
+
+async function openApplicants(){
+  if(TIER==='ltd') return;
+  showView('applicantsView');
+  const host=document.getElementById('apRows');
+  document.getElementById('apHold').innerHTML='';
+  host.innerHTML='<p style="color:var(--text-muted);padding:24px;text-align:center">Unlocking\u2026</p>';
+  const adv=sessionStorage.getItem(SESSION_KEY);
+  try{
+    let res=await RPDRoster.records.connect(adv);
+    if(res.needsSetup){ await RPDRoster.records.setup(adv); res={ ok:true }; }
+    if(!res.ok) throw new Error('records');
+    const ru=await RPDRoster.references.unlock(adv);
+    if(!ru.ok){ host.innerHTML='<p style="color:var(--red-glow);padding:24px;text-align:center">Reference responses are locked to a different advisor passcode. Sign in with the passcode that first opened this tool.</p>'; return; }
+    await RPDRoster.observers.ensureKeys();
+    apReady=true;
+    await apReload();
+  }catch(e){ host.innerHTML='<p style="color:var(--red-glow);padding:24px;text-align:center">Could not open applicants. Check your connection and try again.</p>'; }
+}
+async function apReload(){
+  const [obs, vault, done] = await Promise.all([RPDRoster.observers.get(), RPDRoster.references.vaultGet(), RPDRoster.references.doneMap()]);
+  apObs=(obs||[]).filter(o=>!o.broken);
+  apVault=vault||{ v:1, apps:{} };
+  apDone=done||{};
+  apRender();
+  apBadge();
+}
+async function apVaultMutate(fn){
+  const v=(await RPDRoster.references.vaultGet()) || { v:1, apps:{} };
+  fn(v);
+  await RPDRoster.references.vaultSave(v);
+  apVault=v;
+}
+// Mirror only the opaque ids onto the observer entry so /sgt can show a count.
+async function apSyncObserver(obsId){
+  const app=apVault.apps[obsId];
+  const refs=app ? app.refs.map(r=>({ id:r.id, u:r.unreach?1:0 })) : [];
+  const fresh=(await RPDRoster.observers.get())||[];
+  const e=fresh.find(x=>x.id===obsId && !x.broken);
+  if(e){
+    if(refs.length) e.data.refs=refs; else delete e.data.refs;
+    e.data.updatedAt=Date.now();
+    e.hash=await RPDRoster.observers.save(e.id, e.data, e.hash);
+  }
+  apObs=fresh.filter(o=>!o.broken);
+}
+function apRefStatus(r){
+  if(apDone[r.id]) return { k:'received', label:'Received '+apFmt(apDone[r.id]) };
+  if(r.unreach) return { k:'unreach', label:'Unable to reach' };
+  if(r.exp && Date.now()>r.exp) return { k:'expired', label:'Link expired' };
+  if(r.remindAt) return { k:'remind', label:'Reminder sent '+apFmt(r.remindAt) };
+  if(r.sentAt) return { k:'sent', label:'Sent '+apFmt(r.sentAt) };
+  return { k:'new', label:'Not sent' };
+}
+function apNewCount(){
+  let n=0;
+  Object.values(apVault.apps||{}).forEach(a=> (a.refs||[]).forEach(r=>{ if(apDone[r.id] && !r.viewedAt) n++; }));
+  return n;
+}
+function apBadge(){
+  const b=document.getElementById('refBadge'); if(!b) return;
+  const n=apNewCount(); b.textContent=n; b.style.display=n?'flex':'none';
+}
+// Hub badge on sign-in: never creates the key set, only reads if it exists.
+async function refreshRefBadge(){
+  try{
+    const ru=await RPDRoster.references.unlock(sessionStorage.getItem(SESSION_KEY), { create:false });
+    if(!ru.ok) return;
+    apVault=(await RPDRoster.references.vaultGet()) || { v:1, apps:{} };
+    apDone=(await RPDRoster.references.doneMap()) || {};
+    apBadge();
+  }catch(e){}
+}
+
+/* ── render ── */
+function apCardEl(key){ return Array.from(document.querySelectorAll('#apRows [data-key], #apHold [data-key]')).find(el=>el.dataset.key===key) || null; }
+function apFormSnapshot(){
+  const snap=[];
+  document.querySelectorAll('#apRows [data-form], #apHold [data-form]').forEach(f=>{
+    const card=f.closest('[data-key]'); if(!card) return;
+    const vals={}; f.querySelectorAll('[data-f]').forEach(i=> vals[i.dataset.f]=i.value);
+    snap.push({ key:card.dataset.key, form:f.dataset.form, vals });
+  });
+  return snap;
+}
+function apFormRestore(snap){
+  snap.forEach(s=>{
+    const card=apCardEl(s.key); if(!card) return;
+    const f=Array.from(card.querySelectorAll('[data-form]')).find(x=>x.dataset.form===s.form); if(!f) return;
+    Object.keys(s.vals).forEach(k=>{ const i=f.querySelector('[data-f="'+k+'"]'); if(i) i.value=s.vals[k]; });
+  });
+}
+function apRender(){
+  const snap=apFormSnapshot();
+  apRenderInner();
+  apFormRestore(snap);
+}
+function apRenderInner(){
+  const host=document.getElementById('apRows'), holdHost=document.getElementById('apHold');
+  const q=(document.getElementById('apSearch').value||'').toLowerCase().trim();
+  const apps=apVault.apps||{};
+  const live=new Set(apObs.map(o=>o.id));
+  let list=apObs.filter(o=> apFilter==='all' || o.data.status==='applied' || (apps[o.id] && (apps[o.id].refs||[]).length));
+  if(q) list=list.filter(o=>(o.data.name||'').toLowerCase().includes(q));
+  if(!list.length){
+    host.innerHTML='<p style="color:var(--text-muted);padding:24px;text-align:center">'+
+      (q ? 'No one matches that search.' :
+       apFilter==='all' ? 'No observers on file yet.' :
+       'No one is marked Applied yet. Set an observer to Applied on the /sgt page, or tap All observers to do it here.')+'</p>';
+  } else host.innerHTML=list.map(apCardHtml).join('');
+  const held=Object.keys(apps).filter(k=>!live.has(k) && (!q || (apps[k].name||'').toLowerCase().includes(q)));
+  holdHost.innerHTML = held.length
+    ? '<div class="ap-hold-h">Reference files on hold</div><p class="ap-note" style="margin-bottom:10px">These people are no longer on the Observers list. Their reference responses stay here until you download the PDFs and delete the file.</p>' + held.map(k=>apHoldHtml(k, apps[k])).join('')
+    : '';
+}
+function apRefsHtml(key, app, opts){
+  const refs=(app&&app.refs)||[];
+  const editing=apEdit[key];
+  let html='';
+  refs.forEach(r=>{
+    const st=apRefStatus(r), got=st.k==='received';
+    if(editing===r.rid){ html+=apFormHtml(key, r); return; }
+    html+=`<div class="ap-ref" data-rid="${escapeHtmlA(r.rid)}">
+      <div class="ap-ref-top">
+        <div><span class="ap-ref-name">${escapeHtmlA(r.name)}</span>${r.rel?`<span class="ap-ref-rel">${escapeHtmlA(r.rel)}</span>`:''}${got && !r.viewedAt?'<span class="ap-pill new">New</span>':''}</div>
+        <span class="ap-st ${st.k}">${escapeHtmlA(st.label)}</span>
+      </div>
+      <div class="ap-ref-contact">
+        ${r.email?`<button type="button" class="ap-copy" data-act="copyemail" title="Tap to copy">${escapeHtmlA(r.email)}</button>`:'<span>No email</span>'}
+        ${r.phone?`<span>${escapeHtmlA(r.phone)}</span>`:''}
+      </div>
+      <div class="ap-acts">
+        ${got
+          ? `<button type="button" class="ap-btn main" data-act="view">${apAnsOpen.has(r.id)?'Hide answers':'View answers'}</button>
+             <button type="button" class="ap-btn gold" data-act="pdf">Download PDF</button>`
+          : `<button type="button" class="ap-btn main" data-act="copylink">Copy link</button>
+             <button type="button" class="ap-btn" data-act="remind">${r.remindAt?'Reminder sent again':'Mark reminder sent'}</button>
+             <button type="button" class="ap-btn ${r.unreach?'on':''}" data-act="unreach">Unable to reach</button>
+             <button type="button" class="ap-btn" data-act="newlink">New link</button>`}
+        ${opts.readonly?'':'<button type="button" class="ap-btn" data-act="edit">Edit</button>'}
+        <button type="button" class="ap-btn danger" data-act="remove">Remove</button>
+      </div>
+      ${got && apAnsOpen.has(r.id) ? apAnswersHtml(apAns[r.id]) : ''}
+    </div>`;
+  });
+  if(!refs.length) html+='<p class="ap-note" style="margin-bottom:8px">No references entered yet. Type them in from the application.</p>';
+  if(!opts.readonly){
+    html += editing==='new' ? apFormHtml(key, null)
+      : '<div class="ap-acts"><button type="button" class="ap-btn gold" data-act="addform">+ Add reference</button>' +
+        (refs.some(r=>apDone[r.id]) ? '<button type="button" class="ap-btn gold" data-act="pdfall">Download all (PDF)</button>' : '') + '</div>';
+  } else if(refs.some(r=>apDone[r.id])){
+    html+='<div class="ap-acts"><button type="button" class="ap-btn gold" data-act="pdfall">Download all (PDF)</button></div>';
+  }
+  return html;
+}
+function apFormHtml(key, r){
+  const v=k=> r ? escapeHtmlA(r[k]||'') : '';
+  return `<div class="ap-ref"><div class="ap-form" data-form="${r?escapeHtmlA(r.rid):'new'}">
+    <input type="text" data-f="name" placeholder="Reference name" value="${v('name')}" maxlength="120">
+    <input type="text" data-f="rel" placeholder="Relationship (teacher, employer...)" value="${v('rel')}" maxlength="80">
+    <input type="email" data-f="email" placeholder="Email" value="${v('email')}" maxlength="160">
+    <input type="tel" data-f="phone" placeholder="Phone" value="${v('phone')}" maxlength="40">
+    <div class="ap-form-acts">
+      <button type="button" class="ap-btn main" data-act="saveform">${r?'Save changes':'Add and create link'}</button>
+      <button type="button" class="ap-btn" data-act="cancelform">Cancel</button>
+    </div>
+  </div></div>`;
+}
+function apCardHtml(o){
+  const d=o.data, app=(apVault.apps||{})[o.id], refs=(app&&app.refs)||[];
+  const open=apOpen.has(o.id);
+  const yr=ageFrom(d.dob);
+  const got=refs.filter(r=>apDone[r.id]).length;
+  const fresh=refs.some(r=>apDone[r.id] && !r.viewedAt);
+  const stPill = d.status ? `<span class="ap-pill st-${escapeHtmlA(d.status)}">${escapeHtmlA(AP_STATUS[d.status]||d.status)}</span>` : '<span class="ap-pill">New</span>';
+  const refPill = refs.length ? `<span class="ap-pill ${got===refs.length?'ok':'part'}">References ${got} of ${refs.length}</span>` : '';
+  const kv=(l,val)=>`<div><span>${l}</span><b>${escapeHtmlA(val||'Not given')}</b></div>`;
+  return `<div class="rec-card${open?' open':''}" data-key="${escapeHtmlA(o.id)}">
+    <div class="rec-head" data-act="toggle">
+      <div><span class="rec-name">${escapeHtmlA(d.name)}</span>${stPill}${refPill}${fresh?'<span class="ap-pill new">New response</span>':''}</div>
+      <div class="rec-meta"><svg class="rec-chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div>
+    </div>
+    <div class="rec-body" style="display:${open?'block':'none'}">
+      <div class="ap-kv">
+        ${kv('Date of birth', d.dob ? aprFmtDate(d.dob) : '')}${kv('Age', yr===null?'':yr+' yrs')}${kv('School', d.school)}
+        ${kv('Phone', d.phone)}${kv('Email', d.email)}${kv('Heard about us', apHeardText(d))}
+        ${kv('Parent / guardian', d.parentName)}${kv('Parent phone', d.parentPhone)}${kv('Parent email', d.parentEmail)}
+      </div>
+      <div class="ap-h">References</div>
+      ${apRefsHtml(o.id, app, {})}
+      <div class="ap-foot">
+        ${d.status!=='applied' ? '<button type="button" class="ap-btn" data-act="applied">Mark as Applied</button>' : ''}
+        <button type="button" class="ap-btn accept" data-act="accept">Accept and add to roster</button>
+      </div>
+    </div>
+  </div>`;
+}
+function apHoldHtml(key, app){
+  const open=apOpen.has(key), refs=app.refs||[];
+  const got=refs.filter(r=>apDone[r.id]).length;
+  return `<div class="rec-card${open?' open':''}" data-key="${escapeHtmlA(key)}" data-hold="1">
+    <div class="rec-head" data-act="toggle">
+      <div><span class="rec-name">${escapeHtmlA(app.name||'Applicant')}</span><span class="ap-pill ${app.acceptedAt?'st-accepted':''}">${app.acceptedAt?'Added to roster '+escapeHtmlA(apFmt(app.acceptedAt)):'Observer removed'}</span><span class="ap-pill ${got===refs.length?'ok':'part'}">References ${got} of ${refs.length}</span></div>
+      <div class="rec-meta"><svg class="rec-chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div>
+    </div>
+    <div class="rec-body" style="display:${open?'block':'none'}">
+      <div style="height:12px"></div>
+      ${apRefsHtml(key, app, { readonly:true })}
+      <div class="ap-foot"><button type="button" class="ap-btn danger" data-act="delfile">Delete reference file</button>
+      <span class="ap-note">Deletes every response and link for this person. Download the PDFs first.</span></div>
+    </div>
+  </div>`;
+}
+function apAnswersHtml(a){
+  if(!a) return '<div class="ap-ans"><p class="ap-note">Opening\u2026</p></div>';
+  if(a._err) return '<div class="ap-ans"><p class="ap-note" style="color:#f8a3a3">This response could not be opened.</p></div>';
+  const items=a.items||[];
+  const concerns=items.filter(x=>x.f===2).length, looks=items.filter(x=>x.f===1).length;
+  let html=`<div class="ap-ans"><div class="ap-ans-sum"><span>Recommendation: <b>${escapeHtmlA(a.rec||'Not answered')}</b></span>`+
+    (concerns?`<span class="ap-st unreach">${concerns} flagged</span>`:'<span class="ap-st received">No flags</span>')+
+    (looks?`<span class="ap-st sent">${looks} worth a look</span>`:'')+`</div>`+
+    `<div class="ap-note">Completed by ${escapeHtmlA(a.refName||a.invitedName||'')}${a.phone?' \u00B7 '+escapeHtmlA(a.phone):''}${a._at?' \u00B7 '+escapeHtmlA(apFmtLong(a._at)):''}</div>`;
+  let sec=null, open=false;
+  items.forEach(x=>{
+    if(x.s!==sec){ if(open) html+='</div>'; sec=x.s; html+=`<div class="ap-ans-sec">${escapeHtmlA(sec||'')}</div><div>`; open=true; }
+    const txt=(x.k==='strength'||x.k==='other');
+    html+=`<div class="ap-row${x.f?' f'+x.f:''}${txt?' txt':''}"><div>${escapeHtmlA(x.q)}</div><div class="ap-a">${escapeHtmlA(x.a)}</div>${x.n?`<div class="ap-n">${escapeHtmlA(x.n)}</div>`:''}</div>`;
+  });
+  if(open) html+='</div>';
+  return html+'</div>';
+}
+
+/* ── actions ── */
+function apFind(key, rid){
+  const app=(apVault.apps||{})[key]; if(!app) return {};
+  return { app, ref:(app.refs||[]).find(r=>r.rid===rid) };
+}
+function apAppName(key){
+  const o=apObs.find(x=>x.id===key); if(o) return o.data.name||'';
+  const app=(apVault.apps||{})[key]; return app ? (app.name||'') : '';
+}
+async function apOnClick(e){
+  const btn=e.target.closest('[data-act]'); if(!btn) return;
+  const card=btn.closest('[data-key]'); if(!card) return;
+  const key=card.dataset.key, act=btn.dataset.act;
+  const refEl=btn.closest('[data-rid]'), rid=refEl?refEl.dataset.rid:null;
+  if(act==='toggle'){ if(apOpen.has(key)) apOpen.delete(key); else apOpen.add(key); apRender(); return; }
+  if(act==='addform'){ apEdit[key]='new'; apRender(); const c=apCardEl(key), i=c?c.querySelector('[data-form="new"] input'):null; if(i) i.focus(); return; }
+  if(act==='edit'){ apEdit[key]=rid; apRender(); return; }
+  if(act==='cancelform'){ delete apEdit[key]; apRenderInner(); return; }
+  if(btn.disabled) return;
+  btn.disabled=true;
+  try{
+    if(act==='saveform'){ if(!(await apSaveForm(key, btn.closest('[data-form]')))){ btn.disabled=false; return; } }
+    else if(act==='copyemail'){ const { ref }=apFind(key, rid); if(ref && await apCopyText(ref.email)) showToast('Email address copied'); }
+    else if(act==='copylink') await apCopyLink(key, rid);
+    else if(act==='remind'){ await apVaultMutate(v=>{ const r=v.apps[key].refs.find(x=>x.rid===rid); r.remindAt=Date.now(); if(!r.sentAt) r.sentAt=r.remindAt; }); showToast('Reminder noted'); }
+    else if(act==='unreach'){ await apVaultMutate(v=>{ const r=v.apps[key].refs.find(x=>x.rid===rid); r.unreach=!r.unreach; }); await apSyncObserver(key); }
+    else if(act==='newlink') await apNewLink(key, rid);
+    else if(act==='remove') await apRemoveRef(key, rid);
+    else if(act==='view') await apToggleAnswers(key, rid);
+    else if(act==='pdf') await apPdf(key, [rid]);
+    else if(act==='pdfall') await apPdf(key, null);
+    else if(act==='applied') await apMarkApplied(key);
+    else if(act==='accept'){ apAcceptOpen(key); }
+    else if(act==='delfile') await apDeleteFile(key);
+  }catch(err){ console.error(err); showToast('That did not save. Check your connection and try again.'); }
+  btn.disabled=false;
+  apRender(); apBadge();
+}
+async function apSaveForm(key, form){
+  const f=n=>(form.querySelector(`[data-f="${n}"]`).value||'').trim();
+  const name=f('name'), rel=f('rel'), email=f('email'), phone=f('phone');
+  if(!name){ showToast('Enter the reference\u2019s name'); return false; }
+  if(email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ showToast('That email address does not look right'); return false; }
+  const which=form.dataset.form;
+  if(which==='new'){
+    const applicant=apAppName(key);
+    const inv=await RPDRoster.references.inviteCreate({ applicant, refName:name }, AP_LINK_DAYS);
+    await apVaultMutate(v=>{
+      const app=v.apps[key] || (v.apps[key]={ name:applicant, obsId:key, createdAt:Date.now(), refs:[] });
+      app.name=applicant;
+      app.refs.push({ rid:apRand('rf'), name, rel, email, phone, code:inv.code, id:inv.id, createdAt:inv.at, exp:inv.exp });
+    });
+    await apSyncObserver(key);
+    showToast('Reference added. Copy the link to send it.');
+  } else {
+    await apVaultMutate(v=>{ const r=v.apps[key].refs.find(x=>x.rid===which); if(r){ r.name=name; r.rel=rel; r.email=email; r.phone=phone; } });
+    showToast('Reference updated');
+  }
+  delete apEdit[key];
+  form.removeAttribute('data-form');   // saved: keep its old values out of the next render
+  return true;
+}
+async function apCopyLink(key, rid){
+  const { ref }=apFind(key, rid); if(!ref) return;
+  const link=RPDRoster.references.link(ref.code);
+  const ok=await apCopyText(link);
+  if(!ok){ window.prompt('Copy this link:', link); }
+  const first=!ref.sentAt;
+  if(first) await apVaultMutate(v=>{ const r=v.apps[key].refs.find(x=>x.rid===rid); r.sentAt=Date.now(); });
+  showToast(ok ? (first ? 'Link copied. Marked as sent.' : 'Link copied') : 'Link shown for copying');
+}
+async function apNewLink(key, rid){
+  const { ref }=apFind(key, rid); if(!ref) return;
+  if(!confirm('Create a new link for '+ref.name+'? The old link stops working right away.')) return;
+  const inv=await RPDRoster.references.inviteCreate({ applicant:apAppName(key), refName:ref.name }, AP_LINK_DAYS);
+  const oldId=ref.id;
+  await apVaultMutate(v=>{ const r=v.apps[key].refs.find(x=>x.rid===rid); r.code=inv.code; r.id=inv.id; r.createdAt=inv.at; r.exp=inv.exp; delete r.sentAt; delete r.remindAt; delete r.unreach; });
+  try{ await RPDRoster.references.inviteRemove(oldId); }catch(e){}
+  await apSyncObserver(key);
+  showToast('New link ready. Copy it to send.');
+}
+async function apRemoveRef(key, rid){
+  const { ref }=apFind(key, rid); if(!ref) return;
+  const got=!!apDone[ref.id];
+  if(!confirm(got ? 'Remove '+ref.name+' and permanently delete their response? Download the PDF first if you need it.' : 'Remove '+ref.name+'? Their link will stop working.')) return;
+  await RPDRoster.references.answersRemove(ref.id);
+  delete apDone[ref.id]; delete apAns[ref.id]; apAnsOpen.delete(ref.id);
+  await apVaultMutate(v=>{ const a=v.apps[key]; a.refs=a.refs.filter(x=>x.rid!==rid); if(!a.refs.length && !apObs.some(o=>o.id===key)) delete v.apps[key]; });
+  await apSyncObserver(key);
+  showToast('Reference removed');
+}
+async function apLoadAnswers(id){
+  if(apAns[id] && !apAns[id]._err) return apAns[id];
+  try{ apAns[id]=(await RPDRoster.references.answersGet(id)) || { _err:true }; }
+  catch(e){ apAns[id]={ _err:true }; }
+  return apAns[id];
+}
+async function apToggleAnswers(key, rid){
+  const { ref }=apFind(key, rid); if(!ref) return;
+  if(apAnsOpen.has(ref.id)){ apAnsOpen.delete(ref.id); return; }
+  apAnsOpen.add(ref.id);
+  const a=await apLoadAnswers(ref.id);
+  if(!a._err && !ref.viewedAt) await apVaultMutate(v=>{ const r=v.apps[key].refs.find(x=>x.rid===rid); if(r) r.viewedAt=Date.now(); });
+}
+async function apMarkApplied(key){
+  const fresh=(await RPDRoster.observers.get())||[];
+  const e=fresh.find(x=>x.id===key && !x.broken); if(!e) return;
+  e.data.status='applied'; e.data.updatedAt=Date.now();
+  e.hash=await RPDRoster.observers.save(e.id, e.data, e.hash);
+  apObs=fresh.filter(o=>!o.broken);
+  showToast('Marked as Applied');
+}
+async function apDeleteFile(key){
+  const app=(apVault.apps||{})[key]; if(!app) return;
+  if(!confirm('Permanently delete every reference response and link for '+(app.name||'this person')+'? This cannot be undone.')) return;
+  for(const r of (app.refs||[])){ await RPDRoster.references.answersRemove(r.id); delete apDone[r.id]; delete apAns[r.id]; apAnsOpen.delete(r.id); }
+  await apVaultMutate(v=>{ delete v.apps[key]; });
+  apOpen.delete(key);
+  showToast('Reference file deleted');
+}
+
+/* ── accept: observer -> roster + Cadet Records ── */
+let apAccKey=null, apAccSquad=null;
+function apAcceptOpen(key){
+  const o=apObs.find(x=>x.id===key); if(!o) return;
+  apAccKey=key; apAccSquad=null;
+  document.getElementById('apAccName').value=(o.data.name||'').trim().replace(/\s+/g,' ');
+  document.getElementById('apAccSquad').innerHTML=SQUADS.filter(s=>s[0]!=='leadership').map(s=>`<button type="button" data-sq="${s[0]}">${escapeHtmlA(s[1])}</button>`).join('');
+  document.getElementById('apAccRank').innerHTML=RANKS.map(r=>`<option${r==='Probationary'?' selected':''}>${escapeHtmlA(r)}</option>`).join('');
+  document.getElementById('apAccJoin').value=apToday();
+  document.getElementById('apAccErr').textContent='';
+  document.getElementById('apModal').classList.add('show');
+}
+function apAcceptClose(){ document.getElementById('apModal').classList.remove('show'); apAccKey=null; }
+async function apAcceptGo(){
+  const err=document.getElementById('apAccErr'); err.textContent='';
+  const o=apObs.find(x=>x.id===apAccKey); if(!o){ apAcceptClose(); return; }
+  const name=(document.getElementById('apAccName').value||'').trim().replace(/\s+/g,' ');
+  const rank=document.getElementById('apAccRank').value;
+  const joinDate=document.getElementById('apAccJoin').value;
+  if(!name){ err.textContent='Enter the name for the roster.'; return; }
+  if(apAccSquad===null){ err.textContent='Pick a squad.'; return; }
+  const btn=document.getElementById('apAccGo'); btn.disabled=true; btn.textContent='Adding\u2026';
+  try{
+    // 1. roster (flush any roster edit still waiting to save, then work from the live copy)
+    if(dirty) await flushSave();
+    const arr=RPDRoster.get();
+    const existing=arr.find(p=>!p.open && (p.name||'').trim().toLowerCase()===name.toLowerCase());
+    let useName=name;
+    if(existing){
+      if(!confirm(existing.name+' is already on the roster. Copy this observer\u2019s contact info into that cadet\u2019s record (blank fields only) and remove the observer entry?')){ btn.disabled=false; btn.textContent='Add to roster'; return; }
+      useName=existing.name;
+    } else {
+      const entry={ name, rank, squad:apAccSquad };
+      if(joinDate) entry.joinDate=joinDate;
+      arr.push(entry);
+      await RPDRoster.save(arr.filter(p=>p.open || (p.name||'').trim()));
+      data=RPDRoster.get();
+    }
+    // 2. Cadet Records: fill blanks only, never overwrite what is already there
+    if(recSaveTimer) await recFlush();
+    recData=(await RPDRoster.records.get()) || {};
+    const rec=recData[useName] || (recData[useName]={});
+    const d=o.data;
+    ['school','dob','email','phone','parentName','parentPhone','parentEmail'].forEach(k=>{ if((d[k]||'').toString().trim() && !(rec[k]||'').toString().trim()) rec[k]=d[k]; });
+    const heard=apHeardText(d);
+    if(heard && !(rec.notes||'').toString().trim()) rec.notes='Heard about the program: '+heard;
+    await RPDRoster.records.save(recData);
+    // 3. sergeant notes carry over (skips any already copied by an earlier attempt)
+    if((d.notes||[]).length){
+      const cn=(await RPDRoster.cadetnotes.get()) || [];
+      d.notes.forEach(n=>{
+        if(!cn.some(x=>x.cadet===useName && x.text===n.text && x.at===n.at)) cn.push({ id:apRand('cn'), cadet:useName, name:n.name||'', text:n.text||'', at:n.at||Date.now() });
+      });
+      await RPDRoster.cadetnotes.save(cn); cadNotes=cn;
+    }
+    // 4. reference file goes on hold under the roster name (dropped if empty)
+    await apVaultMutate(v=>{ const a=v.apps[o.id]; if(a){ if((a.refs||[]).length){ a.acceptedAt=Date.now(); a.name=useName; } else delete v.apps[o.id]; } });
+    // 5. last, so nothing is lost if an earlier step fails: remove the observer entry
+    await RPDRoster.observers.remove(o.id, o.hash);
+    apOpen.delete(o.id);
+    apAcceptClose();
+    showToast(useName+' added to the roster');
+    await apReload();
+  }catch(e){
+    console.error(e);
+    err.textContent='Something did not save. Check your connection and tap Add to roster again; nothing is duplicated on a retry.';
+  }
+  btn.disabled=false; btn.textContent='Add to roster';
+}
+
+/* ── PDF (pdf-lib, loaded on first use). Follows the locked GENERAL header in
+      RPD_Cadets_PDF_Reference.md: white letterhead, 96pt dual-badge logo,
+      eyebrow, navy wordmark, red-into-navy split rule, gold footer line. ── */
+let apPdfLibP=null, apLogoBytes=null;
+function apLoadPdfLib(){
+  if(window.PDFLib) return Promise.resolve();
+  if(!apPdfLibP) apPdfLibP=new Promise((res, rej)=>{
+    const s=document.createElement('script');
+    s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js';
+    s.onload=()=>res(); s.onerror=()=>{ apPdfLibP=null; rej(new Error('pdf-lib')); };
+    document.head.appendChild(s);
+  });
+  return apPdfLibP;
+}
+async function apPdf(key, rids){
+  const app=(apVault.apps||{})[key]; if(!app) return;
+  const refs=(app.refs||[]).filter(r=>apDone[r.id] && (!rids || rids.includes(r.rid)));
+  if(!refs.length){ showToast('No responses to print yet'); return; }
+  showToast('Building PDF\u2026');
+  await apLoadPdfLib();
+  if(!apLogoBytes){ try{ apLogoBytes=await apLogoSmall(); }catch(e){} }
+  const list=[];
+  for(const r of refs){ const a=await apLoadAnswers(r.id); if(a && !a._err) list.push({ ref:r, ans:a }); }
+  if(!list.length){ showToast('Those responses could not be opened'); return; }
+  const applicant=apAppName(key) || (list[0].ans.applicant||'Applicant');
+  const bytes=await apBuildPdf(window.PDFLib, apLogoBytes, applicant, list);
+  const safe=s=>String(s||'').replace(/[^A-Za-z0-9]+/g,'_').replace(/^_+|_+$/g,'');
+  const fname = list.length===1 ? 'Reference_'+safe(applicant)+'_'+safe(list[0].ref.name)+'.pdf' : 'References_'+safe(applicant)+'.pdf';
+  const url=URL.createObjectURL(new Blob([bytes], { type:'application/pdf' }));
+  const a=document.createElement('a'); a.href=url; a.download=fname; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 4000);
+  // downloading counts as viewed
+  const unseen=list.filter(x=>!x.ref.viewedAt).map(x=>x.ref.rid);
+  if(unseen.length) await apVaultMutate(v=>{ (v.apps[key].refs||[]).forEach(r=>{ if(unseen.includes(r.rid)) r.viewedAt=Date.now(); }); });
+}
+// The site logo is about 900 KB at full size; a 96pt mark needs far less, so
+// shrink it once in the browser. Falls back to the original if that fails.
+async function apLogoSmall(){
+  const r=await fetch('logo_transparent.png'); if(!r.ok) return null;
+  const buf=await r.arrayBuffer();
+  try{
+    const bmp=await createImageBitmap(new Blob([buf], { type:'image/png' }));
+    const c=document.createElement('canvas'); c.width=400; c.height=Math.round(400*bmp.height/bmp.width);
+    c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
+    const out=await new Promise(res=>c.toBlob(res, 'image/png'));
+    if(out) return new Uint8Array(await out.arrayBuffer());
+  }catch(e){}
+  return new Uint8Array(buf);
+}
+// Standard PDF fonts only cover WinAnsi; anything else would throw.
+function apPdfSafe(s){
+  return String(s==null?'':s)
+    .replace(/[\u2018\u2019\u201A\u2032]/g,"'").replace(/[\u201C\u201D\u201E\u2033]/g,'"')
+    .replace(/[\u2013\u2014\u2212]/g,'-').replace(/\u2026/g,'...').replace(/[\u00A0\u2000-\u200B\u202F]/g,' ')
+    .replace(/\r\n?/g,'\n').replace(/\t/g,' ')
+    .replace(/[^\n\x20-\x7E\u00A1-\u00FF]/g,'?');
+}
+function apWrap(font, size, text, maxW){
+  const out=[];
+  apPdfSafe(text).split('\n').forEach(par=>{
+    let line='';
+    par.split(' ').forEach(word=>{
+      while(font.widthOfTextAtSize(word, size) > maxW){              // break a word longer than the line
+        let cut=word.length;
+        while(cut>1 && font.widthOfTextAtSize((line?line+' ':'')+word.slice(0,cut), size) > maxW) cut--;
+        if(line && cut<=1){ out.push(line); line=''; continue; }
+        out.push((line?line+' ':'')+word.slice(0,cut)); line=''; word=word.slice(cut);
+      }
+      const test=line ? line+' '+word : word;
+      if(font.widthOfTextAtSize(test, size) > maxW && line){ out.push(line); line=word; } else line=test;
+    });
+    out.push(line);
+  });
+  return out;
+}
+async function apBuildPdf(PDFLib, logoBytes, applicant, list){
+  const { PDFDocument, StandardFonts, rgb } = PDFLib;
+  const doc=await PDFDocument.create();
+  doc.setTitle('Reference Check: '+apPdfSafe(applicant));
+  doc.setAuthor('Richardson Police Department Public Safety Cadets');
+  const F=await doc.embedFont(StandardFonts.Helvetica), FB=await doc.embedFont(StandardFonts.HelveticaBold), FI=await doc.embedFont(StandardFonts.HelveticaOblique);
+  let logo=null; if(logoBytes){ try{ logo=await doc.embedPng(logoBytes); }catch(e){} }
+  const hex=h=>rgb(parseInt(h.slice(1,3),16)/255, parseInt(h.slice(3,5),16)/255, parseInt(h.slice(5,7),16)/255);
+  const NAVY=hex('#1B2A4A'), RED=hex('#C41E3A'), GOLD=hex('#C5A55A'), BG=hex('#7A8BA0'), INK=rgb(0.1,0.1,0.1), TINT=hex('#F4F6F9'), FLAG=hex('#FBEDEF'), LOOK=hex('#FBF4E4'), AMBER=hex('#B7791F');
+  const W=612, H=792, L=55, R=W-55, CW=R-L, BOTTOM=64;
+  const pages=[];
+  let page=null, y=0, cur=null;
+  const rtext=(t,xr,yy,size,font,color)=> page.drawText(t, { x:xr-font.widthOfTextAtSize(t,size), y:yy, size, font, color });
+  function header(){
+    const top=H-42, tx=L+96+14;
+    if(logo) page.drawImage(logo, { x:L, y:(top-36)-48, width:96, height:96 });
+    page.pushOperators(PDFLib.setCharacterSpacing(2.2));
+    page.drawText('RICHARDSON POLICE DEPARTMENT', { x:tx, y:top-14, size:8.5, font:FB, color:BG });
+    page.pushOperators(PDFLib.setCharacterSpacing(0));
+    page.drawText('PUBLIC SAFETY CADETS', { x:tx, y:top-40, size:25, font:FB, color:NAVY });
+    const mid=tx+(R-tx)/2;
+    page.drawLine({ start:{x:tx,y:top-50}, end:{x:mid,y:top-50}, thickness:1.5, color:RED });
+    page.drawLine({ start:{x:mid,y:top-50}, end:{x:R,y:top-50}, thickness:1.5, color:NAVY });
+    page.drawText('Applicant Reference Check', { x:tx, y:top-64, size:9, font:F, color:BG });
+    rtext('CONFIDENTIAL', R, top-64, 8, FB, BG);
+    if(cur && cur.ans._at) rtext('Received '+apPdfSafe(apFmtLong(cur.ans._at)), R, top-76, 8, F, BG);
+    y=H-134-6;
+  }
+  function newPage(){ page=doc.addPage(); page.setSize(W,H); pages.push(page); header(); }
+  function need(h){ if(y-h < BOTTOM){ newPage(); page.drawText(apPdfSafe(applicant)+' / reference from '+apPdfSafe(cur.ans.refName||cur.ref.name)+' (continued)', { x:L, y, size:8, font:FI, color:BG }); y-=16; } }
+  function section(title){
+    need(38); y-=7;
+    page.drawText(apPdfSafe(title).toUpperCase(), { x:L, y, size:9.5, font:FB, color:NAVY });
+    page.drawLine({ start:{x:L,y:y-4}, end:{x:R,y:y-4}, thickness:0.5, color:GOLD });
+    y-=16;
+  }
+  const LEAD=12, QW=300, AX=L+QW+18, AW=R-AX-6, PAD=5;
+  function row(x, shade){
+    const txt=(x.k==='strength'||x.k==='other');
+    const ql=apWrap(F, 9, x.q, txt ? CW-16 : QW);
+    const al=apWrap(txt?F:FB, 9, x.a, txt ? CW-16 : AW);
+    const nl=x.n ? apWrap(FI, 9, x.n, CW-30) : [];
+    const mainH = txt ? (ql.length+al.length)*LEAD+2 : Math.max(ql.length, al.length)*LEAD;
+    const h=mainH + (nl.length ? nl.length*LEAD+3 : 0) + PAD;
+    need(h);
+    const fill = x.f===2 ? FLAG : (x.f===1 ? LOOK : (shade ? TINT : null));
+    const rb=y-h+9+PAD/2;   // row box: text baseline sits centered between the PAD halves
+    if(fill) page.drawRectangle({ x:L, y:rb, width:CW, height:h, color:fill });
+    if(x.f) page.drawRectangle({ x:L, y:rb, width:3, height:h, color: x.f===2 ? RED : AMBER });
+    let yy=y;
+    if(txt){
+      ql.forEach(t=>{ page.drawText(t, { x:L+8, y:yy, size:9, font:FB, color:INK }); yy-=LEAD; });
+      yy-=2;
+      al.forEach(t=>{ page.drawText(t, { x:L+8, y:yy, size:9, font:F, color:INK }); yy-=LEAD; });
+    } else {
+      ql.forEach((t,i)=> page.drawText(t, { x:L+8, y:y-i*LEAD, size:9, font:F, color:INK }));
+      al.forEach((t,i)=> page.drawText(t, { x:AX, y:y-i*LEAD, size:9, font:FB, color: x.f===2 ? RED : INK }));
+      yy=y-mainH;
+    }
+    if(nl.length){ yy-=3; nl.forEach(t=>{ page.drawText(t, { x:L+22, y:yy, size:9, font:FI, color:INK }); yy-=LEAD; }); }
+    y-=h;
+  }
+  for(const item of list){
+    cur=item; newPage();
+    const a=item.ans, r=item.ref, items=a.items||[];
+    // who
+    page.drawText('APPLICANT', { x:L, y, size:7, font:FB, color:BG });
+    page.drawText('REFERENCE', { x:L+CW/2, y, size:7, font:FB, color:BG });
+    y-=15;
+    page.drawText(apWrap(FB, 13, applicant, CW/2-12)[0]||'', { x:L, y, size:13, font:FB, color:NAVY });
+    page.drawText(apWrap(FB, 13, a.refName||r.name, CW/2-6)[0]||'', { x:L+CW/2, y, size:13, font:FB, color:NAVY });
+    y-=14;
+    const rel=items.find(x=>x.k==='rel');
+    const relTxt=rel ? (rel.a==='Other' && rel.n ? rel.n : rel.a) : (r.rel||'');
+    const contact=[a.phone||r.phone, r.email].filter(Boolean).join('   ');
+    page.drawText(apWrap(F, 9, relTxt, CW/2-6)[0]||'', { x:L+CW/2, y, size:9, font:F, color:INK });
+    y-=12;
+    if(contact){ page.drawText(apWrap(F, 9, contact, CW/2-6)[0]||'', { x:L+CW/2, y, size:9, font:F, color:INK }); y-=12; }
+    // bottom line box
+    y-=8;
+    const concerns=items.filter(x=>x.f===2).length;
+    page.drawRectangle({ x:L, y:y-24, width:CW, height:34, color:TINT, borderColor:NAVY, borderWidth:0.75 });
+    page.drawText('RECOMMENDATION', { x:L+10, y:y-2, size:7, font:FB, color:BG });
+    page.drawText(apPdfSafe(a.rec||'Not answered'), { x:L+10, y:y-16, size:12, font:FB, color:(a.rec==='Do not recommend'||a.rec==='Recommend with reservations')?RED:NAVY });
+    rtext('FLAGGED ANSWERS', R-10, y-2, 7, FB, BG);
+    rtext(String(concerns), R-10, y-16, 12, FB, concerns?RED:NAVY);
+    y-=46;
+    let sec=null, n=0;
+    items.forEach(x=>{ if(x.s!==sec){ sec=x.s; section(sec||''); n=0; } row(x, n%2===1); n++; });
+    // sign-off
+    need(34); y-=20;
+    page.drawText('Reviewed by:', { x:L, y, size:9, font:F, color:INK });
+    page.drawLine({ start:{x:L+58,y:y-2}, end:{x:L+290,y:y-2}, thickness:0.5, color:BG });
+    page.drawText('Date:', { x:L+310, y, size:9, font:F, color:INK });
+    page.drawLine({ start:{x:L+336,y:y-2}, end:{x:R,y:y-2}, thickness:0.5, color:BG });
+  }
+  pages.forEach((p,i)=>{
+    page=p;
+    p.drawLine({ start:{x:L,y:45}, end:{x:R,y:45}, thickness:0.5, color:GOLD });
+    const addr='200 N. Greenville Ave, Richardson, TX 75081  |  (972) 744-4801';
+    p.drawText(addr, { x:(W-F.widthOfTextAtSize(addr,7))/2, y:34, size:7, font:F, color:BG });
+    p.drawText(AP_PDF_LABEL, { x:L, y:22, size:7, font:F, color:BG });
+    rtext('Page '+(i+1)+' of '+pages.length, R, 22, 7, F, BG);
+  });
+  return await doc.save();
+}
+
+document.getElementById('apBack').addEventListener('click', ()=>showView('hubView'));
+document.getElementById('apRows').addEventListener('click', apOnClick);
+document.getElementById('apHold').addEventListener('click', apOnClick);
+document.getElementById('apSearch').addEventListener('input', ()=>{ if(apReady) apRender(); });
+document.querySelectorAll('.ap-fchip').forEach(b=> b.addEventListener('click', ()=>{
+  apFilter=b.dataset.apf;
+  document.querySelectorAll('.ap-fchip').forEach(x=>x.classList.toggle('on', x===b));
+  if(apReady) apRender();
+}));
+document.getElementById('apAccSquad').addEventListener('click', e=>{
+  const b=e.target.closest('[data-sq]'); if(!b) return;
+  apAccSquad=+b.dataset.sq;
+  document.querySelectorAll('#apAccSquad button').forEach(x=>x.classList.toggle('on', x===b));
+});
+document.getElementById('apAccCancel').addEventListener('click', apAcceptClose);
+document.getElementById('apAccGo').addEventListener('click', apAcceptGo);
+document.getElementById('apModal').addEventListener('click', e=>{ if(e.target.id==='apModal') apAcceptClose(); });
+document.addEventListener('keydown', e=>{ if(e.key==='Escape' && document.getElementById('apModal').classList.contains('show')) apAcceptClose(); });
 </script>
 <script src="shared.js"></script>
 </body>

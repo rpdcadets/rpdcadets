@@ -1,7 +1,7 @@
-/* patrol/print.js | Build v1 | 2026-09-22
+/* patrol/print.js | Build v3 | 2026-10-04 | Auto language: asks the printer device.languages on each job and sends the bitmap as ZPL (^GFA) when the printer is in a zpl mode, else CPCL (EG). Field finding: the 10/2026 e-citation rollout set printers to hybrid_xml_zpl; the September units were line_print. v2: Drain before close: after a job, send a status query and wait (up to 30 s) for the printer's reply so the Windows COM buffer empties before the port closes (fixes silent drops of large jobs on the 'Serial Printer (COMx)' path after the 10/2026 MDC update). Open retried 3 times. v1: 2026-09-22
    Shared print engine for the in-car Zebra ZQ520 (4 inch, 203 dpi, line-print mode).
    Path: Chrome Web Serial over the printer's paired Bluetooth (Serial Port Profile). No driver, no install.
-   Language: CPCL. Slips are drawn on a canvas in the browser and sent as a 1-bit bitmap (EG command),
+   Language: CPCL or ZPL, chosen per printer. Slips are drawn on a canvas in the browser and sent as a 1-bit bitmap (EG command),
    so any font, logo, or layout prints exactly as drawn. Nothing is written to the printer's settings.
    Usage:
      RPDPrint.supported()                 -> true if this browser can print directly
@@ -24,16 +24,21 @@
     if(!supported()) throw new Error('This browser cannot print directly. Use Chrome or Edge on the squad computer.');
     var ports = await navigator.serial.getPorts();
     if(ports.length){ log('Using remembered printer.'); return ports[0]; }
-    log('Pick the printer from the list. Its name matches the serial number on the printer.');
+    log('Pick the entry labeled Serial Printer (COMx). Do not pick the one showing only the printer serial number.');
     return await navigator.serial.requestPort();
   }
 
   async function openPort(port){
-    try{ await port.open({ baudRate:115200, bufferSize:65536 }); }
-    catch(e){
-      if(e && e.name === 'InvalidStateError'){ try{ await port.close(); }catch(x){} await port.open({ baudRate:115200, bufferSize:65536 }); }
-      else throw e;
+    var last;
+    for(var i = 0; i < 3; i++){
+      try{ await port.open({ baudRate:115200, bufferSize:65536 }); return; }
+      catch(e){
+        last = e;
+        if(e && e.name === 'InvalidStateError'){ try{ await port.close(); }catch(x){} }
+        if(i < 2){ log('Printer busy or waking up, retrying...'); await sleep(1500); }
+      }
     }
+    throw last;
   }
 
   async function writeAll(port, bytes){
@@ -43,12 +48,33 @@
     } finally { writer.releaseLock(); }
   }
 
-  async function readFor(port, ms){
+  // stopOnFirst: resolve as soon as any bytes arrive (used to detect that the link has drained)
+  async function readFor(port, ms, stopOnFirst){
     var out = '', reader = port.readable.getReader(), done = false;
     var timer = setTimeout(function(){ done = true; reader.cancel().catch(function(){}); }, ms);
-    try{ while(!done){ var r = await reader.read(); if(r.value) out += new TextDecoder().decode(r.value); if(r.done) break; } }
+    try{
+      while(!done){
+        var r = await reader.read();
+        if(r.value){ out += new TextDecoder().decode(r.value); if(stopOnFirst){ done = true; clearTimeout(timer); timer = setTimeout(function(){ reader.cancel().catch(function(){}); }, 250); } }
+        if(r.done) break;
+      }
+    }
     catch(e){} finally{ clearTimeout(timer); try{ reader.releaseLock(); }catch(e){} }
     return out;
+  }
+
+  // Windows discards whatever is still queued in a COM port when it is closed, and Bluetooth drains
+  // slowly, so after the job we send a status query and wait for the reply: it cannot arrive until the
+  // whole job has gone through. If no reply comes, we still wait a size-based minimum.
+  async function drain(port, bytes){
+    var minWait = 1500 + bytes / 6, maxWait = Math.max(30000, minWait + 5000), t0 = Date.now();
+    try{ await writeAll(port, enc('\r\n! U1 getvar "device.unique_id"\r\n')); }catch(e){}
+    var got = await readFor(port, maxWait, true);
+    var elapsed = Date.now() - t0;
+    if(got){ log('Printer confirmed it received the job (' + (elapsed / 1000).toFixed(1) + ' s).'); }
+    else{ log('No reply from printer; waited ' + (elapsed / 1000).toFixed(1) + ' s for the link to drain.'); }
+    if(elapsed < minWait) await sleep(minWait - elapsed);
+    await sleep(400);
   }
 
   async function sendBytes(bytes){
@@ -56,15 +82,15 @@
     await openPort(port);
     try{
       await writeAll(port, bytes);
-      log('Sent ' + Math.round(bytes.length / 1024) + ' KB to the printer.');
-      await sleep(Math.min(3000, 400 + bytes.length / 40));   // let the Bluetooth link drain before closing
+      log('Sent ' + Math.round(bytes.length / 1024) + ' KB to the printer. Waiting for it to finish...');
+      await drain(port, bytes.length);
     } finally { try{ await port.close(); }catch(e){} }
   }
 
   function sendText(s){ return sendBytes(enc(s)); }
 
-  // Convert a canvas (any width; scaled to DOTS_WIDE if needed) into a CPCL label with one EG bitmap.
-  function canvasToCPCL(canvas, copies){
+  // Convert a canvas (any width; scaled to DOTS_WIDE if needed) into packed 1-bit rows as hex.
+  function canvasToRows(canvas){
     var w = DOTS_WIDE, h = Math.round(canvas.height * w / canvas.width);
     var c = canvas;
     if(canvas.width !== w){
@@ -88,13 +114,44 @@
       }
       out[y] = row;
     }
-    var q = Math.max(1, Math.min(9, copies | 0 || 1));
-    return '! 0 200 200 ' + h + ' ' + q + '\r\n' +
-           'EG ' + bytesPerRow + ' ' + h + ' 0 0 ' + out.join('') + '\r\n' +
-           'PRINT\r\n';
+    return { hex: out.join(''), h: h, bytesPerRow: bytesPerRow };
   }
+  function rowsToCPCL(r, copies){
+    var q = Math.max(1, Math.min(9, copies | 0 || 1));
+    return '! 0 200 200 ' + r.h + ' ' + q + '\r\nEG ' + r.bytesPerRow + ' ' + r.h + ' 0 0 ' + r.hex + '\r\nPRINT\r\n';
+  }
+  function rowsToZPL(r, copies){
+    var q = Math.max(1, Math.min(9, copies | 0 || 1)), total = r.bytesPerRow * r.h;
+    return '^XA^MNN^PW' + DOTS_WIDE + '^LL' + (r.h + 8) + '^LH0,0^FO0,0^GFA,' + total + ',' + total + ',' + r.bytesPerRow + ',' + r.hex + '^FS^PQ' + q + '^XZ\r\n';
+  }
+  function canvasToCPCL(canvas, copies){ return rowsToCPCL(canvasToRows(canvas), copies); }
 
-  function printCanvas(canvas, copies){ return sendText(canvasToCPCL(canvas, copies)); }
+  var langCache = null;
+  async function queryLanguage(port){
+    try{
+      await writeAll(port, enc('\r\n! U1 getvar "device.languages"\r\n'));
+      var ans = (await readFor(port, 1500)).replace(/["\s]/g, '').toLowerCase();
+      if(ans) langCache = ans;
+    }catch(e){}
+    return langCache || '';
+  }
+  function wantsZPL(lang){ return /zpl/.test(lang) && !/line_print|cpcl/.test(lang); }
+
+  // Open once: ask the printer its language, send the bitmap in that language, drain, close.
+  async function printCanvas(canvas, copies){
+    var rows = canvasToRows(canvas);
+    var port = await getPort();
+    await openPort(port);
+    try{
+      var lang = await queryLanguage(port);
+      var zpl = wantsZPL(lang);
+      log('Printer language: ' + (lang || 'unknown') + ' -> sending ' + (zpl ? 'ZPL' : 'CPCL') + '.');
+      var bytes = enc(zpl ? rowsToZPL(rows, copies) : rowsToCPCL(rows, copies));
+      await writeAll(port, bytes);
+      log('Sent ' + Math.round(bytes.length / 1024) + ' KB to the printer. Waiting for it to finish...');
+      await drain(port, bytes.length);
+    } finally { try{ await port.close(); }catch(e){} }
+  }
 
   async function info(){
     var keys = ['device.languages', 'ezpl.print_width', 'ezpl.media_type', 'appl.name', 'device.friendly_name'];
@@ -127,7 +184,7 @@
   global.RPDPrint = {
     DOTS_WIDE: DOTS_WIDE,
     supported: supported, printCanvas: printCanvas, canvasToCPCL: canvasToCPCL,
-    sendText: sendText, info: info, forget: forget, explain: explain,
+    sendText: sendText, info: info, forget: forget, explain: explain, queryLanguage: queryLanguage,
     set log(fn){ log = (typeof fn === 'function') ? fn : function(){}; }
   };
 })(window);

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- traffic/index.html | Build v9 | 2026-10-04 | Setup steps assume the MDC is already paired (e-citation rollout paired every car); pairing is now the fallback. v8: Setup step 5 wording: "Serial Printer" plus a COM number, with an example. v7: Renamed "Traffic Stop Notice" and reduced to the Feedback Notice only: the DL/ID and VIN barcode modes were removed because Brazos is retired and the new e-citation client does not use them. Slip drawn on a canvas with the City wordmark and printed via /patrol/print.js (auto ZPL/CPCL). v6: setup steps for the Serial Printer entry. v1 to v5: DL/ID + VIN barcode generator with Feedback Notice mode. -->
+<!-- traffic/index.html | Build v10 | 2026-10-04 | Compatibility mode switch (raw hex instead of compressed PCX) in troubleshooting. v9: Setup steps assume the MDC is already paired (e-citation rollout paired every car); pairing is now the fallback. v8: Setup step 5 wording: "Serial Printer" plus a COM number, with an example. v7: Renamed "Traffic Stop Notice" and reduced to the Feedback Notice only: the DL/ID and VIN barcode modes were removed because Brazos is retired and the new e-citation client does not use them. Slip drawn on a canvas with the City wordmark and printed via /patrol/print.js (auto ZPL/CPCL). v6: setup steps for the Serial Printer entry. v1 to v5: DL/ID + VIN barcode generator with Feedback Notice mode. -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -97,12 +97,14 @@
         <button type="button" class="btn sec" id="forgetBtn">Choose different printer</button>
         <button type="button" class="btn sec" id="infoBtn">Read printer info</button>
       </div>
+      <button type="button" class="btn sec" id="modeBtn">Compatibility mode: Off</button>
+      <p class="note" style="margin-top:6px;">Compatibility mode sends the slip uncompressed. Slower, but turn it on if slips stop printing on a particular printer.</p>
       <textarea id="log" readonly aria-label="Printer log"></textarea>
     </details>
   </div>
 </main>
 
-<footer class="foot">Internal field tool. Renders entirely in your browser. Nothing is saved on this device or the site. &middot; Build v9</footer>
+<footer class="foot">Internal field tool. Renders entirely in your browser. Nothing is saved on this device or the site. &middot; Build v10</footer>
 
 <script src="/patrol/print.js"></script>
 <script>
@@ -164,6 +166,9 @@
     try{ await RPDPrint.forget(); log('Forgot the saved printer. The next print will ask you to pick one.'); }
     catch(e){ log('ERROR: ' + RPDPrint.explain(e)); }
   });
+  function paintMode(){ if(window.RPDPrint && RPDPrint.getMode) $('modeBtn').textContent = 'Compatibility mode: ' + (RPDPrint.getMode() === 'eg' ? 'On' : 'Off'); }
+  $('modeBtn').addEventListener('click', function(){ if(!window.RPDPrint) return; RPDPrint.setMode(RPDPrint.getMode() === 'eg' ? 'pcx' : 'eg'); paintMode(); log('Compatibility mode ' + (RPDPrint.getMode() === 'eg' ? 'on' : 'off') + '.'); });
+  paintMode();
   log('Ready. Direct printing ' + ((window.RPDPrint && RPDPrint.supported()) ? 'available.' : 'NOT available in this browser. Use Chrome or Edge on the squad computer.'));
 })();
 </script>

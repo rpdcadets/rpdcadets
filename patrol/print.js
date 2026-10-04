@@ -1,4 +1,4 @@
-/* patrol/print.js | Build v3 | 2026-10-04 | Auto language: asks the printer device.languages on each job and sends the bitmap as ZPL (^GFA) when the printer is in a zpl mode, else CPCL (EG). Field finding: the 10/2026 e-citation rollout set printers to hybrid_xml_zpl; the September units were line_print. v2: Drain before close: after a job, send a status query and wait (up to 30 s) for the printer's reply so the Windows COM buffer empties before the port closes (fixes silent drops of large jobs on the 'Serial Printer (COMx)' path after the 10/2026 MDC update). Open retried 3 times. v1: 2026-09-22
+/* patrol/print.js | Build v4 | 2026-10-04 | Picker hint wording. v3: Auto language: asks the printer device.languages on each job and sends the bitmap as ZPL (^GFA) when the printer is in a zpl mode, else CPCL (EG). Field finding: the 10/2026 e-citation rollout set printers to hybrid_xml_zpl; the September units were line_print. v2: Drain before close: after a job, send a status query and wait (up to 30 s) for the printer's reply so the Windows COM buffer empties before the port closes (fixes silent drops of large jobs on the 'Serial Printer (COMx)' path after the 10/2026 MDC update). Open retried 3 times. v1: 2026-09-22
    Shared print engine for the in-car Zebra ZQ520 (4 inch, 203 dpi, line-print mode).
    Path: Chrome Web Serial over the printer's paired Bluetooth (Serial Port Profile). No driver, no install.
    Language: CPCL or ZPL, chosen per printer. Slips are drawn on a canvas in the browser and sent as a 1-bit bitmap (EG command),
@@ -24,7 +24,7 @@
     if(!supported()) throw new Error('This browser cannot print directly. Use Chrome or Edge on the squad computer.');
     var ports = await navigator.serial.getPorts();
     if(ports.length){ log('Using remembered printer.'); return ports[0]; }
-    log('Pick the entry labeled Serial Printer (COMx). Do not pick the one showing only the printer serial number.');
+    log('Pick the entry that says Serial Printer followed by a COM number, for example Serial Printer (COM8). Do not pick the one showing only the printer serial number.');
     return await navigator.serial.requestPort();
   }
 

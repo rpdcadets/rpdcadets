@@ -1,4 +1,4 @@
-/* patrol/print.js | Build v5 | 2026-10-04 | Language query made patient: settle 800 ms after open, flush, ask with a 4 s window, retry once, and remember the answer per computer (localStorage rpd_printer_lang) so later prints do not depend on a reply. Raw reply logged. v4: Picker hint wording. v3: Auto language: asks the printer device.languages on each job and sends the bitmap as ZPL (^GFA) when the printer is in a zpl mode, else CPCL (EG). Field finding: the 10/2026 e-citation rollout set printers to hybrid_xml_zpl; the September units were line_print. v2: Drain before close: after a job, send a status query and wait (up to 30 s) for the printer's reply so the Windows COM buffer empties before the port closes (fixes silent drops of large jobs on the 'Serial Printer (COMx)' path after the 10/2026 MDC update). Open retried 3 times. v1: 2026-09-22
+/* patrol/print.js | Build v6 | 2026-10-04 | Speed: no language query (CPCL prints fine in hybrid_xml_zpl mode); slip sent as a run-length-compressed 1-bit PCX inside CPCL (about a tenth of the raw hex size). Compatibility mode (raw EG hex) via RPDPrint.setMode("eg"), remembered per computer. v5: Language query made patient: settle 800 ms after open, flush, ask with a 4 s window, retry once, and remember the answer per computer (localStorage rpd_printer_lang) so later prints do not depend on a reply. Raw reply logged. v4: Picker hint wording. v3: Auto language: asks the printer device.languages on each job and sends the bitmap as ZPL (^GFA) when the printer is in a zpl mode, else CPCL (EG). Field finding: the 10/2026 e-citation rollout set printers to hybrid_xml_zpl; the September units were line_print. v2: Drain before close: after a job, send a status query and wait (up to 30 s) for the printer's reply so the Windows COM buffer empties before the port closes (fixes silent drops of large jobs on the 'Serial Printer (COMx)' path after the 10/2026 MDC update). Open retried 3 times. v1: 2026-09-22
    Shared print engine for the in-car Zebra ZQ520 (4 inch, 203 dpi, line-print mode).
    Path: Chrome Web Serial over the printer's paired Bluetooth (Serial Port Profile). No driver, no install.
    Language: CPCL or ZPL, chosen per printer. Slips are drawn on a canvas in the browser and sent as a 1-bit bitmap (EG command),
@@ -126,44 +126,55 @@
   }
   function canvasToCPCL(canvas, copies){ return rowsToCPCL(canvasToRows(canvas), copies); }
 
-  var langCache = null;
-  try{ langCache = localStorage.getItem('rpd_printer_lang') || null; }catch(e){}
-  async function askOnce(port, windowMs){
-    await writeAll(port, enc('\r\n! U1 getvar "device.languages"\r\n'));
-    var raw = await readFor(port, windowMs, true);
-    if(raw) raw += await readFor(port, 300);
-    return raw;
-  }
-  async function queryLanguage(port){
-    try{
-      await sleep(800);                    // let the Bluetooth link settle after the port opens
-      await readFor(port, 200);            // flush anything stale
-      var raw = await askOnce(port, 4000);
-      if(!raw.trim()){ log('No language reply yet, asking again...'); raw = await askOnce(port, 4000); }
-      var ans = raw.replace(/["\s]/g, '').toLowerCase();
-      if(/^[a-z_,]+$/.test(ans) && ans.length < 40){
-        langCache = ans;
-        try{ localStorage.setItem('rpd_printer_lang', ans); }catch(e){}
-      } else if(raw.trim()){
-        log('Unreadable language reply: ' + JSON.stringify(raw.slice(0, 40)));
+  // ---- image encoders ----
+  // Raw 1-bit rows -> PCX (version 5, 1 bpp, RLE). In PCX, bit 1 = palette index 1 = white, so rows are inverted.
+  function rowsToPCX(canvasRows){
+    var w = DOTS_WIDE, h = canvasRows.h, bpl = canvasRows.bytesPerRow, hex = canvasRows.hex;
+    var out = [], hdr = new Uint8Array(128);
+    function le16(o, v){ hdr[o] = v & 255; hdr[o+1] = (v >> 8) & 255; }
+    hdr[0] = 0x0A; hdr[1] = 5; hdr[2] = 1; hdr[3] = 1;
+    le16(4, 0); le16(6, 0); le16(8, w - 1); le16(10, h - 1); le16(12, 203); le16(14, 203);
+    hdr[16] = 0; hdr[17] = 0; hdr[18] = 0; hdr[19] = 255; hdr[20] = 255; hdr[21] = 255;   // palette: 0 black, 1 white
+    hdr[65] = 1; le16(66, bpl); le16(68, 1); le16(70, w); le16(72, h);
+    out.push(hdr);
+    var body = [], run = 0, prev = -1;
+    function flush(){ if(run === 0) return; if(run > 1 || (prev & 0xC0) === 0xC0) body.push(0xC0 | run); body.push(prev); run = 0; }
+    for(var y = 0; y < h; y++){
+      run = 0; prev = -1;
+      for(var i = 0; i < bpl; i++){
+        var b = (~parseInt(hex.substr((y * bpl + i) * 2, 2), 16)) & 255;
+        if(b === prev && run < 63) run++; else { flush(); prev = b; run = 1; }
       }
-    }catch(e){}
-    return langCache || '';
+      flush();
+    }
+    out.push(Uint8Array.from(body));
+    return out;
   }
-  function wantsZPL(lang){ return /zpl/.test(lang) && !/line_print|cpcl/.test(lang); }
+  function concat(parts){
+    var n = 0; parts.forEach(function(p){ n += p.length; });
+    var r = new Uint8Array(n), o = 0; parts.forEach(function(p){ r.set(p, o); o += p.length; }); return r;
+  }
+  var mode = 'pcx';
+  try{ mode = localStorage.getItem('rpd_print_mode') === 'eg' ? 'eg' : 'pcx'; }catch(e){}
+  function setMode(m){ mode = (m === 'eg') ? 'eg' : 'pcx'; try{ localStorage.setItem('rpd_print_mode', mode); }catch(e){} }
+  function getMode(){ return mode; }
 
-  // Open once: ask the printer its language, send the bitmap in that language, drain, close.
+  function buildJob(rows, copies){
+    var q = Math.max(1, Math.min(9, copies | 0 || 1));
+    if(mode === 'eg') return enc(rowsToCPCL(rows, q));
+    var pcx = rowsToPCX(rows);
+    return concat([enc('! 0 200 200 ' + rows.h + ' ' + q + '\r\nPCX 0 0\r\n')].concat(pcx).concat([enc('\r\nPRINT\r\n')]));
+  }
+
   async function printCanvas(canvas, copies){
     var rows = canvasToRows(canvas);
+    var bytes = buildJob(rows, copies);
     var port = await getPort();
     await openPort(port);
     try{
-      var lang = await queryLanguage(port);
-      var zpl = wantsZPL(lang);
-      log('Printer language: ' + (lang || 'unknown') + ' -> sending ' + (zpl ? 'ZPL' : 'CPCL') + '.');
-      var bytes = enc(zpl ? rowsToZPL(rows, copies) : rowsToCPCL(rows, copies));
+      var t0 = Date.now();
       await writeAll(port, bytes);
-      log('Sent ' + Math.round(bytes.length / 1024) + ' KB to the printer. Waiting for it to finish...');
+      log('Sent ' + Math.round(bytes.length / 1024) + ' KB (' + (mode === 'eg' ? 'compatibility' : 'compressed') + ') in ' + ((Date.now() - t0) / 1000).toFixed(1) + ' s. Waiting for the printer...');
       await drain(port, bytes.length);
     } finally { try{ await port.close(); }catch(e){} }
   }
@@ -199,7 +210,7 @@
   global.RPDPrint = {
     DOTS_WIDE: DOTS_WIDE,
     supported: supported, printCanvas: printCanvas, canvasToCPCL: canvasToCPCL,
-    sendText: sendText, info: info, forget: forget, explain: explain, queryLanguage: queryLanguage,
+    sendText: sendText, info: info, forget: forget, explain: explain, setMode: setMode, getMode: getMode,
     set log(fn){ log = (typeof fn === 'function') ? fn : function(){}; }
   };
 })(window);

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- patrol/index.html | Build v8 | 2026-09-23 | Electronic Vehicle Impound card (draft) added at the end. v7: Driver Information Exchange card (draft) added. v6: Traffic Stop card mentions the Traffic Feedback Notice mode. v5: New card copy; APOWW card (draft) above EPO; code box routes A-codes to /patrol/apoww; 20-minute expiry wording. v4: EPO card marked DRAFT -->
+<!-- patrol/index.html | Build v9 | 2026-10-04 | Traffic card renamed "Traffic Stop Notice" (DL/ID and VIN barcode modes retired with Brazos). v8: Electronic Vehicle Impound card (draft) added at the end. v7: Driver Information Exchange card (draft) added. v6: Traffic Stop card mentions the Traffic Feedback Notice mode. v5: New card copy; APOWW card (draft) above EPO; code box routes A-codes to /patrol/apoww; 20-minute expiry wording. v4: EPO card marked DRAFT -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -75,8 +75,8 @@
   <div class="tools">
     <a class="tool" href="/traffic/">
       <span class="go">&rsaquo;</span>
-      <div class="name">Traffic Stop / Citations</div>
-      <div class="desc">Use this on your squad car computer when someone has no scannable DL/ID. Type their information and it generates a barcode you can scan straight into your Brazos. Also has the Traffic Feedback Notice, which prints the English/Spanish feedback notice slip on your in-car printer.</div>
+      <div class="name">Traffic Stop Notice</div>
+      <div class="desc">Prints the English/Spanish feedback notice slip on your in-car printer. One tap after the printer is paired.</div>
     </a>
     <a class="tool" href="/patrol/booking/">
       <span class="go">&rsaquo;</span>
@@ -116,10 +116,10 @@
   </div>
 </main>
 
-<footer class="foot">Internal field tools &middot; Build v8</footer>
+<footer class="foot">Internal field tools &middot; Build v9</footer>
 
 <script>
-  const BUILD = '8';
+  const BUILD = '9';
   (async () => {
     try {
       const r = await fetch(location.pathname + '?cb=' + Date.now(), {cache:'no-store'}); if (!r.ok) return;

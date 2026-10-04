@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- patrol/exchange/index.html | Build v5 | 2026-10-04 | Setup steps: pick the "Serial Printer (COMx)" entry, not the serial-number entry. v4: Setup step 3 now covers the Bluetooth PIN and the checkmark button on the printer. v3: Everything prints in ALL CAPS; driver phone field per unit; optional witnesses (name and phone) with their own Add button, printed after the units. v2: QR now points to the accident report page. v1: New tool. Driver Information Exchange slip for crashes: any number of units, each with driver, vehicle, and liability insurance; header with service number, date/time, location, officer. Slip is drawn on a canvas to match the old Brazos layout (city wordmark, title, courtesy text, contact paragraph, address block with QR code, boxed sections) and printed on the in-car Zebra via /patrol/print.js. VIN check-digit validation. Nothing stored. -->
+<!-- patrol/exchange/index.html | Build v7 | 2026-10-04 | Setup steps assume the MDC is already paired; pairing is now the fallback. v6: Setup step 5 wording: "Serial Printer" plus a COM number, with an example. v5: Setup steps: pick the "Serial Printer (COMx)" entry, not the serial-number entry. v4: Setup step 3 now covers the Bluetooth PIN and the checkmark button on the printer. v3: Everything prints in ALL CAPS; driver phone field per unit; optional witnesses (name and phone) with their own Add button, printed after the units. v2: QR now points to the accident report page. v1: New tool. Driver Information Exchange slip for crashes: any number of units, each with driver, vehicle, and liability insurance; header with service number, date/time, location, officer. Slip is drawn on a canvas to match the old Brazos layout (city wordmark, title, courtesy text, contact paragraph, address block with QR code, boxed sections) and printed on the in-car Zebra via /patrol/print.js. VIN check-digit validation. Nothing stored. -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -112,19 +112,23 @@
       <details style="margin-top:14px;">
         <summary>Printer setup and troubleshooting</summary>
         <div class="steps">
-          <p>First-time setup on this computer (about 2 minutes)</p>
-          <ol>
-            <li>Turn the printer on. Note the serial number on its bottom label (starts with <b>XXRBJ</b>).</li>
-            <li>On the computer open <b>Settings</b>, then <b>Bluetooth &amp; devices</b>, then <b>Add device</b>, then <b>Bluetooth</b>.</li>
-            <li>Pick the entry that matches the printer serial number and tap <b>Connect</b>. A PIN pops up on the computer: press the <b>checkmark button on the printer</b> to accept it. When the computer says <b>Connected</b>, tap <b>Done</b>.</li>
-            <li>Come back here and tap <b>Print Slip</b>. Chrome shows a small popup asking which device to use. That is a one-time permission, not a settings change.</li>
-            <li>In the popup, scroll to the entry labeled <b>Serial Printer (COM&#8203;x)</b> and pick it, then tap <b>Connect</b>. Do <b>not</b> pick the entry that shows only the printer serial number; it looks right but does not deliver the job. The slip prints after a few seconds.</li>
-          </ol>
-          <p>After setup</p>
+          <p>First time on this computer (about 30 seconds)</p>
+        <ol>
+          <li>Turn the printer on. The MDC is already paired to it.</li>
+          <li>Tap <b>Print Slip</b>. Chrome shows a small popup asking which device to use. That is a one-time permission, not a settings change.</li>
+          <li>In the popup, scroll down to the entry that says <b>Serial Printer</b> followed by a COM number (for example <b>Serial Printer (COM8)</b>; the number is different on each car). Pick it and tap <b>Connect</b>. Do <b>not</b> pick the entry that shows only the printer serial number; it looks right but does not deliver the job. The slip prints after a few seconds.</li>
+        </ol>
+        <p>No "Serial Printer" entry in the list? Pair the printer first</p>
+        <ol>
+          <li>Note the serial number on the printer's bottom label (starts with <b>XXRBJ</b>).</li>
+          <li>On the computer open <b>Settings</b>, then <b>Bluetooth &amp; devices</b>, then <b>Add device</b>, then <b>Bluetooth</b>.</li>
+          <li>Pick the entry that matches the printer serial number and tap <b>Connect</b>. A PIN pops up on the computer: press the <b>checkmark button on the printer</b> to accept it. When the computer says <b>Connected</b>, tap <b>Done</b>. Then come back here and do the three steps above.</li>
+        </ol>
+        <p>After setup</p>
           <ul>
             <li>Print is one tap. Chrome remembers the printer on this computer.</li>
             <li>Nothing prints? Make sure the printer is on and has paper, then try again.</li>
-            <li>Popup list empty? The printer is off or not paired. Repeat steps 1 to 3.</li>
+            <li>Popup has no Serial Printer entry? The printer is off, or this MDC is not paired to it. See the pairing steps above.</li>
             <li>Picked the wrong device, or swapped cars? Tap <b>Choose different printer</b>, then Print again and pick the <b>Serial Printer</b> entry.</li>
           </ul>
         </div>
@@ -138,7 +142,7 @@
   </div>
 </div>
 
-<footer class="foot">Build v5</footer>
+<footer class="foot">Build v7</footer>
 
 <script src="/patrol/print.js"></script>
 <script>

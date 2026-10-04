@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<!-- reference.html | Build v1 | 10/03/26 | New page: applicant reference questionnaire. Opens only from a one-time link (rpdcadets.com/reference#CODE) minted in /admin. Screen 1 explains why the answers matter, screen 2 is the questionnaire, screen 3 is the thank-you. Answers are encrypted in the reference's browser with the reference public key and can be opened only with the full advisor passcode. Pairs with roster.js v30 (RPDRoster.references). COUPLING: REF_SALT, REF_ITER, and the derive recipe are duplicated from roster.js and must change together. -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reference Questionnaire | Richardson Police Public Safety Cadets</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@300;400;500;600;700&family=Barlow+Condensed:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{--navy:#1a2744;--navy-deep:#0f1a30;--red:#c0392b;--red-glow:#e74c3c;--gold:#d4a952;--gold-light:#f0d68a;--white:#fff;--text-muted:#8899b0;--card-bg:rgba(255,255,255,0.025);--card-border:rgba(255,255,255,0.06);--input-bg:rgba(255,255,255,0.04);--input-border:rgba(255,255,255,0.1);--input-focus:rgba(192,57,43,0.4)}
+body{font-family:'Barlow',sans-serif;background:var(--navy-deep);color:var(--white);min-height:100vh;-webkit-font-smoothing:antialiased}
+.wrap{max-width:660px;margin:0 auto;padding:44px 20px 60px}
+.head{text-align:center;margin-bottom:28px}
+.head img{height:76px;width:auto;margin-bottom:16px}
+.section-label{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:var(--gold);margin-bottom:10px}
+h1{font-family:'Bebas Neue',sans-serif;font-size:40px;letter-spacing:2px;line-height:1.05}
+.card{background:var(--card-bg);border:1px solid var(--card-border);border-radius:16px;padding:34px 30px 30px;position:relative;display:none}
+.card.on{display:block}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--red),var(--gold),var(--red));border-radius:16px 16px 0 0}
+
+/* status cards (loading, invalid, already done, thank you) */
+.status{text-align:center}
+.status .ico{width:70px;height:70px;margin:4px auto 22px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(212,169,82,0.12);border:1px solid rgba(212,169,82,0.35);color:var(--gold-light)}
+.status.ok .ico{background:rgba(39,174,96,0.12);border-color:rgba(39,174,96,0.35);color:#6fdc9d}
+.status h2{font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:1.5px;margin-bottom:12px}
+.status p{font-weight:300;font-size:15.5px;color:#b6c2d4;line-height:1.7;max-width:480px;margin:0 auto 12px}
+.status a{color:var(--gold-light)}
+.spin{width:34px;height:34px;border:3px solid rgba(255,255,255,0.12);border-top-color:var(--gold);border-radius:50%;margin:8px auto 20px;animation:spin .9s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.spin{animation-duration:2.4s}}
+
+/* intro: who this is for + why it matters */
+.who{background:rgba(212,169,82,0.07);border:1px solid rgba(212,169,82,0.28);border-radius:12px;padding:16px 18px;margin-bottom:26px}
+.who-l{font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--gold)}
+.who-name{font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:1.5px;line-height:1.1;margin:4px 0 6px;overflow-wrap:anywhere}
+.who-by{font-size:14px;color:#b6c2d4}
+.why h2{font-family:'Bebas Neue',sans-serif;font-size:30px;letter-spacing:1.5px;margin-bottom:14px}
+.why p{font-size:16.5px;line-height:1.7;color:#dbe3ee;margin-bottom:15px}
+.why p.strong{color:var(--white);font-weight:600;border-left:3px solid var(--red);padding-left:14px}
+.why .fine{font-size:14px;color:var(--text-muted);margin:6px 0 0}
+
+/* questionnaire */
+.for-line{font-size:14px;color:#b6c2d4;margin-bottom:6px}
+.for-line b{color:var(--white);font-weight:600}
+.sec-h{font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin:28px 0 4px;padding-top:22px;border-top:1px solid var(--card-border)}
+.sec-h.first{margin-top:14px}
+.sec-sub{font-size:13.5px;color:var(--text-muted);line-height:1.55;margin-bottom:6px}
+.q{padding:16px 0 4px;scroll-margin-top:16px}
+.q-t{font-size:16px;font-weight:500;line-height:1.45;margin-bottom:10px}
+.q-t .req{color:var(--red-glow)}
+.q-t .opt{color:var(--text-muted);font-weight:400;font-size:13.5px}
+.q.miss .q-t{color:#ff9a8f}
+.q.miss .chips,.q.miss textarea,.q.miss input{outline:1px solid rgba(231,76,60,0.55);outline-offset:4px;border-radius:10px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{min-height:46px;padding:10px 16px;background:var(--input-bg);border:1px solid var(--input-border);border-radius:10px;color:#dbe3ee;font-family:'Barlow',sans-serif;font-size:15px;font-weight:500;line-height:1.2;cursor:pointer;text-align:center}
+.chip:hover{border-color:rgba(255,255,255,0.28)}
+.chip:focus-visible{outline:2px solid var(--gold-light);outline-offset:2px}
+.chip.on{background:rgba(212,169,82,0.16);border-color:var(--gold);color:var(--white)}
+.chips.rate .chip{flex:1 1 0;min-width:96px;padding:10px 8px}
+.more{display:none;margin-top:12px}
+.more.on{display:block}
+.more label{display:block;font-size:13.5px;color:#b6c2d4;margin-bottom:6px}
+.more label .req{color:var(--red-glow)}
+textarea,input[type=text],input[type=tel]{background:var(--input-bg);border:1px solid var(--input-border);border-radius:9px;padding:12px 13px;color:var(--white);font-family:'Barlow',sans-serif;font-size:16px;outline:none;width:100%}
+textarea{resize:vertical;min-height:92px;line-height:1.5}
+textarea:focus,input:focus{border-color:var(--input-focus);background:rgba(255,255,255,0.06)}
+.btn-main{width:100%;margin-top:26px;padding:16px;background:var(--red);color:var(--white);border:none;border-radius:10px;font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:16px;letter-spacing:2.5px;text-transform:uppercase;cursor:pointer;box-shadow:0 4px 20px rgba(192,57,43,0.3)}
+.btn-main:hover{background:var(--red-glow)}
+.btn-main:focus-visible{outline:2px solid var(--gold-light);outline-offset:3px}
+.btn-main:disabled{opacity:.5;cursor:wait}
+.form-error{margin-top:14px;font-size:14px;color:#ff9a8f;line-height:1.5;text-align:center;min-height:20px}
+.conf{margin-top:16px;font-size:13px;color:var(--text-muted);line-height:1.6;text-align:center}
+.foot{text-align:center;margin-top:28px;font-size:12.5px;color:var(--text-muted);line-height:1.7}
+.foot a{color:var(--gold-light);text-decoration:none}
+.build{margin-top:10px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted);text-align:center}
+@media(max-width:560px){.card{padding:28px 18px 24px}h1{font-size:33px}.who-name{font-size:28px}.why p{font-size:16px}.chips.rate .chip{min-width:88px}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="head">
+    <img src="logo_transparent.png" alt="Richardson Police Department Public Safety Cadets badge logo">
+    <div class="section-label">Richardson Police Department</div>
+    <h1>Public Safety Cadets<br>Reference Questionnaire</h1>
+  </div>
+
+  <!-- CHECKING THE LINK -->
+  <div class="card status on" id="loadCard">
+    <div class="spin" aria-hidden="true"></div>
+    <p>Opening your reference link&hellip;</p>
+  </div>
+
+  <!-- LINK PROBLEM -->
+  <div class="card status" id="badCard">
+    <div class="ico"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v5M12 16.5v.5"/></svg></div>
+    <h2 id="badTitle">This link is not active</h2>
+    <p id="badText">This reference link is no longer valid.</p>
+    <p>If you were asked to complete a reference, please email <a href="mailto:advisors@rpdcadets.com">advisors@rpdcadets.com</a> and we will send you a new link.</p>
+  </div>
+
+  <!-- ALREADY SUBMITTED -->
+  <div class="card status ok" id="doneCard">
+    <div class="ico"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 13l4 4L19 7"/></svg></div>
+    <h2>Already received</h2>
+    <p>This reference has already been submitted. Thank you. There is nothing more you need to do.</p>
+    <p>If you need to add or correct something, email <a href="mailto:advisors@rpdcadets.com">advisors@rpdcadets.com</a>.</p>
+  </div>
+
+  <!-- SCREEN 1: WHY YOUR ANSWERS MATTER -->
+  <div class="card" id="introCard">
+    <div class="who">
+      <div class="who-l">Reference for</div>
+      <div class="who-name" id="whoName"></div>
+      <div class="who-by" id="whoBy"></div>
+    </div>
+    <div class="why">
+      <h2>Why your answers matter</h2>
+      <p>Cadets in this program train alongside Richardson police officers. They learn police tactics and procedures, ride in patrol cars, and may see or hear confidential information about real people and real cases.</p>
+      <p class="strong">In the wrong hands, that knowledge can put officers and the public at risk. We have to be confident that every cadet we accept can be trusted with it.</p>
+      <p>You know this applicant in a way we cannot. Please answer honestly, even if it is uncomfortable. Your responses are confidential and will not be shared with the applicant.</p>
+      <p class="fine">The questionnaire takes about three minutes.</p>
+    </div>
+    <button type="button" class="btn-main" id="nextBtn">Next</button>
+  </div>
+
+  <!-- SCREEN 2: QUESTIONNAIRE -->
+  <div class="card" id="formCard">
+    <div class="for-line">Reference for <b id="forName"></b></div>
+    <div id="qHost"></div>
+    <button type="button" class="btn-main" id="goBtn">Submit Reference</button>
+    <div class="form-error" id="formErr" role="alert"></div>
+    <div class="conf">Your responses are encrypted before they leave this device and are read only by the program advisors. They are not shared with the applicant.</div>
+  </div>
+
+  <!-- SCREEN 3: THANK YOU -->
+  <div class="card status ok" id="okCard">
+    <div class="ico"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 13l4 4L19 7"/></svg></div>
+    <h2>Thank you</h2>
+    <p>Your reference has been received. We appreciate you taking the time to help us make a careful decision.</p>
+    <p>You can close this page. If an advisor has a follow-up question, we will contact you directly.</p>
+  </div>
+
+  <div class="foot">Richardson Police Department Public Safety Cadets<br><a href="mailto:advisors@rpdcadets.com">advisors@rpdcadets.com</a></div>
+  <div class="build">Build v1</div>
+</div>
+
+<script>
+console.log('[reference] Build v1');
+/* ====== CONFIG ====== */
+// Same Firebase project as the rest of the site. This page deliberately does
+// NOT load roster.js (its seed carries cadet names, which must never ship in
+// a fully public page), so the config is duplicated here.
+const firebaseConfig = {
+  apiKey:            "AIzaSyDV0vuyGg7gpPXJd2jRqZtUTeKiP3yPxhU",
+  authDomain:        "rpdcadets-quartermaster.firebaseapp.com",
+  databaseURL:       "https://rpdcadets-quartermaster-default-rtdb.firebaseio.com",
+  projectId:         "rpdcadets-quartermaster",
+  storageBucket:     "rpdcadets-quartermaster.firebasestorage.app",
+  messagingSenderId: "832497600166",
+  appId:             "1:832497600166:web:67895b333e07b8806c1667"
+};
+// COUPLING: REF_SALT, REF_ITER, and refDerive() below are duplicated verbatim
+// from roster.js (v30, the references module). If any of them ever changes,
+// change BOTH files together or every outstanding link stops opening.
+const REF_SALT = 'rpdcadets-reference-v1';
+const REF_ITER = 100000;
+const ROOT = 'roster';
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+const enc = new TextEncoder();
+const dec = new TextDecoder();
+
+function b64ToArr(b64){ const bin=atob(b64); const a=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) a[i]=bin.charCodeAt(i); return a; }
+function arrToB64(arr){ let s=''; const a=new Uint8Array(arr); for(let i=0;i<a.length;i++) s+=String.fromCharCode(a[i]); return btoa(s); }
+
+// code -> { id (32 hex chars), key (32 bytes) }. Mirrors refDerive() in roster.js.
+async function refDerive(code){
+  const norm = String(code||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+  const km = await crypto.subtle.importKey('raw', enc.encode(norm), 'PBKDF2', false, ['deriveBits']);
+  const bits = new Uint8Array(await crypto.subtle.deriveBits(
+    { name:'PBKDF2', salt:enc.encode(REF_SALT), iterations:REF_ITER, hash:'SHA-256' }, km, 384));
+  const id = Array.from(bits.slice(0,16)).map(b=>b.toString(16).padStart(2,'0')).join('');
+  return { id, key: bits.slice(16,48) };
+}
+// Mirrors keyDecrypt() in roster.js: 'ivB64.ctB64', AES-GCM, raw 32-byte key.
+async function keyDecrypt(blob, rawKeyBytes){
+  const [ivB64, dataB64] = String(blob).split('.');
+  const key = await crypto.subtle.importKey('raw', rawKeyBytes, { name:'AES-GCM' }, false, ['decrypt']);
+  return dec.decode(await crypto.subtle.decrypt({ name:'AES-GCM', iv:b64ToArr(ivB64) }, key, b64ToArr(dataB64)));
+}
+/* RSA-OAEP envelope: fresh AES-GCM key per submission, RSA-encrypted with the
+   reference public key. This page can encrypt but can never decrypt: the
+   private key only exists wrapped under the full advisor passcode. */
+async function envelope(plainJson, pubJwkTxt){
+  const pubKey = await crypto.subtle.importKey('jwk', JSON.parse(pubJwkTxt), { name:'RSA-OAEP', hash:'SHA-256' }, false, ['encrypt']);
+  const aes = crypto.getRandomValues(new Uint8Array(32));
+  const iv  = crypto.getRandomValues(new Uint8Array(12));
+  const key = await crypto.subtle.importKey('raw', aes, { name:'AES-GCM' }, false, ['encrypt']);
+  const ct  = new Uint8Array(await crypto.subtle.encrypt({ name:'AES-GCM', iv }, key, enc.encode(plainJson)));
+  const ek  = new Uint8Array(await crypto.subtle.encrypt({ name:'RSA-OAEP' }, pubKey, aes));
+  return arrToB64(ek) + '.' + arrToB64(iv) + '.' + arrToB64(ct);
+}
+
+/* ====== QUESTIONS ======
+   Every answer is stored with its own question text, so /admin and the PDF
+   render whatever was asked at the time. Editing wording here never breaks
+   older responses.
+   type: one (single chip) | rate (five-point) | multi | text
+   flag(value) -> 0 none, 1 worth a look, 2 concern (highlighted in /admin)
+   explainIf(value) -> true when the follow-up box is required
+   show(typeGroup) -> limits a question to school, employer, or personal references */
+const RATE = ['Excellent','Good','Fair','Poor',"Can't say"];
+const rateFlag = v => v==='Poor' ? 2 : (v==='Fair' ? 1 : 0);
+const REL_OPTS = ['Teacher or school staff','School Resource Officer','Employer or supervisor','Coach or activity leader','Faith or youth leader','Family friend or neighbor','Relative','Other'];
+function relGroup(rel){
+  if(rel==='Teacher or school staff' || rel==='School Resource Officer') return 'school';
+  if(rel==='Employer or supervisor') return 'employer';
+  return rel ? 'personal' : '';
+}
+const NONE = 'None of these';
+const QUESTIONS = [
+  { sec:'Your relationship' },
+  { k:'rel', type:'one', q:'How do you know the applicant?', opts:REL_OPTS,
+    flag:v=> v==='Relative'?1:0, explainIf:v=> v==='Other', explainLabel:'Please describe how you know them' },
+  { k:'known', type:'one', q:'How long have you known them?', opts:['Under 6 months','6 to 12 months','1 to 3 years','More than 3 years'],
+    flag:v=> v==='Under 6 months'?1:0 },
+  { k:'often', type:'one', q:'How often do you interact with them?', opts:['Daily','Weekly','Monthly','Rarely'],
+    flag:v=> v==='Rarely'?1:0 },
+
+  { sec:'How would you rate the applicant?', sub:"Tap one for each. Choose \u201CCan't say\u201D if you have not seen it firsthand." },
+  { k:'honesty',    type:'rate', q:'Honesty and trustworthiness' },
+  { k:'reliable',   type:'rate', q:'Reliability and showing up on time' },
+  { k:'rules',      type:'rate', q:'Respect for rules and authority' },
+  { k:'peers',      type:'rate', q:'How they treat peers' },
+  { k:'maturity',   type:'rate', q:'Maturity and self-control' },
+  { k:'correction', type:'rate', q:'How they take correction' },
+  { k:'schoolAtt',  type:'rate', q:'Attendance at school', show:'school' },
+  { k:'schoolBeh',  type:'rate', q:'Behavior in class or on campus', show:'school' },
+  { k:'workAtt',    type:'rate', q:'Attendance at work', show:'employer' },
+  { k:'rehire',     type:'one',  q:'Would you hire them again?', opts:['Yes','No',"Can't say"], show:'employer',
+    flag:v=> v==='No'?2:0, explainIf:v=> v==='No', explainLabel:'Please explain' },
+  { k:'stress',     type:'rate', q:'How they handle stress or conflict', show:'personal' },
+
+  { sec:'Concerns' },
+  { k:'aware', type:'multi', q:'Are you aware of any of the following involving the applicant?', sub:'Tap all that apply.',
+    opts:['Serious dishonesty','Discipline at school or work','Trouble with the law','Alcohol, drug, or vape use','Fighting, threats, or bullying','Concerning social media',NONE],
+    flag:v=> (v.length && !(v.length===1 && v[0]===NONE)) ? 2 : 0,
+    explainIf:v=> v.length>0 && !(v.length===1 && v[0]===NONE), explainLabel:'Please explain what you know' },
+  { k:'trust', type:'one', q:'Cadets are exposed to police tactics, training, and confidential information. Do you trust this applicant to keep sensitive information private and to use what they learn responsibly?',
+    opts:['Yes, without hesitation','Yes, with some reservations','No',"Can't say"],
+    flag:v=> (v==='No' || v==='Yes, with some reservations') ? 2 : (v==="Can't say" ? 1 : 0),
+    explainIf:v=> v==='No' || v==='Yes, with some reservations', explainLabel:'Please explain' },
+  { k:'assoc', type:'one', q:'Are you aware of anyone close to the applicant who is involved in criminal activity or who might misuse this kind of information?',
+    opts:['No','Yes',"Can't say"],
+    flag:v=> v==='Yes' ? 2 : (v==="Can't say" ? 1 : 0),
+    explainIf:v=> v==='Yes', explainLabel:'Please explain' },
+
+  { sec:'Your recommendation' },
+  { k:'rec', type:'one', q:'Would you recommend this applicant for the Public Safety Cadets?',
+    opts:['Strongly recommend','Recommend','Recommend with reservations','Do not recommend'],
+    flag:v=> (v==='Recommend with reservations' || v==='Do not recommend') ? 2 : 0,
+    explainIf:v=> v==='Recommend with reservations' || v==='Do not recommend', explainLabel:'Please explain' },
+  { k:'strength', type:'text', q:'What is their biggest strength?', max:600 },
+  { k:'other', type:'text', q:'Is there anything else we should know?', optional:true, max:1500 },
+
+  { sec:'About you' },
+  { k:'refName', type:'text', q:'Your name', single:true, max:120 },
+  { k:'phone', type:'text', q:'Best phone number, in case an advisor has a follow-up question', optional:true, single:true, tel:true, max:40 }
+];
+
+const ans = {};       // k -> value (string, or array for multi)
+let invite = null;    // { a: applicant name, r: reference name }
+let refId = null;
+let submitting = false, done = false;
+
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function showCard(id){
+  document.querySelectorAll('.card').forEach(c=>c.classList.remove('on'));
+  document.getElementById(id).classList.add('on');
+  window.scrollTo(0,0);
+}
+function showBad(title, text){
+  document.getElementById('badTitle').textContent = title;
+  document.getElementById('badText').textContent = text;
+  showCard('badCard');
+}
+
+/* ====== RENDER ====== */
+function buildForm(){
+  const host = document.getElementById('qHost');
+  let html = '', first = true;
+  QUESTIONS.forEach(it=>{
+    if(it.sec){
+      html += `<div class="sec-h${first?' first':''}">${esc(it.sec)}</div>` + (it.sub?`<div class="sec-sub">${esc(it.sub)}</div>`:'');
+      first = false; return;
+    }
+    const req = it.optional ? ' <span class="opt">(optional)</span>' : ' <span class="req">*</span>';
+    let body = '';
+    if(it.type==='text'){
+      body = it.single
+        ? `<input type="${it.tel?'tel':'text'}" id="in_${it.k}" maxlength="${it.max||200}"${it.tel?' autocomplete="tel" inputmode="tel"':''} aria-label="${esc(it.q)}">`
+        : `<textarea id="in_${it.k}" maxlength="${it.max||1000}" aria-label="${esc(it.q)}"></textarea>`;
+    } else {
+      const opts = it.type==='rate' ? RATE : it.opts;
+      body = `<div class="chips${it.type==='rate'?' rate':''}" role="group" aria-label="${esc(it.q)}">` +
+        opts.map(o=>`<button type="button" class="chip" data-k="${it.k}" data-v="${esc(o)}" aria-pressed="false">${esc(o)}</button>`).join('') + `</div>`;
+      if(it.explainIf){
+        body += `<div class="more" id="more_${it.k}"><label for="ex_${it.k}">${esc(it.explainLabel||'Please explain')} <span class="req">*</span></label><textarea id="ex_${it.k}" maxlength="1500"></textarea></div>`;
+      }
+    }
+    html += `<div class="q" id="q_${it.k}"${it.show?` data-show="${it.show}" style="display:none"`:''}>` +
+      `<div class="q-t">${esc(it.q)}${req}</div>` + (it.sub?`<div class="sec-sub">${esc(it.sub)}</div>`:'') + body + `</div>`;
+  });
+  host.innerHTML = html;
+  host.querySelectorAll('.chip').forEach(b=> b.addEventListener('click', ()=> onChip(b)));
+  host.querySelectorAll('textarea, input').forEach(el=> el.addEventListener('input', ()=>{ const q=el.closest('.q'); if(q) q.classList.remove('miss'); }));
+}
+function qDef(k){ return QUESTIONS.find(x=>x.k===k); }
+function onChip(b){
+  const k=b.dataset.k, v=b.dataset.v, it=qDef(k);
+  const group = b.parentElement;
+  if(it.type==='multi'){
+    let cur = Array.isArray(ans[k]) ? ans[k].slice() : [];
+    if(cur.includes(v)) cur = cur.filter(x=>x!==v);
+    else if(v===NONE) cur = [NONE];                       // "None" clears the rest
+    else cur = cur.filter(x=>x!==NONE).concat(v);          // any concern clears "None"
+    ans[k] = cur;
+    group.querySelectorAll('.chip').forEach(c=>{ const on=cur.includes(c.dataset.v); c.classList.toggle('on', on); c.setAttribute('aria-pressed', on?'true':'false'); });
+  } else {
+    ans[k] = v;
+    group.querySelectorAll('.chip').forEach(c=>{ const on=c===b; c.classList.toggle('on', on); c.setAttribute('aria-pressed', on?'true':'false'); });
+  }
+  document.getElementById('q_'+k).classList.remove('miss');
+  if(it.explainIf){ document.getElementById('more_'+k).classList.toggle('on', !!it.explainIf(ans[k])); }
+  if(k==='rel') syncTypeQuestions();
+}
+function isShown(it){ return !it.show || it.show===relGroup(ans.rel||''); }
+function syncTypeQuestions(){
+  QUESTIONS.forEach(it=>{ if(it.k && it.show){ document.getElementById('q_'+it.k).style.display = isShown(it) ? '' : 'none'; } });
+}
+function val(id){ const el=document.getElementById(id); return el ? (el.value||'').trim() : ''; }
+
+/* ====== COLLECT + VALIDATE ====== */
+function collect(){
+  const items=[]; let firstMiss=null, sec='';
+  QUESTIONS.forEach(it=>{
+    if(it.sec){ sec=it.sec; return; }
+    if(!isShown(it)) return;
+    const qEl=document.getElementById('q_'+it.k);
+    let a='', note='', missing=false, raw;
+    if(it.type==='text'){
+      a = val('in_'+it.k); raw = a;
+      if(!a && !it.optional) missing=true;
+    } else if(it.type==='multi'){
+      raw = Array.isArray(ans[it.k]) ? ans[it.k] : [];
+      a = raw.join('; ');
+      if(!raw.length) missing=true;
+    } else {
+      raw = ans[it.k] || ''; a = raw;
+      if(!raw) missing=true;
+    }
+    if(!missing && it.explainIf && it.explainIf(raw)){
+      note = val('ex_'+it.k);
+      if(!note) missing=true;
+    }
+    qEl.classList.toggle('miss', missing);
+    if(missing && !firstMiss) firstMiss=qEl;
+    if(it.k==='refName' || it.k==='phone') return;        // stored at the top level, not as a question row
+    if(!a && it.optional) return;
+    let f = 0;
+    if(it.type==='rate') f = rateFlag(raw); else if(it.flag) f = it.flag(raw);
+    const row = { s:sec, k:it.k, q:it.q, a };
+    if(note) row.n = note;
+    if(f) row.f = f;
+    items.push(row);
+  });
+  return { items, firstMiss };
+}
+
+async function submit(){
+  if(submitting || done) return;
+  const err=document.getElementById('formErr'); err.textContent='';
+  const { items, firstMiss } = collect();
+  if(firstMiss){
+    err.textContent='Please answer the highlighted questions.';
+    firstMiss.scrollIntoView({ behavior:'smooth', block:'start' });
+    return;
+  }
+  submitting=true;
+  const btn=document.getElementById('goBtn'); btn.disabled=true; btn.textContent='Submitting\u2026';
+  try{
+    // The link may have been used on another device while this page sat open.
+    const doneSnap=await db.ref(ROOT+'/refDone/'+refId).once('value');
+    if(doneSnap.exists()){ done=true; showCard('doneCard'); return; }
+    const pubSnap=await db.ref(ROOT+'/refPub').once('value');
+    if(!pubSnap.exists()) throw new Error('no public key');
+    const recRow = items.find(x=>x.k==='rec');
+    const payload = {
+      v:1, applicant: invite.a || '', invitedName: invite.r || '',
+      refName: val('in_refName'), phone: val('in_phone'),
+      rec: recRow ? recRow.a : '', flags: items.filter(x=>x.f===2).length,
+      items, submittedAt: Date.now()
+    };
+    const env=await envelope(JSON.stringify(payload), pubSnap.val());
+    const at=Date.now();
+    await db.ref(ROOT+'/refAnswers/'+refId).set({ env, at });
+    await db.ref(ROOT+'/refDone/'+refId).set(at);
+    // The link is single-use: retire the invite so the code opens nothing.
+    try{ await db.ref(ROOT+'/refInvites/'+refId).remove(); }catch(e){}
+    done=true; showCard('okCard');
+  }catch(e){
+    err.textContent='Something went wrong sending your reference. Check your connection and try again.';
+    btn.disabled=false; btn.textContent='Submit Reference'; submitting=false;
+  }
+}
+
+/* ====== OPEN THE LINK ====== */
+function readCode(){
+  let c = (location.hash||'').replace(/^#/, '');
+  if(!c){ try{ c = new URLSearchParams(location.search).get('c') || ''; }catch(e){ c=''; } }
+  try{ c = decodeURIComponent(c); }catch(e){}
+  return c.toUpperCase().replace(/[^A-Z0-9]/g,'');
+}
+async function init(){
+  const code = readCode();
+  if(code.length < 12){
+    showBad('Open this page from your email', 'This questionnaire opens from the personal link in the email you received from a program advisor.');
+    return;
+  }
+  try{
+    const d = await refDerive(code);
+    refId = d.id;
+    const doneSnap = await db.ref(ROOT+'/refDone/'+refId).once('value');
+    if(doneSnap.exists()){ done=true; showCard('doneCard'); return; }
+    const invSnap = await db.ref(ROOT+'/refInvites/'+refId).once('value');
+    if(!invSnap.exists()){ showBad('This link is not active', 'This reference link is no longer valid. It may have been replaced by a newer one.'); return; }
+    const inv = invSnap.val() || {};
+    if(inv.exp && Date.now() > inv.exp){ showBad('This link has expired', 'This reference link has expired.'); return; }
+    try{ invite = JSON.parse(await keyDecrypt(inv.blob, d.key)); }
+    catch(e){ showBad('This link is not active', 'This reference link could not be opened.'); return; }
+    document.getElementById('whoName').textContent = invite.a || 'Applicant';
+    document.getElementById('whoBy').textContent = invite.r ? ('To be completed by ' + invite.r) : '';
+    document.getElementById('forName').textContent = invite.a || 'the applicant';
+    buildForm();
+    document.getElementById('in_refName').value = invite.r || '';
+    showCard('introCard');
+  }catch(e){
+    showBad('Could not open the link', 'We could not reach the server. Check your connection and reload this page.');
+  }
+}
+document.getElementById('nextBtn').addEventListener('click', ()=> showCard('formCard'));
+document.getElementById('goBtn').addEventListener('click', submit);
+init();
+</script>
+</body>
+</html>

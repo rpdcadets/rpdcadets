@@ -1,4 +1,4 @@
-/* roster.js  |  VERSION 29  |  updated 2026-08-29  |  Task categories config: RPDRoster.taskconfig gains get/save (records key, node roster/taskConfig) holding {cats:[{id,label,color,retired}]} so the Tasks tab on /sgt can manage its own category list. Same isolation as tasks: reads and writes only roster/taskConfig. Prior v28 notes: Tasks board: RPDRoster.tasks gains get/save (records key, node roster/tasks), a flat array of {id, text, cat, cadet, assignee, due, priority, by, at, done, doneBy, doneAt} backing the new Tasks tab on /sgt. This module reads and writes ONLY roster/tasks; it never touches roster, records, requests, notes, or any other node. Prior v27 notes: Requests board: RPDRoster.requests gains get/save (records key, node roster/requests), a flat array of {id, name, text, at, done, doneAt} backing the new Requests tab on /sgt: sergeants post wants, changes, and policy proposals for the post; the advisor checks items off as they are completed and checked items sink below the open list. Prior v26 notes: Ride-Along Trackers inbox (submit cadet-tier via RSA envelope to roster/raInbox, merge records-tier into the log tagged via:'trackers', duplicate ledger at roster/raIndex, RA_SALT 'rpdcadets-ridealongs-v1' lives only in this file). Prior v25: RPDRoster.observers module for the public /guest interest form. */
+/* roster.js  |  VERSION 30  |  updated 2026-10-03  |  Reference checks: new RPDRoster.references module for applicant reference questionnaires. The public /reference page encrypts each response in the reference's browser (RSA envelope, same idea as /guest) under a NEW reference key pair whose private half is wrapped ONLY under the full advisor passcode (roster/refKeyWrap), so the sergeant and limited-advisor tiers cannot open responses. Nodes: roster/refPub, refKeyWrap, refPrivWrap, refVault (advisor-only reference list), refInvites/{id} (one per emailed link, encrypted under a key derived from the link code), refAnswers/{id}, refDone/{id}. REF_SALT 'rpdcadets-reference-v1' and the derive recipe are duplicated in reference.html and must change together. No other module changed. Prior v29 notes: Task categories config: RPDRoster.taskconfig gains get/save (records key, node roster/taskConfig) holding {cats:[{id,label,color,retired}]} so the Tasks tab on /sgt can manage its own category list. Same isolation as tasks: reads and writes only roster/taskConfig. Prior v28 notes: Tasks board: RPDRoster.tasks gains get/save (records key, node roster/tasks), a flat array of {id, text, cat, cadet, assignee, due, priority, by, at, done, doneBy, doneAt} backing the new Tasks tab on /sgt. This module reads and writes ONLY roster/tasks; it never touches roster, records, requests, notes, or any other node. Prior v27 notes: Requests board: RPDRoster.requests gains get/save (records key, node roster/requests), a flat array of {id, name, text, at, done, doneAt} backing the new Requests tab on /sgt: sergeants post wants, changes, and policy proposals for the post; the advisor checks items off as they are completed and checked items sink below the open list. Prior v26 notes: Ride-Along Trackers inbox (submit cadet-tier via RSA envelope to roster/raInbox, merge records-tier into the log tagged via:'trackers', duplicate ledger at roster/raIndex, RA_SALT 'rpdcadets-ridealongs-v1' lives only in this file). Prior v25: RPDRoster.observers module for the public /guest interest form. */
 /* ═══════════════════════════════════════════════════════════════════════
    RPD CADETS — SHARED ROSTER ENGINE
    One encrypted roster in Firebase, read by members, trackers, and
@@ -413,6 +413,15 @@
     observers: {
       ensureKeys: obsEnsureKeys, get: observersGet, save: observersSave,
       remove: observersRemove, hash: obsHash
+    },
+    // Applicant reference checks (v30). Everything except doneMap() needs
+    // unlock() with the FULL advisor passcode; the sergeant and limited tiers
+    // can only see which reference ids have been completed (doneMap).
+    references: {
+      unlock: refUnlock, isUnlocked: () => !!refKey, rewrap: refRewrap,
+      vaultGet: refVaultGet, vaultSave: refVaultSave,
+      inviteCreate: refInviteCreate, inviteRemove: refInviteRemove, link: refLink,
+      doneMap: refDoneMap, answersGet: refAnswersGet, answersRemove: refAnswersRemove
     }
   };
 
@@ -758,6 +767,158 @@
     if (!recordsKey) throw new Error('records locked');
     await db.ref(ROOT + '/observersEntries/' + id).remove();
     if (hash) await db.ref(ROOT + '/observersIndex/' + hash).remove();
+  }
+
+  /* ── Applicant Reference Checks (v30) ─────────────────────────────────────
+     Flow: the advisor adds a reference to an applicant in /admin, which mints
+     a one-time link (rpdcadets.com/reference#CODE). The reference opens it,
+     answers the questionnaire, and the public page encrypts the answers in
+     their browser with the reference PUBLIC key before upload.
+     Confidentiality model:
+       • ADVISOR-ONLY. Sergeants and the limited advisor tier hold the records
+         key, so the records key is deliberately NOT used here. A separate
+         random "reference key" is wrapped under the full advisor passcode
+         (refKeyWrap); it encrypts the RSA private key (refPrivWrap) and the
+         reference list (refVault). No other passcode can open any of it.
+       • Each link code is random (16 chars, ~79 bits). PBKDF2 turns the code
+         into BOTH the invite record id and the AES key for that record, so the
+         database holds only ciphertext and the code never leaves the link.
+       • The applicant's name is inside the encrypted invite, never in the URL.
+     Nodes (all under roster/, so the existing Firebase rules already apply):
+       roster/refPub            RSA public JWK, plaintext (safe to expose)
+       roster/refKeyWrap        reference key, pwEncrypt'd with the advisor passcode
+       roster/refPrivWrap       RSA private JWK, keyEncrypt'd with the reference key
+       roster/refVault          reference list per applicant, reference key
+       roster/refInvites/{id}   { blob, at, exp }  blob = {a: applicant, r: reference}
+       roster/refAnswers/{id}   { env, at }        RSA envelope of the answers
+       roster/refDone/{id}      ms timestamp       "received" marker (no content)
+     IMPORTANT COUPLING: reference.html is standalone (it must not load this
+     file, which carries cadet names in its seed) and duplicates REF_SALT,
+     REF_ITER, and the derive recipe verbatim. Change BOTH files together or
+     every outstanding link stops opening.
+     If the advisor passcode is ever changed, call references.rewrap(newPass)
+     while still unlocked, or the stored responses become unreadable. */
+  const REF_SALT = 'rpdcadets-reference-v1';
+  const REF_ITER = 100000;
+  const REF_ALPHA = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';   // no I, L, O, 0, 1
+  const REF_CODE_LEN = 16;
+  const REF_LINK_BASE = 'https://rpdcadets.com/reference#';
+  let refKey = null;       // Uint8Array, advisor-only reference key
+  let refPrivKey = null;   // per-session cache of the imported RSA private key
+
+  // unlock(passcode, {create:false}) never writes; default creates the key set
+  // on first use. Returns { ok, created } or { ok:false, badPass | notSetup }.
+  async function refUnlock(passcode, opts) {
+    ensureFirebase();
+    const create = !(opts && opts.create === false);
+    const wrap = await once('refKeyWrap');
+    if (wrap) {
+      const k = await pwDecrypt(wrap, passcode);
+      if (!k) return { ok: false, badPass: true };
+      refKey = b64ToArr(k);
+      return { ok: true, created: false };
+    }
+    if (!create) return { ok: false, notSetup: true };
+    const key = crypto.getRandomValues(new Uint8Array(32));
+    const pair = await crypto.subtle.generateKey(
+      { name: 'RSA-OAEP', modulusLength: 2048, publicExponent: new Uint8Array([1, 0, 1]), hash: 'SHA-256' },
+      true, ['encrypt', 'decrypt']);
+    const pubJwk = JSON.stringify(await crypto.subtle.exportKey('jwk', pair.publicKey));
+    const privJwk = JSON.stringify(await crypto.subtle.exportKey('jwk', pair.privateKey));
+    // Private side first: if the public key ever existed without its wraps, the
+    // public page would accept responses nobody could ever read.
+    await db.ref(ROOT + '/refPrivWrap').set(await keyEncrypt(privJwk, key));
+    await db.ref(ROOT + '/refKeyWrap').set(await pwEncrypt(arrToB64(key), passcode));
+    await db.ref(ROOT + '/refPub').set(pubJwk);
+    refKey = key;
+    return { ok: true, created: true };
+  }
+  async function refRewrap(newPasscode) {
+    if (!refKey) throw new Error('references locked');
+    await db.ref(ROOT + '/refKeyWrap').set(await pwEncrypt(arrToB64(refKey), newPasscode));
+  }
+  async function refVaultGet() {
+    if (!refKey) return null;
+    const blob = await once('refVault');
+    if (!blob) return { v: 1, apps: {} };
+    const obj = JSON.parse(await keyDecrypt(blob, refKey));
+    if (!obj.apps) obj.apps = {};
+    return obj;
+  }
+  async function refVaultSave(obj) {
+    if (!refKey) throw new Error('references locked');
+    await db.ref(ROOT + '/refVault').set(await keyEncrypt(JSON.stringify(obj), refKey));
+  }
+  function refNewCode() {
+    let out = '';
+    while (out.length < REF_CODE_LEN) {
+      const buf = crypto.getRandomValues(new Uint8Array(32));
+      for (let i = 0; i < buf.length && out.length < REF_CODE_LEN; i++) {
+        if (buf[i] < 248) out += REF_ALPHA[buf[i] % 31];   // 248 = 8 * 31, no modulo bias
+      }
+    }
+    return out;
+  }
+  // code -> { id (32 hex chars), key (32 bytes) }. MIRRORED in reference.html.
+  async function refDerive(code) {
+    const norm = String(code || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+    const km = await crypto.subtle.importKey('raw', enc.encode(norm), 'PBKDF2', false, ['deriveBits']);
+    const bits = new Uint8Array(await crypto.subtle.deriveBits(
+      { name: 'PBKDF2', salt: enc.encode(REF_SALT), iterations: REF_ITER, hash: 'SHA-256' }, km, 384));
+    const id = Array.from(bits.slice(0, 16)).map(b => b.toString(16).padStart(2, '0')).join('');
+    return { id, key: bits.slice(16, 48) };
+  }
+  // Mints a link for one reference. info = { applicant, refName }.
+  async function refInviteCreate(info, days) {
+    if (!refKey) throw new Error('references locked');
+    const code = refNewCode();
+    const d = await refDerive(code);
+    const blob = await keyEncrypt(JSON.stringify({ a: info.applicant || '', r: info.refName || '' }), d.key);
+    const at = Date.now();
+    const exp = at + (days || 30) * 86400000;
+    await db.ref(ROOT + '/refInvites/' + d.id).set({ blob, at, exp });
+    return { code, id: d.id, at, exp };
+  }
+  async function refInviteRemove(id) {
+    ensureFirebase();
+    await db.ref(ROOT + '/refInvites/' + id).remove();
+  }
+  function refLink(code) { return REF_LINK_BASE + code; }
+  // { id: ms } for every completed reference. No key needed: it holds no content.
+  async function refDoneMap() {
+    ensureFirebase();
+    return (await once('refDone')) || {};
+  }
+  async function refPriv() {
+    if (refPrivKey) return refPrivKey;
+    if (!refKey) throw new Error('references locked');
+    const wrap = await once('refPrivWrap');
+    if (!wrap) return null;
+    const jwk = JSON.parse(await keyDecrypt(wrap, refKey));
+    refPrivKey = await crypto.subtle.importKey('jwk', jwk, { name: 'RSA-OAEP', hash: 'SHA-256' }, false, ['decrypt']);
+    return refPrivKey;
+  }
+  // Decrypted answers object for one reference id, or null if none on file.
+  async function refAnswersGet(id) {
+    if (!refKey) throw new Error('references locked');
+    const row = await once('refAnswers/' + id);
+    if (!row || !row.env) return null;
+    const priv = await refPriv();
+    if (!priv) throw new Error('references not initialized');
+    const [ekB64, ivB64, ctB64] = String(row.env).split('.');
+    const aes = new Uint8Array(await crypto.subtle.decrypt({ name: 'RSA-OAEP' }, priv, b64ToArr(ekB64)));
+    const key = await crypto.subtle.importKey('raw', aes, { name: 'AES-GCM' }, false, ['decrypt']);
+    const txt = dec.decode(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: b64ToArr(ivB64) }, key, b64ToArr(ctB64)));
+    const obj = JSON.parse(txt);
+    obj._at = row.at || 0;
+    return obj;
+  }
+  // Removes everything stored for one reference id (answers, marker, link).
+  async function refAnswersRemove(id) {
+    ensureFirebase();
+    await db.ref(ROOT + '/refAnswers/' + id).remove();
+    await db.ref(ROOT + '/refDone/' + id).remove();
+    await db.ref(ROOT + '/refInvites/' + id).remove();
   }
 
   // Pending proposal queue — same records key, node roster/pending. The /sgt

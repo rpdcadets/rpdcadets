@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- patrol/impound/index.html | Build v8 | 2026-10-04 | Setup steps assume the MDC is already paired; pairing is now the fallback. v7: Setup step 5 wording: "Serial Printer" plus a COM number, with an example. v6: Setup steps: pick the "Serial Printer (COMx)" entry, not the serial-number entry. v5: When Hold is Yes, the receipt prints write-in lines for Hold Released By / Date and Release Notified By ID# / Date. v4: Tow truck LP field removed (not tracked). v3: Setup step 3 now covers the Bluetooth PIN and the checkmark button on the printer. v2: Wrecker address and phone now labeled on the slip. v1: New tool. Electronic Vehicle Impound: replaces the Brazos Towed Vehicle Receipt and the paper Vehicle Impound Report (GO 4.01.02-004). Sections: incident, vehicle, hold, owner/driver/lien holder, tow, inventory (hubcaps, radio, keys, front/rear/trunk), condition, signatures. Slip drawn on a canvas with the city wordmark and printed on the in-car Zebra via /patrol/print.js. Officer-typed values print in ALL CAPS. VIN check-digit validation. Nothing stored. -->
+<!-- patrol/impound/index.html | Build v9 | 2026-10-04 | Compatibility mode switch in troubleshooting. v8: Setup steps assume the MDC is already paired; pairing is now the fallback. v7: Setup step 5 wording: "Serial Printer" plus a COM number, with an example. v6: Setup steps: pick the "Serial Printer (COMx)" entry, not the serial-number entry. v5: When Hold is Yes, the receipt prints write-in lines for Hold Released By / Date and Release Notified By ID# / Date. v4: Tow truck LP field removed (not tracked). v3: Setup step 3 now covers the Bluetooth PIN and the checkmark button on the printer. v2: Wrecker address and phone now labeled on the slip. v1: New tool. Electronic Vehicle Impound: replaces the Brazos Towed Vehicle Receipt and the paper Vehicle Impound Report (GO 4.01.02-004). Sections: incident, vehicle, hold, owner/driver/lien holder, tow, inventory (hubcaps, radio, keys, front/rear/trunk), condition, signatures. Slip drawn on a canvas with the city wordmark and printed on the in-car Zebra via /patrol/print.js. Officer-typed values print in ALL CAPS. VIN check-digit validation. Nothing stored. -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -210,13 +210,15 @@
           <button type="button" class="btn sec" id="forgetBtn">Choose different printer</button>
           <button type="button" class="btn sec" id="infoBtn">Read printer info</button>
         </div>
+        <button type="button" class="btn sec" id="modeBtn">Compatibility mode: Off</button>
+        <p class="note" style="margin-top:6px;">Compatibility mode sends the slip uncompressed. Slower, but turn it on if slips stop printing on a particular printer.</p>
         <textarea id="log" readonly aria-label="Printer log"></textarea>
       </details>
     </div>
   </div>
 </div>
 
-<footer class="foot">Build v8</footer>
+<footer class="foot">Build v9</footer>
 
 <script src="/patrol/print.js"></script>
 <script>
@@ -456,6 +458,9 @@
 
   draw();
   if(document.fonts && document.fonts.ready) document.fonts.ready.then(draw);
+  function paintMode(){ if(window.RPDPrint && RPDPrint.getMode) $('modeBtn').textContent = 'Compatibility mode: ' + (RPDPrint.getMode() === 'eg' ? 'On' : 'Off'); }
+  $('modeBtn').addEventListener('click', function(){ if(!window.RPDPrint) return; RPDPrint.setMode(RPDPrint.getMode() === 'eg' ? 'pcx' : 'eg'); paintMode(); log('Compatibility mode ' + (RPDPrint.getMode() === 'eg' ? 'on' : 'off') + '.'); });
+  paintMode();
   log('Ready. Direct printing ' + ((window.RPDPrint && RPDPrint.supported()) ? 'available.' : 'NOT available in this browser. Use Chrome or Edge on the squad computer.'));
 })();
 </script>

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- traffic/index.html | Build v10 | 2026-10-04 | Compatibility mode switch (raw hex instead of compressed PCX) in troubleshooting. v9: Setup steps assume the MDC is already paired (e-citation rollout paired every car); pairing is now the fallback. v8: Setup step 5 wording: "Serial Printer" plus a COM number, with an example. v7: Renamed "Traffic Stop Notice" and reduced to the Feedback Notice only: the DL/ID and VIN barcode modes were removed because Brazos is retired and the new e-citation client does not use them. Slip drawn on a canvas with the City wordmark and printed via /patrol/print.js (auto ZPL/CPCL). v6: setup steps for the Serial Printer entry. v1 to v5: DL/ID + VIN barcode generator with Feedback Notice mode. -->
+<!-- traffic/index.html | Build v11 | 2026-10-05 | Real progress bar (strip acknowledgements) and red Serial Printer hint under the Print button. v10: Compatibility mode switch (raw hex instead of compressed PCX) in troubleshooting. v9: Setup steps assume the MDC is already paired (e-citation rollout paired every car); pairing is now the fallback. v8: Setup step 5 wording: "Serial Printer" plus a COM number, with an example. v7: Renamed "Traffic Stop Notice" and reduced to the Feedback Notice only: the DL/ID and VIN barcode modes were removed because Brazos is retired and the new e-citation client does not use them. Slip drawn on a canvas with the City wordmark and printed via /patrol/print.js (auto ZPL/CPCL). v6: setup steps for the Serial Printer entry. v1 to v5: DL/ID + VIN barcode generator with Feedback Notice mode. -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -51,6 +51,9 @@
   .steps{font-size:13.5px;line-height:1.5;margin:10px 0 4px;} .steps p{margin:8px 0 4px;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);}
   .steps ol,.steps ul{margin:0 0 8px;padding-left:22px;} .steps li{margin:0 0 5px;}
   #log{width:100%;height:120px;margin-top:8px;font-family:Consolas,Menlo,monospace;font-size:11.5px;border:1px solid var(--line);border-radius:6px;background:var(--field);padding:8px;resize:vertical;}
+  .prog{display:none;height:10px;background:#e6e2d8;border-radius:5px;margin-top:10px;overflow:hidden;}
+  .prog.on{display:block;} .prog .bar{height:100%;width:0;background:var(--ok);transition:width .25s;}
+  .warnred{font-size:13px;color:var(--red);font-weight:600;margin:8px 0 0;}
   footer.foot{text-align:center;font-size:12px;color:var(--muted);padding:14px 18px 22px;border-top:1px solid var(--line);}
 </style>
 </head>
@@ -68,7 +71,9 @@
     <canvas id="slip" class="preview" width="832" height="200" aria-label="Notice preview"></canvas>
     <p class="note">The printer does not cut between copies. Tap Print once per slip you need.</p>
     <button type="button" class="btn" id="printBtn">Print Notice</button>
+    <p class="warnred">If a device list pops up, pick the one that says <b>Serial Printer</b> (for example Serial Printer (COM8)), not the printer serial number.</p>
     <div class="status" id="status"></div>
+    <div class="prog" id="prog"><div class="bar" id="progBar"></div></div>
     <details style="margin-top:14px;">
       <summary>Printer setup and troubleshooting</summary>
       <div class="steps">
@@ -104,7 +109,7 @@
   </div>
 </main>
 
-<footer class="foot">Internal field tool. Renders entirely in your browser. Nothing is saved on this device or the site. &middot; Build v10</footer>
+<footer class="foot">Internal field tool. Renders entirely in your browser. Nothing is saved on this device or the site. &middot; Build v11</footer>
 
 <script src="/patrol/print.js"></script>
 <script>
@@ -120,6 +125,8 @@
   function $(id){ return document.getElementById(id); }
   function log(msg){ var el = $('log'); el.value += '[' + new Date().toLocaleTimeString() + '] ' + msg + '\n'; el.scrollTop = el.scrollHeight; }
   function setStatus(msg, cls){ var s = $('status'); s.textContent = msg || ''; s.className = 'status' + (cls ? ' ' + cls : ''); }
+  function onProg(f){ $('prog').classList.add('on'); $('progBar').style.width = Math.round(f * 100) + '%'; setStatus('Sending to printer... ' + Math.round(f * 100) + '%'); }
+  function finishProg(){ $('progBar').style.width = '100%'; setTimeout(function(){ $('prog').classList.remove('on'); $('progBar').style.width = '0'; }, 1500); }
   if(window.RPDPrint) RPDPrint.log = log;
 
   function wrapText(ctx, text, maxW){
@@ -152,8 +159,8 @@
     if(busy) return;
     if(!window.RPDPrint){ setStatus('Print engine did not load. Check your connection and reload.', 'bad'); return; }
     busy = true; $('printBtn').disabled = true; setStatus('Printing...');
-    try{ draw(); await RPDPrint.printCanvas($('slip'), 1); setStatus('Sent to printer.', 'ok'); }
-    catch(e){ var why = RPDPrint.explain(e); setStatus(why, 'bad'); log('ERROR (' + ((e && e.name) || 'Error') + '): ' + why); }
+    try{ draw(); await RPDPrint.printCanvas($('slip'), 1, onProg); finishProg(); setStatus('Printed.', 'ok'); }
+    catch(e){ $('prog').classList.remove('on'); var why = RPDPrint.explain(e); setStatus(why, 'bad'); log('ERROR (' + ((e && e.name) || 'Error') + '): ' + why); }
     finally{ busy = false; $('printBtn').disabled = false; }
   });
   $('infoBtn').addEventListener('click', async function(){

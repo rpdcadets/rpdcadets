@@ -1,11 +1,11 @@
-/* patrol/print.js | Build v6 | 2026-10-04 | Speed: no language query (CPCL prints fine in hybrid_xml_zpl mode); slip sent as a run-length-compressed 1-bit PCX inside CPCL (about a tenth of the raw hex size). Compatibility mode (raw EG hex) via RPDPrint.setMode("eg"), remembered per computer. v5: Language query made patient: settle 800 ms after open, flush, ask with a 4 s window, retry once, and remember the answer per computer (localStorage rpd_printer_lang) so later prints do not depend on a reply. Raw reply logged. v4: Picker hint wording. v3: Auto language: asks the printer device.languages on each job and sends the bitmap as ZPL (^GFA) when the printer is in a zpl mode, else CPCL (EG). Field finding: the 10/2026 e-citation rollout set printers to hybrid_xml_zpl; the September units were line_print. v2: Drain before close: after a job, send a status query and wait (up to 30 s) for the printer's reply so the Windows COM buffer empties before the port closes (fixes silent drops of large jobs on the 'Serial Printer (COMx)' path after the 10/2026 MDC update). Open retried 3 times. v1: 2026-09-22
+/* patrol/print.js | Build v7 | 2026-10-05 | Real progress: the slip is sent as horizontal strips (about 1 inch each), each followed by a status query the printer can only answer once that strip is in; printCanvas(canvas, copies, onProgress) reports the true fraction received. Printer starts printing strip 1 while later strips arrive. v6: Speed: no language query (CPCL prints fine in hybrid_xml_zpl mode); slip sent as a run-length-compressed 1-bit PCX inside CPCL (about a tenth of the raw hex size). Compatibility mode (raw EG hex) via RPDPrint.setMode("eg"), remembered per computer. v5: Language query made patient: settle 800 ms after open, flush, ask with a 4 s window, retry once, and remember the answer per computer (localStorage rpd_printer_lang) so later prints do not depend on a reply. Raw reply logged. v4: Picker hint wording. v3: Auto language: asks the printer device.languages on each job and sends the bitmap as ZPL (^GFA) when the printer is in a zpl mode, else CPCL (EG). Field finding: the 10/2026 e-citation rollout set printers to hybrid_xml_zpl; the September units were line_print. v2: Drain before close: after a job, send a status query and wait (up to 30 s) for the printer's reply so the Windows COM buffer empties before the port closes (fixes silent drops of large jobs on the 'Serial Printer (COMx)' path after the 10/2026 MDC update). Open retried 3 times. v1: 2026-09-22
    Shared print engine for the in-car Zebra ZQ520 (4 inch, 203 dpi, line-print mode).
    Path: Chrome Web Serial over the printer's paired Bluetooth (Serial Port Profile). No driver, no install.
    Language: CPCL or ZPL, chosen per printer. Slips are drawn on a canvas in the browser and sent as a 1-bit bitmap (EG command),
    so any font, logo, or layout prints exactly as drawn. Nothing is written to the printer's settings.
    Usage:
      RPDPrint.supported()                 -> true if this browser can print directly
-     RPDPrint.printCanvas(canvas, copies) -> sends the canvas as one CPCL label, copies times
+     RPDPrint.printCanvas(canvas, copies, onProgress) -> sends the canvas in strips; onProgress(fraction, done, total) is real
      RPDPrint.sendText(cpclString)        -> sends a raw CPCL / line-mode string
      RPDPrint.info()                      -> read-only settings query, returns array of strings
      RPDPrint.forget()                    -> forget the remembered printer so the next print asks again
@@ -159,23 +159,45 @@
   function setMode(m){ mode = (m === 'eg') ? 'eg' : 'pcx'; try{ localStorage.setItem('rpd_print_mode', mode); }catch(e){} }
   function getMode(){ return mode; }
 
-  function buildJob(rows, copies){
-    var q = Math.max(1, Math.min(9, copies | 0 || 1));
-    if(mode === 'eg') return enc(rowsToCPCL(rows, q));
+  function sliceRows(rows, y0, y1){
+    return { hex: rows.hex.substr(y0 * rows.bytesPerRow * 2, (y1 - y0) * rows.bytesPerRow * 2), h: y1 - y0, bytesPerRow: rows.bytesPerRow };
+  }
+  function buildJob(rows){
+    if(mode === 'eg') return enc(rowsToCPCL(rows, 1));
     var pcx = rowsToPCX(rows);
-    return concat([enc('! 0 200 200 ' + rows.h + ' ' + q + '\r\nPCX 0 0\r\n')].concat(pcx).concat([enc('\r\nPRINT\r\n')]));
+    return concat([enc('! 0 200 200 ' + rows.h + ' 1\r\nPCX 0 0\r\n')].concat(pcx).concat([enc('\r\nPRINT\r\n')]));
+  }
+  // Wait until the printer has consumed everything sent so far: a status query is answered only
+  // after the bytes ahead of it have been read. Returns true if the printer answered.
+  async function ack(port, maxMs){
+    try{ await writeAll(port, enc('\r\n! U1 getvar "device.unique_id"\r\n')); }catch(e){ return false; }
+    var got = await readFor(port, maxMs, true);
+    return !!got;
   }
 
-  async function printCanvas(canvas, copies){
-    var rows = canvasToRows(canvas);
-    var bytes = buildJob(rows, copies);
+  var STRIP = 208;   // rows per strip (about 1 inch), multiple of 8
+  async function printCanvas(canvas, copies, onProgress){
+    var rows = canvasToRows(canvas), q = Math.max(1, Math.min(9, copies | 0 || 1));
+    var strips = [];
+    for(var y = 0; y < rows.h; y += STRIP) strips.push(sliceRows(rows, y, Math.min(rows.h, y + STRIP)));
+    var total = strips.length * q, done = 0, sentBytes = 0, t0 = Date.now(), silent = 0;
+    function report(){ if(typeof onProgress === 'function'){ try{ onProgress(done / total, done, total); }catch(e){} } }
     var port = await getPort();
     await openPort(port);
     try{
-      var t0 = Date.now();
-      await writeAll(port, bytes);
-      log('Sent ' + Math.round(bytes.length / 1024) + ' KB (' + (mode === 'eg' ? 'compatibility' : 'compressed') + ') in ' + ((Date.now() - t0) / 1000).toFixed(1) + ' s. Waiting for the printer...');
-      await drain(port, bytes.length);
+      report();
+      for(var c = 0; c < q; c++){
+        for(var i = 0; i < strips.length; i++){
+          var bytes = buildJob(strips[i]);
+          await writeAll(port, bytes); sentBytes += bytes.length;
+          if(await ack(port, 20000)) silent = 0; else silent++;
+          done++; report();
+        }
+      }
+      var secs = ((Date.now() - t0) / 1000).toFixed(1);
+      if(silent) log('Sent ' + Math.round(sentBytes / 1024) + ' KB in ' + total + ' strips; printer did not confirm the last ' + silent + '. Waited ' + secs + ' s.');
+      else log('Printer received all ' + total + ' strips (' + Math.round(sentBytes / 1024) + ' KB, ' + (mode === 'eg' ? 'compatibility' : 'compressed') + ') in ' + secs + ' s.');
+      await sleep(300);
     } finally { try{ await port.close(); }catch(e){} }
   }
 

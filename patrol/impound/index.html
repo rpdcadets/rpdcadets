@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- patrol/impound/index.html | Build v9 | 2026-10-04 | Compatibility mode switch in troubleshooting. v8: Setup steps assume the MDC is already paired; pairing is now the fallback. v7: Setup step 5 wording: "Serial Printer" plus a COM number, with an example. v6: Setup steps: pick the "Serial Printer (COMx)" entry, not the serial-number entry. v5: When Hold is Yes, the receipt prints write-in lines for Hold Released By / Date and Release Notified By ID# / Date. v4: Tow truck LP field removed (not tracked). v3: Setup step 3 now covers the Bluetooth PIN and the checkmark button on the printer. v2: Wrecker address and phone now labeled on the slip. v1: New tool. Electronic Vehicle Impound: replaces the Brazos Towed Vehicle Receipt and the paper Vehicle Impound Report (GO 4.01.02-004). Sections: incident, vehicle, hold, owner/driver/lien holder, tow, inventory (hubcaps, radio, keys, front/rear/trunk), condition, signatures. Slip drawn on a canvas with the city wordmark and printed on the in-car Zebra via /patrol/print.js. Officer-typed values print in ALL CAPS. VIN check-digit validation. Nothing stored. -->
+<!-- patrol/impound/index.html | Build v10 | 2026-10-05 | Real progress bar and red Serial Printer hint under the Print button. v9: Compatibility mode switch in troubleshooting. v8: Setup steps assume the MDC is already paired; pairing is now the fallback. v7: Setup step 5 wording: "Serial Printer" plus a COM number, with an example. v6: Setup steps: pick the "Serial Printer (COMx)" entry, not the serial-number entry. v5: When Hold is Yes, the receipt prints write-in lines for Hold Released By / Date and Release Notified By ID# / Date. v4: Tow truck LP field removed (not tracked). v3: Setup step 3 now covers the Bluetooth PIN and the checkmark button on the printer. v2: Wrecker address and phone now labeled on the slip. v1: New tool. Electronic Vehicle Impound: replaces the Brazos Towed Vehicle Receipt and the paper Vehicle Impound Report (GO 4.01.02-004). Sections: incident, vehicle, hold, owner/driver/lien holder, tow, inventory (hubcaps, radio, keys, front/rear/trunk), condition, signatures. Slip drawn on a canvas with the city wordmark and printed on the in-car Zebra via /patrol/print.js. Officer-typed values print in ALL CAPS. VIN check-digit validation. Nothing stored. -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -66,6 +66,9 @@
   .steps{font-size:13.5px;line-height:1.5;margin:10px 0 4px;} .steps p{margin:8px 0 4px;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);}
   .steps ol,.steps ul{margin:0 0 8px;padding-left:22px;} .steps li{margin:0 0 5px;}
   #log{width:100%;height:110px;margin-top:8px;font-family:Consolas,Menlo,monospace;font-size:11.5px;border:1px solid var(--line);border-radius:6px;background:var(--field);padding:8px;resize:vertical;}
+  .prog{display:none;height:10px;background:#e6e2d8;border-radius:5px;margin-top:10px;overflow:hidden;}
+  .prog.on{display:block;} .prog .bar{height:100%;width:0;background:var(--ok);transition:width .25s;}
+  .warnred{font-size:13px;color:var(--red);font-weight:600;margin:8px 0 0;}
   footer.foot{text-align:center;font-size:12px;color:var(--muted);padding:14px 18px 22px;border-top:1px solid var(--line);}
 </style>
 </head>
@@ -181,7 +184,9 @@
       <canvas id="slip" class="preview" width="832" height="300" aria-label="Slip preview"></canvas>
       <p class="note">The printer does not cut between copies. Tap Print once per copy you need.</p>
       <button type="button" class="btn" id="printBtn">Print Receipt</button>
+      <p class="warnred">If a device list pops up, pick the one that says <b>Serial Printer</b> (for example Serial Printer (COM8)), not the printer serial number.</p>
       <div class="status" id="status"></div>
+      <div class="prog" id="prog"><div class="bar" id="progBar"></div></div>
       <button type="button" class="btn sec" id="clearBtn">Clear everything</button>
       <details style="margin-top:14px;">
         <summary>Printer setup and troubleshooting</summary>
@@ -218,7 +223,7 @@
   </div>
 </div>
 
-<footer class="foot">Build v9</footer>
+<footer class="foot">Build v10</footer>
 
 <script src="/patrol/print.js"></script>
 <script>
@@ -233,6 +238,8 @@
   function up(s){ return (s || '').toUpperCase(); }
   function log(msg){ var el = $('log'); el.value += '[' + new Date().toLocaleTimeString() + '] ' + msg + '\n'; el.scrollTop = el.scrollHeight; }
   function setStatus(msg, cls){ var s = $('status'); s.textContent = msg || ''; s.className = 'status' + (cls ? ' ' + cls : ''); }
+  function onProg(f){ $('prog').classList.add('on'); $('progBar').style.width = Math.round(f * 100) + '%'; setStatus('Sending to printer... ' + Math.round(f * 100) + '%'); }
+  function finishProg(){ $('progBar').style.width = '100%'; setTimeout(function(){ $('prog').classList.remove('on'); $('progBar').style.width = '0'; }, 1500); }
   if(window.RPDPrint) RPDPrint.log = log;
   function pad(n){ return (n < 10 ? '0' : '') + n; }
   function nowStr(){ var d = new Date(), h = d.getHours(), ap = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12; return pad(d.getMonth()+1) + '/' + pad(d.getDate()) + '/' + d.getFullYear() + '  ' + pad(h) + ':' + pad(d.getMinutes()) + ' ' + ap; }
@@ -441,8 +448,8 @@
     if(busy) return;
     if(!window.RPDPrint){ setStatus('Print engine did not load. Check your connection and reload.', 'bad'); return; }
     busy = true; $('printBtn').disabled = true; setStatus('Printing...');
-    try{ draw(); await RPDPrint.printCanvas($('slip'), 1); setStatus('Sent to printer. Tap again for another copy.', 'ok'); }
-    catch(e){ var why = RPDPrint.explain(e); setStatus(why, 'bad'); log('ERROR (' + ((e && e.name) || 'Error') + '): ' + why); }
+    try{ draw(); await RPDPrint.printCanvas($('slip'), 1, onProg); finishProg(); setStatus('Printed. Tap again for another copy.', 'ok'); }
+    catch(e){ $('prog').classList.remove('on'); var why = RPDPrint.explain(e); setStatus(why, 'bad'); log('ERROR (' + ((e && e.name) || 'Error') + '): ' + why); }
     finally{ busy = false; $('printBtn').disabled = false; }
   });
   $('infoBtn').addEventListener('click', async function(){

@@ -1,4 +1,4 @@
-/* patrol/print.js | Build v7 | 2026-10-05 | Real progress: the slip is sent as horizontal strips (about 1 inch each), each followed by a status query the printer can only answer once that strip is in; printCanvas(canvas, copies, onProgress) reports the true fraction received. Printer starts printing strip 1 while later strips arrive. v6: Speed: no language query (CPCL prints fine in hybrid_xml_zpl mode); slip sent as a run-length-compressed 1-bit PCX inside CPCL (about a tenth of the raw hex size). Compatibility mode (raw EG hex) via RPDPrint.setMode("eg"), remembered per computer. v5: Language query made patient: settle 800 ms after open, flush, ask with a 4 s window, retry once, and remember the answer per computer (localStorage rpd_printer_lang) so later prints do not depend on a reply. Raw reply logged. v4: Picker hint wording. v3: Auto language: asks the printer device.languages on each job and sends the bitmap as ZPL (^GFA) when the printer is in a zpl mode, else CPCL (EG). Field finding: the 10/2026 e-citation rollout set printers to hybrid_xml_zpl; the September units were line_print. v2: Drain before close: after a job, send a status query and wait (up to 30 s) for the printer's reply so the Windows COM buffer empties before the port closes (fixes silent drops of large jobs on the 'Serial Printer (COMx)' path after the 10/2026 MDC update). Open retried 3 times. v1: 2026-09-22
+/* patrol/print.js | Build v8 | 2026-10-05 | Two pieces instead of many strips: the first piece ends at the first blank row after the logo (so the seam is in white space and nothing smears), the rest goes as one job. Progress is still confirmed by the printer. v7: Real progress: the slip is sent as horizontal strips (about 1 inch each), each followed by a status query the printer can only answer once that strip is in; printCanvas(canvas, copies, onProgress) reports the true fraction received. Printer starts printing strip 1 while later strips arrive. v6: Speed: no language query (CPCL prints fine in hybrid_xml_zpl mode); slip sent as a run-length-compressed 1-bit PCX inside CPCL (about a tenth of the raw hex size). Compatibility mode (raw EG hex) via RPDPrint.setMode("eg"), remembered per computer. v5: Language query made patient: settle 800 ms after open, flush, ask with a 4 s window, retry once, and remember the answer per computer (localStorage rpd_printer_lang) so later prints do not depend on a reply. Raw reply logged. v4: Picker hint wording. v3: Auto language: asks the printer device.languages on each job and sends the bitmap as ZPL (^GFA) when the printer is in a zpl mode, else CPCL (EG). Field finding: the 10/2026 e-citation rollout set printers to hybrid_xml_zpl; the September units were line_print. v2: Drain before close: after a job, send a status query and wait (up to 30 s) for the printer's reply so the Windows COM buffer empties before the port closes (fixes silent drops of large jobs on the 'Serial Printer (COMx)' path after the 10/2026 MDC update). Open retried 3 times. v1: 2026-09-22
    Shared print engine for the in-car Zebra ZQ520 (4 inch, 203 dpi, line-print mode).
    Path: Chrome Web Serial over the printer's paired Bluetooth (Serial Port Profile). No driver, no install.
    Language: CPCL or ZPL, chosen per printer. Slips are drawn on a canvas in the browser and sent as a 1-bit bitmap (EG command),
@@ -175,11 +175,21 @@
     return !!got;
   }
 
-  var STRIP = 208;   // rows per strip (about 1 inch), multiple of 8
+  // Split point: first fully blank row after the logo area (search 80..420 rows, prefer near 1 inch).
+  function splitRow(rows){
+    var bpr = rows.bytesPerRow, blankRow = new Array(bpr * 2 + 1).join('0');
+    function blank(y){ return rows.hex.substr(y * bpr * 2, bpr * 2) === blankRow; }
+    var best = -1, bestD = 1e9;
+    for(var y = 80; y < Math.min(rows.h - 40, 420); y += 8){
+      if(blank(y) && blank(y + 1)){ var d = Math.abs(y - 208); if(d < bestD){ best = y; bestD = d; } }
+    }
+    return best > 0 ? best : Math.min(208, rows.h);
+  }
   async function printCanvas(canvas, copies, onProgress){
     var rows = canvasToRows(canvas), q = Math.max(1, Math.min(9, copies | 0 || 1));
-    var strips = [];
-    for(var y = 0; y < rows.h; y += STRIP) strips.push(sliceRows(rows, y, Math.min(rows.h, y + STRIP)));
+    var strips = [], cut = splitRow(rows);
+    if(rows.h > cut + 16){ strips.push(sliceRows(rows, 0, cut)); strips.push(sliceRows(rows, cut, rows.h)); }
+    else strips.push(rows);
     var total = strips.length * q, done = 0, sentBytes = 0, t0 = Date.now(), silent = 0;
     function report(){ if(typeof onProgress === 'function'){ try{ onProgress(done / total, done, total); }catch(e){} } }
     var port = await getPort();

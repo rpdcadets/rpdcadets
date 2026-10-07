@@ -1,4 +1,4 @@
-/* roster.js  |  VERSION 30  |  updated 2026-10-03  |  Reference checks: new RPDRoster.references module for applicant reference questionnaires. The public /reference page encrypts each response in the reference's browser (RSA envelope, same idea as /guest) under a NEW reference key pair whose private half is wrapped ONLY under the full advisor passcode (roster/refKeyWrap), so the sergeant and limited-advisor tiers cannot open responses. Nodes: roster/refPub, refKeyWrap, refPrivWrap, refVault (advisor-only reference list), refInvites/{id} (one per emailed link, encrypted under a key derived from the link code), refAnswers/{id}, refDone/{id}. REF_SALT 'rpdcadets-reference-v1' and the derive recipe are duplicated in reference.html and must change together. No other module changed. Prior v29 notes: Task categories config: RPDRoster.taskconfig gains get/save (records key, node roster/taskConfig) holding {cats:[{id,label,color,retired}]} so the Tasks tab on /sgt can manage its own category list. Same isolation as tasks: reads and writes only roster/taskConfig. Prior v28 notes: Tasks board: RPDRoster.tasks gains get/save (records key, node roster/tasks), a flat array of {id, text, cat, cadet, assignee, due, priority, by, at, done, doneBy, doneAt} backing the new Tasks tab on /sgt. This module reads and writes ONLY roster/tasks; it never touches roster, records, requests, notes, or any other node. Prior v27 notes: Requests board: RPDRoster.requests gains get/save (records key, node roster/requests), a flat array of {id, name, text, at, done, doneAt} backing the new Requests tab on /sgt: sergeants post wants, changes, and policy proposals for the post; the advisor checks items off as they are completed and checked items sink below the open list. Prior v26 notes: Ride-Along Trackers inbox (submit cadet-tier via RSA envelope to roster/raInbox, merge records-tier into the log tagged via:'trackers', duplicate ledger at roster/raIndex, RA_SALT 'rpdcadets-ridealongs-v1' lives only in this file). Prior v25: RPDRoster.observers module for the public /guest interest form. */
+/* roster.js  |  VERSION 31  |  updated 2026-10-07  |  Waiver tracker: new RPDRoster.waivers module. One encrypted node (roster/waivers, same records key, so the advisor, limited advisor, and sergeant tiers can open it and cadet tiers cannot) holds a per-cadet, per-waiver entry: Received (date + who accepted it, marked on /sgt) then Filed (marked on /admin). Existing Cadet Records checkmarks are read as Filed with no date and are never rewritten. waivers.status() also applies the turning-18 rule (re-sign each waiver once the cadet is 18; the liability release must be the adult version). waivers.mutate() re-reads the node before every write so two people marking at once do not overwrite each other. Nothing else changed. Prior v30 notes: Reference checks: new RPDRoster.references module for applicant reference questionnaires. The public /reference page encrypts each response in the reference's browser (RSA envelope, same idea as /guest) under a NEW reference key pair whose private half is wrapped ONLY under the full advisor passcode (roster/refKeyWrap), so the sergeant and limited-advisor tiers cannot open responses. Nodes: roster/refPub, refKeyWrap, refPrivWrap, refVault (advisor-only reference list), refInvites/{id} (one per emailed link, encrypted under a key derived from the link code), refAnswers/{id}, refDone/{id}. REF_SALT 'rpdcadets-reference-v1' and the derive recipe are duplicated in reference.html and must change together. No other module changed. Prior v29 notes: Task categories config: RPDRoster.taskconfig gains get/save (records key, node roster/taskConfig) holding {cats:[{id,label,color,retired}]} so the Tasks tab on /sgt can manage its own category list. Same isolation as tasks: reads and writes only roster/taskConfig. Prior v28 notes: Tasks board: RPDRoster.tasks gains get/save (records key, node roster/tasks), a flat array of {id, text, cat, cadet, assignee, due, priority, by, at, done, doneBy, doneAt} backing the new Tasks tab on /sgt. This module reads and writes ONLY roster/tasks; it never touches roster, records, requests, notes, or any other node. Prior v27 notes: Requests board: RPDRoster.requests gains get/save (records key, node roster/requests), a flat array of {id, name, text, at, done, doneAt} backing the new Requests tab on /sgt: sergeants post wants, changes, and policy proposals for the post; the advisor checks items off as they are completed and checked items sink below the open list. Prior v26 notes: Ride-Along Trackers inbox (submit cadet-tier via RSA envelope to roster/raInbox, merge records-tier into the log tagged via:'trackers', duplicate ledger at roster/raIndex, RA_SALT 'rpdcadets-ridealongs-v1' lives only in this file). Prior v25: RPDRoster.observers module for the public /guest interest form. */
 /* ═══════════════════════════════════════════════════════════════════════
    RPD CADETS — SHARED ROSTER ENGINE
    One encrypted roster in Firebase, read by members, trackers, and
@@ -357,6 +357,12 @@
     cadetnotes: {
       get: cadetnotesGet, save: cadetnotesSave
     },
+    // ── Waiver tracker (v31): Received on /sgt, Filed on /admin ──
+    waivers: {
+      get: waiversGet, save: waiversSave, mutate: waiversMutate,
+      ITEMS: WV_ITEMS, LIAB: WV_LIAB, SOON_DAYS: WV_SOON_DAYS,
+      status: wvStatus, summary: wvSummary, age: wvAge, b18: wvB18, today: wvToday
+    },
     requests: {
       get: requestsGet, save: requestsSave
     },
@@ -618,6 +624,121 @@
     if (!recordsKey) throw new Error('records locked');
     const data = await keyEncrypt(JSON.stringify(arr), recordsKey);
     await db.ref(ROOT + '/cadetnotes').set(data);
+  }
+  /* ── Waiver tracker (v31): same records key, node roster/waivers ──
+     Shape: { v:1, cadets: { "<cadet name>": { <key>: entry } } }
+       key   = psc | ptc | photo | sim | med | liability
+       entry = { s:'received'|'filed'|'missing', rAt, rBy, fAt, fBy, type, prev, at }
+               rAt/fAt are YYYY-MM-DD; type (liability only) = married|divorced|adult;
+               prev holds the entry a re-sign replaced, so an undo can put it back.
+     A cadet/key with NO entry falls back to the old Cadet Records checkmark
+     (rec.waiverSet), which reads as Filed with no date. That old data is never
+     rewritten here.
+     Unlike the other nodes, a blob that will not decrypt THROWS instead of
+     reading as empty, so a bad read can never be saved back over real data. */
+  const WV_ITEMS = [
+    ['psc', 'Public Safety Cadets Agreement and Legal Waiver', 'PSC Agreement'],
+    ['ptc', 'Police Training Center Waiver', 'Training Center'],
+    ['photo', 'Photo Release', 'Photo Release'],
+    ['sim', 'Simunitions Waiver', 'Simunitions'],
+    ['med', 'Permission for Medical Treatment', 'Medical'],
+    ['liability', 'Release of Liability', 'Liability']
+  ];
+  const WV_LIAB = [
+    ['married', 'Release of Liability (Minors with Married Parents or Single Guardian)', 'Minor: married parents or single guardian'],
+    ['divorced', 'Release of Liability (Minors with Divorced Parents)', 'Minor: divorced parents'],
+    ['adult', 'Release of Liability (Adults, Cadets 18+)', 'Adult (18+)']
+  ];
+  const WV_LEGACY_CUTOFF = '2026-10-07';   // old checkmarks all predate the tracker
+  const WV_SOON_DAYS = 60;                 // "turns 18 soon" heads-up window
+  function wvIso(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+  function wvToday() { return wvIso(new Date()); }
+  function wvValidDate(iso) { return /^\d{4}-\d{2}-\d{2}$/.test(String(iso || '')) && !isNaN(new Date(iso + 'T12:00:00')); }
+  // 18th birthday as YYYY-MM-DD (Feb 29 birthdays land on Mar 1 in non-leap years)
+  function wvB18(dob) {
+    if (!wvValidDate(dob)) return null;
+    const p = dob.split('-').map(Number);
+    return wvIso(new Date(p[0] + 18, p[1] - 1, p[2], 12));
+  }
+  function wvAddDays(iso, n) { const d = new Date(iso + 'T12:00:00'); d.setDate(d.getDate() + n); return wvIso(d); }
+  // Age picture for one cadet: adult now, turning 18 within the heads-up window, or no birthdate.
+  function wvAge(dob, today) {
+    today = today || wvToday();
+    const b18 = wvB18(dob);
+    if (!b18) return { known: false, adult: false, soon: false, b18: null };
+    const adult = today >= b18;
+    return { known: true, adult, soon: !adult && b18 <= wvAddDays(today, WV_SOON_DAYS), b18 };
+  }
+  // Effective status of one waiver for one cadet.
+  //   entry  = the tracker entry (or undefined)
+  //   legacy = the cadet's old rec.waiverSet (or undefined)
+  // Returns { state, base, rAt, rBy, fAt, fBy, type, legacy, signedOn }
+  //   base  = missing | received | filed (what is recorded)
+  //   state = base, or 'resign' when the cadet is 18+ and the paper on record
+  //           was signed before the birthday (or is a minor liability release)
+  function wvStatus(key, entry, legacy, dob, today) {
+    today = today || wvToday();
+    const out = { state: 'missing', base: 'missing', rAt: '', rBy: '', fAt: '', fBy: '', type: '', legacy: false, signedOn: '' };
+    if (entry && entry.s) {
+      out.base = (entry.s === 'received' || entry.s === 'filed') ? entry.s : 'missing';
+      if (out.base !== 'missing') {
+        out.rAt = entry.rAt || ''; out.rBy = entry.rBy || '';
+        if (out.base === 'filed') { out.fAt = entry.fAt || ''; out.fBy = entry.fBy || ''; }
+        out.type = entry.type || '';
+        out.signedOn = out.rAt || out.fAt || '';
+      }
+    } else if (legacy) {
+      const on = (key === 'liability') ? !!legacy.liability : !!legacy[key];
+      if (on) { out.base = 'filed'; out.legacy = true; if (key === 'liability') out.type = String(legacy.liability); }
+    }
+    out.state = out.base;
+    if (out.base !== 'missing') {
+      const b18 = wvB18(dob);
+      if (b18 && today >= b18) {
+        if (key === 'liability' && out.type) {
+          if (out.type !== 'adult') out.state = 'resign';
+        } else if (out.signedOn) {
+          if (out.signedOn < b18) out.state = 'resign';
+        } else if (b18 > WV_LEGACY_CUTOFF) {
+          out.state = 'resign';     // undated old checkmark, and the cadet turned 18 after it was made
+        }
+      }
+    }
+    return out;
+  }
+  // All six for one cadet, plus counts. need = missing + resign.
+  function wvSummary(cadetEntries, legacy, dob, today) {
+    today = today || wvToday();
+    const cells = {}; let need = 0, received = 0, filed = 0;
+    WV_ITEMS.forEach(function (it) {
+      const st = wvStatus(it[0], (cadetEntries || {})[it[0]], legacy, dob, today);
+      cells[it[0]] = st;
+      if (st.state === 'filed') filed++; else if (st.state === 'received') received++; else need++;
+    });
+    return { cells, need, received, filed, total: WV_ITEMS.length, complete: filed === WV_ITEMS.length, age: wvAge(dob, today) };
+  }
+  async function waiversGet() {
+    if (!recordsKey) return null;
+    const blob = await once('waivers');
+    if (!blob) return { v: 1, cadets: {} };
+    const obj = JSON.parse(await keyDecrypt(blob, recordsKey));   // throws on a bad read, by design
+    if (!obj || typeof obj !== 'object') throw new Error('waivers unreadable');
+    if (!obj.cadets || typeof obj.cadets !== 'object') obj.cadets = {};
+    return obj;
+  }
+  async function waiversSave(obj) {
+    if (!recordsKey) throw new Error('records locked');
+    const data = await keyEncrypt(JSON.stringify(obj), recordsKey);
+    await db.ref(ROOT + '/waivers').set(data);
+  }
+  // Read fresh, let fn(data) change it, save, return the saved data. fn may
+  // return false to cancel the save (data is still returned).
+  async function waiversMutate(fn) {
+    if (!recordsKey) throw new Error('records locked');
+    const obj = await waiversGet();
+    const res = fn(obj);
+    if (res !== false) await waiversSave(obj);
+    return obj;
   }
   // Requests board: same records key, node roster/requests. A flat array of
   // {id, name, text, at, done, doneAt}: sergeants post wants, changes, and

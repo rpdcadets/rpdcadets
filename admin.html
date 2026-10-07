@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- admin.html  |  Build v33  |  updated 2026-10-03  |  pairs with roster.js v30  |  Applicants & References: supports the longer questionnaire (reference.html Build v2). Free-text answers are recognized by their own tag (t:1) so new text questions lay out full width on screen and in the PDF; the PDF now sets short one-line answers two across and uses slightly tighter rows so a clean response still fits one page. No other tool changed. Prior v32 notes: New tool: Applicants & References (full advisor passcode only). Lists observers marked Applied; type in each reference from the paper application and the tool mints a one-time link (rpdcadets.com/reference#CODE) with a Copy link button for pasting into the Outlook email template; tracks Not sent / Sent / Reminder sent / Received / Unable to reach / Link expired; shows the decrypted responses with flagged answers highlighted and builds a letterhead PDF per reference or one file per applicant (pdf-lib, footer label CADET/REFCHECK V1). Responses are locked under a separate advisor-only key, so the sergeant and limited tiers cannot open them. Accept and add to roster: confirm name, pick squad, rank defaults to Probationary, join date defaults to today; adds the roster entry, copies observer contact info into Cadet Records (blank fields only), carries sergeant notes into cadet notes, removes the observer entry, and keeps the reference file on hold until deleted. Hub tile shows a badge for unread responses. Also bumped the roster.js cache-buster from 26 to 30. Prior v31 notes: Ride-Along Log now merges the Trackers inbox on open (cadet-submitted rides appear tagged "Trackers" and count toast shows how many arrived); add, edit, and delete maintain the roster/raIndex duplicate ledger so a deleted entry frees the cadet to resubmit; approving a sergeant ride-along proposal also claims its ledger hash. Prior v30 notes: Act. Sgt. rank dropdown; itemized six-waiver panel; per-cadet sergeant note lines; merged Sergeant Notes panel; waiver-item proposals in Pending Approvals. -->
+<!-- admin.html  |  Build v34  |  updated 2026-10-07  |  pairs with roster.js v31  |  New Waiver Tracker tool: every active cadet with the six waivers, most missing first. Sergeants mark Received on /sgt; here an advisor marks Filed (today's date), clears a Received mark, or un-files. Printable Missing Waivers list (PDF, CADET/WAIVERS V1). Cadets 18 or older show "Re-sign at 18" on every waiver signed before the birthday; cadets within 60 days of 18 get a "Turns 18 on" tag. Cadet Records: the Waivers chip and its panel now read from the tracker (tap a waiver to open the same dialog); the old checkbox toggles are gone and old checkmarks read as Filed with no date. Pending Approvals: a waiver change in an older sergeant proposal is applied to the tracker when approved. Prior v33 notes: Applicants & References: supports the longer questionnaire (reference.html Build v2). Free-text answers are recognized by their own tag (t:1) so new text questions lay out full width on screen and in the PDF; the PDF now sets short one-line answers two across and uses slightly tighter rows so a clean response still fits one page. No other tool changed. Prior v32 notes: New tool: Applicants & References (full advisor passcode only). Lists observers marked Applied; type in each reference from the paper application and the tool mints a one-time link (rpdcadets.com/reference#CODE) with a Copy link button for pasting into the Outlook email template; tracks Not sent / Sent / Reminder sent / Received / Unable to reach / Link expired; shows the decrypted responses with flagged answers highlighted and builds a letterhead PDF per reference or one file per applicant (pdf-lib, footer label CADET/REFCHECK V1). Responses are locked under a separate advisor-only key, so the sergeant and limited tiers cannot open them. Accept and add to roster: confirm name, pick squad, rank defaults to Probationary, join date defaults to today; adds the roster entry, copies observer contact info into Cadet Records (blank fields only), carries sergeant notes into cadet notes, removes the observer entry, and keeps the reference file on hold until deleted. Hub tile shows a badge for unread responses. Also bumped the roster.js cache-buster from 26 to 30. Prior v31 notes: Ride-Along Log now merges the Trackers inbox on open (cadet-submitted rides appear tagged "Trackers" and count toast shows how many arrived); add, edit, and delete maintain the roster/raIndex duplicate ledger so a deleted entry frees the cadet to resubmit; approving a sergeant ride-along proposal also claims its ledger hash. Prior v30 notes: Act. Sgt. rank dropdown; itemized six-waiver panel; per-cadet sergeant note lines; merged Sergeant Notes panel; waiver-item proposals in Pending Approvals. -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -131,6 +131,72 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
 .wv-chip.full .box{background:var(--green);border-color:var(--green);color:#fff}
 .wv-panel{margin-top:12px;padding:13px 15px;border:1px dashed rgba(212,169,82,0.3);border-radius:11px;background:rgba(212,169,82,0.03)}
 .wv-h{font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--gold)}
+/* WAIVER TRACKER (wvt-*). Same block in admin.html and sgt.html. */
+.wvt-stats{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.wvt-stat{flex:1;min-width:92px;background:var(--card-bg);border:1px solid var(--card-border);border-radius:11px;padding:11px 8px;text-align:center}
+.wvt-stat .n{font-family:'Bebas Neue',sans-serif;font-size:27px;letter-spacing:1px;line-height:1}
+.wvt-stat .l{font-family:'Barlow Condensed',sans-serif;font-size:10.5px;letter-spacing:.9px;line-height:1.25;text-transform:uppercase;color:var(--text-muted);margin-top:4px}
+.wvt-stat.need .n{color:#f87171}.wvt-stat.recv .n{color:var(--gold-light)}.wvt-stat.done .n{color:#5fd391}
+.wvt-bar{display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+.wvt-filter{display:flex;gap:6px;flex-wrap:wrap}
+.wvt-f{background:rgba(255,255,255,0.03);border:1px solid var(--card-border);color:var(--text-muted);border-radius:20px;padding:9px 15px;font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:600;letter-spacing:1px;text-transform:uppercase;cursor:pointer}
+.wvt-f.on{background:rgba(212,169,82,0.12);border-color:var(--gold);color:var(--gold-light)}
+.wvt-search{flex:1;min-width:150px;background:var(--input-bg);border:1px solid var(--input-border);border-radius:9px;padding:10px 14px;color:var(--white);font-family:'Barlow',sans-serif;font-size:14px;outline:none}
+.wvt-search:focus{border-color:var(--input-focus)}
+.wvt-btn{background:rgba(255,255,255,0.03);border:1px solid var(--card-border);color:#c6d0de;border-radius:9px;padding:11px 15px;font-family:'Barlow Condensed',sans-serif;font-size:12.5px;font-weight:600;letter-spacing:1px;text-transform:uppercase;cursor:pointer}
+.wvt-btn:hover{color:#fff;border-color:rgba(255,255,255,0.22)}
+.wvt-btn:disabled{opacity:.5;cursor:wait}
+.wvt-btn.main{background:var(--red);border-color:var(--red);color:#fff}
+.wvt-btn.main:hover{background:var(--red-glow)}
+.wvt-btn.go{background:rgba(39,174,96,0.16);border-color:var(--green);color:#b8f1cf}
+.wvt-btn.danger{color:#f8a3a3}
+.wvt-legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12px;color:var(--text-muted);margin:0 2px 14px}
+.wvt-legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.wvt-legend .need i{background:#dc2626}.wvt-legend .recv i{background:var(--amber)}.wvt-legend .filed i{background:var(--green)}
+.wvt-empty{color:var(--text-muted);padding:30px 20px;text-align:center;line-height:1.6}
+.wvt-row{background:var(--card-bg);border:1px solid var(--card-border);border-radius:12px;padding:12px 12px 12px;margin-bottom:8px}
+.wvt-row.done{opacity:.82}
+.wvt-who{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;margin-bottom:9px}
+.wvt-rank{font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:1.2px;text-transform:uppercase;color:var(--gold)}
+.wvt-name{font-weight:600;font-size:15px;margin-right:4px}
+.wvt-tag{font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;border-radius:20px;padding:3px 9px;border:1px solid var(--card-border);color:var(--text-muted)}
+.wvt-tag.need{border-color:rgba(220,38,38,0.55);color:#f8a3a3;background:rgba(220,38,38,0.1)}
+.wvt-tag.recv{border-color:rgba(217,119,6,0.6);color:var(--gold-light);background:rgba(217,119,6,0.1)}
+.wvt-tag.ok{border-color:var(--green);color:#b8f1cf;background:rgba(39,174,96,0.12)}
+.wvt-tag.age{border-color:rgba(212,169,82,0.55);color:var(--gold-light)}
+.wvt-cells{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px}
+.wvt-cell{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:2px;min-height:58px;text-align:left;background:var(--input-bg);border:1px solid var(--input-border);border-radius:9px;padding:7px 9px;color:var(--white);cursor:pointer;font-family:'Barlow',sans-serif;overflow:hidden}
+.wvt-cell:hover{border-color:rgba(255,255,255,0.3)}
+.wvt-cell .l{font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:600;letter-spacing:.3px;text-transform:uppercase;color:#c6d0de;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.wvt-cell .s{font-size:12.5px;font-weight:600;line-height:1.2}
+.wvt-cell .b{font-size:11px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.wvt-cell.need{border-color:rgba(220,38,38,0.5);background:rgba(220,38,38,0.08)}.wvt-cell.need .s{color:#f8a3a3}
+.wvt-cell.resign{border-color:rgba(220,38,38,0.75);background:rgba(220,38,38,0.14)}.wvt-cell.resign .s{color:#fca5a5}
+.wvt-cell.recv{border-color:rgba(217,119,6,0.65);background:rgba(217,119,6,0.11)}.wvt-cell.recv .s{color:var(--gold-light)}
+.wvt-cell.filed{border-color:rgba(39,174,96,0.55);background:rgba(39,174,96,0.1)}.wvt-cell.filed .s{color:#8fe3b3}
+.wvt-embed{margin-top:8px}
+.wvt-embed .wvt-cell .l{white-space:normal;line-height:1.15}
+.wvt-modal{display:none;position:fixed;inset:0;background:rgba(6,11,22,0.86);z-index:1600;align-items:center;justify-content:center;padding:18px}
+.wvt-modal.show{display:flex}
+.wvt-card{background:var(--navy);border:1px solid rgba(212,169,82,0.3);border-radius:16px;padding:24px 22px 20px;max-width:460px;width:100%;max-height:92vh;overflow:auto}
+.wvt-card .eb{font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:var(--gold);margin-bottom:4px}
+.wvt-card h3{font-family:'Bebas Neue',sans-serif;font-size:25px;letter-spacing:1.3px;line-height:1.1;margin-bottom:12px}
+.wvt-card .st{font-size:14px;line-height:1.55;color:#d5dde9;background:rgba(255,255,255,0.03);border:1px solid var(--card-border);border-radius:10px;padding:11px 13px}
+.wvt-card .st b{color:#fff}
+.wvt-card .st .sub{display:block;color:var(--text-muted);font-size:12.5px;margin-top:3px}
+.wvt-card label{display:block;font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);margin:14px 0 6px}
+.wvt-card select{width:100%;background:var(--input-bg);border:1px solid var(--input-border);border-radius:9px;padding:13px 12px;color:var(--white);font-family:'Barlow',sans-serif;font-size:16px;outline:none}
+.wvt-card select option{background:var(--navy)}
+.wvt-types{display:flex;flex-direction:column;gap:7px}
+.wvt-type{text-align:left;background:var(--input-bg);border:1px solid var(--input-border);border-radius:9px;padding:12px 13px;color:#c6d0de;font-family:'Barlow',sans-serif;font-size:14px;cursor:pointer}
+.wvt-type.on{border-color:var(--gold);background:rgba(212,169,82,0.12);color:#fff}
+.wvt-date{font-size:13.5px;color:#d5dde9;margin-top:14px}
+.wvt-date b{color:#fff}
+.wvt-err{min-height:18px;margin-top:10px;font-size:13px;color:#ff9a8f}
+.wvt-acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.wvt-acts .wvt-btn{flex:1;min-width:120px;padding:14px 12px}
+@media(max-width:700px){.wvt-cells{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:400px){.wvt-cells{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .acc-msg{font-size:13px;min-height:18px;margin-bottom:14px}
 .acc-msg.ok{color:var(--green)} .acc-msg.err{color:#f87171}
 .acc-note{max-width:520px;font-size:12.5px;line-height:1.6;color:var(--text-muted);background:var(--card-bg);border:1px solid var(--card-border);border-radius:10px;padding:14px 16px}
@@ -649,7 +715,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
     <button class="lock-btn" id="goBtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg><span id="goLabel">Unlock</span></button>
     <div class="lock-error" id="lockErr">Incorrect passcode.</div>
     <div class="lock-home"><a href="index.html">← Return to Home</a></div>
-    <div style="margin-top:16px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v33</div>
+    <div style="margin-top:16px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v34</div>
   </div>
 </div>
 
@@ -679,7 +745,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
       <button class="back-link" id="rosterBack"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Admin Console</button>
       <div class="bar">
         <div class="status-pill" id="pill"><span class="dot"></span><span id="pillText">Synced</span></div>
-        <span style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v33</span>
+        <span style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v34</span>
         <button class="btn ghost" id="syncMembersBtn" title="One-time: pull titles and alumni from the Members page into the shared roster">Sync members data</button>
         <button class="btn add" id="addBtn">+ Add Person</button>
       </div>
@@ -709,6 +775,32 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
         </div>
         <div id="recRows"></div>
       </div>
+    </div>
+  </div>
+
+  <!-- WAIVER TRACKER (advisor passcode) -->
+  <div class="view" id="waiversView">
+    <div class="page-header">
+      <div class="section-label">Waivers</div>
+      <h1 class="section-title">Waiver Tracker</h1>
+      <p class="page-desc">Who is missing which waiver, what a sergeant has received, and what is filed.</p>
+    </div>
+    <div class="container">
+      <button class="back-link" id="wvBack"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Admin Console</button>
+      <div class="rec-warning">Sergeants mark a waiver Received on the /sgt page when a cadet hands it in. Mark it Filed here once it is scanned and the original is in the binder. Checkmarks made in Cadet Records before the tracker show as Filed with no date. A cadet who has turned 18 shows "Re-sign at 18" on each waiver until a new one comes in.</div>
+      <div class="wvt-stats" id="wvtStats"></div>
+      <div class="wvt-bar">
+        <div class="wvt-filter">
+          <button type="button" class="wvt-f on" data-f="all">All</button>
+          <button type="button" class="wvt-f" data-f="need">Missing</button>
+          <button type="button" class="wvt-f" data-f="recv">Awaiting filing</button>
+          <button type="button" class="wvt-f" data-f="done">Complete</button>
+        </div>
+        <input type="text" id="wvtSearch" class="wvt-search" placeholder="Search cadet&hellip;">
+        <button type="button" class="wvt-btn" id="wvtPrint">Print missing list</button>
+      </div>
+      <div class="wvt-legend"><span class="need"><i></i>Missing or re-sign at 18</span><span class="recv"><i></i>Received, not filed yet</span><span class="filed"><i></i>Filed</span></div>
+      <div id="wvtRows"><p class="wvt-empty">Loading&hellip;</p></div>
     </div>
   </div>
 
@@ -964,9 +1056,9 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
 
 <div class="toast" id="toast"></div>
 
-<script src="roster.js?v=30"></script>
+<script src="roster.js?v=31"></script>
 <script>
-console.log('[admin] Build v33');
+console.log('[admin] Build v34');
 const SESSION_KEY = 'rpd761_admin_auth';   // advisor-only; NOT shared with cadet pages
 const TIER_KEY = 'rpd761_admin_tier';      // 'full' (golden) or 'ltd' (limited advisor)
 const LIMITED_TOOLS = ['records','ridealongs','donations'];
@@ -1005,6 +1097,13 @@ const TOOLS = [
     desc: 'Confidential cadet details. Separate passphrase, separate encryption, isolated from the roster.',
     icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18"/><path d="M8 4v16"/></svg>',
     open: openRecords
+  },
+  {
+    id: 'waivers',
+    name: 'Waiver Tracker',
+    desc: 'Who is missing which waiver. Sergeants mark them Received on the /sgt page; mark them Filed here and print the missing list.',
+    icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 15l2 2 4-4"/></svg>',
+    open: openWaivers
   },
   {
     id: 'ridealongs',
@@ -2231,28 +2330,370 @@ let recData = null;
 let cadNotes = [];   // per-cadet sergeant note lines (roster/cadetnotes)
 let recSaveTimer = null;
 const REC_CHECKS = [['offProbation','Off Probation'],['rideAlong','Ride-Along Certified'],['competition','Competition Team'],['uas','UAS Certified']];
-/* Itemized waivers. The old single rec.waivers checkmark is intentionally ignored
-   (not migrated): every cadet starts unverified and gets checked off against the
-   physical paperwork. Five fixed forms plus exactly ONE Release of Liability. */
-const WAIVER_ITEMS = [
-  ['psc','Public Safety Cadets Agreement and Legal Waiver'],
-  ['ptc','Police Training Center Waiver'],
-  ['photo','Photo Release'],
-  ['sim','Simunitions Waiver'],
-  ['med','Permission for Medical Treatment']
-];
-const WAIVER_LIAB = [
-  ['married','Release of Liability (Minors with Married Parents or Single Guardian)'],
-  ['divorced','Release of Liability (Minors with Divorced Parents)'],
-  ['adult','Release of Liability (Adults, Cadets 18+)']
-];
-function waiverLiabLabel(k){ const f=WAIVER_LIAB.find(x=>x[0]===k); return f?f[1]:''; }
-function waiverProgress(rec){
-  const ws = rec.waiverSet || {};
-  let done = 0;
-  WAIVER_ITEMS.forEach(([k])=>{ if(ws[k]) done++; });
-  if(ws.liability) done++;
-  return { done, total: WAIVER_ITEMS.length + 1, state: done===0 ? 'none' : (done===WAIVER_ITEMS.length+1 ? 'full' : 'part') };
+/* Waiver names, statuses, and the turning-18 rule now come from roster.js (RPDRoster.waivers). */
+/* ═══════ WAIVER TRACKER (wvt). This block is the same in admin.html and sgt.html;
+   only WVT_ADMIN differs. Data and rules live in roster.js (RPDRoster.waivers).
+     /sgt   : a sergeant marks a waiver Received (today's date + their name) and can
+              undo their own mark until an advisor files it.
+     /admin : an advisor marks it Filed, clears a Received mark, or un-files.
+   Old Cadet Records checkmarks read as Filed with no date. A cadet who is 18 or
+   older needs every waiver re-signed (state "resign") until a new one is marked. ═══════ */
+const WVT_ADMIN = true;
+let wvData = null, wvLoadErr = false, wvFilter = 'all', wvModalCtx = null;
+function wvE(s){ return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function wvFmt(iso){ const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso||'')); return m ? m[2]+'/'+m[3]+'/'+m[1].slice(2) : ''; }
+function wvFmtLong(iso){ if(!iso) return ''; const d=new Date(iso+'T12:00:00'); return isNaN(d)?String(iso):d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); }
+function wvRec(name){ return ((typeof recData==='object' && recData) ? recData[name] : null) || {}; }
+function wvEntries(name){ return ((wvData||{}).cadets||{})[name]; }
+function wvSum(name){ const rec=wvRec(name); return RPDRoster.waivers.summary(wvEntries(name), rec.waiverSet, rec.dob); }
+function wvItem(key){ return RPDRoster.waivers.ITEMS.find(i=>i[0]===key) || [key,key,key]; }
+function wvLiabName(t){ const f=RPDRoster.waivers.LIAB.find(x=>x[0]===t); return f?f[1]:''; }
+function wvPerson(name){ return RPDRoster.activeSorted().find(p=>p.name===name) || { name:name, rank:'' }; }
+async function wvLoad(){
+  try{ const d=await RPDRoster.waivers.get(); if(d){ wvData=d; wvLoadErr=false; } }
+  catch(e){ wvLoadErr=true; }
+  wvRender(); wvRefreshEmbeds();
+}
+function wvCellHtml(name, key, st){
+  const it=wvItem(key);
+  let cls='need', s='Missing', b='';
+  if(st.state==='resign'){ cls='resign'; s='Re-sign at 18'; }
+  else if(st.state==='received'){ cls='recv'; s='Received '+wvFmt(st.rAt); b=st.rBy?'by '+st.rBy:''; }
+  else if(st.state==='filed'){ cls='filed'; s=st.fAt?'Filed '+wvFmt(st.fAt):'Filed'; }
+  return `<button type="button" class="wvt-cell ${cls}" data-c="${wvE(name)}" data-k="${wvE(key)}" title="${wvE(it[1])}"><span class="l">${wvE(it[2])}</span><span class="s">${wvE(s)}</span>${b?`<span class="b">${wvE(b)}</span>`:''}</button>`;
+}
+function wvCellsHtml(name, sum){ return RPDRoster.waivers.ITEMS.map(it=>wvCellHtml(name, it[0], sum.cells[it[0]])).join(''); }
+function wvRender(){
+  const host=document.getElementById('wvtRows'); if(!host) return;
+  const statHost=document.getElementById('wvtStats');
+  if(wvLoadErr && !wvData){ host.innerHTML='<p class="wvt-empty">Could not load the waiver tracker. Check your connection and reopen this tab.</p>'; if(statHost) statHost.innerHTML=''; return; }
+  if(!(window.RPDRoster && RPDRoster.get().length)){ host.innerHTML='<p class="wvt-empty">Loading\u2026</p>'; return; }
+  const all=RPDRoster.activeSorted().map(p=>({ p:p, sum:wvSum(p.name) }));
+  const tot={ cadets:all.length, done:0, need:0, needCadets:0, recv:0 };
+  all.forEach(x=>{ if(x.sum.complete) tot.done++; if(x.sum.need){ tot.need+=x.sum.need; tot.needCadets++; } tot.recv+=x.sum.received; });
+  if(statHost) statHost.innerHTML=
+    `<div class="wvt-stat done"><div class="n">${tot.done} / ${tot.cadets}</div><div class="l">Cadets complete</div></div>`+
+    `<div class="wvt-stat need"><div class="n">${tot.need}</div><div class="l">Waivers missing</div></div>`+
+    `<div class="wvt-stat recv"><div class="n">${tot.recv}</div><div class="l">Awaiting filing</div></div>`;
+  const sEl=document.getElementById('wvtSearch');
+  const q=((sEl&&sEl.value)||'').toLowerCase().trim();
+  let rows=all.filter(x=>!q || x.p.name.toLowerCase().includes(q));
+  if(wvFilter==='need') rows=rows.filter(x=>x.sum.need>0);
+  else if(wvFilter==='recv') rows=rows.filter(x=>x.sum.received>0);
+  else if(wvFilter==='done') rows=rows.filter(x=>x.sum.complete);
+  rows.sort((a,b)=>(b.sum.need-a.sum.need) || (b.sum.received-a.sum.received));   // most missing first; ties keep roster order
+  if(!rows.length){ host.innerHTML='<p class="wvt-empty">'+(q?'No cadet matches.':'Nothing in this view.')+'</p>'; return; }
+  host.innerHTML=rows.map(x=>{
+    const s=x.sum, tags=[];
+    if(s.complete) tags.push('<span class="wvt-tag ok">Complete</span>');
+    if(s.need) tags.push(`<span class="wvt-tag need">${s.need} missing</span>`);
+    if(s.received) tags.push(`<span class="wvt-tag recv">${s.received} awaiting filing</span>`);
+    if(s.age.soon) tags.push(`<span class="wvt-tag age">Turns 18 on ${wvE(wvFmtLong(s.age.b18))}</span>`);
+    if(!s.age.known) tags.push('<span class="wvt-tag">No birthdate on file</span>');
+    return `<div class="wvt-row${s.complete?' done':''}"><div class="wvt-who">${x.p.rank?`<span class="wvt-rank">${wvE(x.p.rank)}</span>`:''}<span class="wvt-name">${wvE(x.p.name)}</span>${tags.join('')}</div><div class="wvt-cells">${wvCellsHtml(x.p.name, s)}</div></div>`;
+  }).join('');
+}
+// Waiver chips, lists, and cells that live outside the tracker (the Cadet Records cards).
+function wvChipState(sum){ const have=sum.total-sum.need; return { have:have, cls: sum.complete ? 'full' : (have>0 ? 'part' : 'none') }; }
+function wvMissingNames(sum){
+  return RPDRoster.waivers.ITEMS.filter(it=>{ const st=sum.cells[it[0]].state; return st==='missing'||st==='resign'; })
+    .map(it=> it[1] + (sum.cells[it[0]].state==='resign' ? ' (re-sign at 18)' : (it[0]==='liability' ? ' (the one that applies)' : '')));
+}
+function wvMissHtml(sum){
+  const miss=wvMissingNames(sum), parts=[];
+  if(miss.length) parts.push('<b>Missing:</b> '+miss.map(wvE).join(', '));
+  if(sum.received) parts.push('<b>Awaiting filing:</b> '+sum.received);
+  if(sum.age.soon) parts.push('<b>Turns 18 on '+wvE(wvFmtLong(sum.age.b18))+':</b> every waiver gets re-signed then');
+  return parts.join(' &nbsp;\u00B7&nbsp; ');
+}
+function wvRefreshEmbeds(){
+  document.querySelectorAll('[data-wvchip]').forEach(el=>{
+    const sum=wvSum(el.dataset.wvchip), c=wvChipState(sum);
+    el.classList.remove('none','part','full'); el.classList.add(c.cls);
+    const box=el.querySelector('.box'); if(box) box.textContent = c.cls==='full'?'\u2713':(c.cls==='part'?'\u2026':'');
+    const lbl=el.querySelector('.wv-lbl'); if(lbl) lbl.textContent='Waivers '+c.have+' of '+sum.total;
+  });
+  document.querySelectorAll('[data-wvmiss]').forEach(el=>{
+    const h=wvMissHtml(wvSum(el.dataset.wvmiss));
+    el.innerHTML=h; el.style.display=h?'':'none';
+  });
+  document.querySelectorAll('[data-wvcells]').forEach(el=>{ el.innerHTML=wvCellsHtml(el.dataset.wvcells, wvSum(el.dataset.wvcells)); });
+}
+/* ── cell dialog ── */
+function wvModalEl(){
+  let m=document.getElementById('wvtModal');
+  if(!m){
+    m=document.createElement('div'); m.id='wvtModal'; m.className='wvt-modal'; m.setAttribute('role','dialog'); m.setAttribute('aria-modal','true');
+    m.innerHTML='<div class="wvt-card"><div class="eb" id="wvtMWho"></div><h3 id="wvtMTitle"></h3><div id="wvtMBody"></div><div class="wvt-err" id="wvtMErr" role="alert"></div><div class="wvt-acts" id="wvtMActs"></div></div>';
+    document.body.appendChild(m);
+    m.addEventListener('click', e=>{ if(e.target===m) wvClose(); });
+  }
+  return m;
+}
+function wvClose(){ const m=document.getElementById('wvtModal'); if(m) m.classList.remove('show'); wvModalCtx=null; }
+function wvLiabChoices(age){ const L=RPDRoster.waivers.LIAB; if(!age.known) return L; return L.filter(x=> age.adult ? x[0]==='adult' : x[0]!=='adult'); }
+function wvOpen(name, key){
+  if(!(window.RPDRoster && RPDRoster.waivers)) return;
+  const m=wvModalEl(), it=wvItem(key), p=wvPerson(name), rec=wvRec(name);
+  const sum=wvSum(name), st=sum.cells[key]; if(!st) return;
+  const today=RPDRoster.waivers.today();
+  wvModalCtx={ name:name, key:key, type:'' };
+  document.getElementById('wvtMWho').textContent=(p.rank?p.rank+' ':'')+name;
+  document.getElementById('wvtMTitle').textContent=it[1];
+  document.getElementById('wvtMErr').textContent='';
+  const typeLine = (key==='liability' && st.type) ? `<span class="sub">${wvE(wvLiabName(st.type))}</span>` : '';
+  let status='';
+  if(st.state==='missing') status='<b>Not on file.</b>';
+  else if(st.state==='resign'){
+    status=`<b>Needs a new signature.</b> ${wvE(name)} turned 18 on ${wvE(wvFmtLong(sum.age.b18))}, so the cadet signs this one as an adult.`+
+      `<span class="sub">On record now: ${st.base==='filed' ? (st.fAt?'filed '+wvFmt(st.fAt):'filed, no date') : 'received '+wvFmt(st.rAt)+(st.rBy?' by '+wvE(st.rBy):'')}${key==='liability'&&st.type?', '+wvE(wvLiabName(st.type)):''}</span>`;
+  }
+  else if(st.state==='received') status=`<b>Received ${wvE(wvFmt(st.rAt))}</b>${st.rBy?' by '+wvE(st.rBy):''}.${typeLine}<span class="sub">Not filed yet. An advisor marks it Filed once it is scanned and in the binder.</span>`;
+  else status=`<b>Filed${st.fAt?' '+wvE(wvFmt(st.fAt)):''}</b>${st.fBy?' by '+wvE(st.fBy):''}.${typeLine}<span class="sub">${st.rAt ? 'Received '+wvE(wvFmt(st.rAt))+(st.rBy?' by '+wvE(st.rBy):'') : (st.legacy ? 'Checked off in Cadet Records before the tracker, so there is no date.' : 'Filed directly by an advisor.')}</span>`;
+  let body=`<div class="st">${status}</div>`, acts='';
+  const needsNew = (st.state==='missing' || st.state==='resign');
+  const typePicker = () => {
+    if(key!=='liability') return '';
+    const ch=wvLiabChoices(sum.age);
+    if(ch.length===1) wvModalCtx.type=ch[0][0];
+    return '<label>Which release was turned in</label><div class="wvt-types">'+ch.map(c=>`<button type="button" class="wvt-type${wvModalCtx.type===c[0]?' on':''}" data-wvtype="${c[0]}">${wvE(c[2])}</button>`).join('')+'</div>';
+  };
+  const whoPicker = (label) => {
+    let saved=''; try{ saved=localStorage.getItem(NAME_KEY)||''; }catch(e){}
+    return `<label for="wvtWho">${label}</label><select id="wvtWho"><option value="">Select your name\u2026</option>`+leadershipNames().map(n=>`<option value="${wvE(n)}"${n===saved?' selected':''}>${wvE(n)}</option>`).join('')+'</select>';
+  };
+  if(WVT_ADMIN){
+    if(needsNew){
+      body+=typePicker()+`<div class="wvt-date">Filed date: <b>${wvE(wvFmtLong(today))}</b> (today)</div>`;
+      acts='<button type="button" class="wvt-btn" data-wvact="close">Cancel</button><button type="button" class="wvt-btn go" data-wvact="file">Mark filed</button>';
+    } else if(st.state==='received'){
+      body+=`<div class="wvt-date">Filed date: <b>${wvE(wvFmtLong(today))}</b> (today)</div>`;
+      acts='<button type="button" class="wvt-btn danger" data-wvact="clear">Clear, not received</button><button type="button" class="wvt-btn go" data-wvact="file">Mark filed</button>';
+    } else {
+      acts='<button type="button" class="wvt-btn danger" data-wvact="unfile">Un-file</button><button type="button" class="wvt-btn" data-wvact="close">Close</button>';
+    }
+  } else {
+    if(needsNew){
+      body+=whoPicker('Accepted by')+typePicker()+`<div class="wvt-date">Date received: <b>${wvE(wvFmtLong(today))}</b> (today)</div>`;
+      acts='<button type="button" class="wvt-btn" data-wvact="close">Cancel</button><button type="button" class="wvt-btn go" data-wvact="receive">Mark received</button>';
+    } else if(st.state==='received'){
+      body+=whoPicker('Your name')+'<div class="wvt-date">Tapped the wrong one? The sergeant who marked it can undo it until an advisor files it.</div>';
+      acts='<button type="button" class="wvt-btn danger" data-wvact="undo">Undo received</button><button type="button" class="wvt-btn" data-wvact="close">Close</button>';
+    } else {
+      body+='<div class="wvt-date">Filed by an advisor. Only an advisor can change it.</div>';
+      acts='<button type="button" class="wvt-btn" data-wvact="close">Close</button>';
+    }
+  }
+  document.getElementById('wvtMBody').innerHTML=body;
+  document.getElementById('wvtMActs').innerHTML=acts;
+  m.classList.add('show');
+}
+function wvStrip(e){ if(!e) return null; const o=Object.assign({}, e); delete o.prev; return o; }
+async function wvAct(act){
+  const ctx=wvModalCtx; if(!ctx) return;
+  const err=document.getElementById('wvtMErr'); err.textContent='';
+  const name=ctx.name, key=ctx.key, rec=wvRec(name), W=RPDRoster.waivers, today=W.today();
+  const label=wvItem(key)[2];
+  let by='';
+  if(!WVT_ADMIN && (act==='receive' || act==='undo')){
+    const sel=document.getElementById('wvtWho'); by=sel?sel.value:'';
+    if(!by){ err.textContent='Select your name first.'; return; }
+    try{ localStorage.setItem(NAME_KEY, by); }catch(e){}
+  }
+  const now=W.status(key, (wvEntries(name)||{})[key], rec.waiverSet, rec.dob);
+  const needsNew=(now.state==='missing'||now.state==='resign');
+  if((act==='receive' || (act==='file' && needsNew)) && key==='liability' && !ctx.type){ err.textContent='Pick which release was turned in.'; return; }
+  if(act==='undo' && now.rBy && now.rBy!==by){ err.textContent='Only '+now.rBy+' or an advisor can undo this one.'; return; }
+  if(act==='undo' && !confirm('Undo "Received" for '+label+' ('+name+')?')) return;
+  if(act==='clear' && !confirm('Clear the Received mark for '+label+' ('+name+')? Use this when the paper was never actually turned in.')) return;
+  if(act==='unfile' && !confirm('Un-file '+label+' for '+name+'?')) return;
+  const btns=document.querySelectorAll('#wvtMActs button'); btns.forEach(b=>b.disabled=true);
+  let stale=false, msg='';
+  try{
+    const saved=await W.mutate(d=>{
+      const ce=d.cadets[name] || (d.cadets[name]={});
+      const old=ce[key];
+      const cur=W.status(key, old, rec.waiverSet, rec.dob);
+      const open=(cur.state==='missing'||cur.state==='resign');
+      if(act==='receive'){
+        if(!open){ stale=true; return false; }
+        const e={ s:'received', rAt:today, rBy:by, at:Date.now() };
+        if(key==='liability') e.type=ctx.type;
+        const prev=wvStrip(old); if(prev) e.prev=prev;
+        ce[key]=e; msg='Marked received';
+      } else if(act==='undo' || act==='clear'){
+        if(cur.state!=='received' || !old){ stale=true; return false; }
+        if(act==='undo' && old.rBy && old.rBy!==by){ stale=true; return false; }
+        if(old.prev) ce[key]=old.prev; else delete ce[key];
+        msg = act==='undo' ? 'Undone' : 'Cleared';
+      } else if(act==='file'){
+        if(cur.state==='received' && old){ old.s='filed'; old.fAt=today; old.fBy='Advisor'; old.at=Date.now(); }
+        else if(open){
+          const e={ s:'filed', fAt:today, fBy:'Advisor', at:Date.now() };
+          if(key==='liability') e.type=ctx.type;
+          const prev=wvStrip(old); if(prev) e.prev=prev;
+          ce[key]=e;
+        } else { stale=true; return false; }
+        msg='Marked filed';
+      } else if(act==='unfile'){
+        if(cur.base!=='filed'){ stale=true; return false; }
+        if(old && old.s==='filed' && old.rAt){ old.s='received'; delete old.fAt; delete old.fBy; old.at=Date.now(); msg='Back to received'; }
+        else { ce[key] = (old && old.prev) ? old.prev : { s:'missing', at:Date.now() }; msg='Un-filed'; }
+      } else return false;
+      if(!Object.keys(ce).length) delete d.cadets[name];
+    });
+    wvData=saved; wvLoadErr=false;
+    wvRender(); wvRefreshEmbeds();
+    if(stale){ showToast('Someone just updated that one. The list is refreshed.'); wvClose(); return; }
+    wvClose(); showToast(msg);
+  }catch(e){
+    err.textContent='Could not save. Check your connection and try again.';
+    btns.forEach(b=>b.disabled=false);
+  }
+}
+document.addEventListener('click', e=>{
+  const t=e.target; if(!t || !t.closest) return;
+  const ty=t.closest('[data-wvtype]');
+  if(ty && wvModalCtx){ wvModalCtx.type=ty.dataset.wvtype; document.querySelectorAll('#wvtMBody [data-wvtype]').forEach(b=>b.classList.toggle('on', b===ty)); return; }
+  const ac=t.closest('[data-wvact]');
+  if(ac){ if(ac.dataset.wvact==='close') wvClose(); else wvAct(ac.dataset.wvact); return; }
+  const cell=t.closest('.wvt-cell');
+  if(cell){ e.preventDefault(); wvOpen(cell.dataset.c, cell.dataset.k); return; }
+  const f=t.closest('.wvt-f');
+  if(f){ wvFilter=f.dataset.f; document.querySelectorAll('.wvt-f').forEach(b=>b.classList.toggle('on', b===f)); wvRender(); }
+});
+document.addEventListener('input', e=>{ if(e.target && e.target.id==='wvtSearch') wvRender(); });
+document.addEventListener('keydown', e=>{ if(e.key==='Escape' && wvModalCtx) wvClose(); });
+
+/* ── waiver tracker: admin-only pieces (open the view, print the missing list) ── */
+async function openWaivers(){
+  if(TIER==='ltd') return;
+  showView('waiversView');
+  const host = document.getElementById('wvtRows');
+  host.innerHTML = '<p class="wvt-empty">Unlocking\u2026</p>';
+  const adv = sessionStorage.getItem(SESSION_KEY);
+  try{
+    let res = await RPDRoster.records.connect(adv);
+    if(res.needsSetup){ await RPDRoster.records.setup(adv); res = { ok:true }; }
+    if(!res.ok){ host.innerHTML = '<p class="wvt-empty">Could not unlock. Re-open the admin page and try again.</p>'; return; }
+    if(!recData) recData = (await RPDRoster.records.get()) || {};   // birthdates and old checkmarks live in Cadet Records
+    await wvLoad();
+  }catch(e){ host.innerHTML = '<p class="wvt-empty">Could not reach the database. Check your connection.</p>'; }
+}
+const WV_PDF_LABEL = 'CADET/WAIVERS V1';
+async function wvPrintMissing(){
+  const btn = document.getElementById('wvtPrint');
+  if(!wvData){ showToast('The tracker has not loaded yet'); return; }
+  showToast('Building PDF\u2026'); if(btn) btn.disabled = true;
+  try{
+    await apLoadPdfLib();
+    if(!apLogoBytes){ try{ apLogoBytes = await apLogoSmall(); }catch(e){} }
+    const bytes = await wvBuildPdf(window.PDFLib, apLogoBytes);
+    const url = URL.createObjectURL(new Blob([bytes], { type:'application/pdf' }));
+    const a = document.createElement('a'); a.href = url; a.download = 'Missing_Waivers_' + RPDRoster.waivers.today() + '.pdf'; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url), 4000);
+  }catch(e){ showToast('Could not build the PDF. Check your connection.'); }
+  if(btn) btn.disabled = false;
+}
+// Same locked GENERAL header and footer as the reference-check PDF.
+async function wvBuildPdf(PDFLib, logoBytes){
+  const { PDFDocument, StandardFonts, rgb } = PDFLib;
+  const W8 = RPDRoster.waivers, today = W8.today();
+  const all = RPDRoster.activeSorted().map(p => ({ p:p, sum:wvSum(p.name) }));
+  const needRows = all.filter(x => x.sum.need > 0);
+  const recvRows = all.filter(x => x.sum.received > 0);
+  const soonRows = all.filter(x => x.sum.age.soon);
+  const noDob = all.filter(x => !x.sum.age.known);
+  const doc = await PDFDocument.create();
+  doc.setTitle('Missing Waivers ' + today);
+  doc.setAuthor('Richardson Police Department Public Safety Cadets');
+  const F = await doc.embedFont(StandardFonts.Helvetica), FB = await doc.embedFont(StandardFonts.HelveticaBold), FI = await doc.embedFont(StandardFonts.HelveticaOblique);
+  let logo = null; if(logoBytes){ try{ logo = await doc.embedPng(logoBytes); }catch(e){} }
+  const hex = h => rgb(parseInt(h.slice(1,3),16)/255, parseInt(h.slice(3,5),16)/255, parseInt(h.slice(5,7),16)/255);
+  const NAVY = hex('#1B2A4A'), RED = hex('#C41E3A'), GOLD = hex('#C5A55A'), BG = hex('#7A8BA0'), INK = rgb(0.1,0.1,0.1), RULE = hex('#DDE2EA');
+  const W = 612, H = 792, L = 55, R = W-55, CW = R-L, BOTTOM = 64, LEAD = 12;
+  const asOf = new Date(today + 'T12:00:00').toLocaleDateString('en-US', { month:'long', day:'numeric', year:'numeric' });
+  const pages = []; let page = null, y = 0;
+  const rtext = (t, xr, yy, size, font, color) => page.drawText(t, { x: xr - font.widthOfTextAtSize(t, size), y: yy, size, font, color });
+  function header(){
+    const top = H-42, tx = L+96+14;
+    if(logo) page.drawImage(logo, { x:L, y:(top-36)-48, width:96, height:96 });
+    page.pushOperators(PDFLib.setCharacterSpacing(2.2));
+    page.drawText('RICHARDSON POLICE DEPARTMENT', { x:tx, y:top-14, size:8.5, font:FB, color:BG });
+    page.pushOperators(PDFLib.setCharacterSpacing(0));
+    page.drawText('PUBLIC SAFETY CADETS', { x:tx, y:top-40, size:25, font:FB, color:NAVY });
+    const mid = tx + (R-tx)/2;
+    page.drawLine({ start:{x:tx,y:top-50}, end:{x:mid,y:top-50}, thickness:1.5, color:RED });
+    page.drawLine({ start:{x:mid,y:top-50}, end:{x:R,y:top-50}, thickness:1.5, color:NAVY });
+    page.drawText('Waiver Status: Missing Waivers', { x:tx, y:top-64, size:9, font:F, color:BG });
+    rtext('CONFIDENTIAL', R, top-64, 8, FB, BG);
+    rtext('As of ' + apPdfSafe(asOf), R, top-76, 8, F, BG);
+    y = H-134-6;
+  }
+  function newPage(){ page = doc.addPage(); page.setSize(W, H); pages.push(page); header(); }
+  function need(h){ if(y - h < BOTTOM) newPage(); }
+  function section(title){
+    need(40); y -= 8;
+    page.drawText(apPdfSafe(title).toUpperCase(), { x:L, y, size:9.5, font:FB, color:NAVY });
+    page.drawLine({ start:{x:L,y:y-4}, end:{x:R,y:y-4}, thickness:0.5, color:GOLD });
+    y -= 18;
+  }
+  function para(text, font, size, indent){
+    apWrap(font, size, text, CW-(indent||0)).forEach(t => { need(LEAD); page.drawText(t, { x:L+(indent||0), y, size, font, color:INK }); y -= LEAD; });
+  }
+  const who = p => (p.rank ? p.rank + ' ' : '') + p.name;
+  newPage();
+  const complete = all.filter(x => x.sum.complete).length;
+  const needTotal = needRows.reduce((n, x) => n + x.sum.need, 0), recvTotal = recvRows.reduce((n, x) => n + x.sum.received, 0);
+  para(all.length + ' active cadets. ' + complete + ' complete. ' + needTotal + (needTotal===1?' waiver':' waivers') + ' missing across ' + needRows.length + (needRows.length===1?' cadet. ':' cadets. ') + recvTotal + ' received and awaiting filing.', F, 9.5);
+  y -= 2;
+  section('Missing waivers');
+  if(!needRows.length) para('No waivers are missing.', FI, 9.5);
+  needRows.forEach(x => {
+    const items = W8.ITEMS.filter(it => { const st = x.sum.cells[it[0]].state; return st==='missing' || st==='resign'; }).map(it => {
+      const st = x.sum.cells[it[0]];
+      let label = it[1];
+      if(it[0]==='liability') label = x.sum.age.adult ? wvLiabName('adult') : (x.sum.age.known ? 'Release of Liability (the minor version that applies)' : 'Release of Liability (the version that applies)');
+      if(st.state==='resign') label += '  (re-sign: turned 18 on ' + wvFmtLong(x.sum.age.b18) + ')';
+      return apWrap(F, 9, label, CW-34);
+    });
+    const h = 16 + items.reduce((n, l) => n + l.length*LEAD, 0) + 8;
+    need(Math.min(h, 200));
+    page.drawText(apPdfSafe(who(x.p)), { x:L, y, size:10.5, font:FB, color:INK });
+    rtext(x.sum.need + ' missing', R, y, 8.5, FB, RED);
+    y -= 16;
+    items.forEach(linesArr => {
+      need(linesArr.length*LEAD);
+      page.drawRectangle({ x:L+12, y:y-1.5, width:8, height:8, borderColor:INK, borderWidth:0.8 });
+      linesArr.forEach(t => { page.drawText(t, { x:L+28, y, size:9, font:F, color:INK }); y -= LEAD; });
+    });
+    y -= 3;
+    page.drawLine({ start:{x:L,y:y+4}, end:{x:R,y:y+4}, thickness:0.4, color:RULE });
+    y -= 7;
+  });
+  if(recvRows.length){
+    section('Received, awaiting filing');
+    recvRows.forEach(x => {
+      W8.ITEMS.forEach(it => { const st = x.sum.cells[it[0]]; if(st.state==='received') para(who(x.p) + ': ' + it[1] + ', received ' + wvFmt(st.rAt) + (st.rBy ? ' by ' + st.rBy : ''), F, 9, 12); });
+    });
+  }
+  if(soonRows.length){
+    section('Turning 18 in the next ' + W8.SOON_DAYS + ' days');
+    soonRows.forEach(x => para(who(x.p) + ': ' + wvFmtLong(x.sum.age.b18) + '. Every waiver must be re-signed by the cadet on or after that date.', F, 9, 12));
+  }
+  if(noDob.length){
+    section('No birthdate on file');
+    para(noDob.map(x => x.p.name).join(', ') + '. The turning-18 check cannot run for these cadets until a birthdate is added in Cadet Records.', F, 9, 12);
+  }
+  pages.forEach((p, i) => {
+    page = p;
+    p.drawLine({ start:{x:L,y:45}, end:{x:R,y:45}, thickness:0.5, color:GOLD });
+    const addr = '200 N. Greenville Ave, Richardson, TX 75081  |  (972) 744-4801';
+    p.drawText(addr, { x:(W - F.widthOfTextAtSize(addr, 7))/2, y:34, size:7, font:F, color:BG });
+    p.drawText(WV_PDF_LABEL, { x:L, y:22, size:7, font:F, color:BG });
+    rtext('Page ' + (i+1) + ' of ' + pages.length, R, 22, 7, F, BG);
+  });
+  return await doc.save();
 }
 const REC_SHIRT = ['','XS','S','M','L','XL','2XL','3XL'];
 function escapeHtmlA(s){ return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
@@ -2293,7 +2734,7 @@ async function openRecords(){
   try {
     let res = await RPDRoster.records.connect(adv);
     if(res.needsSetup){ await RPDRoster.records.setup(adv); res = { ok:true }; }
-    if(res.ok){ recData = (await RPDRoster.records.get()) || {}; try{ cadNotes = (await RPDRoster.cadetnotes.get()) || []; }catch(e){ cadNotes=[]; } migrateJoinDates(); renderRecords(); loadRecNotes(); }
+    if(res.ok){ recData = (await RPDRoster.records.get()) || {}; try{ cadNotes = (await RPDRoster.cadetnotes.get()) || []; }catch(e){ cadNotes=[]; } try{ const wv = await RPDRoster.waivers.get(); if(wv){ wvData = wv; wvLoadErr = false; } }catch(e){ wvLoadErr = true; } migrateJoinDates(); renderRecords(); loadRecNotes(); }
     else { host.innerHTML = '<p style="color:var(--red-glow);padding:24px;text-align:center">Could not unlock records. Re-open the admin page and try again.</p>'; }
   } catch(e){ host.innerHTML = '<p style="color:var(--red-glow);padding:24px;text-align:center">Could not reach the database. Check your connection.</p>'; }
 }
@@ -2305,11 +2746,11 @@ function renderRecords(){
   if(!cadets.length){ host.innerHTML='<p style="color:var(--text-muted);padding:24px;text-align:center">No cadet matches.</p>'; return; }
   cadets.forEach(p => host.appendChild(recCard(p)));
 }
-function recFilledCount(rec){
+function recFilledCount(rec, name){
   let n = 0;
   ['radio','shirt','school','dob','email','phone','parentName','parentPhone','parentEmail','notes'].forEach(k => { if((rec[k]||'').toString().trim()) n++; });
   REC_CHECKS.forEach(([k]) => { if(rec[k]) n++; });
-  if(waiverProgress(rec).done) n++;
+  if(name){ const ws = wvSum(name); if(ws.total - ws.need > 0) n++; }
   return n;
 }
 function recCard(p){
@@ -2319,11 +2760,8 @@ function recCard(p){
   const sqOpts = SQUADS.map(([v,l])=>`<option value="${v}" ${String(v)===String(p.squad)?'selected':''}>${l}</option>`).join('');
   const rankOpts = RANKS.map(r=>`<option value="${r}" ${r===p.rank?'selected':''}>${r}</option>`).join('');
   const checks = REC_CHECKS.map(([k,l]) => `<button type="button" class="rec-check ${rec[k]?'on':''}" data-k="${k}"><span class="box">${rec[k]?'✓':''}</span>${l}</button>`).join('');
-  const ws = rec.waiverSet || (rec.waiverSet = {});
-  const wp = waiverProgress(rec);
-  const wvChip = `<button type="button" class="rec-check wv-chip ${wp.state}" data-act="wv"><span class="box">${wp.state==='full'?'✓':(wp.state==='part'?'…':'')}</span><span class="wv-lbl">Waivers ${wp.done} of ${wp.total}</span></button>`;
-  const wvItems = WAIVER_ITEMS.map(([k,l]) => `<button type="button" class="rec-check ${ws[k]?'on':''}" data-wv="${k}"><span class="box">${ws[k]?'✓':''}</span>${l}</button>`).join('');
-  const wvLiab = WAIVER_LIAB.map(([k,l]) => `<button type="button" class="rec-check ${ws.liability===k?'on':''}" data-wl="${k}"><span class="box">${ws.liability===k?'✓':''}</span>${l}</button>`).join('');
+  const wsum = wvSum(p.name), wch = wvChipState(wsum);
+  const wvChip = `<button type="button" class="rec-check wv-chip ${wch.cls}" data-act="wv" data-wvchip="${escapeHtmlA(p.name)}"><span class="box">${wch.cls==='full'?'✓':(wch.cls==='part'?'…':'')}</span><span class="wv-lbl">Waivers ${wch.have} of ${wsum.total}</span></button>`;
   const cn = (cadNotes||[]).filter(x=>x.cadet===p.name);
   const cnRows = cn.length ? cn.slice().sort((a,b)=>(b.at||0)-(a.at||0)).map(x=>
     `<div class="recnote" data-cnid="${escapeHtmlA(x.id)}"><div class="recnote-top"><span class="recnote-name">${escapeHtmlA(x.name)}</span><span class="recnote-when">${x.at?new Date(x.at).toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'}):''}</span><button class="recnote-del" title="Delete note">&times;</button></div><div class="recnote-text">${escapeHtmlA(x.text)}</div></div>`
@@ -2331,7 +2769,7 @@ function recCard(p){
   wrap.innerHTML =
     `<div class="rec-head" data-act="toggle">
        <div><span class="rec-rank">${p.rank}</span> <span class="rec-name">${escapeHtmlA(p.name)}</span></div>
-       <div class="rec-meta"><span class="rec-filled">${recFilledCount(rec)?recFilledCount(rec)+' filled':'empty'}</span> <svg class="rec-chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div>
+       <div class="rec-meta"><span class="rec-filled">${recFilledCount(rec, p.name)?recFilledCount(rec, p.name)+' filled':'empty'}</span> <svg class="rec-chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div>
      </div>
      <div class="rec-body" style="display:none">
        <div class="rec-synced">Squad, rank, and join date stay in step with the Roster Editor.</div>
@@ -2352,10 +2790,8 @@ function recCard(p){
        </div>
        <div class="rec-checks">${checks}${wvChip}</div>
        <div class="wv-panel" style="display:none">
-         <div class="wv-h">Waivers on file</div>
-         <div class="rec-checks" style="margin-top:8px">${wvItems}</div>
-         <div class="wv-h" style="margin-top:12px">Release of Liability, complete only the one that applies</div>
-         <div class="rec-checks" style="margin-top:8px">${wvLiab}</div>
+         <div class="wv-h">Waivers: tap one to mark it Filed or see who received it</div>
+         <div class="wvt-cells wvt-embed" data-wvcells="${escapeHtmlA(p.name)}">${wvCellsHtml(p.name, wsum)}</div>
        </div>
        <div class="rec-grid">
          <label class="rec-field"><span>Email</span><input type="text" data-k="email" value="${escapeHtmlA(rec.email||'')}" placeholder="cadet@example.com"></label>
@@ -2375,7 +2811,7 @@ function recCard(p){
   wrap.querySelectorAll('input[data-k],textarea[data-k],select[data-k]').forEach(el => el.addEventListener('input', () => {
     rec[el.dataset.k] = el.value;
     if(el.dataset.k==='dob'){ const a=wrap.querySelector('[data-role="age"]'); if(a){ const yr=ageFrom(rec.dob); a.textContent = yr===null?'—':yr+' yrs'; a.classList.toggle('empty', yr===null); } }
-    wrap.querySelector('.rec-filled').textContent = recFilledCount(rec)?recFilledCount(rec)+' filled':'empty';
+    wrap.querySelector('.rec-filled').textContent = recFilledCount(rec, p.name)?recFilledCount(rec, p.name)+' filled':'empty';
     recSchedule();
   }));
   // roster-owned fields (squad, rank, join date) — write straight to the shared roster
@@ -2392,32 +2828,12 @@ function recCard(p){
   wrap.querySelectorAll('.rec-check[data-k]').forEach(btn => btn.addEventListener('click', () => {
     const k = btn.dataset.k; rec[k] = !rec[k];
     btn.classList.toggle('on', rec[k]); btn.querySelector('.box').textContent = rec[k]?'✓':'';
-    wrap.querySelector('.rec-filled').textContent = recFilledCount(rec)?recFilledCount(rec)+' filled':'empty';
+    wrap.querySelector('.rec-filled').textContent = recFilledCount(rec, p.name)?recFilledCount(rec, p.name)+' filled':'empty';
     recSchedule();
   }));
-  // waivers: chip toggles the panel; items toggle; liability behaves like a radio group
+  // waivers: the chip opens the panel; each waiver in it opens the tracker dialog (see WAIVER TRACKER)
   const wvPanel = wrap.querySelector('.wv-panel');
-  const wvChipEl = wrap.querySelector('.wv-chip');
-  function wvRefreshChip(){
-    const w = waiverProgress(rec);
-    wvChipEl.className = 'rec-check wv-chip ' + w.state;
-    wvChipEl.querySelector('.box').textContent = w.state==='full'?'✓':(w.state==='part'?'…':'');
-    wvChipEl.querySelector('.wv-lbl').textContent = `Waivers ${w.done} of ${w.total}`;
-    wrap.querySelector('.rec-filled').textContent = recFilledCount(rec)?recFilledCount(rec)+' filled':'empty';
-  }
-  wvChipEl.addEventListener('click', () => { wvPanel.style.display = wvPanel.style.display==='none' ? 'block' : 'none'; });
-  wrap.querySelectorAll('[data-wv]').forEach(btn => btn.addEventListener('click', () => {
-    const k = btn.dataset.wv; ws[k] = !ws[k]; if(!ws[k]) delete ws[k];
-    btn.classList.toggle('on', !!ws[k]); btn.querySelector('.box').textContent = ws[k]?'✓':'';
-    wvRefreshChip(); recSchedule();
-  }));
-  wrap.querySelectorAll('[data-wl]').forEach(btn => btn.addEventListener('click', () => {
-    const k = btn.dataset.wl;
-    ws.liability = (ws.liability === k) ? '' : k;
-    if(!ws.liability) delete ws.liability;
-    wrap.querySelectorAll('[data-wl]').forEach(b => { const on = ws.liability===b.dataset.wl; b.classList.toggle('on', on); b.querySelector('.box').textContent = on?'✓':''; });
-    wvRefreshChip(); recSchedule();
-  }));
+  wrap.querySelector('.wv-chip').addEventListener('click', () => { wvPanel.style.display = wvPanel.style.display==='none' ? 'block' : 'none'; });
   // per-cadet sergeant note lines (delete removes them from the shared feed too)
   wrap.querySelectorAll('.recnote-del').forEach(btn => btn.addEventListener('click', async () => {
     const id = btn.closest('.recnote').dataset.cnid;
@@ -3271,6 +3687,8 @@ document.getElementById('catBack').addEventListener('click', ()=>showView('hubVi
 document.getElementById('uniBack').addEventListener('click', ()=>showView('hubView'));
 document.getElementById('trnBack').addEventListener('click', ()=>showView('hubView'));
 document.getElementById('recBack').addEventListener('click', ()=>showView('hubView'));
+document.getElementById('wvBack').addEventListener('click', ()=>showView('hubView'));
+document.getElementById('wvtPrint').addEventListener('click', wvPrintMissing);
 document.getElementById('accBack').addEventListener('click', ()=>showView('hubView'));
 document.getElementById('aprBack').addEventListener('click', ()=>showView('hubView'));
 
@@ -3299,6 +3717,7 @@ async function openApprovals(){
     if(!rc.ok){ host.innerHTML='<p style="color:var(--red-glow);padding:24px;text-align:center">Could not unlock. Re-open the admin page and try again.</p>'; return; }
     aprPending = (await RPDRoster.pending.get()) || [];
     recData = (await RPDRoster.records.get()) || {};
+    try{ const wv = await RPDRoster.waivers.get(); if(wv){ wvData = wv; wvLoadErr = false; } }catch(e){ wvLoadErr = true; }
     try{ raDataApr = (await RPDRoster.ridealongs.get()) || []; }catch(e){ raDataApr = raDataApr || []; }
     renderApprovals();
   }catch(e){ host.innerHTML='<p style="color:var(--red-glow);padding:24px;text-align:center">Could not reach the database.</p>'; }
@@ -3316,9 +3735,10 @@ function aprCurrentDisplay(prop, c){
     return entry[c.field] || '—';
   }
   if(c.owner === 'waiver'){
-    const ws = (recData[prop.cadet] || {}).waiverSet || {};
-    if(c.field === 'liability') return ws.liability ? waiverLiabLabel(ws.liability) : '—';
-    return ws[c.field] ? 'On file' : 'Missing';
+    const r0 = recData[prop.cadet] || {};
+    const st = RPDRoster.waivers.status(c.field, (wvEntries(prop.cadet) || {})[c.field], r0.waiverSet, r0.dob);
+    if(c.field === 'liability') return (st.base !== 'missing' && st.type) ? wvLiabName(st.type) : '—';
+    return st.base === 'missing' ? 'Missing' : 'On file';
   }
   const rec = recData[prop.cadet] || {};
   const v = rec[c.field];
@@ -3382,6 +3802,7 @@ async function aprDecide(id, approve, el){
         recData = (await RPDRoster.records.get()) || {};
         const rec = recData[p.cadet] || (recData[p.cadet] = {});
         let rosterTouched=false, recTouched=false;
+        const wvOps=[];   // waiver changes from older proposals go to the waiver tracker, not Cadet Records
         (p.changes||[]).forEach(c=>{
           if(c.owner==='roster'){
             const entry = rosterEntryFor(p.cadet); if(!entry) return;
@@ -3390,14 +3811,24 @@ async function aprDecide(id, approve, el){
             else entry[c.field]=c.raw;
             rosterTouched=true;
           } else if(c.owner==='waiver'){
-            const ws = rec.waiverSet || (rec.waiverSet = {});
-            if(c.field==='liability'){ if(c.raw) ws.liability=c.raw; else delete ws.liability; }
-            else { if(c.raw) ws[c.field]=true; else delete ws[c.field]; }
-            recTouched=true;
+            wvOps.push(c);
           } else { rec[c.field]=c.raw; recTouched=true; }
         });
         if(recTouched) await RPDRoster.records.save(recData);
         if(rosterTouched) await RPDRoster.save(data);
+        if(wvOps.length){
+          // Approved = Filed today; the sergeant who proposed it is recorded as having received it.
+          const day = RPDRoster.waivers.today();
+          const pd = p.at ? new Date(p.at) : null;
+          const propDay = (pd && !isNaN(pd)) ? pd.getFullYear()+'-'+String(pd.getMonth()+1).padStart(2,'0')+'-'+String(pd.getDate()).padStart(2,'0') : day;
+          wvData = await RPDRoster.waivers.mutate(d=>{
+            const ce = d.cadets[p.cadet] || (d.cadets[p.cadet] = {});
+            wvOps.forEach(c=>{
+              if(c.raw){ const e={ s:'filed', rAt:propDay, rBy:p.by||'', fAt:day, fBy:'Advisor', at:Date.now() }; if(c.field==='liability') e.type=c.raw; ce[c.field]=e; }
+              else ce[c.field] = { s:'missing', at:Date.now() };
+            });
+          });
+        }
       }
     }
     aprPending = ((await RPDRoster.pending.get()) || []).filter(x=>x.id!==id);

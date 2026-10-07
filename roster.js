@@ -1,4 +1,4 @@
-/* roster.js  |  VERSION 31  |  updated 2026-10-07  |  Waiver tracker: new RPDRoster.waivers module. One encrypted node (roster/waivers, same records key, so the advisor, limited advisor, and sergeant tiers can open it and cadet tiers cannot) holds a per-cadet, per-waiver entry: Received (date + who accepted it, marked on /sgt) then Filed (marked on /admin). Existing Cadet Records checkmarks are read as Filed with no date and are never rewritten. waivers.status() also applies the turning-18 rule (re-sign each waiver once the cadet is 18; the liability release must be the adult version). waivers.mutate() re-reads the node before every write so two people marking at once do not overwrite each other. Nothing else changed. Prior v30 notes: Reference checks: new RPDRoster.references module for applicant reference questionnaires. The public /reference page encrypts each response in the reference's browser (RSA envelope, same idea as /guest) under a NEW reference key pair whose private half is wrapped ONLY under the full advisor passcode (roster/refKeyWrap), so the sergeant and limited-advisor tiers cannot open responses. Nodes: roster/refPub, refKeyWrap, refPrivWrap, refVault (advisor-only reference list), refInvites/{id} (one per emailed link, encrypted under a key derived from the link code), refAnswers/{id}, refDone/{id}. REF_SALT 'rpdcadets-reference-v1' and the derive recipe are duplicated in reference.html and must change together. No other module changed. Prior v29 notes: Task categories config: RPDRoster.taskconfig gains get/save (records key, node roster/taskConfig) holding {cats:[{id,label,color,retired}]} so the Tasks tab on /sgt can manage its own category list. Same isolation as tasks: reads and writes only roster/taskConfig. Prior v28 notes: Tasks board: RPDRoster.tasks gains get/save (records key, node roster/tasks), a flat array of {id, text, cat, cadet, assignee, due, priority, by, at, done, doneBy, doneAt} backing the new Tasks tab on /sgt. This module reads and writes ONLY roster/tasks; it never touches roster, records, requests, notes, or any other node. Prior v27 notes: Requests board: RPDRoster.requests gains get/save (records key, node roster/requests), a flat array of {id, name, text, at, done, doneAt} backing the new Requests tab on /sgt: sergeants post wants, changes, and policy proposals for the post; the advisor checks items off as they are completed and checked items sink below the open list. Prior v26 notes: Ride-Along Trackers inbox (submit cadet-tier via RSA envelope to roster/raInbox, merge records-tier into the log tagged via:'trackers', duplicate ledger at roster/raIndex, RA_SALT 'rpdcadets-ridealongs-v1' lives only in this file). Prior v25: RPDRoster.observers module for the public /guest interest form. */
+/* roster.js  |  VERSION 32  |  updated 2026-10-07  |  FIX: VERSION 31 failed to start in the browser. The public RPDRoster object (built near the top of this file) read the waiver constants WV_ITEMS / WV_LIAB / WV_SOON_DAYS before the lines that declare them had run, which throws "Cannot access before initialization" and left RPDRoster undefined on every page. The four waiver constants now sit directly above the RPDRoster object. No logic changed. Prior v31 notes: Waiver tracker: new RPDRoster.waivers module. One encrypted node (roster/waivers, same records key, so the advisor, limited advisor, and sergeant tiers can open it and cadet tiers cannot) holds a per-cadet, per-waiver entry: Received (date + who accepted it, marked on /sgt) then Filed (marked on /admin). Existing Cadet Records checkmarks are read as Filed with no date and are never rewritten. waivers.status() also applies the turning-18 rule (re-sign each waiver once the cadet is 18; the liability release must be the adult version). waivers.mutate() re-reads the node before every write so two people marking at once do not overwrite each other. Nothing else changed. Prior v30 notes: Reference checks: new RPDRoster.references module for applicant reference questionnaires. The public /reference page encrypts each response in the reference's browser (RSA envelope, same idea as /guest) under a NEW reference key pair whose private half is wrapped ONLY under the full advisor passcode (roster/refKeyWrap), so the sergeant and limited-advisor tiers cannot open responses. Nodes: roster/refPub, refKeyWrap, refPrivWrap, refVault (advisor-only reference list), refInvites/{id} (one per emailed link, encrypted under a key derived from the link code), refAnswers/{id}, refDone/{id}. REF_SALT 'rpdcadets-reference-v1' and the derive recipe are duplicated in reference.html and must change together. No other module changed. Prior v29 notes: Task categories config: RPDRoster.taskconfig gains get/save (records key, node roster/taskConfig) holding {cats:[{id,label,color,retired}]} so the Tasks tab on /sgt can manage its own category list. Same isolation as tasks: reads and writes only roster/taskConfig. Prior v28 notes: Tasks board: RPDRoster.tasks gains get/save (records key, node roster/tasks), a flat array of {id, text, cat, cadet, assignee, due, priority, by, at, done, doneBy, doneAt} backing the new Tasks tab on /sgt. This module reads and writes ONLY roster/tasks; it never touches roster, records, requests, notes, or any other node. Prior v27 notes: Requests board: RPDRoster.requests gains get/save (records key, node roster/requests), a flat array of {id, name, text, at, done, doneAt} backing the new Requests tab on /sgt: sergeants post wants, changes, and policy proposals for the post; the advisor checks items off as they are completed and checked items sink below the open list. Prior v26 notes: Ride-Along Trackers inbox (submit cadet-tier via RSA envelope to roster/raInbox, merge records-tier into the log tagged via:'trackers', duplicate ledger at roster/raIndex, RA_SALT 'rpdcadets-ridealongs-v1' lives only in this file). Prior v25: RPDRoster.observers module for the public /guest interest form. */
 /* ═══════════════════════════════════════════════════════════════════════
    RPD CADETS — SHARED ROSTER ENGINE
    One encrypted roster in Firebase, read by members, trackers, and
@@ -335,6 +335,24 @@
     return groups.filter(g => g.members.length);
   }
 
+  // Waiver tracker constants. They MUST be declared before the RPDRoster object below,
+  // because that object reads them the moment this file loads (v32 fix).
+  const WV_ITEMS = [
+    ['psc', 'Public Safety Cadets Agreement and Legal Waiver', 'PSC Agreement'],
+    ['ptc', 'Police Training Center Waiver', 'Training Center'],
+    ['photo', 'Photo Release', 'Photo Release'],
+    ['sim', 'Simunitions Waiver', 'Simunitions'],
+    ['med', 'Permission for Medical Treatment', 'Medical'],
+    ['liability', 'Release of Liability', 'Liability']
+  ];
+  const WV_LIAB = [
+    ['married', 'Release of Liability (Minors with Married Parents or Single Guardian)', 'Minor: married parents or single guardian'],
+    ['divorced', 'Release of Liability (Minors with Divorced Parents)', 'Minor: divorced parents'],
+    ['adult', 'Release of Liability (Adults, Cadets 18+)', 'Adult (18+)']
+  ];
+  const WV_LEGACY_CUTOFF = '2026-10-07';   // old checkmarks all predate the tracker
+  const WV_SOON_DAYS = 60;                 // "turns 18 soon" heads-up window
+
   global.RPDRoster = {
     connect, setup, linkRole, save, refresh, subscribe, get, getSorted, activeSorted,
     loadCatalog, saveCatalog, subscribeCatalog, getCatalog,
@@ -636,21 +654,7 @@
      rewritten here.
      Unlike the other nodes, a blob that will not decrypt THROWS instead of
      reading as empty, so a bad read can never be saved back over real data. */
-  const WV_ITEMS = [
-    ['psc', 'Public Safety Cadets Agreement and Legal Waiver', 'PSC Agreement'],
-    ['ptc', 'Police Training Center Waiver', 'Training Center'],
-    ['photo', 'Photo Release', 'Photo Release'],
-    ['sim', 'Simunitions Waiver', 'Simunitions'],
-    ['med', 'Permission for Medical Treatment', 'Medical'],
-    ['liability', 'Release of Liability', 'Liability']
-  ];
-  const WV_LIAB = [
-    ['married', 'Release of Liability (Minors with Married Parents or Single Guardian)', 'Minor: married parents or single guardian'],
-    ['divorced', 'Release of Liability (Minors with Divorced Parents)', 'Minor: divorced parents'],
-    ['adult', 'Release of Liability (Adults, Cadets 18+)', 'Adult (18+)']
-  ];
-  const WV_LEGACY_CUTOFF = '2026-10-07';   // old checkmarks all predate the tracker
-  const WV_SOON_DAYS = 60;                 // "turns 18 soon" heads-up window
+  // (WV_ITEMS, WV_LIAB, WV_LEGACY_CUTOFF, WV_SOON_DAYS are declared above the RPDRoster object; see the v32 note.)
   function wvIso(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
   function wvToday() { return wvIso(new Date()); }
   function wvValidDate(iso) { return /^\d{4}-\d{2}-\d{2}$/.test(String(iso || '')) && !isNaN(new Date(iso + 'T12:00:00')); }

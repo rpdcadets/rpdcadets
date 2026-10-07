@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- trackers.html  |  Build v19  |  updated 2026-07-23  |  pairs with roster.js v26  |  Officer popup fix: the approved-officers list is refetched when the popup opens with an empty cached list, so officers added in /admin after this page loaded (or missed by a transient connection error at load) now appear without a page reload. Shows a brief "Loading officers" state during the refetch. Prior v18 notes preserved: ride-along auto-log via officer popup, roster/raIndex duplicate ledger, RSA raInbox queue merged by /admin and /sgt, officer included in the Formspark email. -->
+<!-- trackers.html  |  Build v21  |  updated 2026-10-07  |  pairs with roster.js v30  |  Missed weekly attendance note: when the Weekly Meeting tab opens, a note at the top lists any Thursday meeting in the last 8 weeks with no attendance on file (one date reads as a single sentence, two or more as a list). A week counts as covered when any session or No Meeting marker falls in that Monday to Sunday week; today's Thursday is not counted until the next day; nothing before the earliest recorded session is flagged. Dates are plain text, not tappable. trackers.html only, roster.js unchanged. Prior v20 notes: Event/Activity hours guards (trackers.html only, roster.js unchanged): (1) Submit button locks while a submission is in flight. (2) Start and end times are rounded to the nearest 15 minutes before saving or emailing; the cadet gets one notice when a time changed. (3) Identical hours (same cadet, date, start, end) are blocked. (4) Hours that overlap an earlier entry for the same cadet are treated as a correction: the cadet may replace the earlier entry or entries, or cancel; both are never saved. Correction emails carry a CORRECTION field and subject. Overlaps with a ride-along entry are blocked (sergeant/advisor fixes those). Cache-buster bumped to roster.js?v=30. This restores and extends the July 8 double-submission guard that was overwritten by a cache-buster copy. Prior v19 notes: officer popup refetches the approved-officers list when the cached list is empty. Prior v18 notes: ride-along auto-log via officer popup, roster/raIndex duplicate ledger, RSA raInbox queue merged by /admin and /sgt, officer included in the Formspark email. -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -9,7 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@300;400;500;600;700&family=Barlow+Condensed:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
-<script src="roster.js?v=26"></script>
+<script src="roster.js?v=30"></script>
 <style>
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 :root {
@@ -103,6 +103,11 @@ nav.scrolled { background: rgba(15,26,48,0.97); box-shadow: 0 4px 30px rgba(0,0,
 .submit-btn:hover { background: var(--red-glow); transform: translateY(-2px); box-shadow: 0 8px 30px rgba(192,57,43,0.4); }
 .submit-btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none; box-shadow: none; }
 .error-msg { color: var(--red-glow); font-size: 13px; margin-top: 12px; min-height: 20px; text-align: center; font-weight: 500; }
+/* Missed weekly attendance note (Build v21) */
+.att-missed-note { margin: 0 0 18px; background: rgba(212,169,82,0.08); border: 1px solid rgba(212,169,82,0.35); border-left: 3px solid var(--gold); border-radius: 10px; padding: 12px 16px; font-size: 13.5px; line-height: 1.55; color: var(--gold-light); }
+.att-missed-note strong { color: var(--gold); }
+.att-missed-note ul { margin: 6px 0 0; padding-left: 20px; }
+.att-missed-note li { margin: 2px 0; }
 
 /* ─── ATTENDANCE PANEL ─── */
 .stats-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-bottom: 24px; }
@@ -436,7 +441,7 @@ footer { background: var(--navy); border-top: 1px solid rgba(255,255,255,0.05); 
         Return to Home
       </a>
     </div>
-    <div style="margin-top:20px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v19</div>
+    <div style="margin-top:20px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v21</div>
   </div>
 </div>
 
@@ -568,7 +573,73 @@ function switchTab(tab) {
   } else {
     document.getElementById('tabAttendance').classList.add('active');
     document.getElementById('panelAttendance').classList.add('active');
+    attMissedCheck();
   }
+}
+
+/* ── MISSED WEEKLY ATTENDANCE NOTE (Build v21) ──
+   Shown at the top of the Weekly Meeting tab when a recent Thursday has no
+   attendance on file. Rules:
+     - looks back ATT_MISSED_WEEKS Thursdays, starting with the most recent
+       Thursday BEFORE today (tonight's meeting is not "missed" yet)
+     - a week is covered when any session or No Meeting marker is dated in that
+       Monday to Sunday week (so an off-day meeting covers its week)
+     - nothing earlier than the first recorded session is flagged
+     - clears when the date is submitted, or an advisor marks it No Meeting in /admin
+   Read-only and best-effort: if attendance cannot be read, no note is shown.
+   The element is created here, so the encrypted form markup is untouched. */
+const ATT_MISSED_WEEKS = 8;
+function attMissedIso(d){ return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
+function attMissedDates(data, today){
+  const have = new Set();
+  Object.keys(data||{}).forEach(k => {
+    const d = (data[k] && data[k].date) || k;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(d)) have.add(d);
+  });
+  if (!have.size) return [];
+  const earliest = Array.from(have).sort()[0];
+  const base = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 12);
+  const back = ((base.getDay() - 4 + 7) % 7) || 7;   // days back to the last Thursday before today
+  const out = [];
+  for (let i = 0; i < ATT_MISSED_WEEKS; i++) {
+    const thu = new Date(base); thu.setDate(base.getDate() - back - 7*i);
+    let covered = false, inRecord = false;
+    for (let o = -3; o <= 3; o++) {
+      const x = new Date(thu); x.setDate(thu.getDate() + o);
+      const xi = attMissedIso(x);
+      if (have.has(xi)) { covered = true; break; }
+      if (xi >= earliest) inRecord = true;
+    }
+    if (!covered && !inRecord) break;       // this week is entirely before record keeping began
+    if (!covered && attMissedIso(thu) >= earliest) out.push(attMissedIso(thu));
+  }
+  return out.reverse();                      // oldest first
+}
+function attMissedFmt(iso, today){
+  const d = new Date(iso + 'T12:00:00');
+  const opt = { weekday:'long', month:'long', day:'numeric' };
+  if (d.getFullYear() !== today.getFullYear()) opt.year = 'numeric';
+  return d.toLocaleDateString('en-US', opt);
+}
+async function attMissedCheck(){
+  const panel = document.getElementById('panelAttendance');
+  if (!panel) return;
+  let box = document.getElementById('attMissedNote');
+  let data = null;
+  try { if (window.RPDRoster && RPDRoster.attendance) data = await RPDRoster.attendance.get(); } catch (e) { data = null; }
+  const today = new Date();
+  const missed = data ? attMissedDates(data, today) : [];
+  if (!missed.length) { if (box) box.style.display = 'none'; return; }
+  if (!box) {
+    box = document.createElement('div');
+    box.id = 'attMissedNote';
+    box.className = 'att-missed-note';
+    panel.insertBefore(box, panel.firstChild);
+  }
+  box.innerHTML = (missed.length === 1)
+    ? '<strong>Note:</strong> attendance for the ' + attMissedFmt(missed[0], today) + ' meeting was not submitted.'
+    : '<strong>Attendance was not submitted for the following meetings:</strong><ul>' + missed.map(m => '<li>' + attMissedFmt(m, today) + '</li>').join('') + '</ul>';
+  box.style.display = '';
 }
 
 /* ── CURRENT ATTENDANCE (read-only roll-up; shares roster.js rollup) ── */
@@ -1026,21 +1097,140 @@ function updateEventHoursCalc(){
   return h;
 }
 
+/* ═══════ EVENT HOURS GUARDS (Build v20) ═══════
+   1) evSubmitting + evLock: the Submit button locks while a submission is in
+      flight, so a rapid double tap cannot fire twice.
+   2) Start and end times are rounded to the nearest 15 minutes before anything
+      is saved or emailed. The cadet gets one notice when a time changed.
+   3) Before saving, existing records for the same cadet are checked:
+        identical date + start + end -> blocked outright
+        overlapping times            -> treated as a correction: the cadet may
+                                        replace the earlier entry (or entries)
+                                        or cancel. Both are never saved.
+        overlap with a ride-along    -> blocked. Ride-along fixes go through a
+                                        sergeant or advisor, because the
+                                        Ride-Along Log entry is separate and a
+                                        cadet-side replace would leave the two
+                                        out of sync.
+   The check is best-effort: if the database cannot be read, the submission
+   goes through unchecked (the email is still the record of it).
+   Names are compared with any rank prefix stripped, so a promotion between
+   two entries does not hide a duplicate. */
+let evSubmitting = false;
+function evSubmitBtn(){
+  const btns = document.querySelectorAll('button');
+  for (let i=0; i<btns.length; i++){
+    if ((btns[i].getAttribute('onclick')||'').indexOf('handleEventSubmit') > -1) return btns[i];
+  }
+  return null;
+}
+function evLock(on){
+  evSubmitting = on;
+  const b = evSubmitBtn();
+  if(!b) return;
+  if(on){ if(!b.dataset.origHtml) b.dataset.origHtml = b.innerHTML; b.disabled = true; b.textContent = 'Submitting\u2026'; }
+  else { b.disabled = false; if(b.dataset.origHtml) b.innerHTML = b.dataset.origHtml; }
+}
+// If the cadet returns with the Back button, the page can be restored with the button still locked.
+window.addEventListener('pageshow', function(e){ if (e.persisted) evLock(false); });
+
+function evToMin(t){ const p=String(t||'').split(':').map(Number); return (p[0]||0)*60 + (p[1]||0); }
+function evFromMin(m){ return String(Math.floor(m/60)).padStart(2,'0') + ':' + String(m%60).padStart(2,'0'); }
+// Nearest 15 minutes: 1 to 7 minutes past a block rounds down, 8 to 14 rounds up.
+// A start that would round up to midnight stays at 11:45 PM so it never jumps a day.
+function evRoundTimes(startV, endV){
+  let s = Math.round(evToMin(startV)/15)*15;
+  let e = Math.round(evToMin(endV)/15)*15;
+  if (s >= 1440) s = 1425;
+  if (e >= 1440) e = (s === 0) ? 1425 : 0;   // 12:00 AM end reads as "through midnight"
+  const rs = evFromMin(s), re = evFromMin(e);
+  return { start: rs, end: re, startChanged: evToMin(startV) !== s, endChanged: evToMin(endV) !== e };
+}
+function evNameKey(n){
+  return String(n==null?'':n).replace(/^(?:(?:[A-Za-z]{2,5}\.|Captain)\s+)+/,'').replace(/\s+/g,' ').trim().toLowerCase();
+}
+function evDayNum(iso){
+  const p = String(iso||'').split('-').map(Number);
+  if (p.length !== 3 || p.some(isNaN)) return null;
+  return Math.round(Date.UTC(p[0], p[1]-1, p[2]) / 86400000);
+}
+// Absolute [start, end) in minutes; an end earlier than the start runs past midnight.
+function evSpan(date, start, end){
+  const d = evDayNum(date);
+  if (d === null || !start || !end) return null;
+  const st = evToMin(start);
+  let len = evToMin(end) - st;
+  if (len < 0) len += 1440;
+  return [d*1440 + st, d*1440 + st + len];
+}
+function evFindConflicts(existing, name, isoDate, startV, endV){
+  const out = { same: [], overlap: [] };
+  const me = evNameKey(name), span = evSpan(isoDate, startV, endV);
+  if (!me || !span) return out;
+  (existing||[]).forEach(r => {
+    if (!r || evNameKey(r.cadet) !== me) return;
+    const rs = evSpan(r.date, r.start, r.end);
+    if (!rs) return;
+    if (rs[0] === span[0] && rs[1] === span[1]) { out.same.push(r); return; }
+    if (rs[0] < span[1] && span[0] < rs[1]) out.overlap.push(r);
+  });
+  return out;
+}
+function evPrettyDate(iso){
+  const p = String(iso||'').split('-');
+  if (p.length !== 3) return String(iso||'');
+  const mon = Object.keys(EV_MONTHS).find(k => EV_MONTHS[k] === p[1]) || p[1];
+  return mon + ' ' + Number(p[2]) + ', ' + p[0];
+}
+function evDescribe(r){
+  let h = Number(r.hours);
+  if (isNaN(h)) { const c = eventHoursFrom(r.start, r.end); h = (c === null) ? 0 : c; }
+  return (r.event || 'Event') + ', ' + evPrettyDate(r.date) + ', ' + evFmtTime(r.start) + ' to ' + evFmtTime(r.end) + ' (' + h + (h===1?' hr':' hrs') + ')';
+}
+function evSig(r){ return r && r.id ? 'id:' + r.id : JSON.stringify([r.cadet, r.date, r.event, r.start, r.end, r.ts]); }
+
 async function handleEventSubmit() {
+  if (evSubmitting) return;
   const name = selectedName || nameInput.value.trim();
   const month = document.getElementById('fMonth').value;
   const day = document.getElementById('fDay').value;
   const year = document.getElementById('fYear').value;
   const customEl = document.getElementById('fEventCustom');
   const ev = (customEl && customEl.style.display==='block') ? customEl.value.trim() : document.getElementById('fEvent').value.trim();
-  const startV = document.getElementById('fStart').value;
-  const endV = document.getElementById('fEnd').value;
+  const startEl = document.getElementById('fStart');
+  const endEl = document.getElementById('fEnd');
+  let startV = startEl.value;
+  let endV = endEl.value;
   const comments = document.getElementById('fComments').value.trim();
   const err = document.getElementById('eventError');
+  err.textContent = '';
   if(!name){ err.textContent='Please select or enter your name.'; return; }
   if(!month||!day||!year){ err.textContent='Please fill in the complete date.'; return; }
   if(!ev){ err.textContent='Please enter the event name.'; return; }
   if(!startV||!endV){ err.textContent='Please enter both a start and end time.'; return; }
+  const rawHours = eventHoursFrom(startV, endV);
+  if(rawHours===null || rawHours<=0){ err.textContent='End time must be after start time.'; return; }
+
+  // Round to the nearest 15 minutes. The form fields are updated to match, so the
+  // notice shows once and everything after this point uses the rounded times.
+  const rounded = evRoundTimes(startV, endV);
+  if (rounded.startChanged || rounded.endChanged) {
+    if (rounded.start === rounded.end) {
+      err.textContent = 'Times are rounded to the nearest 15 minutes, and both of yours round to ' + evFmtTime(rounded.start) + '. Entries must be at least 15 minutes long. Please check your times.';
+      return;
+    }
+    const was = { start: startV, end: endV };
+    startV = rounded.start; endV = rounded.end;
+    startEl.value = startV; endEl.value = endV;
+    const rh = updateEventHoursCalc();
+    let note = 'Your times were rounded to the nearest 15 minutes for easier tracking.\n';
+    if (rounded.startChanged) note += '\nStart: ' + evFmtTime(was.start) + ' is now ' + evFmtTime(startV);
+    if (rounded.endChanged)   note += '\nEnd: ' + evFmtTime(was.end) + ' is now ' + evFmtTime(endV);
+    const th = (rh === null || rh === undefined) ? eventHoursFrom(startV, endV) : rh;
+    note += '\n\nTotal: ' + th + (th===1 ? ' hour' : ' hours');
+    alert(note);
+  }
+
   const hours = eventHoursFrom(startV, endV);
   if(hours===null || hours<=0){ err.textContent='End time must be after start time.'; return; }
   if(hours>8){
@@ -1052,72 +1242,130 @@ async function handleEventSubmit() {
 
   // Ride-along events must name an approved officer and cannot be submitted twice
   const isRA = isRideAlongEvent(ev);
-  if (isRA) {
-    if (!raChosenOfficer) { openRaModal(); return; }
+  if (isRA && !raChosenOfficer) { openRaModal(); return; }
+
+  // From here on the work is async: lock the button, and unlock on any early exit.
+  evLock(true);
+  let submitted = false;
+  try {
+    if (isRA) {
+      try {
+        if (window.RPDRoster && RPDRoster.ridealongs && RPDRoster.ridealongs.hashExists) {
+          if (await RPDRoster.ridealongs.hashExists(name, raChosenOfficer, isoDate)) {
+            err.textContent = 'A ride-along for you with ' + raChosenOfficer + ' on this date has already been submitted. If this is a correction, ask an advisor or sergeant to delete the original entry first.';
+            return;
+          }
+        }
+      } catch(e) { /* if the check itself fails, the merge-time dedupe still catches repeats */ }
+    }
+    const timeStr = evFmtTime(startV) + ' \u2013 ' + evFmtTime(endV) + ' (' + hours + (hours===1?' hr':' hrs') + ')';
+
+    // Duplicate / overlap check against what is already in the hours database.
+    // Best-effort: a read failure never blocks a legitimate submission.
+    let existing = null;
     try {
-      if (window.RPDRoster && RPDRoster.ridealongs && RPDRoster.ridealongs.hashExists) {
-        if (await RPDRoster.ridealongs.hashExists(name, raChosenOfficer, isoDate)) {
-          err.textContent = 'A ride-along for you with ' + raChosenOfficer + ' on this date has already been submitted. If this is a correction, ask an advisor or sergeant to delete the original entry first.';
+      if (window.RPDRoster && RPDRoster.events) existing = await RPDRoster.events.get();
+    } catch (e) { existing = null; }
+    let replaceList = [];
+    if (existing && existing.length) {
+      const found = evFindConflicts(existing, name, isoDate, startV, endV);
+      if (found.same.length) {
+        err.textContent = 'These hours are already logged: ' + evDescribe(found.same[0]) + '. Nothing was submitted. If that entry is wrong, ask a sergeant or advisor to fix it.';
+        return;
+      }
+      if (found.overlap.length) {
+        const list = found.overlap.map(r => '  ' + evDescribe(r)).join('\n');
+        const n = found.overlap.length;
+        if (found.overlap.some(r => isRideAlongEvent(r.event))) {
+          err.textContent = 'These hours overlap a ride-along you already logged (' + found.overlap.filter(r => isRideAlongEvent(r.event)).map(evDescribe).join('; ') + '). Ride-along entries can only be corrected by a sergeant or advisor. Nothing was submitted.';
           return;
         }
+        const newLine = '  ' + ev + ', ' + dateStr + ', ' + evFmtTime(startV) + ' to ' + evFmtTime(endV) + ' (' + hours + (hours===1?' hr':' hrs') + ')';
+        const msg = (n === 1)
+          ? 'These hours overlap an entry you already logged:\n\n' + list + '\n\nYour new entry:\n' + newLine + '\n\nIs this a correction? Tap OK to replace the earlier entry with the new one, or Cancel to keep the earlier entry. If you cancel, nothing is submitted.'
+          : 'Your new hours overlap ' + n + ' entries you already logged:\n\n' + list + '\n\nYour new entry:\n' + newLine + '\n\nTap OK to replace ' + (n === 2 ? 'both' : 'all ' + n) + ' with the new entry, or Cancel to keep them. If you cancel, nothing is submitted.';
+        if (!confirm(msg)) {
+          err.textContent = 'Nothing was submitted. Your earlier ' + (n === 1 ? 'entry was' : 'entries were') + ' kept.';
+          return;
+        }
+        replaceList = found.overlap;
       }
-    } catch(e) { /* if the check itself fails, the merge-time dedupe still catches repeats */ }
-  }
-  const timeStr = evFmtTime(startV) + ' \u2013 ' + evFmtTime(endV) + ' (' + hours + (hours===1?' hr':' hrs') + ')';
-
-  // Disable the old static fields so lowercase ones don't duplicate in the email
-  ['hName','hMonth','hDay','hYear','hEvent','hTime','hComments'].forEach(id=>{
-    const el=document.getElementById(id); if(el) el.disabled=true;
-  });
-
-  // Inject clean, ordered fields with friendly labels
-  const form=document.getElementById('eventRealForm');
-  form.querySelectorAll('.cleanField').forEach(n=>n.remove());
-  const addField=(label,value)=>{
-    const inp=document.createElement('input');
-    inp.type='hidden'; inp.name=label; inp.value=value; inp.className='cleanField';
-    form.insertBefore(inp, form.firstChild);
-  };
-  // final order reads: Name, Date, Event, [Ride-Along Officer,] Time Worked, Comments
-  addField('Comments', comments || '(none)');
-  addField('Time Worked', timeStr);
-  if (isRA) addField('Ride-Along Officer', raChosenOfficer);
-  addField('Event / Activity', ev);
-  addField('Date', dateStr);
-  addField('Name', name);
-
-  // Store an encrypted copy for the /admin Attendance & Hours roll-up. Awaited so it
-  // lands before the form POST redirects; wrapped so a sync hiccup never blocks submit.
-  try {
-    if (window.RPDRoster && RPDRoster.events) {
-      await RPDRoster.events.add({
-        cadet: name, date: isoDate, event: ev,
-        start: startV, end: endV, hours: hours,
-        comments: comments, ts: Date.now()
-      });
     }
-  } catch (e) {
-    alert('Heads up: your email will still send, but saving to the hours database failed (connection issue). These hours will not show in Current Attendance until an advisor logs them in the admin console.');
-  }
 
-  // Ride-along: drop an encrypted entry in the log inbox. The /admin and /sgt
-  // consoles merge it into the official Ride-Along Log the next time they open.
-  if (isRA) {
+    // Disable the old static fields so lowercase ones don't duplicate in the email
+    ['hName','hMonth','hDay','hYear','hEvent','hTime','hComments'].forEach(id=>{
+      const el=document.getElementById(id); if(el) el.disabled=true;
+    });
+
+    // Inject clean, ordered fields with friendly labels
+    const form=document.getElementById('eventRealForm');
+    form.querySelectorAll('.cleanField').forEach(n=>n.remove());
+    const addField=(label,value)=>{
+      const inp=document.createElement('input');
+      inp.type='hidden'; inp.name=label; inp.value=value; inp.className='cleanField';
+      form.insertBefore(inp, form.firstChild);
+    };
+    // final order reads: [CORRECTION,] Name, Date, Event, [Ride-Along Officer,] Time Worked, Comments
+    addField('Comments', comments || '(none)');
+    addField('Time Worked', timeStr);
+    if (isRA) addField('Ride-Along Officer', raChosenOfficer);
+    addField('Event / Activity', ev);
+    addField('Date', dateStr);
+    addField('Name', name);
+    if (replaceList.length) {
+      addField('CORRECTION', 'This submission replaces ' + (replaceList.length === 1 ? 'an earlier entry' : replaceList.length + ' earlier entries') + ': ' + replaceList.map(evDescribe).join('; '));
+      addField('_email.subject', 'CORRECTION: Event hours, ' + name + ', ' + dateStr);
+    }
+
+    // Store an encrypted copy for the /admin Attendance & Hours roll-up. Awaited so it
+    // lands before the form POST redirects; wrapped so a sync hiccup never blocks submit.
     try {
-      if (window.RPDRoster && RPDRoster.ridealongs && RPDRoster.ridealongs.submit) {
-        await RPDRoster.ridealongs.submit({
-          cadet: name, officer: raChosenOfficer, date: isoDate,
-          start: startV, end: endV, notes: comments
-        });
+      if (window.RPDRoster && RPDRoster.events) {
+        const rec = {
+          cadet: name, date: isoDate, event: ev,
+          start: startV, end: endV, hours: hours,
+          comments: comments, ts: Date.now()
+        };
+        if (replaceList.length) {
+          // Correction: re-read, drop the replaced entries, add the new one, save once.
+          const all = await RPDRoster.events.get();
+          if (!all || !all.length) throw new Error('hours database unavailable');
+          const gone = new Set(replaceList.map(evSig));
+          const kept = all.filter(r => !gone.has(evSig(r)));
+          rec.id = 'ev_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+          kept.push(rec);
+          await RPDRoster.events.save(kept);
+        } else {
+          await RPDRoster.events.add(rec);
+        }
       }
     } catch (e) {
-      if (!(e && e.duplicate)) {
-        alert('Heads up: your hours saved, but the Ride-Along Log entry could not be recorded (connection issue). Let an advisor know so they can log your ride with ' + raChosenOfficer + ' manually.');
+      if (replaceList.length) alert('Heads up: your email will still send, but the correction could not be saved to the hours database (connection issue). Your earlier entry is still on file. Let an advisor know so they can fix it in the admin console.');
+      else alert('Heads up: your email will still send, but saving to the hours database failed (connection issue). These hours will not show in Current Attendance until an advisor logs them in the admin console.');
+    }
+
+    // Ride-along: drop an encrypted entry in the log inbox. The /admin and /sgt
+    // consoles merge it into the official Ride-Along Log the next time they open.
+    if (isRA) {
+      try {
+        if (window.RPDRoster && RPDRoster.ridealongs && RPDRoster.ridealongs.submit) {
+          await RPDRoster.ridealongs.submit({
+            cadet: name, officer: raChosenOfficer, date: isoDate,
+            start: startV, end: endV, notes: comments
+          });
+        }
+      } catch (e) {
+        if (!(e && e.duplicate)) {
+          alert('Heads up: your hours saved, but the Ride-Along Log entry could not be recorded (connection issue). Let an advisor know so they can log your ride with ' + raChosenOfficer + ' manually.');
+        }
       }
     }
-  }
 
-  form.submit();
+    submitted = true;
+    form.submit();
+  } finally {
+    if (!submitted) evLock(false);
+  }
 }
 
 // ═══════ ATTENDANCE FORM ═══════

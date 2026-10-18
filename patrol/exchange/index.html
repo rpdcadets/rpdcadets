@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- patrol/exchange/index.html | Build v9 | 2026-10-05 | Real progress bar and red Serial Printer hint under the Print button. v8: Compatibility mode switch in troubleshooting. v7: Setup steps assume the MDC is already paired; pairing is now the fallback. v6: Setup step 5 wording: "Serial Printer" plus a COM number, with an example. v5: Setup steps: pick the "Serial Printer (COMx)" entry, not the serial-number entry. v4: Setup step 3 now covers the Bluetooth PIN and the checkmark button on the printer. v3: Everything prints in ALL CAPS; driver phone field per unit; optional witnesses (name and phone) with their own Add button, printed after the units. v2: QR now points to the accident report page. v1: New tool. Driver Information Exchange slip for crashes: any number of units, each with driver, vehicle, and liability insurance; header with service number, date/time, location, officer. Slip is drawn on a canvas to match the old Brazos layout (city wordmark, title, courtesy text, contact paragraph, address block with QR code, boxed sections) and printed on the in-car Zebra via /patrol/print.js. VIN check-digit validation. Nothing stored. -->
+<!-- patrol/exchange/index.html | Build v10 | 2026-10-18 | Phone scanning and desktop handoff. Each unit has Scan license (reads the barcode on the back of a driver license or ID with the phone camera and fills last name, first name, license number, and state; everything else on the card is discarded) and Scan VIN (reads the door-jamb VIN barcode, then fills year, make, and model from the NHTSA vPIC decoder; only the VIN is sent). Both run through the shared /patrol/scan.js and show only where a camera is available. New Desktop code button: the whole form travels to the squad computer as an encrypted D-code (same PBKDF2 / AES-GCM / 20-minute scheme as the other tools; the /patrol code box routes D to this page), restores there, and prints as usual; Firebase loads only when a code is made or picked up. Masthead and note wording updated. v9: Real progress bar and red Serial Printer hint under the Print button. v8: Compatibility mode switch in troubleshooting. v7: Setup steps assume the MDC is already paired; pairing is now the fallback. v6: Setup step 5 wording: "Serial Printer" plus a COM number, with an example. v5: Setup steps: pick the "Serial Printer (COMx)" entry, not the serial-number entry. v4: Setup step 3 now covers the Bluetooth PIN and the checkmark button on the printer. v3: Everything prints in ALL CAPS; driver phone field per unit; optional witnesses (name and phone) with their own Add button, printed after the units. v2: QR now points to the accident report page. v1: New tool. Driver Information Exchange slip for crashes: any number of units, each with driver, vehicle, and liability insurance; header with service number, date/time, location, officer. Slip is drawn on a canvas to match the old Brazos layout (city wordmark, title, courtesy text, contact paragraph, address block with QR code, boxed sections) and printed on the in-car Zebra via /patrol/print.js. VIN check-digit validation. Nothing stored. -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -52,7 +52,19 @@
   @media(max-width:600px){.c4,.c3{grid-column:span 6;} .c2{grid-column:span 3;} .c1{grid-column:span 2;}}
   .addrow{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;} .addrow .btn.add{margin-bottom:0;}
   .btn.add.wit{background:#fff;color:var(--navy);border:1.5px solid var(--navy);}
-  .sect{font-family:"Barlow Condensed",sans-serif;font-size:15px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin:14px 0 6px;grid-column:1/-1;}
+  .sect{font-family:"Barlow Condensed",sans-serif;font-size:15px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin:14px 0 6px;grid-column:1/-1;display:flex;align-items:center;gap:10px;}
+  .scanbtn{margin-left:auto;font-family:"Barlow Condensed",sans-serif;font-size:17px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;min-height:40px;padding:6px 14px;border:0;border-radius:8px;background:var(--navy);color:#fff;cursor:pointer;display:none;}
+  body.can-scan .scanbtn{display:inline-flex;align-items:center;gap:6px;}
+  .scanbtn:disabled{opacity:.5;}
+  .btn.code{background:var(--navy);color:#fff;}
+  .modal{display:none;position:fixed;inset:0;z-index:50;background:rgba(11,31,58,.75);align-items:center;justify-content:center;padding:18px;}
+  .modal.show{display:flex;}
+  .modal .box{background:#fff;border-radius:10px;padding:20px 18px;max-width:460px;width:100%;text-align:center;}
+  .modal h3{margin:0 0 6px;font-family:"Barlow Condensed",sans-serif;font-size:22px;letter-spacing:.04em;text-transform:uppercase;color:var(--navy);}
+  .modal p{margin:0 0 12px;font-size:14.5px;color:var(--ink);text-align:left;line-height:1.45;}
+  .bigcode{font-family:"Barlow Condensed",monospace;font-size:44px;font-weight:700;letter-spacing:.22em;color:var(--navy);margin:6px 0 8px;}
+  .linkline{font-size:13px;color:var(--muted);word-break:break-all;margin-bottom:10px;}
+  .modal .btn{margin-top:8px;}
   .sect:first-child{margin-top:0;}
   .chips{display:flex;flex-wrap:wrap;gap:6px;grid-column:1/-1;}
   .chip{font-family:"Barlow Condensed",sans-serif;font-size:16px;font-weight:700;letter-spacing:.04em;min-height:40px;padding:6px 14px;border:1.5px solid var(--line);border-radius:8px;background:var(--field);color:var(--navy);cursor:pointer;}
@@ -79,11 +91,11 @@
 <header class="masthead">
   <p class="kick">Public Safety &middot; Field Tools</p>
   <h1>Driver Information Exchange</h1>
-  <div class="sub">Type each unit's driver, vehicle, and insurance, then print one slip per driver on the in-car printer. <a href="/patrol/">&lsaquo; All tools</a></div>
+  <div class="sub">Scan or type each unit's driver, vehicle, and insurance, on your phone or the MDC, then print one slip per driver on the in-car printer. <a href="/patrol/">&lsaquo; All tools</a></div>
 </header>
 
 <div class="wrap">
-  <p class="interim">Interim tool. Runs entirely in this browser. Nothing is stored or sent anywhere except to the printer.</p>
+  <p class="interim">Interim tool. Runs in this browser and nothing is stored. A scanned license is read on the phone and only name, license number, and state are kept; a scanned VIN is sent to NHTSA for year, make, and model; a desktop code carries the form to the squad computer encrypted for 20 minutes. Nothing else leaves the device.</p>
 
   <div class="in">
     <div class="card">
@@ -102,6 +114,12 @@
     <div class="addrow">
       <button type="button" class="btn add" id="addUnit">+ Add another unit</button>
       <button type="button" class="btn add wit" id="addWit">+ Add witness</button>
+    </div>
+    <div class="card">
+      <h2>Send to the squad computer</h2>
+      <p class="note">Filling this out on your phone? Get a code, then enter it in the Desktop code box at <b>rpdcadets.com/patrol</b> on the MDC. The form opens there filled in, ready to print. Works once, expires in 20 minutes.</p>
+      <button type="button" class="btn code" id="codeBtn">Get desktop code</button>
+      <div class="status" id="codeStatus"></div>
     </div>
   </div>
 
@@ -149,9 +167,19 @@
   </div>
 </div>
 
-<footer class="foot">Build v9</footer>
+<div class="modal" id="codeModal"><div class="box">
+  <h3>Desktop code</h3>
+  <p style="text-align:center;">On the MDC, open <b>rpdcadets.com/patrol</b>, enter this code in the Desktop code box, and the exchange opens filled in, ready to print. Works once, expires in 20 minutes.</p>
+  <div class="bigcode" id="bigCode"></div>
+  <div class="linkline" id="fullLink"></div>
+  <button type="button" class="btn sec" id="copyLink">Copy link</button>
+  <button type="button" class="btn" id="closeModal">Done</button>
+</div></div>
+
+<footer class="foot">Build v10</footer>
 
 <script src="/patrol/print.js"></script>
+<script src="/patrol/scan.js"></script>
 <script>
 (function(){
   'use strict';
@@ -209,7 +237,10 @@
     var card = document.createElement('div'); card.className = 'card unit'; card.dataset.id = unitSeq;
     var h = '<h2><span class="uname">Unit ' + pad(n) + '</span><button type="button" class="rm">Remove</button></h2><div class="g">';
     FIELDS.forEach(function(f){
-      if(f[0] === 'sect'){ h += '<div class="sect">' + f[1] + '</div>'; return; }
+      if(f[0] === 'sect'){
+        var sb = f[1] === 'Driver' ? '<button type="button" class="scanbtn" data-scan="license">Scan license</button>' : f[1] === 'Vehicle' ? '<button type="button" class="scanbtn" data-scan="vin">Scan VIN</button>' : '';
+        h += '<div class="sect"><span>' + f[1] + '</span>' + sb + '</div>'; return;
+      }
       var inputmode = f[3] === 'numeric' ? 'numeric' : (f[3] === 'tel' ? 'tel' : 'text');
       h += '<div class="f ' + f[2] + '"><label>' + f[1] + '</label><input data-k="' + f[0] + '" inputmode="' + inputmode + '" autocomplete="off"' +
            (f[4] === 'upper' ? ' style="text-transform:uppercase"' : '') + (f[5] ? ' value="' + f[5] + '"' : '') + '>' +
@@ -227,6 +258,7 @@
       renumber(); draw();
     });
     card.addEventListener('click', function(ev){
+      var sb = ev.target.closest('.scanbtn'); if(sb){ doScan(card, sb.dataset.scan, sb); return; }
       var ch = ev.target.closest('.chip'); if(!ch) return;
       card.querySelector('input[data-k="color"]').value = ch.dataset.color; draw();
     });
@@ -278,6 +310,102 @@
     $('units').innerHTML = ''; $('witnesses').innerHTML = ''; addUnit(); addUnit();
     setStatus('');
   });
+
+  // ---------- scanning (phone camera, shared /patrol/scan.js) ----------
+  var canScan = !!(window.RPDScan && RPDScan.supported());
+  if(canScan) document.body.classList.add('can-scan');
+  // A computer with no camera at all gets no scan buttons (the MDC's built-in camera counts, the phone always does).
+  if(canScan && navigator.mediaDevices.enumerateDevices){ navigator.mediaDevices.enumerateDevices().then(function(list){ if(!list.some(function(d){ return d.kind === 'videoinput'; })) document.body.classList.remove('can-scan'); }).catch(function(){}); }
+  if(window.RPDScan) RPDScan.log = log;
+  function setVal(card, k, v){ var i = card.querySelector('input[data-k="' + k + '"]'); if(!i) return; i.value = v || ''; i.dispatchEvent(new Event('input', { bubbles: true })); }
+  var scanBusy = false;
+  async function doScan(card, kind, btn){
+    if(scanBusy || !window.RPDScan) return; scanBusy = true; if(btn) btn.disabled = true;
+    try{
+      if(kind === 'license'){
+        var r = await RPDScan.scanLicense();
+        if(r && r.ok){
+          var f = r.fields;                                   // keep name, license number, and state; nothing else is kept
+          setVal(card, 'last', f.last); setVal(card, 'first', f.first); setVal(card, 'dl', f.id); setVal(card, 'dlst', f.state || 'TX');
+          setStatus('License read for ' + card.querySelector('.uname').textContent + ': ' + [f.last, f.first].filter(Boolean).join(', ') + '. Phone is not on the license.', 'ok');
+          var ph = card.querySelector('input[data-k="phone"]'); if(ph && !ph.value) ph.focus();
+        } else if(r && r.reason !== 'cancel'){ setStatus(r.message || 'Could not read the license. Type it instead.', 'bad'); }
+      } else {
+        var v = await RPDScan.scanVIN();
+        if(v && v.ok){
+          setVal(card, 'vin', v.vin);
+          setStatus('VIN read. Looking up year, make, and model...');
+          var d = await RPDScan.decodeVIN(v.vin);
+          if(d){ setVal(card, 'year', d.year); setVal(card, 'make', d.make); setVal(card, 'model', d.model); setStatus('VIN read; year, make, and model filled from NHTSA. Check them against the vehicle, then add plate and color.', 'ok'); }
+          else setStatus('VIN read. The year, make, and model lookup did not answer; type them.', 'ok');
+          if(!v.valid) log('VIN check digit does not match the scanned VIN; double-check it.');
+        } else if(v && v.reason !== 'cancel'){ setStatus(v.message || 'Could not read the VIN. Type it instead.', 'bad'); }
+      }
+    } catch(e){ setStatus(RPDScan.explain(e), 'bad'); log('Scan error: ' + ((e && e.message) || e)); }
+    finally{ scanBusy = false; if(btn) btn.disabled = false; draw(); }
+  }
+
+  // ---------- desktop handoff (D-codes; same PBKDF2 / AES-GCM / 20-minute scheme as the other tools) ----------
+  var HANDOFF_TTL_MS = 20 * 60 * 1000, CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789', CODE_PREFIX = 'D', PBKDF2_ITERS = 300000;
+  var firebaseConfig = { apiKey:"AIzaSyDV0vuyGg7gpPXJd2jRqZtUTeKiP3yPxhU", authDomain:"rpdcadets-quartermaster.firebaseapp.com", databaseURL:"https://rpdcadets-quartermaster-default-rtdb.firebaseio.com", projectId:"rpdcadets-quartermaster", storageBucket:"rpdcadets-quartermaster.firebasestorage.app" };
+  var fbReady = null, db = null;
+  function loadScript(src){ return new Promise(function(res, rej){ var t = document.createElement('script'); t.src = src; t.onload = res; t.onerror = function(){ rej(new Error('Could not reach the code service. Check the connection and try again.')); }; document.head.appendChild(t); }); }
+  function getDb(){
+    if(!fbReady){
+      fbReady = (window.firebase ? Promise.resolve() : loadScript('https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js').then(function(){ return loadScript('https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js'); }))
+        .then(function(){ if(!firebase.apps.length) firebase.initializeApp(firebaseConfig); db = firebase.database(); return db; })
+        .catch(function(e){ fbReady = null; throw e; });
+    }
+    return fbReady;
+  }
+  var tenc = new TextEncoder(), tdec = new TextDecoder();
+  function hex(u8){ return Array.prototype.map.call(u8, function(b){ return b.toString(16).padStart(2, '0'); }).join(''); }
+  function b64(u8){ var out = ''; for(var i = 0; i < u8.length; i += 8192) out += String.fromCharCode.apply(null, u8.subarray(i, i + 8192)); return btoa(out); }
+  function unb64(str){ return Uint8Array.from(atob(str), function(c){ return c.charCodeAt(0); }); }
+  async function keysFor(code){
+    var base = await crypto.subtle.importKey('raw', tenc.encode(code), 'PBKDF2', false, ['deriveBits']);
+    var bits = new Uint8Array(await crypto.subtle.deriveBits({ name:'PBKDF2', hash:'SHA-256', salt: tenc.encode('rpd-handoff-v2'), iterations: PBKDF2_ITERS }, base, 512));
+    return { id: hex(bits.slice(0, 32)), key: await crypto.subtle.importKey('raw', bits.slice(32), 'AES-GCM', false, ['encrypt', 'decrypt']) };
+  }
+  function makeCode(){ var a = new Uint8Array(7); crypto.getRandomValues(a); return CODE_PREFIX + Array.prototype.map.call(a, function(b){ return CODE_ALPHABET[b % CODE_ALPHABET.length]; }).join(''); }
+  function collectAll(){ return { v: 1, svc: $('svc').value, dt: $('dt').value, loc: $('loc').value, offName: $('offName').value, offBadge: $('offBadge').value, units: readUnits(), wits: readWitnesses() }; }
+  function setCodeStatus(m, cls){ var s = $('codeStatus'); s.textContent = m || ''; s.className = 'status' + (cls ? ' ' + cls : ''); }
+  var codeBusy = false;
+  $('codeBtn').addEventListener('click', async function(){
+    if(codeBusy) return; codeBusy = true; $('codeBtn').disabled = true; setCodeStatus('Creating code...');
+    try{
+      var code = makeCode(), k = await keysFor(code), iv = crypto.getRandomValues(new Uint8Array(12));
+      var ct = new Uint8Array(await crypto.subtle.encrypt({ name:'AES-GCM', iv: iv }, k.key, tenc.encode(JSON.stringify(collectAll()))));
+      var d = await getDb(); await d.ref('handoff/' + k.id).set({ iv: b64(iv), ct: b64(ct), at: Date.now() });
+      $('bigCode').textContent = code; $('fullLink').textContent = location.origin + '/patrol/exchange/#' + code; $('codeModal').classList.add('show'); setCodeStatus('');
+      log('Desktop code created.');
+    } catch(e){ setCodeStatus('Could not create code: ' + ((e && e.message) || e), 'bad'); log('Code error: ' + ((e && e.message) || e)); }
+    finally{ codeBusy = false; $('codeBtn').disabled = false; }
+  });
+  $('copyLink').addEventListener('click', async function(){ try{ await navigator.clipboard.writeText($('fullLink').textContent); $('copyLink').textContent = 'Copied'; setTimeout(function(){ $('copyLink').textContent = 'Copy link'; }, 1500); }catch(e){} });
+  $('closeModal').addEventListener('click', function(){ $('codeModal').classList.remove('show'); });
+  function restore(d){
+    ['svc', 'dt', 'loc', 'offName', 'offBadge'].forEach(function(id){ if(d[id] !== undefined) $(id).value = d[id]; });
+    $('units').innerHTML = ''; $('witnesses').innerHTML = '';
+    (d.units && d.units.length ? d.units : [{}, {}]).forEach(function(u){ addUnit(); var card = $('units').lastElementChild; card.querySelectorAll('input').forEach(function(i){ if(u[i.dataset.k] !== undefined) i.value = u[i.dataset.k]; }); });
+    (d.wits || []).forEach(function(w){ addWitness(); var card = $('witnesses').lastElementChild; card.querySelectorAll('input').forEach(function(i){ if(w[i.dataset.k] !== undefined) i.value = w[i.dataset.k]; }); });
+    renumber(); draw(); window.scrollTo(0, 0);
+  }
+  async function pickup(code){
+    setStatus('Fetching the exchange for code ' + code + '...');
+    try{
+      var k = await keysFor(code), d = await getDb(), ref = d.ref('handoff/' + k.id), snap = await ref.get();
+      if(!snap.exists()) throw new Error('That code was not found. It may have expired (20 minutes) or already been used.');
+      var v = snap.val(); if(Date.now() - (v.at || 0) > HANDOFF_TTL_MS){ try{ await ref.remove(); }catch(e){} throw new Error('That code has expired. Get a new one on the phone.'); }
+      var plain = tdec.decode(await crypto.subtle.decrypt({ name:'AES-GCM', iv: unb64(v.iv) }, k.key, unb64(v.ct))); try{ await ref.remove(); }catch(e){}
+      restore(JSON.parse(plain));
+      setStatus('Exchange restored from code ' + code + '. Check it, then tap Print Slip once per driver. The code has been used up.', 'ok');
+      log('Picked up desktop code ' + code + '.');
+      sweep();
+    } catch(e){ setStatus((e && e.message) || String(e), 'bad'); log('Pickup error: ' + ((e && e.message) || e)); }
+    history.replaceState(null, '', location.pathname + location.search);
+  }
+  async function sweep(){ try{ var d = await getDb(), snap = await d.ref('handoff').get(); if(!snap.exists()) return; var cutoff = Date.now() - HANDOFF_TTL_MS, dead = {}; snap.forEach(function(ch){ if(((ch.val() || {}).at || 0) < cutoff) dead[ch.key] = null; }); if(Object.keys(dead).length) await d.ref('handoff').update(dead); }catch(e){ console.warn('sweep skipped', e); } }
 
   // ---------- drawing ----------
   var W = 832, M = 30;
@@ -413,6 +541,8 @@
 
   addUnit(); addUnit();
   if(document.fonts && document.fonts.ready) document.fonts.ready.then(draw);
+  var hashCode = location.hash.replace('#', '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+  if(hashCode.length === 8) pickup(hashCode);
   function paintMode(){ if(window.RPDPrint && RPDPrint.getMode) $('modeBtn').textContent = 'Compatibility mode: ' + (RPDPrint.getMode() === 'eg' ? 'On' : 'Off'); }
   $('modeBtn').addEventListener('click', function(){ if(!window.RPDPrint) return; RPDPrint.setMode(RPDPrint.getMode() === 'eg' ? 'pcx' : 'eg'); paintMode(); log('Compatibility mode ' + (RPDPrint.getMode() === 'eg' ? 'on' : 'off') + '.'); });
   paintMode();

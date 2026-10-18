@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<!-- patrol/scan-test/index.html | Build v1 | 2026-10-18 | Field test page for the shared camera scanner (/patrol/scan.js): scan a license barcode or a door-jamb VIN barcode with the phone and see exactly what was read, how long it took, and what the NHTSA lookup returns. Not linked from the /patrol index. Nothing is stored; only the VIN is sent out, to NHTSA. -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Scanner test</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  :root{ --navy:#0b1f3a; --navy-2:#13294b; --paper:#f4f1ea; --ink:#1a1d24; --line:#c9c2b4; --red:#9b2030; --gold:#b8923a; --field:#fbfaf6; --muted:#5f6675; --ok:#1f6b3a; }
+  *{box-sizing:border-box;} html,body{margin:0;padding:0;}
+  body{font-family:"Barlow","Segoe UI",system-ui,sans-serif;background:var(--paper);color:var(--ink);line-height:1.45;min-height:100vh;display:flex;flex-direction:column;}
+  header.masthead{background:linear-gradient(180deg,var(--navy) 0%,var(--navy-2) 100%);border-bottom:3px solid var(--gold);box-shadow:0 2px 0 var(--red) inset,0 6px 20px rgba(0,0,0,.25);padding:18px 24px 14px;}
+  .masthead .kick{margin:0 0 2px;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);font-weight:600;}
+  .masthead h1{margin:0;font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:32px;letter-spacing:.02em;color:#fff;line-height:1.05;}
+  .masthead .sub{margin-top:4px;font-size:13px;color:rgba(255,255,255,.72);} .masthead a{color:var(--gold);text-decoration:none;}
+  main{flex:1;width:100%;max-width:640px;margin:0 auto;padding:20px 18px 40px;}
+  .card{background:#fff;border:1px solid var(--line);border-radius:8px;padding:16px 18px;margin-bottom:16px;box-shadow:0 1px 2px rgba(0,0,0,.05);}
+  h2{font-family:"Barlow Condensed",sans-serif;font-size:22px;letter-spacing:.04em;text-transform:uppercase;color:var(--navy);margin:0 0 10px;}
+  p{margin:0 0 10px;font-size:14.5px;} .muted{color:var(--muted);font-size:13px;}
+  .btn{display:block;width:100%;font-family:"Barlow Condensed",sans-serif;font-size:24px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;min-height:60px;padding:12px 18px;border:0;border-radius:8px;background:var(--gold);color:var(--navy);cursor:pointer;margin-bottom:10px;}
+  .btn.sec{font-size:18px;min-height:50px;background:#fff;border:1.5px solid var(--navy);color:var(--navy);}
+  .btn:disabled{opacity:.45;}
+  table{width:100%;border-collapse:collapse;font-size:15px;} td{padding:6px 4px;border-bottom:1px solid var(--line);vertical-align:top;} td:first-child{color:var(--muted);font-size:11.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;width:40%;padding-top:9px;}
+  .status{font-size:14px;margin:6px 0 10px;min-height:20px;color:var(--muted);} .status.ok{color:var(--ok);font-weight:600;} .status.bad{color:var(--red);font-weight:600;}
+  #log{width:100%;height:140px;font-family:Consolas,Menlo,monospace;font-size:11.5px;border:1px solid var(--line);border-radius:6px;background:var(--field);padding:8px;resize:vertical;}
+  footer.foot{text-align:center;font-size:12px;color:var(--muted);padding:14px 18px 22px;border-top:1px solid var(--line);}
+</style>
+</head>
+<body>
+<header class="masthead">
+  <p class="kick">Public Safety &middot; Field Tools</p>
+  <h1>Scanner test</h1>
+  <div class="sub">Try the camera scanner on your own license and a door-jamb label. <a href="/patrol/">&lsaquo; All tools</a></div>
+</header>
+<main>
+  <div class="card">
+    <p>Test page only. Nothing is stored or sent anywhere, except the VIN, which goes to the NHTSA decoder for year, make, and model. The full set of fields is shown here so you can check the read; the exchange tool keeps only name, license number, and state.</p>
+    <button type="button" class="btn" id="btnLic">Scan license</button>
+    <button type="button" class="btn" id="btnVin">Scan VIN</button>
+    <div class="status" id="status"></div>
+  </div>
+  <div class="card" id="licCard" style="display:none;"><h2>License read</h2><table id="licTable"></table></div>
+  <div class="card" id="vinCard" style="display:none;"><h2>VIN read</h2><table id="vinTable"></table></div>
+  <div class="card">
+    <h2>Log</h2>
+    <textarea id="log" readonly aria-label="Scanner log"></textarea>
+    <button type="button" class="btn sec" id="btnCopy" style="margin-top:10px;">Copy log</button>
+    <button type="button" class="btn sec" id="btnClear">Clear</button>
+  </div>
+</main>
+<footer class="foot">Build v1</footer>
+
+<script src="/patrol/scan.js"></script>
+<script>
+(function(){
+  'use strict';
+  function $(id){ return document.getElementById(id); }
+  function log(m){ var el = $('log'); el.value += '[' + new Date().toLocaleTimeString() + '] ' + m + '\n'; el.scrollTop = el.scrollHeight; }
+  function setStatus(m, cls){ var s = $('status'); s.textContent = m || ''; s.className = 'status' + (cls ? ' ' + cls : ''); }
+  function fill(tableId, rows){ var t = $(tableId); t.innerHTML = rows.map(function(r){ return '<tr><td>' + r[0] + '</td><td>' + (r[1] === undefined || r[1] === null || r[1] === '' ? '<span class="muted">(blank)</span>' : String(r[1]).replace(/</g, '&lt;')) + '</td></tr>'; }).join(''); }
+  if(window.RPDScan) RPDScan.log = log;
+  log('Browser: ' + navigator.userAgent);
+  log('Camera scanning ' + ((window.RPDScan && RPDScan.supported()) ? 'available.' : 'NOT available here (needs a secure page and a camera).'));
+  var busy = false;
+  $('btnLic').addEventListener('click', async function(){
+    if(busy) return; busy = true; setStatus('Opening camera...');
+    try{
+      var r = await RPDScan.scanLicense();
+      if(r.ok){
+        var f = r.fields;
+        fill('licTable', [['Last name', f.last], ['First name', f.first], ['Middle name', f.middle], ['License no.', f.id], ['State (issuer)', f.state], ['Card type', f.cardType], ['Date of birth', f.dob], ['Expires', f.exp], ['Issued', f.issued], ['Sex', f.sex], ['Height', f.height], ['Weight', f.weight], ['Eyes', f.eyes], ['Hair', f.hair], ['Street', f.street + (f.street2 ? ' ' + f.street2 : '')], ['City', f.city], ['Address state', f.addressState], ['ZIP', f.zip], ['Country', f.country], ['Barcode', r.format + (r.ms ? ', ' + r.ms + ' ms, ' + r.tries + ' frames' : ' (photo)')], ['AAMVA version', f.aamvaVersion || '?']]);
+        $('licCard').style.display = 'block'; setStatus('License read.', 'ok');
+      } else setStatus(r.reason === 'cancel' ? 'Cancelled.' : (r.message || 'Could not read the license.'), r.reason === 'cancel' ? '' : 'bad');
+    }catch(e){ setStatus(RPDScan.explain(e), 'bad'); log('ERROR: ' + (e && e.message)); }
+    busy = false;
+  });
+  $('btnVin').addEventListener('click', async function(){
+    if(busy) return; busy = true; setStatus('Opening camera...');
+    try{
+      var r = await RPDScan.scanVIN();
+      if(r.ok){
+        fill('vinTable', [['VIN', r.vin], ['Check digit', r.valid ? 'OK' : 'Does not match (double-check the VIN)'], ['Barcode', r.format + (r.ms ? ', ' + r.ms + ' ms, ' + r.tries + ' frames' : ' (photo)')], ['Year / make / model', 'Looking up...']]);
+        $('vinCard').style.display = 'block'; setStatus('VIN read. Looking up year, make, and model...');
+        var t0 = Date.now(), d = await RPDScan.decodeVIN(r.vin);
+        log('NHTSA lookup ' + (d ? 'answered' : 'failed or timed out') + ' in ' + (Date.now() - t0) + ' ms' + (d ? ': ' + JSON.stringify(d) : '.'));
+        fill('vinTable', [['VIN', r.vin], ['Check digit', r.valid ? 'OK' : 'Does not match (double-check the VIN)'], ['Barcode', r.format + (r.ms ? ', ' + r.ms + ' ms, ' + r.tries + ' frames' : ' (photo)')], ['Year / make / model', d ? [d.year, d.make, d.model].filter(Boolean).join(' ') : 'Lookup unavailable']]);
+        setStatus(d ? 'VIN read and decoded.' : 'VIN read; the NHTSA lookup did not answer.', d ? 'ok' : 'bad');
+      } else setStatus(r.reason === 'cancel' ? 'Cancelled.' : (r.message || 'Could not read the VIN.'), r.reason === 'cancel' ? '' : 'bad');
+    }catch(e){ setStatus(RPDScan.explain(e), 'bad'); log('ERROR: ' + (e && e.message)); }
+    busy = false;
+  });
+  $('btnCopy').addEventListener('click', async function(){ try{ await navigator.clipboard.writeText($('log').value); $('btnCopy').textContent = 'Copied'; setTimeout(function(){ $('btnCopy').textContent = 'Copy log'; }, 1500); }catch(e){} });
+  $('btnClear').addEventListener('click', function(){ location.reload(); });
+})();
+</script>
+</body>
+</html>

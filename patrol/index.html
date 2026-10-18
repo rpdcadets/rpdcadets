@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- patrol/index.html | Build v11 | 2026-10-18 | Card redesign: short officer-speak titles (Booking Slip + Medical, APOWW, EPO Packet, Driver Exchange, Vehicle Impound), one- or two-line descriptions, printer or form icon on each card, a status slot under the title (red DRAFT pill for tools in testing, green check line for confirmations such as MRMC Campbell), the two draft tools moved under their own muted "In testing" heading at the bottom, pressed-state tint, a "Have a desktop code?" jump button in the header on phones, and a two-column layout (tools left, Desktop code box pinned right) on screens at least 900px wide that have a mouse or touchpad pointer, so sideways phones stay single-column. APOWW description now says Apprehension by Peace Officer Without Warrant. v10: APOWW and EPO cards cleared for use (DRAFT tags removed); APOWW card gains the green note that the form is confirmed accepted at MRMC Campbell. v9: Traffic card renamed "Traffic Stop Notice" (DL/ID and VIN barcode modes retired with Brazos). v8: Electronic Vehicle Impound card (draft) added at the end. v7: Driver Information Exchange card (draft) added. v6: Traffic Stop card mentions the Traffic Feedback Notice mode. v5: New card copy; APOWW card (draft) above EPO; code box routes A-codes to /patrol/apoww; 20-minute expiry wording. v4: EPO card marked DRAFT -->
+<!-- patrol/index.html | Build v12 | 2026-10-18 | Desktop code box now routes D codes to the Driver Exchange (phone-filled exchange forms picked up on the MDC) and mentions it; Driver Exchange card description notes phone scanning. v11: Card redesign: short officer-speak titles (Booking Slip + Medical, APOWW, EPO Packet, Driver Exchange, Vehicle Impound), one- or two-line descriptions, printer or form icon on each card, a status slot under the title (red DRAFT pill for tools in testing, green check line for confirmations such as MRMC Campbell), the two draft tools moved under their own muted "In testing" heading at the bottom, pressed-state tint, a "Have a desktop code?" jump button in the header on phones, and a two-column layout (tools left, Desktop code box pinned right) on screens at least 900px wide that have a mouse or touchpad pointer, so sideways phones stay single-column. APOWW description now says Apprehension by Peace Officer Without Warrant. v10: APOWW and EPO cards cleared for use (DRAFT tags removed); APOWW card gains the green note that the form is confirmed accepted at MRMC Campbell. v9: Traffic card renamed "Traffic Stop Notice" (DL/ID and VIN barcode modes retired with Brazos). v8: Electronic Vehicle Impound card (draft) added at the end. v7: Driver Information Exchange card (draft) added. v6: Traffic Stop card mentions the Traffic Feedback Notice mode. v5: New card copy; APOWW card (draft) above EPO; code box routes A-codes to /patrol/apoww; 20-minute expiry wording. v4: EPO card marked DRAFT -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -153,7 +153,7 @@
             <span class="go">&rsaquo;</span>
           </div>
           <div class="status"><span class="pill">Draft &middot; do not use</span></div>
-          <div class="desc">Crash driver exchange slip. Any number of units; one slip per driver on the in-car printer.</div>
+          <div class="desc">Crash driver exchange slip. Scan licenses and the VIN with your phone or type them, any number of units, then print one slip per driver on the in-car printer.</div>
         </a>
         <a class="tool testing" href="/patrol/impound/">
           <div class="row">
@@ -170,7 +170,7 @@
 
   <aside class="code-box" id="desktop-code">
     <h2>Desktop code</h2>
-    <p>Got a code from an officer or MDC? Enter it to pull up their Booking Slip, EPO Packet, or APOWW and print the filled forms on this computer.</p>
+    <p>Got a code from an officer or MDC? Enter it to pull up their Booking Slip, EPO Packet, APOWW, or Driver Exchange and print the filled forms on this computer.</p>
     <div class="code-row">
       <input id="code" inputmode="latin" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="12" placeholder="8 characters">
       <button id="go" disabled>Go</button>
@@ -179,10 +179,10 @@
   </aside>
 </main>
 
-<footer class="foot">Internal field tools &middot; Build v11</footer>
+<footer class="foot">Internal field tools &middot; Build v12</footer>
 
 <script>
-  const BUILD = '11';
+  const BUILD = '12';
   (async () => {
     try {
       const r = await fetch(location.pathname + '?cb=' + Date.now(), {cache:'no-store'}); if (!r.ok) return;
@@ -196,7 +196,7 @@
   function clean(){ return code.value.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,8); }
   code.addEventListener('input', () => { const c = clean(); if (code.value !== c) code.value = c; go.disabled = c.length !== 8; });
   code.addEventListener('keydown', e => { if (e.key === 'Enter' && !go.disabled) go.click(); });
-  go.addEventListener('click', () => { const c = clean(); location.href = (c[0] === 'E' ? '/patrol/epo/#' : c[0] === 'A' ? '/patrol/apoww/#' : '/patrol/booking/#') + c; });
+  go.addEventListener('click', () => { const c = clean(); location.href = (c[0] === 'E' ? '/patrol/epo/#' : c[0] === 'A' ? '/patrol/apoww/#' : c[0] === 'D' ? '/patrol/exchange/#' : '/patrol/booking/#') + c; });
 </script>
 </body>
 </html>

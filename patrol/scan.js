@@ -1,4 +1,4 @@
-/* patrol/scan.js | Build v1 | 2026-10-18 | Shared camera scanner for the /patrol field tools. Reads the PDF417 barcode on the back of a driver license or ID (AAMVA layout, all US states and Canadian provinces) and the VIN barcode on a vehicle's door-jamb label, using the phone's camera inside the page. Decoding runs in the browser with the self-hosted zxing-wasm reader (/patrol/vendor/zxing-wasm/3.1.5/, loaded only when a scan starts); nothing is uploaded, nothing is stored, and the caller decides which parsed fields to keep. Also looks a VIN up at the NHTSA vPIC service for year, make, and model (only the VIN is sent).
+/* patrol/scan.js | Build v2 | 2026-10-18 | VIN guide frame is now label-shaped (about 2:1) instead of a thin strip, and the hint says the bars or the square code both work, since newer door-jamb labels (GM, for one) carry the VIN in a QR code; field finding 10/18/26. v1: Shared camera scanner for the /patrol field tools. Reads the PDF417 barcode on the back of a driver license or ID (AAMVA layout, all US states and Canadian provinces) and the VIN barcode on a vehicle's door-jamb label, using the phone's camera inside the page. Decoding runs in the browser with the self-hosted zxing-wasm reader (/patrol/vendor/zxing-wasm/3.1.5/, loaded only when a scan starts); nothing is uploaded, nothing is stored, and the caller decides which parsed fields to keep. Also looks a VIN up at the NHTSA vPIC service for year, make, and model (only the VIN is sent).
    Usage:
      RPDScan.supported()                -> true if this browser can open the camera here (secure page, getUserMedia, WebAssembly)
      RPDScan.scanLicense()              -> Promise {ok:true, fields:{last, first, middle, id, state, ...}, ms} or {ok:false, reason:'cancel'|'error', message}
@@ -174,7 +174,7 @@
       '.rpdscan .mask{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;}' +
       '.rpdscan .frame{border:3px solid rgba(255,255,255,.9);border-radius:14px;box-shadow:0 0 0 2000px rgba(0,0,0,.45);transition:border-color .15s;}' +
       '.rpdscan .frame.license{width:min(86vw,560px);aspect-ratio:1.586;}' +
-      '.rpdscan .frame.vin{width:min(92vw,640px);aspect-ratio:4.2;}' +
+      '.rpdscan .frame.vin{width:min(88vw,600px);aspect-ratio:2.1;}' +
       '.rpdscan .frame.hit{border-color:#5fd38d;}' +
       '.rpdscan .top{position:relative;padding:max(14px,env(safe-area-inset-top)) 18px 10px;background:linear-gradient(180deg,rgba(0,0,0,.65),rgba(0,0,0,0));}' +
       '.rpdscan .top h3{margin:0;font-family:"Barlow Condensed",sans-serif;font-size:22px;letter-spacing:.04em;text-transform:uppercase;color:#f2d28b;}' +
@@ -190,7 +190,7 @@
   }
   var COPY = {
     license: { title: 'Scan license', hint: 'Hold the BACK of the license flat inside the frame, 6 to 8 inches away. It reads on its own.' },
-    vin:     { title: 'Scan VIN',     hint: 'Open the driver door. Line up the barcode on the door-jamb label inside the frame.' }
+    vin:     { title: 'Scan VIN',     hint: 'Open the driver door and point at the sticker on the door jamb. The bars or the square code both work. It reads on its own.' }
   };
   function buildOverlay(kind){
     injectCss();

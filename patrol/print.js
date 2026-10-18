@@ -1,11 +1,11 @@
-/* patrol/print.js | Build v8 | 2026-10-05 | Two pieces instead of many strips: the first piece ends at the first blank row after the logo (so the seam is in white space and nothing smears), the rest goes as one job. Progress is still confirmed by the printer. v7: Real progress: the slip is sent as horizontal strips (about 1 inch each), each followed by a status query the printer can only answer once that strip is in; printCanvas(canvas, copies, onProgress) reports the true fraction received. Printer starts printing strip 1 while later strips arrive. v6: Speed: no language query (CPCL prints fine in hybrid_xml_zpl mode); slip sent as a run-length-compressed 1-bit PCX inside CPCL (about a tenth of the raw hex size). Compatibility mode (raw EG hex) via RPDPrint.setMode("eg"), remembered per computer. v5: Language query made patient: settle 800 ms after open, flush, ask with a 4 s window, retry once, and remember the answer per computer (localStorage rpd_printer_lang) so later prints do not depend on a reply. Raw reply logged. v4: Picker hint wording. v3: Auto language: asks the printer device.languages on each job and sends the bitmap as ZPL (^GFA) when the printer is in a zpl mode, else CPCL (EG). Field finding: the 10/2026 e-citation rollout set printers to hybrid_xml_zpl; the September units were line_print. v2: Drain before close: after a job, send a status query and wait (up to 30 s) for the printer's reply so the Windows COM buffer empties before the port closes (fixes silent drops of large jobs on the 'Serial Printer (COMx)' path after the 10/2026 MDC update). Open retried 3 times. v1: 2026-09-22
+/* patrol/print.js | Build v9 | 2026-10-18 | Send cap: no single send is taller than 1200 rows (about 6 in) or bigger than about 38 KB compressed; a longer slip is cut into more sends, always in a white gap of at least 8 blank rows between sections (between units, before the witnesses, under the address block), nearest the cap. Field finding 10/18/26, two cars: the printer breaks one 8.1-inch job on its own around 1440 rows (7.1 in) and restarts the rest shifted sideways, so the 8.9-inch two-unit exchange slip came out with a seam through Unit 02's insurance header. Any number of units and witnesses is covered; a slip with no white gap in reach is still cut at the cap. The first cut (near 1 in, so the paper starts moving early) now also takes the middle of the roomiest white gap instead of the nearest blank pair. v8: Two pieces instead of many strips: the first piece ends at the first blank row after the logo (so the seam is in white space and nothing smears), the rest goes as one job. Progress is still confirmed by the printer. v7: Real progress: the slip is sent as horizontal strips (about 1 inch each), each followed by a status query the printer can only answer once that strip is in; printCanvas(canvas, copies, onProgress) reports the true fraction received. Printer starts printing strip 1 while later strips arrive. v6: Speed: no language query (CPCL prints fine in hybrid_xml_zpl mode); slip sent as a run-length-compressed 1-bit PCX inside CPCL (about a tenth of the raw hex size). Compatibility mode (raw EG hex) via RPDPrint.setMode("eg"), remembered per computer. v5: Language query made patient: settle 800 ms after open, flush, ask with a 4 s window, retry once, and remember the answer per computer (localStorage rpd_printer_lang) so later prints do not depend on a reply. Raw reply logged. v4: Picker hint wording. v3: Auto language: asks the printer device.languages on each job and sends the bitmap as ZPL (^GFA) when the printer is in a zpl mode, else CPCL (EG). Field finding: the 10/2026 e-citation rollout set printers to hybrid_xml_zpl; the September units were line_print. v2: Drain before close: after a job, send a status query and wait (up to 30 s) for the printer's reply so the Windows COM buffer empties before the port closes (fixes silent drops of large jobs on the 'Serial Printer (COMx)' path after the 10/2026 MDC update). Open retried 3 times. v1: 2026-09-22
    Shared print engine for the in-car Zebra ZQ520 (4 inch, 203 dpi, line-print mode).
    Path: Chrome Web Serial over the printer's paired Bluetooth (Serial Port Profile). No driver, no install.
    Language: CPCL or ZPL, chosen per printer. Slips are drawn on a canvas in the browser and sent as a 1-bit bitmap (EG command),
    so any font, logo, or layout prints exactly as drawn. Nothing is written to the printer's settings.
    Usage:
      RPDPrint.supported()                 -> true if this browser can print directly
-     RPDPrint.printCanvas(canvas, copies, onProgress) -> sends the canvas in strips; onProgress(fraction, done, total) is real
+     RPDPrint.printCanvas(canvas, copies, onProgress) -> sends the canvas in pieces cut in white space; onProgress(fraction, done, total) is real
      RPDPrint.sendText(cpclString)        -> sends a raw CPCL / line-mode string
      RPDPrint.info()                      -> read-only settings query, returns array of strings
      RPDPrint.forget()                    -> forget the remembered printer so the next print asks again
@@ -185,11 +185,92 @@
     }
     return best > 0 ? best : Math.min(208, rows.h);
   }
+
+  // ---- send caps ----
+  // The car printers break a single job on their own at about 1440 rows (7.1 in) and restart the rest
+  // shifted sideways (seen 10/18/26 on two cars), so no send may be taller than MAX_ROWS. MAX_BYTES caps
+  // the compressed size of one send as well, in case the limit is really on bytes. Every extra cut is made
+  // in the middle of a white gap of at least MIN_GAP blank rows, as close to the cap as possible.
+  var MAX_ROWS = 1200, MAX_BYTES = 38000, MIN_PIECE = 160, MIN_GAP = 8;
+
+  function blankMap(rows){
+    var bpr = rows.bytesPerRow, blankRow = new Array(bpr * 2 + 1).join('0'), m = new Array(rows.h);
+    for(var y = 0; y < rows.h; y++) m[y] = rows.hex.substr(y * bpr * 2, bpr * 2) === blankRow;
+    return m;
+  }
+  // cum[y] = compressed PCX size of rows 0..y-1 (same run-length rules as rowsToPCX), so any range is cum[b] - cum[a].
+  function rowCosts(rows){
+    var bpl = rows.bytesPerRow, hex = rows.hex, cum = new Array(rows.h + 1); cum[0] = 0;
+    for(var y = 0; y < rows.h; y++){
+      var run = 0, prev = -1, n = 0;
+      for(var i = 0; i < bpl; i++){
+        var b = (~parseInt(hex.substr((y * bpl + i) * 2, 2), 16)) & 255;
+        if(b === prev && run < 63) run++;
+        else { if(run) n += (run > 1 || (prev & 0xC0) === 0xC0) ? 2 : 1; prev = b; run = 1; }
+      }
+      if(run) n += (run > 1 || (prev & 0xC0) === 0xC0) ? 2 : 1;
+      cum[y + 1] = cum[y] + n;
+    }
+    return cum;
+  }
+  // A cut row inside a white gap of at least MIN_GAP blank rows, with at least MIN_GAP/2 blank rows on each side
+  // of the cut, as near the middle of the gap as the window [lo, hi] allows, nearest hi; -1 if there is none.
+  function findGap(blank, lo, hi){
+    var half = MIN_GAP / 2, y = hi;
+    while(y >= lo){
+      if(blank[y]){
+        var y0 = y, y1 = y;
+        while(y0 - 1 >= 0 && blank[y0 - 1]) y0--;
+        while(y1 + 1 < blank.length && blank[y1 + 1]) y1++;
+        if(y1 - y0 + 1 >= MIN_GAP){
+          var mid = Math.floor((y0 + y1 + 1) / 2), a = y0 + half, b = Math.min(y1 + 1 - half, hi);
+          var c = Math.min(Math.max(mid, a), b);
+          if(c >= lo && c >= a && c <= b) return c;
+        }
+        y = y0 - 1;
+      } else y--;
+    }
+    return -1;
+  }
+  // Middle of the white gap (at least MIN_GAP blank rows) in [lo, hi] whose middle is nearest target; -1 if none.
+  function findGapNear(blank, lo, hi, target){
+    var best = -1, bestD = 1e9, y = lo;
+    while(y <= hi){
+      if(blank[y]){
+        var y1 = y;
+        while(y1 + 1 < blank.length && blank[y1 + 1]) y1++;
+        if(y1 - y + 1 >= MIN_GAP){ var mid = Math.floor((y + y1 + 1) / 2), d = Math.abs(mid - target); if(d < bestD){ best = mid; bestD = d; } }
+        y = y1 + 1;
+      } else y++;
+    }
+    return best;
+  }
+  // Returns [[y0, y1], ...]: the first piece ends in the white gap nearest 1 inch (so the paper starts moving
+  // early), the rest is cut only where a send would exceed MAX_ROWS or MAX_BYTES, at the nearest white gap
+  // below the cap.
+  function planPieces(rows){
+    var h = rows.h, cuts = [], start = 0, blank = blankMap(rows);
+    var cum = (mode === 'eg') ? null : rowCosts(rows);
+    function bytesIn(a, b){ return cum ? cum[b] - cum[a] + 160 : 0; }
+    var first = findGapNear(blank, 80, Math.min(h - 40, 420), 208);
+    if(first < 0) first = splitRow(rows);
+    if(h > first + 16){ cuts.push(first); start = first; }
+    while(h - start > MAX_ROWS || bytesIn(start, h) > MAX_BYTES){
+      var hi = Math.min(h, start + MAX_ROWS);
+      while(hi > start + MIN_PIECE && bytesIn(start, hi) > MAX_BYTES) hi--;
+      var cut = findGap(blank, start + MIN_PIECE, hi);
+      if(cut < 0) cut = hi;
+      if(cut <= start || cut >= h) break;
+      cuts.push(cut); start = cut;
+    }
+    var out = [], y = 0;
+    for(var i = 0; i < cuts.length; i++){ out.push([y, cuts[i]]); y = cuts[i]; }
+    out.push([y, h]);
+    return out;
+  }
   async function printCanvas(canvas, copies, onProgress){
     var rows = canvasToRows(canvas), q = Math.max(1, Math.min(9, copies | 0 || 1));
-    var strips = [], cut = splitRow(rows);
-    if(rows.h > cut + 16){ strips.push(sliceRows(rows, 0, cut)); strips.push(sliceRows(rows, cut, rows.h)); }
-    else strips.push(rows);
+    var strips = planPieces(rows).map(function(p){ return sliceRows(rows, p[0], p[1]); });
     var total = strips.length * q, done = 0, sentBytes = 0, t0 = Date.now(), silent = 0;
     function report(){ if(typeof onProgress === 'function'){ try{ onProgress(done / total, done, total); }catch(e){} } }
     var port = await getPort();
@@ -205,8 +286,8 @@
         }
       }
       var secs = ((Date.now() - t0) / 1000).toFixed(1);
-      if(silent) log('Sent ' + Math.round(sentBytes / 1024) + ' KB in ' + total + ' strips; printer did not confirm the last ' + silent + '. Waited ' + secs + ' s.');
-      else log('Printer received all ' + total + ' strips (' + Math.round(sentBytes / 1024) + ' KB, ' + (mode === 'eg' ? 'compatibility' : 'compressed') + ') in ' + secs + ' s.');
+      if(silent) log('Sent ' + Math.round(sentBytes / 1024) + ' KB in ' + total + ' pieces; printer did not confirm the last ' + silent + '. Waited ' + secs + ' s.');
+      else log('Printer received all ' + total + ' pieces (' + Math.round(sentBytes / 1024) + ' KB, ' + (mode === 'eg' ? 'compatibility' : 'compressed') + ') in ' + secs + ' s.');
       await sleep(300);
     } finally { try{ await port.close(); }catch(e){} }
   }

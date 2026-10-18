@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- patrol/index.html | Build v9 | 2026-10-04 | Traffic card renamed "Traffic Stop Notice" (DL/ID and VIN barcode modes retired with Brazos). v8: Electronic Vehicle Impound card (draft) added at the end. v7: Driver Information Exchange card (draft) added. v6: Traffic Stop card mentions the Traffic Feedback Notice mode. v5: New card copy; APOWW card (draft) above EPO; code box routes A-codes to /patrol/apoww; 20-minute expiry wording. v4: EPO card marked DRAFT -->
+<!-- patrol/index.html | Build v10 | 2026-10-18 | APOWW and EPO cards cleared for use (DRAFT tags removed); APOWW card gains the green note that the form is confirmed accepted at MRMC Campbell. v9: Traffic card renamed "Traffic Stop Notice" (DL/ID and VIN barcode modes retired with Brazos). v8: Electronic Vehicle Impound card (draft) added at the end. v7: Driver Information Exchange card (draft) added. v6: Traffic Stop card mentions the Traffic Feedback Notice mode. v5: New card copy; APOWW card (draft) above EPO; code box routes A-codes to /patrol/apoww; 20-minute expiry wording. v4: EPO card marked DRAFT -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -85,12 +85,13 @@
     </a>
     <a class="tool" href="/patrol/apoww/">
       <span class="go">&rsaquo;</span>
-      <div class="name">APOWW Form <span style="color:var(--red);font-size:15px;letter-spacing:.05em;">(DRAFT - DO NOT USE)</span></div>
+      <div class="name">APOWW Form</div>
       <div class="desc">Prefill your APOWW on scene, then give the code to the ER nursing staff to print, or download the PDF and email it to them directly.</div>
+      <div class="desc" style="color:#1f6b3a;font-weight:600;margin-top:6px;">Confirmed accepted at MRMC Campbell. At other locations, officers may ask the nursing staff whether they have internet and print capability and guide them through printing the form.</div>
     </a>
     <a class="tool" href="/patrol/epo/">
       <span class="go">&rsaquo;</span>
-      <div class="name">Emergency Protective Order Packet <span style="color:var(--red);font-size:15px;letter-spacing:.05em;">(DRAFT - DO NOT USE)</span></div>
+      <div class="name">Emergency Protective Order Packet</div>
       <div class="desc">Every required EPO form in one place. Type the information once and it fills the matching fields on all of them, plus two extra forms the jail asked for to make their side easier.</div>
     </a>
     <a class="tool" href="/patrol/exchange/">
@@ -116,10 +117,10 @@
   </div>
 </main>
 
-<footer class="foot">Internal field tools &middot; Build v9</footer>
+<footer class="foot">Internal field tools &middot; Build v10</footer>
 
 <script>
-  const BUILD = '9';
+  const BUILD = '10';
   (async () => {
     try {
       const r = await fetch(location.pathname + '?cb=' + Date.now(), {cache:'no-store'}); if (!r.ok) return;

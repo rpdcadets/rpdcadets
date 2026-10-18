@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- patrol/apoww/index.html | Build v7 | 2026-09-16 | Long text auto-shrinks to fit; anything that still overflows continues on a generated attachment page marked (SEE ATTACHED). v6: Apt # box added to both addresses (omitted from the PDF when blank). v5: All typed text printed in ALL CAPS on the PDF. v4: Addresses split into street, city, county, state, zip on screen. v3: Sections 1 and 2 typed text rendered bold so it stands out from the printed question. v2: Officer line includes badge #; EMS section behind a toggle; hosted PDF v2 seats text on the underlines. v1: APOWW (Notification of Emergency Detention): phone-first fill of the official 2-page form; intro popup; PBKDF2-hardened desktop handoff (A-codes, 20-minute expiry) -->
+<!-- patrol/apoww/index.html | Build v8 | 2026-10-18 | The printed location of apprehension now carries its label again: the official form keeps the words "Location of apprehension:" inside the field itself (as the field's value, not page text), so filling the field had been replacing the label with the typed location; the PDF now prints "Location of apprehension: " followed by the typed text in ALL CAPS, overflow continues on the attachment page under its own heading. v7: Long text auto-shrinks to fit; anything that still overflows continues on a generated attachment page marked (SEE ATTACHED). v6: Apt # box added to both addresses (omitted from the PDF when blank). v5: All typed text printed in ALL CAPS on the PDF. v4: Addresses split into street, city, county, state, zip on screen. v3: Sections 1 and 2 typed text rendered bold so it stands out from the printed question. v2: Officer line includes badge #; EMS section behind a toggle; hosted PDF v2 seats text on the underlines. v1: APOWW (Notification of Emergency Detention): phone-first fill of the official 2-page form; intro popup; PBKDF2-hardened desktop handoff (A-codes, 20-minute expiry) -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -267,7 +267,7 @@
   <div class="nav"><button data-go="6">&lsaquo; Back</button></div>
 </section>
 
-<footer class="foot">Internal field tool. Renders entirely in your browser. Nothing is saved on this device or the site. &middot; Build v7</footer>
+<footer class="foot">Internal field tool. Renders entirely in your browser. Nothing is saved on this device or the site. &middot; Build v8</footer>
 </main>
 
 <div class="actions">
@@ -297,7 +297,7 @@
 
 <script>
 /* ---------------- constants ---------------- */
-const BUILD = '7';
+const BUILD = '8';
 const PDF_URL = 'APOWW.pdf?v=2';
 const HANDOFF_TTL_MS = 20 * 60 * 1000;
 const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -428,11 +428,13 @@ async function buildPdf(d){
   const doc = await PDFDocument.load(await loadBlank());
   const form = doc.getForm(); const helv = await doc.embedFont(StandardFonts.Helvetica); const helvBold = await doc.embedFont(StandardFonts.HelveticaBold);
   const BOLD = new Set([TEXT_MAP.narrative, TEXT_MAP.witnesses]);
+  /* The blank form keeps this label inside the field as its value, so it must be printed with the typed text or it disappears. */
+  const LABELS = { [TEXT_MAP.loc]: 'Location of apprehension: ' };
   const isMulti = f => { try { return f.isMultiline(); } catch(e){ return false; } };
   const overflow = [];   // {title, text} blocks that go to an attachment page
   const text = (name, v, size, title) => {
     if (!v) return;
-    try { const f=form.getTextField(name); let s=String(v).toUpperCase(); const font = BOLD.has(name) ? helvBold : helv;
+    try { const f=form.getTextField(name); let s=(LABELS[name]||'')+String(v).toUpperCase(); const font = BOLD.has(name) ? helvBold : helv;
       if (isMulti(f)){
         const r=f.acroField.getWidgets()[0].getRectangle(); const fit=fitMultiline(s, font, r.width-10, r.height-6, size||9);
         f.setFontSize(fit.size); s=fit.lines.join('\n');
@@ -444,7 +446,7 @@ async function buildPdf(d){
   const check = name => { try { form.getCheckBox(name).check(); } catch(e){ console.warn('check',name,e.message); } };
   const radio = (name,v) => { if(!v) return; try { form.getRadioGroup(name).select(v); } catch(e){ console.warn('radio',name,e.message); } };
   const t = d.text;
-  const TITLES = { narrative:'SECTION 1: BASIS FOR BELIEFS (CONTINUED)', witnesses:'SECTION 2: WITNESSES / REPORTING PERSONS (CONTINUED)', noticeWhy:'REASON NOTICE TO PARENTS COULD NOT BE PROVIDED (CONTINUED)' };
+  const TITLES = { narrative:'SECTION 1: BASIS FOR BELIEFS (CONTINUED)', witnesses:'SECTION 2: WITNESSES / REPORTING PERSONS (CONTINUED)', loc:'LOCATION OF APPREHENSION (CONTINUED)', noticeWhy:'REASON NOTICE TO PARENTS COULD NOT BE PROVIDED (CONTINUED)' };
   Object.entries(TEXT_MAP).forEach(([id,pdf])=>text(pdf, t[id], undefined, TITLES[id]));
   ['FOR THE BEST INTEREST AND PROTECTION OF','person detained evidences mental','detention of person detained'].forEach(f=>text(f, t.pName));
   const addr=(st,ap,ci,co,sa,zp)=>{ ap=(ap||'').trim(); const street=[st,(ap? (/^(apt|suite|ste|unit|#)/i.test(ap)?ap:'Apt '+ap):'')].map(x=>(x||'').trim()).filter(Boolean).join(' '); return [street,ci,co?co+' County':'',[sa,zp].filter(Boolean).join(' ')].map(x=>(x||'').trim()).filter(Boolean).join(', '); };

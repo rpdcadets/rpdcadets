@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- patrol/scan-test/index.html | Build v1 | 2026-10-18 | Field test page for the shared camera scanner (/patrol/scan.js): scan a license barcode or a door-jamb VIN barcode with the phone and see exactly what was read, how long it took, and what the NHTSA lookup returns. Not linked from the /patrol index. Nothing is stored; only the VIN is sent out, to NHTSA. -->
+<!-- patrol/scan-test/index.html | Build v2 | 2026-10-18 | Cache-buster on the shared scanner (scan.js?v=2). v1: Field test page for the shared camera scanner (/patrol/scan.js): scan a license barcode or a door-jamb VIN barcode with the phone and see exactly what was read, how long it took, and what the NHTSA lookup returns. Not linked from the /patrol index. Nothing is stored; only the VIN is sent out, to NHTSA. -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -50,9 +50,9 @@
     <button type="button" class="btn sec" id="btnClear">Clear</button>
   </div>
 </main>
-<footer class="foot">Build v1</footer>
+<footer class="foot">Build v2</footer>
 
-<script src="/patrol/scan.js"></script>
+<script src="/patrol/scan.js?v=2"></script>
 <script>
 (function(){
   'use strict';

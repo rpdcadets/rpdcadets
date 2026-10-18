@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- traffic/index.html | Build v11 | 2026-10-05 | Real progress bar (strip acknowledgements) and red Serial Printer hint under the Print button. v10: Compatibility mode switch (raw hex instead of compressed PCX) in troubleshooting. v9: Setup steps assume the MDC is already paired (e-citation rollout paired every car); pairing is now the fallback. v8: Setup step 5 wording: "Serial Printer" plus a COM number, with an example. v7: Renamed "Traffic Stop Notice" and reduced to the Feedback Notice only: the DL/ID and VIN barcode modes were removed because Brazos is retired and the new e-citation client does not use them. Slip drawn on a canvas with the City wordmark and printed via /patrol/print.js (auto ZPL/CPCL). v6: setup steps for the Serial Printer entry. v1 to v5: DL/ID + VIN barcode generator with Feedback Notice mode. -->
+<!-- traffic/index.html | Build v12 | 2026-10-18 | Cache-buster on the shared print engine (print.js?v=9) so a pushed engine update reaches every MDC on the next page load instead of after the 10-minute cache. v11: Real progress bar (strip acknowledgements) and red Serial Printer hint under the Print button. v10: Compatibility mode switch (raw hex instead of compressed PCX) in troubleshooting. v9: Setup steps assume the MDC is already paired (e-citation rollout paired every car); pairing is now the fallback. v8: Setup step 5 wording: "Serial Printer" plus a COM number, with an example. v7: Renamed "Traffic Stop Notice" and reduced to the Feedback Notice only: the DL/ID and VIN barcode modes were removed because Brazos is retired and the new e-citation client does not use them. Slip drawn on a canvas with the City wordmark and printed via /patrol/print.js (auto ZPL/CPCL). v6: setup steps for the Serial Printer entry. v1 to v5: DL/ID + VIN barcode generator with Feedback Notice mode. -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -109,9 +109,9 @@
   </div>
 </main>
 
-<footer class="foot">Internal field tool. Renders entirely in your browser. Nothing is saved on this device or the site. &middot; Build v11</footer>
+<footer class="foot">Internal field tool. Renders entirely in your browser. Nothing is saved on this device or the site. &middot; Build v12</footer>
 
-<script src="/patrol/print.js"></script>
+<script src="/patrol/print.js?v=9"></script>
 <script>
 (function(){
   'use strict';

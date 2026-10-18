@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- patrol/impound/index.html | Build v10 | 2026-10-05 | Real progress bar and red Serial Printer hint under the Print button. v9: Compatibility mode switch in troubleshooting. v8: Setup steps assume the MDC is already paired; pairing is now the fallback. v7: Setup step 5 wording: "Serial Printer" plus a COM number, with an example. v6: Setup steps: pick the "Serial Printer (COMx)" entry, not the serial-number entry. v5: When Hold is Yes, the receipt prints write-in lines for Hold Released By / Date and Release Notified By ID# / Date. v4: Tow truck LP field removed (not tracked). v3: Setup step 3 now covers the Bluetooth PIN and the checkmark button on the printer. v2: Wrecker address and phone now labeled on the slip. v1: New tool. Electronic Vehicle Impound: replaces the Brazos Towed Vehicle Receipt and the paper Vehicle Impound Report (GO 4.01.02-004). Sections: incident, vehicle, hold, owner/driver/lien holder, tow, inventory (hubcaps, radio, keys, front/rear/trunk), condition, signatures. Slip drawn on a canvas with the city wordmark and printed on the in-car Zebra via /patrol/print.js. Officer-typed values print in ALL CAPS. VIN check-digit validation. Nothing stored. -->
+<!-- patrol/impound/index.html | Build v11 | 2026-10-18 | Cache-buster on the shared print engine (print.js?v=9) so a pushed engine update reaches every MDC on the next page load instead of after the 10-minute cache. v10: Real progress bar and red Serial Printer hint under the Print button. v9: Compatibility mode switch in troubleshooting. v8: Setup steps assume the MDC is already paired; pairing is now the fallback. v7: Setup step 5 wording: "Serial Printer" plus a COM number, with an example. v6: Setup steps: pick the "Serial Printer (COMx)" entry, not the serial-number entry. v5: When Hold is Yes, the receipt prints write-in lines for Hold Released By / Date and Release Notified By ID# / Date. v4: Tow truck LP field removed (not tracked). v3: Setup step 3 now covers the Bluetooth PIN and the checkmark button on the printer. v2: Wrecker address and phone now labeled on the slip. v1: New tool. Electronic Vehicle Impound: replaces the Brazos Towed Vehicle Receipt and the paper Vehicle Impound Report (GO 4.01.02-004). Sections: incident, vehicle, hold, owner/driver/lien holder, tow, inventory (hubcaps, radio, keys, front/rear/trunk), condition, signatures. Slip drawn on a canvas with the city wordmark and printed on the in-car Zebra via /patrol/print.js. Officer-typed values print in ALL CAPS. VIN check-digit validation. Nothing stored. -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -223,9 +223,9 @@
   </div>
 </div>
 
-<footer class="foot">Build v10</footer>
+<footer class="foot">Build v11</footer>
 
-<script src="/patrol/print.js"></script>
+<script src="/patrol/print.js?v=9"></script>
 <script>
 (function(){
   'use strict';

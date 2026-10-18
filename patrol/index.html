@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- patrol/index.html | Build v10 | 2026-10-18 | APOWW and EPO cards cleared for use (DRAFT tags removed); APOWW card gains the green note that the form is confirmed accepted at MRMC Campbell. v9: Traffic card renamed "Traffic Stop Notice" (DL/ID and VIN barcode modes retired with Brazos). v8: Electronic Vehicle Impound card (draft) added at the end. v7: Driver Information Exchange card (draft) added. v6: Traffic Stop card mentions the Traffic Feedback Notice mode. v5: New card copy; APOWW card (draft) above EPO; code box routes A-codes to /patrol/apoww; 20-minute expiry wording. v4: EPO card marked DRAFT -->
+<!-- patrol/index.html | Build v11 | 2026-10-18 | Card redesign: short officer-speak titles (Booking Slip + Medical, APOWW, EPO Packet, Driver Exchange, Vehicle Impound), one- or two-line descriptions, printer or form icon on each card, a status slot under the title (red DRAFT pill for tools in testing, green check line for confirmations such as MRMC Campbell), the two draft tools moved under their own muted "In testing" heading at the bottom, pressed-state tint, a "Have a desktop code?" jump button in the header on phones, and a two-column layout (tools left, Desktop code box pinned right) on screens at least 900px wide that have a mouse or touchpad pointer, so sideways phones stay single-column. APOWW description now says Apprehension by Peace Officer Without Warrant. v10: APOWW and EPO cards cleared for use (DRAFT tags removed); APOWW card gains the green note that the form is confirmed accepted at MRMC Campbell. v9: Traffic card renamed "Traffic Stop Notice" (DL/ID and VIN barcode modes retired with Brazos). v8: Electronic Vehicle Impound card (draft) added at the end. v7: Driver Information Exchange card (draft) added. v6: Traffic Stop card mentions the Traffic Feedback Notice mode. v5: New card copy; APOWW card (draft) above EPO; code box routes A-codes to /patrol/apoww; 20-minute expiry wording. v4: EPO card marked DRAFT -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -10,7 +10,7 @@
 <style>
   :root{
     --navy:#0b1f3a; --navy-2:#13294b; --paper:#f4f1ea; --ink:#1a1d24;
-    --line:#c9c2b4; --red:#9b2030; --gold:#b8923a; --field:#fbfaf6; --muted:#5f6675;
+    --line:#c9c2b4; --red:#9b2030; --gold:#b8923a; --field:#fbfaf6; --muted:#5f6675; --ok:#1f6b3a;
   }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;}
@@ -27,26 +27,48 @@
     background:linear-gradient(180deg,var(--navy) 0%,var(--navy-2) 100%);
     border-bottom:3px solid var(--gold);
     box-shadow:0 2px 0 var(--red) inset, 0 6px 20px rgba(0,0,0,.25);
-    padding:18px 24px 14px;
+    padding:18px 0 16px;
   }
+  .masthead .in{max-width:1040px;margin:0 auto;padding:0 18px;display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;}
   .masthead .kick{margin:0 0 2px;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);font-weight:600;}
   .masthead h1{margin:0;font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:32px;letter-spacing:.02em;color:#fff;line-height:1.05;}
   .masthead .sub{margin-top:4px;font-size:13px;color:rgba(255,255,255,.72);}
-  main{flex:1;width:100%;max-width:640px;margin:0 auto;padding:24px 18px 40px;}
-  h2{font-family:"Barlow Condensed",sans-serif;font-size:22px;letter-spacing:.04em;text-transform:uppercase;color:var(--navy);margin:0 0 12px;}
-  .tools{display:grid;gap:12px;margin-bottom:32px;}
+  .codejump{
+    display:inline-flex;align-items:center;gap:6px;text-decoration:none;color:#fff;font-weight:600;font-size:14px;
+    border:1.5px solid rgba(184,146,58,.75);border-radius:999px;padding:8px 14px;white-space:nowrap;
+  }
+  .codejump:active{background:rgba(255,255,255,.12);}
+  main{flex:1;width:100%;max-width:1040px;margin:0 auto;padding:22px 18px 40px;}
+  .layout{display:grid;grid-template-columns:minmax(0,1fr);gap:28px;align-items:start;}
+  h2{font-family:"Barlow Condensed",sans-serif;font-size:21px;letter-spacing:.04em;text-transform:uppercase;color:var(--navy);margin:0 0 10px;}
+  h2 .n{color:var(--muted);font-weight:600;font-size:14px;letter-spacing:.06em;margin-left:8px;}
+  h2.muted{color:var(--muted);}
+  .group{margin-bottom:26px;}
+  .tools{display:grid;gap:12px;}
   a.tool{
     display:block;text-decoration:none;color:inherit;background:#fff;border:1px solid var(--line);
-    border-left:5px solid var(--navy);border-radius:8px;padding:16px 18px;
-    box-shadow:0 1px 2px rgba(0,0,0,.05);transition:transform .08s ease,box-shadow .08s ease;
+    border-left:5px solid var(--navy);border-radius:10px;padding:14px 16px 14px 14px;
+    box-shadow:0 1px 2px rgba(0,0,0,.05);transition:transform .08s ease,box-shadow .08s ease,background .08s ease;
   }
-  a.tool:active{transform:scale(.99);}
+  a.tool:active{transform:scale(.99);background:#eef2f8;}
   a.tool:hover{box-shadow:0 4px 12px rgba(0,0,0,.10);}
   a.tool:focus-visible{outline:3px solid var(--gold);outline-offset:2px;}
-  .tool .name{font-family:"Barlow Condensed",sans-serif;font-size:22px;font-weight:700;letter-spacing:.02em;color:var(--navy);}
-  .tool .desc{font-size:14px;color:var(--muted);margin-top:2px;}
-  .tool .go{float:right;color:var(--gold);font-size:22px;line-height:1;margin-top:2px;}
-  .code-box{background:#fff;border:1px solid var(--line);border-radius:8px;padding:16px 18px;}
+  .tool .row{display:flex;align-items:center;gap:12px;}
+  .tool .ico{flex:none;width:36px;height:36px;border-radius:9px;background:var(--navy);color:var(--gold);display:grid;place-items:center;}
+  .tool .ico svg{width:20px;height:20px;}
+  .tool .name{flex:1;min-width:0;font-family:"Barlow Condensed",sans-serif;font-size:23px;font-weight:700;letter-spacing:.02em;color:var(--navy);line-height:1.1;}
+  .tool .go{flex:none;color:var(--gold);font-size:26px;line-height:1;}
+  .tool .desc{font-size:14px;color:var(--muted);margin:8px 0 0 48px;}
+  .tool .status{display:flex;align-items:flex-start;gap:7px;margin:8px 0 0 48px;font-size:13.5px;line-height:1.35;}
+  .status .ok{color:var(--ok);font-weight:600;}
+  .status .ok-more{color:var(--ok);font-weight:400;}
+  .status svg{flex:none;width:16px;height:16px;margin-top:2px;}
+  .pill{display:inline-block;font-size:11.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--red);border:1.5px solid var(--red);border-radius:999px;padding:3px 9px;line-height:1.2;}
+  a.tool.testing{background:var(--field);border-left-color:var(--red);}
+  a.tool.testing .ico{background:#6b7280;color:#fff;}
+  a.tool.testing .name{color:#3b4252;}
+  .code-box{background:#fff;border:1px solid var(--line);border-radius:10px;padding:16px 18px;}
+  .code-box h2{margin-bottom:6px;}
   .code-box p{margin:0 0 10px;font-size:14px;color:var(--muted);}
   .code-row{display:flex;gap:8px;}
   #code{
@@ -61,66 +83,106 @@
   #go:disabled{opacity:.45;cursor:default;}
   .code-hint{font-size:12px;color:var(--muted);margin-top:8px;}
   footer.foot{text-align:center;font-size:12px;color:var(--muted);padding:14px 18px 22px;border-top:1px solid var(--line);}
+  /* Two columns only on wide screens that have a mouse or touchpad (MDCs, ER and jail desktops); a phone turned sideways keeps one column. */
+  @media (min-width: 900px) and (hover: hover) and (pointer: fine){
+    .layout{grid-template-columns:minmax(0,1fr) 360px;gap:36px;}
+    .code-box{position:sticky;top:22px;}
+    .codejump{display:none;}
+  }
 </style>
 </head>
 <body>
 <header class="masthead">
-  <p class="kick">Public Safety &middot; Field Tools</p>
-  <h1>Select the tool you need</h1>
-  <div class="sub">Everything runs in your browser. Nothing is stored.</div>
+  <div class="in">
+    <div>
+      <p class="kick">Public Safety &middot; Field Tools</p>
+      <h1>Select the tool you need</h1>
+      <div class="sub">Everything runs in your browser. Nothing is stored.</div>
+    </div>
+    <a class="codejump" href="#desktop-code">Have a desktop code? &rsaquo;</a>
+  </div>
 </header>
 
-<main>
-  <h2>Tools</h2>
-  <div class="tools">
-    <a class="tool" href="/traffic/">
-      <span class="go">&rsaquo;</span>
-      <div class="name">Traffic Stop Notice</div>
-      <div class="desc">Prints the English/Spanish feedback notice slip on your in-car printer. One tap after the printer is paired.</div>
-    </a>
-    <a class="tool" href="/patrol/booking/">
-      <span class="go">&rsaquo;</span>
-      <div class="name">Booking Slip / Medical Questionnaire</div>
-      <div class="desc">Fill this out on your work phone or squad computer, as much or as little as you want, then give the code to Detention staff to print the booking slip and medical screening. Tip: send the code over the MDC while you're enroute so it's ready when you arrive.</div>
-    </a>
-    <a class="tool" href="/patrol/apoww/">
-      <span class="go">&rsaquo;</span>
-      <div class="name">APOWW Form</div>
-      <div class="desc">Prefill your APOWW on scene, then give the code to the ER nursing staff to print, or download the PDF and email it to them directly.</div>
-      <div class="desc" style="color:#1f6b3a;font-weight:600;margin-top:6px;">Confirmed accepted at MRMC Campbell. At other locations, officers may ask the nursing staff whether they have internet and print capability and guide them through printing the form.</div>
-    </a>
-    <a class="tool" href="/patrol/epo/">
-      <span class="go">&rsaquo;</span>
-      <div class="name">Emergency Protective Order Packet</div>
-      <div class="desc">Every required EPO form in one place. Type the information once and it fills the matching fields on all of them, plus two extra forms the jail asked for to make their side easier.</div>
-    </a>
-    <a class="tool" href="/patrol/exchange/">
-      <span class="go">&rsaquo;</span>
-      <div class="name">Driver Information Exchange <span style="color:var(--red);font-size:15px;letter-spacing:.05em;">(DRAFT - DO NOT USE)</span></div>
-      <div class="desc">Crash driver exchange slip. Add as many units as were involved, type driver, vehicle, and insurance for each, and print one slip per driver on your in-car printer.</div>
-    </a>
-    <a class="tool" href="/patrol/impound/">
-      <span class="go">&rsaquo;</span>
-      <div class="name">Electronic Vehicle Impound <span style="color:var(--red);font-size:15px;letter-spacing:.05em;">(DRAFT - DO NOT USE)</span></div>
-      <div class="desc">Vehicle impound and towed vehicle receipt. Type the vehicle, hold, owner, tow, and inventory details, then print the receipt on your in-car printer.</div>
-    </a>
+<main class="layout">
+  <div>
+    <div class="group">
+      <div class="tools">
+        <a class="tool" href="/traffic/">
+          <div class="row">
+            <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V3h12v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M7 14h10v7H7z"/></svg></span>
+            <div class="name">Traffic Stop Notice</div>
+            <span class="go">&rsaquo;</span>
+          </div>
+          <div class="desc">English/Spanish feedback notice slip. One tap once the printer is paired.</div>
+        </a>
+        <a class="tool" href="/patrol/booking/">
+          <div class="row">
+            <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5"/><path d="M10 13h6M10 17h6"/></svg></span>
+            <div class="name">Booking Slip + Medical</div>
+            <span class="go">&rsaquo;</span>
+          </div>
+          <div class="desc">Booking slip and medical screening. Fill it on your phone or MDC; Detention prints it from your code.</div>
+        </a>
+        <a class="tool" href="/patrol/apoww/">
+          <div class="row">
+            <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5"/><path d="M10 13h6M10 17h6"/></svg></span>
+            <div class="name">APOWW</div>
+            <span class="go">&rsaquo;</span>
+          </div>
+          <div class="desc">Apprehension by Peace Officer Without Warrant. Fill it on scene; the ER prints it from your code, or email them the PDF.</div>
+          <div class="status"><svg viewBox="0 0 24 24" fill="none" stroke="#1f6b3a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.7 2.7L16 9.5"/></svg><div><span class="ok">Confirmed accepted at MRMC Campbell.</span> <span class="ok-more">At other locations, ask the nursing staff whether they have internet and print capability and guide them through printing the form.</span></div></div>
+        </a>
+        <a class="tool" href="/patrol/epo/">
+          <div class="row">
+            <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5"/><path d="M10 13h6M10 17h6"/></svg></span>
+            <div class="name">EPO Packet</div>
+            <span class="go">&rsaquo;</span>
+          </div>
+          <div class="desc">Every required EPO form from one set of answers, plus the two extra forms the jail asked for.</div>
+        </a>
+      </div>
+    </div>
+
+    <div class="group">
+      <h2 class="muted">In testing</h2>
+      <div class="tools">
+        <a class="tool testing" href="/patrol/exchange/">
+          <div class="row">
+            <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V3h12v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M7 14h10v7H7z"/></svg></span>
+            <div class="name">Driver Exchange</div>
+            <span class="go">&rsaquo;</span>
+          </div>
+          <div class="status"><span class="pill">Draft &middot; do not use</span></div>
+          <div class="desc">Crash driver exchange slip. Any number of units; one slip per driver on the in-car printer.</div>
+        </a>
+        <a class="tool testing" href="/patrol/impound/">
+          <div class="row">
+            <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V3h12v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M7 14h10v7H7z"/></svg></span>
+            <div class="name">Vehicle Impound</div>
+            <span class="go">&rsaquo;</span>
+          </div>
+          <div class="status"><span class="pill">Draft &middot; do not use</span></div>
+          <div class="desc">Impound report and towed vehicle receipt on the in-car printer.</div>
+        </a>
+      </div>
+    </div>
   </div>
 
-  <h2>Desktop code</h2>
-  <div class="code-box">
-    <p>Got a code from an officer or MDC? Enter it below to pull up their Booking Slip, EPO Packet, or APOWW and print the filled forms on this computer.</p>
+  <aside class="code-box" id="desktop-code">
+    <h2>Desktop code</h2>
+    <p>Got a code from an officer or MDC? Enter it to pull up their Booking Slip, EPO Packet, or APOWW and print the filled forms on this computer.</p>
     <div class="code-row">
       <input id="code" inputmode="latin" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="12" placeholder="8 characters">
       <button id="go" disabled>Go</button>
     </div>
     <div class="code-hint">Codes work once and expire 20 minutes after they are created.</div>
-  </div>
+  </aside>
 </main>
 
-<footer class="foot">Internal field tools &middot; Build v10</footer>
+<footer class="foot">Internal field tools &middot; Build v11</footer>
 
 <script>
-  const BUILD = '10';
+  const BUILD = '11';
   (async () => {
     try {
       const r = await fetch(location.pathname + '?cb=' + Date.now(), {cache:'no-store'}); if (!r.ok) return;

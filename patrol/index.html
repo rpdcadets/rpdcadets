@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- patrol/index.html | Build v12 | 2026-10-18 | Desktop code box now routes D codes to the Driver Exchange (phone-filled exchange forms picked up on the MDC) and mentions it; Driver Exchange card description notes phone scanning. v11: Card redesign: short officer-speak titles (Booking Slip + Medical, APOWW, EPO Packet, Driver Exchange, Vehicle Impound), one- or two-line descriptions, printer or form icon on each card, a status slot under the title (red DRAFT pill for tools in testing, green check line for confirmations such as MRMC Campbell), the two draft tools moved under their own muted "In testing" heading at the bottom, pressed-state tint, a "Have a desktop code?" jump button in the header on phones, and a two-column layout (tools left, Desktop code box pinned right) on screens at least 900px wide that have a mouse or touchpad pointer, so sideways phones stay single-column. APOWW description now says Apprehension by Peace Officer Without Warrant. v10: APOWW and EPO cards cleared for use (DRAFT tags removed); APOWW card gains the green note that the form is confirmed accepted at MRMC Campbell. v9: Traffic card renamed "Traffic Stop Notice" (DL/ID and VIN barcode modes retired with Brazos). v8: Electronic Vehicle Impound card (draft) added at the end. v7: Driver Information Exchange card (draft) added. v6: Traffic Stop card mentions the Traffic Feedback Notice mode. v5: New card copy; APOWW card (draft) above EPO; code box routes A-codes to /patrol/apoww; 20-minute expiry wording. v4: EPO card marked DRAFT -->
+<!-- patrol/index.html | Build v13 | 2026-10-20 | Driver Exchange and Vehicle Impound cards removed along with the "In testing" group (the tool pages stay on the site, just unlinked, because e-citation and CIS computer updates keep breaking in-car printing); Traffic Stop Notice card gains an amber note that e-citation and CIS updates may make the tool unusable; Desktop code text no longer lists Driver Exchange (a D code still routes to it if entered). v12: Desktop code box now routes D codes to the Driver Exchange (phone-filled exchange forms picked up on the MDC) and mentions it; Driver Exchange card description notes phone scanning. v11: Card redesign: short officer-speak titles (Booking Slip + Medical, APOWW, EPO Packet, Driver Exchange, Vehicle Impound), one- or two-line descriptions, printer or form icon on each card, a status slot under the title (red DRAFT pill for tools in testing, green check line for confirmations such as MRMC Campbell), the two draft tools moved under their own muted "In testing" heading at the bottom, pressed-state tint, a "Have a desktop code?" jump button in the header on phones, and a two-column layout (tools left, Desktop code box pinned right) on screens at least 900px wide that have a mouse or touchpad pointer, so sideways phones stay single-column. APOWW description now says Apprehension by Peace Officer Without Warrant. v10: APOWW and EPO cards cleared for use (DRAFT tags removed); APOWW card gains the green note that the form is confirmed accepted at MRMC Campbell. v9: Traffic card renamed "Traffic Stop Notice" (DL/ID and VIN barcode modes retired with Brazos). v8: Electronic Vehicle Impound card (draft) added at the end. v7: Driver Information Exchange card (draft) added. v6: Traffic Stop card mentions the Traffic Feedback Notice mode. v5: New card copy; APOWW card (draft) above EPO; code box routes A-codes to /patrol/apoww; 20-minute expiry wording. v4: EPO card marked DRAFT -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -10,7 +10,7 @@
 <style>
   :root{
     --navy:#0b1f3a; --navy-2:#13294b; --paper:#f4f1ea; --ink:#1a1d24;
-    --line:#c9c2b4; --red:#9b2030; --gold:#b8923a; --field:#fbfaf6; --muted:#5f6675; --ok:#1f6b3a;
+    --line:#c9c2b4; --red:#9b2030; --gold:#b8923a; --field:#fbfaf6; --muted:#5f6675; --ok:#1f6b3a; --warn:#8a5a00;
   }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;}
@@ -62,6 +62,7 @@
   .tool .status{display:flex;align-items:flex-start;gap:7px;margin:8px 0 0 48px;font-size:13.5px;line-height:1.35;}
   .status .ok{color:var(--ok);font-weight:600;}
   .status .ok-more{color:var(--ok);font-weight:400;}
+  .status .warn{color:var(--warn);font-weight:600;}
   .status svg{flex:none;width:16px;height:16px;margin-top:2px;}
   .pill{display:inline-block;font-size:11.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--red);border:1.5px solid var(--red);border-radius:999px;padding:3px 9px;line-height:1.2;}
   a.tool.testing{background:var(--field);border-left-color:var(--red);}
@@ -114,6 +115,7 @@
             <span class="go">&rsaquo;</span>
           </div>
           <div class="desc">English/Spanish feedback notice slip. One tap once the printer is paired.</div>
+          <div class="status"><svg viewBox="0 0 24 24" fill="none" stroke="#8a5a00" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5l9.5 16.5h-19z"/><path d="M12 10v4.5"/><path d="M12 17.6h.01"/></svg><div><span class="warn">E-citation and CIS updates may make this tool unusable.</span></div></div>
         </a>
         <a class="tool" href="/patrol/booking/">
           <div class="row">
@@ -142,35 +144,11 @@
         </a>
       </div>
     </div>
-
-    <div class="group">
-      <h2 class="muted">In testing</h2>
-      <div class="tools">
-        <a class="tool testing" href="/patrol/exchange/">
-          <div class="row">
-            <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V3h12v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M7 14h10v7H7z"/></svg></span>
-            <div class="name">Driver Exchange</div>
-            <span class="go">&rsaquo;</span>
-          </div>
-          <div class="status"><span class="pill">Draft &middot; do not use</span></div>
-          <div class="desc">Crash driver exchange slip. Scan licenses and the VIN with your phone or type them, any number of units, then print one slip per driver on the in-car printer.</div>
-        </a>
-        <a class="tool testing" href="/patrol/impound/">
-          <div class="row">
-            <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V3h12v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M7 14h10v7H7z"/></svg></span>
-            <div class="name">Vehicle Impound</div>
-            <span class="go">&rsaquo;</span>
-          </div>
-          <div class="status"><span class="pill">Draft &middot; do not use</span></div>
-          <div class="desc">Impound report and towed vehicle receipt on the in-car printer.</div>
-        </a>
-      </div>
-    </div>
   </div>
 
   <aside class="code-box" id="desktop-code">
     <h2>Desktop code</h2>
-    <p>Got a code from an officer or MDC? Enter it to pull up their Booking Slip, EPO Packet, APOWW, or Driver Exchange and print the filled forms on this computer.</p>
+    <p>Got a code from an officer or MDC? Enter it to pull up their Booking Slip, EPO Packet, or APOWW and print the filled forms on this computer.</p>
     <div class="code-row">
       <input id="code" inputmode="latin" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="12" placeholder="8 characters">
       <button id="go" disabled>Go</button>
@@ -179,10 +157,10 @@
   </aside>
 </main>
 
-<footer class="foot">Internal field tools &middot; Build v12</footer>
+<footer class="foot">Internal field tools &middot; Build v13</footer>
 
 <script>
-  const BUILD = '12';
+  const BUILD = '13';
   (async () => {
     try {
       const r = await fetch(location.pathname + '?cb=' + Date.now(), {cache:'no-store'}); if (!r.ok) return;

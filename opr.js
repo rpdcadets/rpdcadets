@@ -1,8 +1,8 @@
-/* opr.js  |  Build v4  |  updated 2026-10-21  |  v4: Before you start note reworded to Tony's text; screenshot policy changed to match (a concern that might stop the application is screenshotted and sent to an advisor; sexual content involving a minor is still never saved); the guide rules and the PDF scope line updated to say the same. v3: FIX: the Before you start note and the guide inject the stylesheet themselves. On the first unlock the note fires before any review form has been mounted, so it rendered as bare text at the bottom of /sgt instead of a centered popup. v2: Reviewer recommendation block (Proceed / Proceed with notes / Do not proceed, plus a reason) that whoever runs the review sets, shared with both panels and printed beside the advisor result. Build v1: Online Presence Review: the standardized social media and online presence check run on cadet applicants (the public-information part of the background check). One shared form and guide rendered on both /sgt (the one sergeant cleared for background checks, after the hidden unlock) and /admin (advisors). Holds the step list, the one-tap link builder (every search link is built from the name, handles, email, phone, and parent names typed in), the username variant generator, the twelve review categories, the household and public-records section, the activity trail, the How to run this check guide, and the letterhead PDF builder used by /admin. Data access is RPDRoster.vet (roster.js VERSION 33). Loaded only by sgt.html and admin.html with a ?v= cache-buster; bump it with every change. */
+/* opr.js  |  Build v5  |  updated 2026-10-21  |  v5: username guesses in Discovery collapse into one row of small chips labeled as guesses (built from the name and handles), with a Copy all button; an opened chip turns green. Hashtag suggestion handles High School / Highschool spellings. v4: Before you start note reworded to Tony's text; screenshot policy changed to match (a concern that might stop the application is screenshotted and sent to an advisor; sexual content involving a minor is still never saved); the guide rules and the PDF scope line updated to say the same. v3: FIX: the Before you start note and the guide inject the stylesheet themselves. On the first unlock the note fires before any review form has been mounted, so it rendered as bare text at the bottom of /sgt instead of a centered popup. v2: Reviewer recommendation block (Proceed / Proceed with notes / Do not proceed, plus a reason) that whoever runs the review sets, shared with both panels and printed beside the advisor result. Build v1: Online Presence Review: the standardized social media and online presence check run on cadet applicants (the public-information part of the background check). One shared form and guide rendered on both /sgt (the one sergeant cleared for background checks, after the hidden unlock) and /admin (advisors). Holds the step list, the one-tap link builder (every search link is built from the name, handles, email, phone, and parent names typed in), the username variant generator, the twelve review categories, the household and public-records section, the activity trail, the How to run this check guide, and the letterhead PDF builder used by /admin. Data access is RPDRoster.vet (roster.js VERSION 33). Loaded only by sgt.html and admin.html with a ?v= cache-buster; bump it with every change. */
 (function (global) {
   'use strict';
 
-  const BUILD = 4;
+  const BUILD = 5;
   const PDF_LABEL = 'CADET/ONLINE V1';
   const CITY = 'Richardson';
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -173,7 +173,7 @@
     return app;
   }
   function suggestTags(school) {
-    const s = String(school || '').toLowerCase().replace(/high school/g, 'hs').replace(/[^a-z0-9 ]/g, '').trim();
+    const s = String(school || '').toLowerCase().replace(/high\s*school/g, 'hs').replace(/middle\s*school/g, 'ms').replace(/[^a-z0-9 ]/g, '').trim();
     if (!s) return '';
     const t = s.replace(/\s+/g, '');
     return t ? '#' + t : '';
@@ -355,7 +355,10 @@
 .opr-chip-l{font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);margin-right:2px}
 .opr-links{display:flex;flex-direction:column;gap:5px;margin:6px 0 10px}
 .opr-link{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;background:rgba(255,255,255,0.025);border:1px solid var(--card-border);border-radius:9px;padding:7px 10px}
-.opr-link.var{background:none;border-style:dashed;opacity:.85}
+.opr-link.var{background:none;border-style:dashed}
+.opr-link a.opr-vchip{display:inline-flex;align-items:center;min-height:28px;padding:3px 9px;border:1px solid var(--card-border);border-bottom:1px solid var(--card-border);border-radius:14px;color:#c6d0de;font-family:'Barlow',sans-serif;font-size:12.5px;font-weight:500;text-decoration:none}
+.opr-link a.opr-vchip:hover{color:#fff;border-color:rgba(255,255,255,0.25)}
+.opr-link a.opr-vchip.on{border-color:rgba(39,174,96,0.6);color:#8ee7b1}
 .opr-link a{color:var(--gold-light);font-family:'Barlow',sans-serif;font-size:13.5px;font-weight:600;text-decoration:none;border-bottom:1px dashed rgba(240,214,138,0.45);overflow-wrap:anywhere;min-height:24px;display:inline-flex;align-items:center}
 .opr-link a:hover{color:#fff}
 .opr-link .opr-hint{flex-basis:100%;font-size:12px;color:var(--text-muted);line-height:1.45}
@@ -425,7 +428,12 @@
   }
   function linksHtml(key, list, app, ro, empty) {
     const none = empty === '' ? '' : `<div class="opr-small">${esc(empty || 'Nothing to link yet.')}</div>`;
-    return `<div class="opr-links" data-links="${key}"${list.length || none ? '' : ' style="margin:0"'}>${list.length ? list.map(L => linkRowHtml(L, app, ro)).join('') : none}</div>`;
+    const rows = list.filter(L => !L.variant), vars = list.filter(L => L.variant);
+    let inner = rows.map(L => linkRowHtml(L, app, ro)).join('');
+    if (vars.length) {
+      inner += `<div class="opr-link var"><span class="opr-chip-l">Username guesses</span>${vars.map(L => `<a class="opr-vchip${app.opened[L.k] ? ' on' : ''}" href="${esc(L.url)}" target="_blank" rel="noopener noreferrer" data-lk="${esc(L.k)}" title="Open on WhatsMyName">${esc(L.label.replace(/^Variant: /, ''))}</a>`).join('')}<button type="button" class="opr-copy" data-copy="${esc(vars.map(L => L.label.replace(/^Variant: /, '')).join('\n'))}">Copy all</button><span class="opr-hint">Built from the name and the handles. Guesses only; skip any that are clearly someone else.</span></div>`;
+    }
+    return `<div class="opr-links" data-links="${key}"${list.length || none ? '' : ' style="margin:0"'}>${list.length ? inner : none}</div>`;
   }
   function stepHtml(k, idx, title, app, inner, open, ro) {
     const d = (app.steps || {})[k];
@@ -737,6 +745,7 @@
         const k = a.dataset.lk, t = now();
         S.app.opened[k] = t;
         const tag = a.parentElement.querySelector('[data-lko]'); if (tag) { tag.textContent = 'Opened ' + fmtWhen(t); tag.classList.add('on'); }
+        if (a.classList.contains('opr-vchip')) a.classList.add('on');
         if (!S.locked) { try { await enqueue(x => { x.opened = x.opened || {}; x.opened[k] = t; x.updatedAt = t; }); } catch (err) {} }
         return;
       }

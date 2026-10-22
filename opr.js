@@ -1,8 +1,8 @@
-/* opr.js  |  Build v2  |  updated 2026-10-21  |  v2: Reviewer recommendation block (Proceed / Proceed with notes / Do not proceed, plus a reason) that whoever runs the review sets, shared with both panels and printed beside the advisor result. Build v1: Online Presence Review: the standardized social media and online presence check run on cadet applicants (the public-information part of the background check). One shared form and guide rendered on both /sgt (the one sergeant cleared for background checks, after the hidden unlock) and /admin (advisors). Holds the step list, the one-tap link builder (every search link is built from the name, handles, email, phone, and parent names typed in), the username variant generator, the twelve review categories, the household and public-records section, the activity trail, the How to run this check guide, and the letterhead PDF builder used by /admin. Data access is RPDRoster.vet (roster.js VERSION 33). Loaded only by sgt.html and admin.html with a ?v= cache-buster; bump it with every change. */
+/* opr.js  |  Build v3  |  updated 2026-10-21  |  v3: FIX: the Before you start note and the guide inject the stylesheet themselves. On the first unlock the note fires before any review form has been mounted, so it rendered as bare text at the bottom of /sgt instead of a centered popup. v2: Reviewer recommendation block (Proceed / Proceed with notes / Do not proceed, plus a reason) that whoever runs the review sets, shared with both panels and printed beside the advisor result. Build v1: Online Presence Review: the standardized social media and online presence check run on cadet applicants (the public-information part of the background check). One shared form and guide rendered on both /sgt (the one sergeant cleared for background checks, after the hidden unlock) and /admin (advisors). Holds the step list, the one-tap link builder (every search link is built from the name, handles, email, phone, and parent names typed in), the username variant generator, the twelve review categories, the household and public-records section, the activity trail, the How to run this check guide, and the letterhead PDF builder used by /admin. Data access is RPDRoster.vet (roster.js VERSION 33). Loaded only by sgt.html and admin.html with a ?v= cache-buster; bump it with every change. */
 (function (global) {
   'use strict';
 
-  const BUILD = 2;
+  const BUILD = 3;
   const PDF_LABEL = 'CADET/ONLINE V1';
   const CITY = 'Richardson';
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -587,6 +587,7 @@
 
   /* ══════════ guide modal ══════════ */
   function guideModal() {
+    ensureStyle();
     let m = document.getElementById('oprGuide');
     if (m) return m;
     m = document.createElement('div'); m.className = 'opr-modal'; m.id = 'oprGuide';
@@ -600,6 +601,7 @@
     return m;
   }
   function noteModal(onOk) {
+    ensureStyle();
     let m = document.getElementById('oprNote');
     if (!m) {
       m = document.createElement('div'); m.className = 'opr-modal'; m.id = 'oprNote';

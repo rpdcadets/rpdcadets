@@ -1,8 +1,8 @@
-/* opr.js  |  Build v3  |  updated 2026-10-21  |  v3: FIX: the Before you start note and the guide inject the stylesheet themselves. On the first unlock the note fires before any review form has been mounted, so it rendered as bare text at the bottom of /sgt instead of a centered popup. v2: Reviewer recommendation block (Proceed / Proceed with notes / Do not proceed, plus a reason) that whoever runs the review sets, shared with both panels and printed beside the advisor result. Build v1: Online Presence Review: the standardized social media and online presence check run on cadet applicants (the public-information part of the background check). One shared form and guide rendered on both /sgt (the one sergeant cleared for background checks, after the hidden unlock) and /admin (advisors). Holds the step list, the one-tap link builder (every search link is built from the name, handles, email, phone, and parent names typed in), the username variant generator, the twelve review categories, the household and public-records section, the activity trail, the How to run this check guide, and the letterhead PDF builder used by /admin. Data access is RPDRoster.vet (roster.js VERSION 33). Loaded only by sgt.html and admin.html with a ?v= cache-buster; bump it with every change. */
+/* opr.js  |  Build v4  |  updated 2026-10-21  |  v4: Before you start note reworded to Tony's text; screenshot policy changed to match (a concern that might stop the application is screenshotted and sent to an advisor; sexual content involving a minor is still never saved); the guide rules and the PDF scope line updated to say the same. v3: FIX: the Before you start note and the guide inject the stylesheet themselves. On the first unlock the note fires before any review form has been mounted, so it rendered as bare text at the bottom of /sgt instead of a centered popup. v2: Reviewer recommendation block (Proceed / Proceed with notes / Do not proceed, plus a reason) that whoever runs the review sets, shared with both panels and printed beside the advisor result. Build v1: Online Presence Review: the standardized social media and online presence check run on cadet applicants (the public-information part of the background check). One shared form and guide rendered on both /sgt (the one sergeant cleared for background checks, after the hidden unlock) and /admin (advisors). Holds the step list, the one-tap link builder (every search link is built from the name, handles, email, phone, and parent names typed in), the username variant generator, the twelve review categories, the household and public-records section, the activity trail, the How to run this check guide, and the letterhead PDF builder used by /admin. Data access is RPDRoster.vet (roster.js VERSION 33). Loaded only by sgt.html and admin.html with a ?v= cache-buster; bump it with every change. */
 (function (global) {
   'use strict';
 
-  const BUILD = 3;
+  const BUILD = 4;
   const PDF_LABEL = 'CADET/ONLINE V1';
   const CITY = 'Richardson';
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -130,11 +130,11 @@
 
   /* ══════════ guide ══════════ */
   const STOP_RULES = [
-    'Public view only. Never log in as the applicant, send a follow or friend request, DM them, or use a fake account.',
-    'Do not screenshot, download, or save anything. Describe what you saw in the note. An advisor decides what goes in the folder.',
-    'Anything serious (threats, weapons, drugs, sexual content): mark Concern, write one line, stop looking, and tell an advisor.',
-    'Sexual content involving a minor is never saved by anyone. Note that it exists and stop.',
-    'What you find stays in this panel. Do not discuss it with cadets or anyone outside the advisors.',
+    'Use only what is publicly accessible. Do not follow the applicant, friend request, direct message, or use a fake account to see what is private.',
+    'If you see anything serious, mark it Concern and type it in for the interview board.',
+    'Screenshot anything that is a concern that might lead to the application not proceeding and submit it to an advisor. Nothing else gets saved.',
+    'Sexual content involving a minor is never screenshotted or saved by anyone. Note that it exists, stop, and tell an advisor.',
+    'Do not discuss anything you find with cadets or anyone outside the advisors.',
     'No people-search sites (Spokeo, BeenVerified, TruthFinder) and no paid lookups. Everything in the link rows is free.',
     'Reverse image search only photos found online in public view, never the photo from the application file.'
   ];
@@ -149,7 +149,7 @@
     ['Household and family', 'Run the parent or guardian names and the home address through the sex offender registries, the court portals, the jail and prison lookups, and the name and news searches. Household findings inform; the applicant\'s own conduct decides. Record what you find in the records list with the disposition: a dismissed case is not a conviction.'],
     ['What was found', 'Mark each of the twelve categories Clear, Note, or Concern with a short line that says where and when. Positives count too.']
   ];
-  const SGT_NOTE = 'This review is confidential and yours alone to run. Public view only: no follows, friend requests, DMs, logins, fake accounts, screenshots, or saved copies. Anything serious gets a Concern, one line, and you stop and tell an advisor. Nothing you find here is discussed with cadets or anyone outside the advisors.';
+  const SGT_NOTE = 'This review is confidential and yours alone to run. Use only what is publicly accessible, do not follow the applicant, friend request, direct message, or use a fake account to see what is private. If you see anything serious, type the concern in for the interview board. Screenshot and submit to an advisor if you see anything that is a concern that might lead to their application not proceeding. Please do not discuss anything you find with cadets or anyone outside the advisors.';
 
   /* ══════════ data ══════════ */
   function blankApp(name, obsId, prefill) {
@@ -922,7 +922,7 @@
     y -= 46;
     if (rec.n) { para('Reviewer note: ' + rec.n, FI, 9); y -= 4; }
     if (adv.note) { para('Advisor note: ' + adv.note, FI, 9); y -= 4; }
-    para('Scope: public content only. No passwords or logins were requested, no accounts were followed or contacted, no fake accounts were used, and nothing was saved from the applicant\'s accounts by the reviewer. Household findings are information for the advisor; the applicant\'s own conduct decides.', F, 8, BG);
+    para('Scope: public content only. No passwords or logins were requested, no accounts were followed or contacted, and no fake accounts were used. Screenshots of concerns, if any, are in the applicant\'s folder, not in the system. Household findings are information for the advisor; the applicant\'s own conduct decides.', F, 8, BG);
     y -= 4;
     // accounts
     section('Accounts');

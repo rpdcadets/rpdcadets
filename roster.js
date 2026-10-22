@@ -1,4 +1,4 @@
-/* roster.js  |  VERSION 32  |  updated 2026-10-07  |  FIX: VERSION 31 failed to start in the browser. The public RPDRoster object (built near the top of this file) read the waiver constants WV_ITEMS / WV_LIAB / WV_SOON_DAYS before the lines that declare them had run, which throws "Cannot access before initialization" and left RPDRoster undefined on every page. The four waiver constants now sit directly above the RPDRoster object. No logic changed. Prior v31 notes: Waiver tracker: new RPDRoster.waivers module. One encrypted node (roster/waivers, same records key, so the advisor, limited advisor, and sergeant tiers can open it and cadet tiers cannot) holds a per-cadet, per-waiver entry: Received (date + who accepted it, marked on /sgt) then Filed (marked on /admin). Existing Cadet Records checkmarks are read as Filed with no date and are never rewritten. waivers.status() also applies the turning-18 rule (re-sign each waiver once the cadet is 18; the liability release must be the adult version). waivers.mutate() re-reads the node before every write so two people marking at once do not overwrite each other. Nothing else changed. Prior v30 notes: Reference checks: new RPDRoster.references module for applicant reference questionnaires. The public /reference page encrypts each response in the reference's browser (RSA envelope, same idea as /guest) under a NEW reference key pair whose private half is wrapped ONLY under the full advisor passcode (roster/refKeyWrap), so the sergeant and limited-advisor tiers cannot open responses. Nodes: roster/refPub, refKeyWrap, refPrivWrap, refVault (advisor-only reference list), refInvites/{id} (one per emailed link, encrypted under a key derived from the link code), refAnswers/{id}, refDone/{id}. REF_SALT 'rpdcadets-reference-v1' and the derive recipe are duplicated in reference.html and must change together. No other module changed. Prior v29 notes: Task categories config: RPDRoster.taskconfig gains get/save (records key, node roster/taskConfig) holding {cats:[{id,label,color,retired}]} so the Tasks tab on /sgt can manage its own category list. Same isolation as tasks: reads and writes only roster/taskConfig. Prior v28 notes: Tasks board: RPDRoster.tasks gains get/save (records key, node roster/tasks), a flat array of {id, text, cat, cadet, assignee, due, priority, by, at, done, doneBy, doneAt} backing the new Tasks tab on /sgt. This module reads and writes ONLY roster/tasks; it never touches roster, records, requests, notes, or any other node. Prior v27 notes: Requests board: RPDRoster.requests gains get/save (records key, node roster/requests), a flat array of {id, name, text, at, done, doneAt} backing the new Requests tab on /sgt: sergeants post wants, changes, and policy proposals for the post; the advisor checks items off as they are completed and checked items sink below the open list. Prior v26 notes: Ride-Along Trackers inbox (submit cadet-tier via RSA envelope to roster/raInbox, merge records-tier into the log tagged via:'trackers', duplicate ledger at roster/raIndex, RA_SALT 'rpdcadets-ridealongs-v1' lives only in this file). Prior v25: RPDRoster.observers module for the public /guest interest form. */
+/* roster.js  |  VERSION 33  |  updated 2026-10-21  |  Online Presence Review (applicant vetting) data layer: RPDRoster.vet with get/mutate for the shared review node (roster/vet, records key: the cleared sergeant on /sgt and advisors on /admin both edit it) and advGet/advMutate for the advisor-only result (roster/vetAdv, reference key, full advisor passcode only). The form, link builder, guide, and PDF live in opr.js Build v1, loaded only by sgt.html and admin.html. No existing function changed. Prior VERSION 32 notes: FIX: VERSION 31 failed to start in the browser. The public RPDRoster object (built near the top of this file) read the waiver constants WV_ITEMS / WV_LIAB / WV_SOON_DAYS before the lines that declare them had run, which throws "Cannot access before initialization" and left RPDRoster undefined on every page. The four waiver constants now sit directly above the RPDRoster object. No logic changed. Prior v31 notes: Waiver tracker: new RPDRoster.waivers module. One encrypted node (roster/waivers, same records key, so the advisor, limited advisor, and sergeant tiers can open it and cadet tiers cannot) holds a per-cadet, per-waiver entry: Received (date + who accepted it, marked on /sgt) then Filed (marked on /admin). Existing Cadet Records checkmarks are read as Filed with no date and are never rewritten. waivers.status() also applies the turning-18 rule (re-sign each waiver once the cadet is 18; the liability release must be the adult version). waivers.mutate() re-reads the node before every write so two people marking at once do not overwrite each other. Nothing else changed. Prior v30 notes: Reference checks: new RPDRoster.references module for applicant reference questionnaires. The public /reference page encrypts each response in the reference's browser (RSA envelope, same idea as /guest) under a NEW reference key pair whose private half is wrapped ONLY under the full advisor passcode (roster/refKeyWrap), so the sergeant and limited-advisor tiers cannot open responses. Nodes: roster/refPub, refKeyWrap, refPrivWrap, refVault (advisor-only reference list), refInvites/{id} (one per emailed link, encrypted under a key derived from the link code), refAnswers/{id}, refDone/{id}. REF_SALT 'rpdcadets-reference-v1' and the derive recipe are duplicated in reference.html and must change together. No other module changed. Prior v29 notes: Task categories config: RPDRoster.taskconfig gains get/save (records key, node roster/taskConfig) holding {cats:[{id,label,color,retired}]} so the Tasks tab on /sgt can manage its own category list. Same isolation as tasks: reads and writes only roster/taskConfig. Prior v28 notes: Tasks board: RPDRoster.tasks gains get/save (records key, node roster/tasks), a flat array of {id, text, cat, cadet, assignee, due, priority, by, at, done, doneBy, doneAt} backing the new Tasks tab on /sgt. This module reads and writes ONLY roster/tasks; it never touches roster, records, requests, notes, or any other node. Prior v27 notes: Requests board: RPDRoster.requests gains get/save (records key, node roster/requests), a flat array of {id, name, text, at, done, doneAt} backing the new Requests tab on /sgt: sergeants post wants, changes, and policy proposals for the post; the advisor checks items off as they are completed and checked items sink below the open list. Prior v26 notes: Ride-Along Trackers inbox (submit cadet-tier via RSA envelope to roster/raInbox, merge records-tier into the log tagged via:'trackers', duplicate ledger at roster/raIndex, RA_SALT 'rpdcadets-ridealongs-v1' lives only in this file). Prior v25: RPDRoster.observers module for the public /guest interest form. */
 /* ═══════════════════════════════════════════════════════════════════════
    RPD CADETS — SHARED ROSTER ENGINE
    One encrypted roster in Firebase, read by members, trackers, and
@@ -446,6 +446,13 @@
       vaultGet: refVaultGet, vaultSave: refVaultSave,
       inviteCreate: refInviteCreate, inviteRemove: refInviteRemove, link: refLink,
       doneMap: refDoneMap, answersGet: refAnswersGet, answersRemove: refAnswersRemove
+    },
+    // Online Presence Review (v33). get/mutate: records key (sergeant tier and
+    // advisors). advGet/advMutate: reference key (full advisor passcode only),
+    // for the advisor's result. See the module comment above vetGet.
+    vet: {
+      get: vetGet, mutate: vetMutate, advGet: vetAdvGet, advMutate: vetAdvMutate,
+      advIsUnlocked: () => !!refKey
     }
   };
 
@@ -1044,6 +1051,64 @@
     await db.ref(ROOT + '/refAnswers/' + id).remove();
     await db.ref(ROOT + '/refDone/' + id).remove();
     await db.ref(ROOT + '/refInvites/' + id).remove();
+  }
+
+  /* ── Online Presence Review (v33) ──────────────────────────────────────
+     Standardized social media / online presence check on cadet applicants,
+     filled in by the one sergeant cleared for background checks (on /sgt)
+     and by advisors (on /admin). Two nodes:
+       roster/vet      records key. { v, cfg:{ sgt, gen, devices:{id:{at,ua}} },
+                       apps:{ <observerId>: review } }. The sergeant tier holds
+                       the records key, so the cleared sergeant can read and
+                       write it; cfg.sgt is the name stamped on every edit from
+                       /sgt, cfg.gen and cfg.devices back the hidden unlock on
+                       /sgt (Reset unlocks on /admin bumps gen and clears them).
+       roster/vetAdv   reference key (full advisor passcode). { v, apps:{
+                       <observerId>: { result, resultAt, resultBy, note, shots } } }.
+                       The advisor's overall result; never readable on /sgt.
+     Every write re-reads the node first and applies a mutation to the fresh
+     copy (same clobber protection as waivers). Review contents (fields, link
+     list, guide) are defined in opr.js, not here. */
+  function vetBlank() { return { v: 1, cfg: { sgt: '', gen: 0, devices: {} }, apps: {} }; }
+  async function vetGet() {
+    if (!recordsKey) return null;
+    const blob = await once('vet');
+    if (!blob) return vetBlank();
+    const obj = JSON.parse(await keyDecrypt(blob, recordsKey));   // throws on a bad read, by design
+    if (!obj.cfg) obj.cfg = { sgt: '', gen: 0, devices: {} };
+    if (!obj.cfg.devices) obj.cfg.devices = {};
+    if (!obj.apps) obj.apps = {};
+    return obj;
+  }
+  async function vetSave(obj) {
+    if (!recordsKey) throw new Error('records locked');
+    const data = await keyEncrypt(JSON.stringify(obj), recordsKey);
+    await db.ref(ROOT + '/vet').set(data);
+  }
+  // fn(obj) edits the fresh copy in place; return false from fn to skip the save.
+  async function vetMutate(fn) {
+    if (!recordsKey) throw new Error('records locked');
+    const obj = await vetGet();
+    const res = fn(obj);
+    if (res === false) return obj;
+    await vetSave(obj);
+    return obj;
+  }
+  async function vetAdvGet() {
+    if (!refKey) return null;
+    const blob = await once('vetAdv');
+    if (!blob) return { v: 1, apps: {} };
+    const obj = JSON.parse(await keyDecrypt(blob, refKey));
+    if (!obj.apps) obj.apps = {};
+    return obj;
+  }
+  async function vetAdvMutate(fn) {
+    if (!refKey) throw new Error('references locked');
+    const obj = await vetAdvGet();
+    const res = fn(obj);
+    if (res === false) return obj;
+    await db.ref(ROOT + '/vetAdv').set(await keyEncrypt(JSON.stringify(obj), refKey));
+    return obj;
   }
 
   // Pending proposal queue — same records key, node roster/pending. The /sgt

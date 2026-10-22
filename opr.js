@@ -1,8 +1,8 @@
-/* opr.js  |  Build v6  |  updated 2026-10-21  |  v6: Epieos (email and phone) and Have I Been Pwned rows at the top of Discovery, ahead of OSINT Industries, so the free lookups run before credits are spent; an Open all button on every step that has links opens them as tabs in one tap (the sergeant allows pop-ups for rpdcadets.com once; username guesses are left out of it); the guide text says the same. v5: username guesses in Discovery collapse into one row of small chips labeled as guesses (built from the name and handles), with a Copy all button; an opened chip turns green. Hashtag suggestion handles High School / Highschool spellings. v4: Before you start note reworded to Tony's text; screenshot policy changed to match (a concern that might stop the application is screenshotted and sent to an advisor; sexual content involving a minor is still never saved); the guide rules and the PDF scope line updated to say the same. v3: FIX: the Before you start note and the guide inject the stylesheet themselves. On the first unlock the note fires before any review form has been mounted, so it rendered as bare text at the bottom of /sgt instead of a centered popup. v2: Reviewer recommendation block (Proceed / Proceed with notes / Do not proceed, plus a reason) that whoever runs the review sets, shared with both panels and printed beside the advisor result. Build v1: Online Presence Review: the standardized social media and online presence check run on cadet applicants (the public-information part of the background check). One shared form and guide rendered on both /sgt (the one sergeant cleared for background checks, after the hidden unlock) and /admin (advisors). Holds the step list, the one-tap link builder (every search link is built from the name, handles, email, phone, and parent names typed in), the username variant generator, the twelve review categories, the household and public-records section, the activity trail, the How to run this check guide, and the letterhead PDF builder used by /admin. Data access is RPDRoster.vet (roster.js VERSION 33). Loaded only by sgt.html and admin.html with a ?v= cache-buster; bump it with every change. */
+/* opr.js  |  Build v7  |  updated 2026-10-21  |  v7: Download PDF on /sgt too (reviewer copy: same letterhead, no advisor result or advisor note, marked Reviewer copy); the pdf-lib loader, logo shrink, and download now live here (RPDOpr.pdfDownload) and both panels use it. v6: Epieos (email and phone) and Have I Been Pwned rows at the top of Discovery, ahead of OSINT Industries, so the free lookups run before credits are spent; an Open all button on every step that has links opens them as tabs in one tap (the sergeant allows pop-ups for rpdcadets.com once; username guesses are left out of it); the guide text says the same. v5: username guesses in Discovery collapse into one row of small chips labeled as guesses (built from the name and handles), with a Copy all button; an opened chip turns green. Hashtag suggestion handles High School / Highschool spellings. v4: Before you start note reworded to Tony's text; screenshot policy changed to match (a concern that might stop the application is screenshotted and sent to an advisor; sexual content involving a minor is still never saved); the guide rules and the PDF scope line updated to say the same. v3: FIX: the Before you start note and the guide inject the stylesheet themselves. On the first unlock the note fires before any review form has been mounted, so it rendered as bare text at the bottom of /sgt instead of a centered popup. v2: Reviewer recommendation block (Proceed / Proceed with notes / Do not proceed, plus a reason) that whoever runs the review sets, shared with both panels and printed beside the advisor result. Build v1: Online Presence Review: the standardized social media and online presence check run on cadet applicants (the public-information part of the background check). One shared form and guide rendered on both /sgt (the one sergeant cleared for background checks, after the hidden unlock) and /admin (advisors). Holds the step list, the one-tap link builder (every search link is built from the name, handles, email, phone, and parent names typed in), the username variant generator, the twelve review categories, the household and public-records section, the activity trail, the How to run this check guide, and the letterhead PDF builder used by /admin. Data access is RPDRoster.vet (roster.js VERSION 33). Loaded only by sgt.html and admin.html with a ?v= cache-buster; bump it with every change. */
 (function (global) {
   'use strict';
 
-  const BUILD = 6;
+  const BUILD = 7;
   const PDF_LABEL = 'CADET/ONLINE V1';
   const CITY = 'Richardson';
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -505,7 +505,7 @@
     let html = '';
     // header
     html += `<div class="opr-top"><span class="opr-title">Online Presence Review</span><span class="opr-pill ${sum.k}">${esc(sum.label)}</span>
-      <button type="button" class="opr-btn gold" data-act="guide">How to run this check</button>${S.mode === 'admin' && S.onPdf ? '<button type="button" class="opr-btn gold" data-act="pdf">Download PDF</button>' : ''}</div>`;
+      <button type="button" class="opr-btn gold" data-act="guide">How to run this check</button>${S.pdf ? '<button type="button" class="opr-btn gold" data-act="pdf">Download PDF</button>' : ''}</div>`;
     if (S.mode === 'sgt') html += `<div class="opr-who">Edits save as <b>${esc(S.by || 'the cleared sergeant')}</b> with the time. Public view only; the rules are under How to run this check.</div>`;
     else html += `<div class="opr-who">Edits save as <b>${esc(S.by || 'Advisor')}</b>. The cleared sergeant can fill this in from /sgt until it is marked Advisor reviewed.</div>`;
     if (app.status === 'reviewed') html += `<div class="opr-lock">Advisor reviewed ${esc(fmtDate(app.reviewedAt))}${app.reviewedBy ? ' by ' + esc(app.reviewedBy) : ''}. ${S.mode === 'sgt' ? 'Locked on this page; an advisor can reopen it.' : 'Locked on /sgt. Reopen below if the sergeant needs to add anything.'}</div>`;
@@ -643,7 +643,7 @@
   function mount(host, opts) {
     ensureStyle();
     const S = { mode: opts.mode, app: fix(opts.app), adv: opts.adv || null, locked: !!opts.locked, by: opts.by || '', prefill: opts.prefill || {},
-      open: new Set(opts.openSteps || ['details']), trailOpen: false, opts, host, timers: {} };
+      open: new Set(opts.openSteps || ['details']), trailOpen: false, opts, host, timers: {}, pdf: opts.pdf !== false };
     host.innerHTML = '<div class="opr"></div>';
     const root = host.firstElementChild;
     const toast = m => { if (opts.toast) opts.toast(m); };
@@ -789,7 +789,7 @@
         if (openedKeys.length && !S.locked) { try { await enqueue(x => { x.opened = x.opened || {}; openedKeys.forEach(k => { x.opened[k] = t; }); x.updatedAt = t; }); } catch (err) {} }
         return;
       }
-      if (act === 'pdf') { if (opts.onPdf) opts.onPdf(); return; }
+      if (act === 'pdf') { if (opts.onPdf) opts.onPdf(); else pdfDownload({ app: S.app, adv: S.mode === 'admin' ? S.adv : null, prefill: S.prefill, mode: S.mode }, toast); return; }
       if (act === 'reviewed') { if (opts.onReviewed) opts.onReviewed(); return; }
       if (act === 'reopen') { if (opts.onReopen) opts.onReopen(); return; }
       if (act === 'delete') { if (opts.onDelete) opts.onDelete(); return; }
@@ -907,7 +907,7 @@
       page.drawLine({ start: { x: mid, y: top - 50 }, end: { x: R, y: top - 50 }, thickness: 1.5, color: NAVY });
       page.drawText('Applicant Online Presence Review', { x: tx, y: top - 64, size: 9, font: F, color: BG });
       rtext('CONFIDENTIAL', R, top - 64, 8, FB, BG);
-      rtext('Printed ' + pdfSafe(new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })), R, top - 76, 8, F, BG);
+      rtext((ctx.mode === 'sgt' ? 'Reviewer copy, printed ' : 'Printed ') + pdfSafe(new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })), R, top - 76, 8, F, BG);
       y = H - 134 - 6;
     }
     function newPage() { page = doc.addPage(); page.setSize(W, H); pages.push(page); header(); }
@@ -956,14 +956,16 @@
     page.drawText('REVIEWER RECOMMENDATION', { x: L + 10, y: y - 2, size: 7, font: FB, color: BG });
     page.drawText(pdfSafe(recLabel), { x: L + 10, y: y - 16, size: 12, font: FB, color: rec.v === 'no' ? RED : NAVY });
     if (rec.by) page.drawText(pdfSafe('by ' + rec.by), { x: L + 10 + FB.widthOfTextAtSize(pdfSafe(recLabel), 12) + 8, y: y - 16, size: 8, font: F, color: BG });
-    page.drawLine({ start: { x: L + CW / 2, y: y - 22 }, end: { x: L + CW / 2, y: y + 8 }, thickness: 0.5, color: BG });
-    page.drawText('ADVISOR RESULT', { x: L + CW / 2 + 10, y: y - 2, size: 7, font: FB, color: BG });
-    page.drawText(pdfSafe(resLabel), { x: L + CW / 2 + 10, y: y - 16, size: 12, font: FB, color: (adv.result === 'decline' || adv.result === 'concerns') ? RED : NAVY });
+    if (ctx.mode !== 'sgt') {
+      page.drawLine({ start: { x: L + CW / 2, y: y - 22 }, end: { x: L + CW / 2, y: y + 8 }, thickness: 0.5, color: BG });
+      page.drawText('ADVISOR RESULT', { x: L + CW / 2 + 10, y: y - 2, size: 7, font: FB, color: BG });
+      page.drawText(pdfSafe(resLabel), { x: L + CW / 2 + 10, y: y - 16, size: 12, font: FB, color: (adv.result === 'decline' || adv.result === 'concerns') ? RED : NAVY });
+    }
     rtext('CONCERNS', R - 60, y - 2, 7, FB, BG); rtext(String(fc.concern), R - 60, y - 16, 12, FB, fc.concern ? RED : NAVY);
     rtext('NOTES', R - 10, y - 2, 7, FB, BG); rtext(String(fc.note), R - 10, y - 16, 12, FB, fc.note ? AMBER : NAVY);
     y -= 46;
     if (rec.n) { para('Reviewer note: ' + rec.n, FI, 9); y -= 4; }
-    if (adv.note) { para('Advisor note: ' + adv.note, FI, 9); y -= 4; }
+    if (ctx.mode !== 'sgt' && adv.note) { para('Advisor note: ' + adv.note, FI, 9); y -= 4; }
     para('Scope: public content only. No passwords or logins were requested, no accounts were followed or contacted, and no fake accounts were used. Screenshots of concerns, if any, are in the applicant\'s folder, not in the system. Household findings are information for the advisor; the applicant\'s own conduct decides.', F, 8, BG);
     y -= 4;
     // accounts
@@ -1034,9 +1036,55 @@
     return await doc.save();
   }
 
+  /* pdf-lib loads from cdnjs on first use; the site logo (about 900 KB) is
+     shrunk in the browser once per page. Falls back to no logo if it fails. */
+  let pdfLibP = null, logoBytes = null;
+  function loadPdfLib() {
+    if (global.PDFLib) return Promise.resolve();
+    if (!pdfLibP) pdfLibP = new Promise((res, rej) => {
+      const sc = document.createElement('script');
+      sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js';
+      sc.onload = () => res(); sc.onerror = () => { pdfLibP = null; rej(new Error('pdf-lib')); };
+      document.head.appendChild(sc);
+    });
+    return pdfLibP;
+  }
+  async function logoSmall() {
+    if (logoBytes) return logoBytes;
+    try {
+      const r = await fetch('logo_transparent.png'); if (!r.ok) return null;
+      const buf = await r.arrayBuffer();
+      try {
+        const bmp = await createImageBitmap(new Blob([buf], { type: 'image/png' }));
+        const c = document.createElement('canvas'); c.width = 400; c.height = Math.round(400 * bmp.height / bmp.width);
+        c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
+        const out = await new Promise(res => c.toBlob(res, 'image/png'));
+        if (out) { logoBytes = new Uint8Array(await out.arrayBuffer()); return logoBytes; }
+      } catch (e) {}
+      logoBytes = new Uint8Array(buf); return logoBytes;
+    } catch (e) { return null; }
+  }
+  // ctx = { app, adv, prefill, mode }. Builds the PDF and hands it to the browser as a download.
+  async function pdfDownload(ctx, toast) {
+    const say = m => { if (toast) toast(m); };
+    if (!ctx || !ctx.app) { say('Nothing to print yet'); return false; }
+    say('Building PDF\u2026');
+    try {
+      await loadPdfLib();
+      const logo = await logoSmall();
+      const bytes = await buildPdf(global.PDFLib, logo, ctx);
+      const safe = t => String(t || '').replace(/[^A-Za-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+      const url = URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' }));
+      const a = document.createElement('a'); a.href = url; a.download = 'Online_Review_' + safe(ctx.app.name || 'Applicant') + (ctx.mode === 'sgt' ? '_Reviewer' : '') + '.pdf';
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 4000);
+      return true;
+    } catch (e) { console.error(e); say('Could not build the PDF. Check your connection and try again.'); return false; }
+  }
+
   global.RPDOpr = {
     BUILD, PLATFORMS, CATEGORIES, STEPS, RESULTS, RECS, GUIDE, STOP_RULES, SGT_NOTE,
-    blankApp, fix, summary, flagCounts, log, variants, mount, buildPdf, noteModal, guideModal, cleanHandle,
+    blankApp, fix, summary, flagCounts, log, variants, mount, buildPdf, pdfDownload, noteModal, guideModal, cleanHandle,
     links: { account: accountLinks, discovery: discoveryLinks, searches: searchLinks, image: imageLinks, public: publicLinks, household: householdLinks }
   };
 })(window);

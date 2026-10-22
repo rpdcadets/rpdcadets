@@ -1,8 +1,8 @@
-/* opr.js  |  Build v5  |  updated 2026-10-21  |  v5: username guesses in Discovery collapse into one row of small chips labeled as guesses (built from the name and handles), with a Copy all button; an opened chip turns green. Hashtag suggestion handles High School / Highschool spellings. v4: Before you start note reworded to Tony's text; screenshot policy changed to match (a concern that might stop the application is screenshotted and sent to an advisor; sexual content involving a minor is still never saved); the guide rules and the PDF scope line updated to say the same. v3: FIX: the Before you start note and the guide inject the stylesheet themselves. On the first unlock the note fires before any review form has been mounted, so it rendered as bare text at the bottom of /sgt instead of a centered popup. v2: Reviewer recommendation block (Proceed / Proceed with notes / Do not proceed, plus a reason) that whoever runs the review sets, shared with both panels and printed beside the advisor result. Build v1: Online Presence Review: the standardized social media and online presence check run on cadet applicants (the public-information part of the background check). One shared form and guide rendered on both /sgt (the one sergeant cleared for background checks, after the hidden unlock) and /admin (advisors). Holds the step list, the one-tap link builder (every search link is built from the name, handles, email, phone, and parent names typed in), the username variant generator, the twelve review categories, the household and public-records section, the activity trail, the How to run this check guide, and the letterhead PDF builder used by /admin. Data access is RPDRoster.vet (roster.js VERSION 33). Loaded only by sgt.html and admin.html with a ?v= cache-buster; bump it with every change. */
+/* opr.js  |  Build v6  |  updated 2026-10-21  |  v6: Epieos (email and phone) and Have I Been Pwned rows at the top of Discovery, ahead of OSINT Industries, so the free lookups run before credits are spent; an Open all button on every step that has links opens them as tabs in one tap (the sergeant allows pop-ups for rpdcadets.com once; username guesses are left out of it); the guide text says the same. v5: username guesses in Discovery collapse into one row of small chips labeled as guesses (built from the name and handles), with a Copy all button; an opened chip turns green. Hashtag suggestion handles High School / Highschool spellings. v4: Before you start note reworded to Tony's text; screenshot policy changed to match (a concern that might stop the application is screenshotted and sent to an advisor; sexual content involving a minor is still never saved); the guide rules and the PDF scope line updated to say the same. v3: FIX: the Before you start note and the guide inject the stylesheet themselves. On the first unlock the note fires before any review form has been mounted, so it rendered as bare text at the bottom of /sgt instead of a centered popup. v2: Reviewer recommendation block (Proceed / Proceed with notes / Do not proceed, plus a reason) that whoever runs the review sets, shared with both panels and printed beside the advisor result. Build v1: Online Presence Review: the standardized social media and online presence check run on cadet applicants (the public-information part of the background check). One shared form and guide rendered on both /sgt (the one sergeant cleared for background checks, after the hidden unlock) and /admin (advisors). Holds the step list, the one-tap link builder (every search link is built from the name, handles, email, phone, and parent names typed in), the username variant generator, the twelve review categories, the household and public-records section, the activity trail, the How to run this check guide, and the letterhead PDF builder used by /admin. Data access is RPDRoster.vet (roster.js VERSION 33). Loaded only by sgt.html and admin.html with a ?v= cache-buster; bump it with every change. */
 (function (global) {
   'use strict';
 
-  const BUILD = 5;
+  const BUILD = 6;
   const PDF_LABEL = 'CADET/ONLINE V1';
   const CITY = 'Richardson';
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -140,7 +140,7 @@
   ];
   const GUIDE = [
     ['Applicant details', 'Type what the application gives: nickname or other names, email, phone, home address, parent or guardian names, and every handle listed. The links below build from these as you type.'],
-    ['Discovery', 'Run the email, phone, and each handle through OSINT Industries, then each handle and its variants through WhatsMyName and the quoted Google search. Add any account you find with + Add account found so the rest of the review covers it.'],
+    ['Discovery', 'Run the email through Epieos and Have I Been Pwned first (both free), then the email, phone, and each handle through OSINT Industries (credits), then each handle and its guesses through WhatsMyName and the quoted Google search. Add any account you find with + Add account found so the rest of the review covers it.'],
     ['Confirm it is them', 'Profile photo against the application photo, school or city in the bio, mutual follows with current cadets. Mark Right person on each account. A handle or email match can belong to someone else.'],
     ['Accounts and platforms', 'For each account: bio and links, posts, videos or Reels, highlights, tagged photos, comments they left, who they follow and who follows them (gang, drug, weapon, or hate accounts), pinned posts. Scroll back two years or to the start. Private accounts are marked Private and left alone.'],
     ['Searches, hashtags, mentions', 'The Google and Bing name searches, Images and News, the site-limited searches, school and class hashtags, Social Searcher for mentions, Snap Map and Instagram locations around the school, Wayback for old copies.'],
@@ -234,7 +234,13 @@
     if (app.in.email) copies.push({ label: 'Copy email', text: app.in.email });
     if (app.in.phone) copies.push({ label: 'Copy phone', text: app.in.phone });
     app.accounts.forEach(a => { const h = cleanHandle(a.handle); if (h) copies.push({ label: 'Copy ' + (PLAT[a.plat] || PLAT.other).label + ' handle', text: h }); });
-    out.push({ k: 'disc:osint', label: 'Open OSINT Industries', url: SITE.osint[2], hint: SITE.osint[3], copies });
+    const email = String(app.in.email || '').trim(), phone = String(app.in.phone || '').trim();
+    if (email) {
+      out.push({ k: 'disc:epieos', label: 'Epieos: ' + email, url: 'https://epieos.com/?q=' + enc(email) + '&t=email', hint: 'Free. Shows the Google account on this email (name, photo, public Maps reviews) and which services it is registered with. If the box comes up empty, paste the email.', copies: [{ label: 'Copy email', text: email }] });
+      out.push({ k: 'disc:hibp', label: 'Have I Been Pwned: ' + email, url: 'https://haveibeenpwned.com/account/' + enc(email), hint: 'Free. The breach names show where this email had accounts, listed or not.' });
+    }
+    if (phone) out.push({ k: 'disc:epieos-ph', label: 'Epieos: ' + phone, url: 'https://epieos.com/?q=' + enc(phone.replace(/[^\d+]/g, '')) + '&t=phone', hint: 'Free. Which services the phone number is registered with.', copies: [{ label: 'Copy phone', text: phone }] });
+    out.push({ k: 'disc:osint', label: 'Open OSINT Industries', url: SITE.osint[2], hint: SITE.osint[3] + ' Credits are limited, so run the free rows above first.', copies });
     const seen = new Set();
     app.accounts.forEach(a => {
       const h = cleanHandle(a.handle); if (!h || seen.has(h.toLowerCase())) return; seen.add(h.toLowerCase());
@@ -435,14 +441,23 @@
     }
     return `<div class="opr-links" data-links="${key}"${list.length || none ? '' : ' style="margin:0"'}>${list.length ? inner : none}</div>`;
   }
+  function stepLinkCount(k, app) {
+    if (k === 'discovery') return discoveryLinks(app).filter(L => !L.variant).length;
+    if (k === 'platforms') return app.accounts.reduce((n, a) => n + accountLinks(app, a).length, 0);
+    if (k === 'searches') return searchLinks(app).length;
+    if (k === 'image') return imageLinks(app).length;
+    if (k === 'public') return app.pub.run === 'no' ? 0 : publicLinks(app).length;
+    if (k === 'household') return householdLinks(app).length;
+    return 0;
+  }
   function stepHtml(k, idx, title, app, inner, open, ro) {
-    const d = (app.steps || {})[k];
+    const d = (app.steps || {})[k], nl = stepLinkCount(k, app);
     return `<div class="opr-step${open ? ' open' : ''}" data-step="${k}">
       <div class="opr-step-h" data-act="togglestep"><span class="opr-step-n">${idx}</span><span class="opr-step-t">${esc(title)}</span>
         <span class="opr-step-d${d && d.at ? ' on' : ''}">${d && d.at ? 'Done ' + esc(fmtDate(d.at)) + (d.by ? ' by ' + esc(d.by) : '') : 'Not done'}</span>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div>
       <div class="opr-step-body">${inner}
-        <div class="opr-chips" style="margin-top:8px"><span class="opr-chip-l">Step</span>${chipRow([['done', 'Done'], ['open', 'Not done']], d && d.at ? 'done' : 'open', `data-act="stepdone" data-k="${k}"`, k2 => k2 === 'done' ? 'good' : 'muted', ro)}</div>
+        <div class="opr-chips" style="margin-top:8px"><span class="opr-chip-l">Step</span>${chipRow([['done', 'Done'], ['open', 'Not done']], d && d.at ? 'done' : 'open', `data-act="stepdone" data-k="${k}"`, k2 => k2 === 'done' ? 'good' : 'muted', ro)}${nl ? `<button type="button" class="opr-btn" data-act="openall" data-k="${k}" style="margin-left:auto">Open all (${nl})</button>` : ''}</div>
       </div></div>`;
   }
   function inputHtml(label, field, val, ro, ph, type) {
@@ -656,6 +671,7 @@
         else if (key.indexOf('acct:') === 0) { const a = S.app.accounts.find(x => x.aid === key.slice(5)); if (a) list = accountLinks(S.app, a); }
         if (list) box.outerHTML = linksHtml(key, list, S.app, S.locked, key.indexOf('acct:') === 0 ? '' : undefined);
       });
+      root.querySelectorAll('[data-act="openall"]').forEach(b => { const n = stepLinkCount(b.dataset.k, S.app); b.textContent = 'Open all (' + n + ')'; b.style.display = n ? '' : 'none'; });
       root.querySelectorAll('[data-acctrows]').forEach(box => {
         if (box.children.length) return;
         const a = S.app.accounts.find(x => x.aid === box.dataset.acctrows); if (!a) return;
@@ -756,6 +772,23 @@
       if (act === 'togglestep') { const st = btn.closest('[data-step]').dataset.step; if (S.open.has(st)) S.open.delete(st); else S.open.add(st); btn.closest('[data-step]').classList.toggle('open'); if (opts.onOpenChange) opts.onOpenChange(Array.from(S.open)); return; }
       if (act === 'guide') { guideModal().classList.add('show'); return; }
       if (act === 'trail') { S.trailOpen = !S.trailOpen; btn.closest('.opr-trail').classList.toggle('open', S.trailOpen); return; }
+      if (act === 'openall') {
+        const body = btn.closest('[data-step]');
+        const anchors = Array.from(body.querySelectorAll('a[data-lk]:not(.opr-vchip)'));
+        if (!anchors.length) return;
+        const t = now(), openedKeys = []; let blocked = 0;
+        anchors.forEach(a => {
+          const w = window.open(a.href, '_blank');   // with 'noopener' the call always returns null, so blocking could not be told apart
+          if (!w) { blocked++; return; }
+          try { w.opener = null; } catch (err) {}
+          openedKeys.push(a.dataset.lk); S.app.opened[a.dataset.lk] = t;
+          const tag = a.parentElement.querySelector('[data-lko]'); if (tag) { tag.textContent = 'Opened ' + fmtWhen(t); tag.classList.add('on'); }
+        });
+        if (blocked) toast((anchors.length - blocked) + ' of ' + anchors.length + ' opened. Allow pop-ups for rpdcadets.com (the icon in the address bar) and tap again for the rest.');
+        else toast(anchors.length + ' tabs opened');
+        if (openedKeys.length && !S.locked) { try { await enqueue(x => { x.opened = x.opened || {}; openedKeys.forEach(k => { x.opened[k] = t; }); x.updatedAt = t; }); } catch (err) {} }
+        return;
+      }
       if (act === 'pdf') { if (opts.onPdf) opts.onPdf(); return; }
       if (act === 'reviewed') { if (opts.onReviewed) opts.onReviewed(); return; }
       if (act === 'reopen') { if (opts.onReopen) opts.onReopen(); return; }

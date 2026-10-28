@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- admin.html  |  Build v44  |  updated 2026-10-28  |  pairs with roster.js v36, opr.js v7, and wv.js v2  |  v44: cache-busters only, for wv.js Build v2 (Clear per person and Clear all on the online signing block) and roster.js VERSION 36. Build v43 notes: v43: online waiver signing. Every row in the Waiver Tracker gets an online block (Online code, Copy link, Share, QR, Refresh, New code, Cancel, and per-form status; a form with every signature it needs is marked Received automatically as "Online: name"), plus the advisor-only parts: a PDF button per signed form that unseals the records with the reference key and fills the official form with pdf-lib, and a "New parent contacts from online signing" card at the top of the tracker that adds or updates the parent (or new second parent) in Cadet Records, asking before it replaces a value. Cadet Records gains second parent or guardian name, phone, and email. Cache-busters roster.js?v=35, wv.js?v=1, plus the vendored QR library. Build v42 notes: v42: former cadets. The Roster Editor remove button now opens Mark as left: Alumni (stays on the roster as alumni with a date left and the Members-page note filled from the join and left dates when blank) or Dismissed (not in good standing: comes off the shared roster and every page; the status, date, and reason go to the advisor-only ledger RPDRoster.former, reference key, while the Cadet Records entry, waivers, hours, and sergeant notes stay put), plus Remove only for mistakes. Cadet Records gets a filter row (Active, Alumni, Dismissed, All; the limited tier never sees Dismissed) with a status strip on former cadets (dates, reason, Edit date or reason, Reinstate), Reinstate (back on the roster as active with a chosen squad, rank, and join date; the record is untouched), and recovery of records whose cadet was removed before this build (File as alumni, File as dismissed, or Reinstate). Alumni rows in the Roster Editor get a Left date. Cache-buster roster.js?v=34 (the v34 roll-up drops the Not recorded rows from before a cadet joined). Build v41 notes: v41: the review PDF downloads through the shared RPDOpr.pdfDownload (same output); cache-buster for opr.js Build v7. Build v40 notes: v40: cache-buster only, for opr.js Build v6 (Epieos and Have I Been Pwned rows, Open all per step). Build v39 notes: v39: cache-buster only, for opr.js Build v5 (username guesses collapsed into one chip row). Build v38 notes: v38: cache-buster only, for the opr.js Build v4 note rewording. Build v37 notes: v37: cache-buster only, for the opr.js Build v3 fix. Build v36 notes: v36: the review ends with a Reviewer recommendation (Proceed / Proceed with notes / Do not proceed, plus a reason) set by whoever runs it, shared with /sgt and shown as a pill on the card bar; the advisor result stays advisor-only; the PDF prints both side by side. Build v35 notes: Applicants & References gains the Online Presence Review: each applicant card has an Online presence section with Open review, the shared form from opr.js (applicant details, discovery with OSINT Industries and WhatsMyName, identity, accounts and platforms with one-tap links built from the typed handles, searches, reverse image, public records, household and family with a records list, the twelve categories, activity trail), plus the advisor-only result (Clear / Clear with notes / Concerns found / Recommend decline, stored under the reference key so /sgt can never read it), Screenshot in folder markers, Mark Advisor reviewed (locks the form on /sgt) and Reopen, Delete review, and a letterhead PDF (CADET/ONLINE V1) for the applicant folder. A settings strip at the top of the tool names the cleared sergeant whose name is stamped on every /sgt edit, shows how many devices have done the hidden unlock, and has Reset unlocks. Accept and add to roster moves the review to the files-on-hold list with the references; Delete file removes both. Visible build stamps are now version-only. No other tool changed. Prior v34 notes: New Waiver Tracker tool: every active cadet with the six waivers, most missing first. Sergeants mark Received on /sgt; here an advisor marks Filed (today's date), clears a Received mark, or un-files. Printable Missing Waivers list (PDF, CADET/WAIVERS V1). Cadets 18 or older show "Re-sign at 18" on every waiver signed before the birthday; cadets within 60 days of 18 get a "Turns 18 on" tag. Cadet Records: the Waivers chip and its panel now read from the tracker (tap a waiver to open the same dialog); the old checkbox toggles are gone and old checkmarks read as Filed with no date. Pending Approvals: a waiver change in an older sergeant proposal is applied to the tracker when approved. Prior v33 notes: Applicants & References: supports the longer questionnaire (reference.html Build v2). Free-text answers are recognized by their own tag (t:1) so new text questions lay out full width on screen and in the PDF; the PDF now sets short one-line answers two across and uses slightly tighter rows so a clean response still fits one page. No other tool changed. Prior v32 notes: New tool: Applicants & References (full advisor passcode only). Lists observers marked Applied; type in each reference from the paper application and the tool mints a one-time link (rpdcadets.com/reference#CODE) with a Copy link button for pasting into the Outlook email template; tracks Not sent / Sent / Reminder sent / Received / Unable to reach / Link expired; shows the decrypted responses with flagged answers highlighted and builds a letterhead PDF per reference or one file per applicant (pdf-lib, footer label CADET/REFCHECK V1). Responses are locked under a separate advisor-only key, so the sergeant and limited tiers cannot open them. Accept and add to roster: confirm name, pick squad, rank defaults to Probationary, join date defaults to today; adds the roster entry, copies observer contact info into Cadet Records (blank fields only), carries sergeant notes into cadet notes, removes the observer entry, and keeps the reference file on hold until deleted. Hub tile shows a badge for unread responses. Also bumped the roster.js cache-buster from 26 to 30. Prior v31 notes: Ride-Along Log now merges the Trackers inbox on open (cadet-submitted rides appear tagged "Trackers" and count toast shows how many arrived); add, edit, and delete maintain the roster/raIndex duplicate ledger so a deleted entry frees the cadet to resubmit; approving a sergeant ride-along proposal also claims its ledger hash. Prior v30 notes: Act. Sgt. rank dropdown; itemized six-waiver panel; per-cadet sergeant note lines; merged Sergeant Notes panel; waiver-item proposals in Pending Approvals. -->
+<!-- admin.html  |  Build v45  |  updated 2026-10-28  |  pairs with roster.js v37, opr.js v7, wv.js v2, and awards.js v1  |  v45: Cadet Awards tool. New hub tile and view: one card per active cadet (Alumni under their own filter) with every award's status, computed by awards.js from the weekly attendance, logged events, the roster join date, and the award ledger: Presented, Earned (criteria met, not yet presented), Close, In progress, Not started, or Not yet awarded for the advisor-recorded ones. Law Enforcement Training (60 hrs, weekly meetings at 3 hrs plus training events), Community Service (100 hrs), and Law Enforcement Service (100 hrs) accumulate from the join date; Crime Prevention is 4 events in the selected award year; Physical Fitness compares the first and last rowing percentage of the year (rowing log on the card); Perfect Attendance runs join date to anniversary with no unexcused absence (every membership year listed, with a manual-check flag when the attendance records do not cover the whole year); Tenure counts anniversaries with the star device. Mark presented / Add / Record a past presentation store the date presented (and the year, level, or place where it applies) so past awards can be entered; entries can be removed. Drug Abuse Prevention has a training checkbox. Event buckets panel: which award each event name feeds (starting map built in, names typed under Other flagged). Award year chips, filters (Active, Ready to present, Close, Alumni), search. Stored at roster/awards under the shared roster key so the Trackers cadet PDF can show the same statuses. Cache-busters roster.js?v=37, awards.js?v=1. Build v44 notes: v44: cache-busters only, for wv.js Build v2 (Clear per person and Clear all on the online signing block) and roster.js VERSION 36. Build v43 notes: v43: online waiver signing. Every row in the Waiver Tracker gets an online block (Online code, Copy link, Share, QR, Refresh, New code, Cancel, and per-form status; a form with every signature it needs is marked Received automatically as "Online: name"), plus the advisor-only parts: a PDF button per signed form that unseals the records with the reference key and fills the official form with pdf-lib, and a "New parent contacts from online signing" card at the top of the tracker that adds or updates the parent (or new second parent) in Cadet Records, asking before it replaces a value. Cadet Records gains second parent or guardian name, phone, and email. Cache-busters roster.js?v=35, wv.js?v=1, plus the vendored QR library. Build v42 notes: v42: former cadets. The Roster Editor remove button now opens Mark as left: Alumni (stays on the roster as alumni with a date left and the Members-page note filled from the join and left dates when blank) or Dismissed (not in good standing: comes off the shared roster and every page; the status, date, and reason go to the advisor-only ledger RPDRoster.former, reference key, while the Cadet Records entry, waivers, hours, and sergeant notes stay put), plus Remove only for mistakes. Cadet Records gets a filter row (Active, Alumni, Dismissed, All; the limited tier never sees Dismissed) with a status strip on former cadets (dates, reason, Edit date or reason, Reinstate), Reinstate (back on the roster as active with a chosen squad, rank, and join date; the record is untouched), and recovery of records whose cadet was removed before this build (File as alumni, File as dismissed, or Reinstate). Alumni rows in the Roster Editor get a Left date. Cache-buster roster.js?v=34 (the v34 roll-up drops the Not recorded rows from before a cadet joined). Build v41 notes: v41: the review PDF downloads through the shared RPDOpr.pdfDownload (same output); cache-buster for opr.js Build v7. Build v40 notes: v40: cache-buster only, for opr.js Build v6 (Epieos and Have I Been Pwned rows, Open all per step). Build v39 notes: v39: cache-buster only, for opr.js Build v5 (username guesses collapsed into one chip row). Build v38 notes: v38: cache-buster only, for the opr.js Build v4 note rewording. Build v37 notes: v37: cache-buster only, for the opr.js Build v3 fix. Build v36 notes: v36: the review ends with a Reviewer recommendation (Proceed / Proceed with notes / Do not proceed, plus a reason) set by whoever runs it, shared with /sgt and shown as a pill on the card bar; the advisor result stays advisor-only; the PDF prints both side by side. Build v35 notes: Applicants & References gains the Online Presence Review: each applicant card has an Online presence section with Open review, the shared form from opr.js (applicant details, discovery with OSINT Industries and WhatsMyName, identity, accounts and platforms with one-tap links built from the typed handles, searches, reverse image, public records, household and family with a records list, the twelve categories, activity trail), plus the advisor-only result (Clear / Clear with notes / Concerns found / Recommend decline, stored under the reference key so /sgt can never read it), Screenshot in folder markers, Mark Advisor reviewed (locks the form on /sgt) and Reopen, Delete review, and a letterhead PDF (CADET/ONLINE V1) for the applicant folder. A settings strip at the top of the tool names the cleared sergeant whose name is stamped on every /sgt edit, shows how many devices have done the hidden unlock, and has Reset unlocks. Accept and add to roster moves the review to the files-on-hold list with the references; Delete file removes both. Visible build stamps are now version-only. No other tool changed. Prior v34 notes: New Waiver Tracker tool: every active cadet with the six waivers, most missing first. Sergeants mark Received on /sgt; here an advisor marks Filed (today's date), clears a Received mark, or un-files. Printable Missing Waivers list (PDF, CADET/WAIVERS V1). Cadets 18 or older show "Re-sign at 18" on every waiver signed before the birthday; cadets within 60 days of 18 get a "Turns 18 on" tag. Cadet Records: the Waivers chip and its panel now read from the tracker (tap a waiver to open the same dialog); the old checkbox toggles are gone and old checkmarks read as Filed with no date. Pending Approvals: a waiver change in an older sergeant proposal is applied to the tracker when approved. Prior v33 notes: Applicants & References: supports the longer questionnaire (reference.html Build v2). Free-text answers are recognized by their own tag (t:1) so new text questions lay out full width on screen and in the PDF; the PDF now sets short one-line answers two across and uses slightly tighter rows so a clean response still fits one page. No other tool changed. Prior v32 notes: New tool: Applicants & References (full advisor passcode only). Lists observers marked Applied; type in each reference from the paper application and the tool mints a one-time link (rpdcadets.com/reference#CODE) with a Copy link button for pasting into the Outlook email template; tracks Not sent / Sent / Reminder sent / Received / Unable to reach / Link expired; shows the decrypted responses with flagged answers highlighted and builds a letterhead PDF per reference or one file per applicant (pdf-lib, footer label CADET/REFCHECK V1). Responses are locked under a separate advisor-only key, so the sergeant and limited tiers cannot open them. Accept and add to roster: confirm name, pick squad, rank defaults to Probationary, join date defaults to today; adds the roster entry, copies observer contact info into Cadet Records (blank fields only), carries sergeant notes into cadet notes, removes the observer entry, and keeps the reference file on hold until deleted. Hub tile shows a badge for unread responses. Also bumped the roster.js cache-buster from 26 to 30. Prior v31 notes: Ride-Along Log now merges the Trackers inbox on open (cadet-submitted rides appear tagged "Trackers" and count toast shows how many arrived); add, edit, and delete maintain the roster/raIndex duplicate ledger so a deleted entry frees the cadet to resubmit; approving a sergeant ride-along proposal also claims its ledger hash. Prior v30 notes: Act. Sgt. rank dropdown; itemized six-waiver panel; per-cadet sergeant note lines; merged Sergeant Notes panel; waiver-item proposals in Pending Approvals. -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -728,6 +728,80 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
 .ap-cfg select option{background:var(--navy)}
 .ap-cfg .ap-note{flex-basis:100%}
 .ap-opr-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:6px}
+/* Cadet Awards (Build v45) */
+.aw-top{display:flex;flex-wrap:wrap;gap:10px 22px;align-items:center;margin-bottom:16px}
+.aw-lbl{font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted);margin-right:6px}
+.aw-chip{background:rgba(255,255,255,0.03);border:1px solid var(--card-border);color:var(--text-muted);font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:1.2px;text-transform:uppercase;padding:7px 12px;border-radius:8px;cursor:pointer;margin-right:6px}
+.aw-chip:hover{color:var(--white)}
+.aw-chip.on{color:var(--gold);border-color:var(--gold)}
+.aw-item{background:var(--card-bg);border:1px solid var(--card-border);border-radius:11px;margin-bottom:8px;overflow:hidden}
+.aw-row{display:grid;grid-template-columns:1fr auto;gap:14px;align-items:center;padding:13px 16px;cursor:pointer}
+.aw-item.open .aw-row{background:rgba(255,255,255,0.02)}
+.aw-id{min-width:0}
+.aw-sub{font-size:12px;color:var(--text-muted);margin-top:4px;display:flex;flex-wrap:wrap;align-items:center}
+.aw-sum.earned{color:var(--green)}
+.aw-sum.close{color:var(--gold-light)}
+.aw-dot{color:var(--text-muted);padding:0 6px}
+.aw-alum{display:inline-block;font-family:'Barlow Condensed',sans-serif;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);border:1px solid var(--card-border);border-radius:4px;padding:1px 6px;margin-left:8px;vertical-align:middle}
+.aw-right{display:flex;align-items:center;gap:12px;color:var(--text-muted)}
+.aw-ribs{display:flex;gap:3px;flex-wrap:wrap;justify-content:flex-end;max-width:150px}
+.aw-caret{transition:transform .2s;flex-shrink:0}
+.aw-item.open .aw-caret{transform:rotate(180deg)}
+.aw-detail{display:none;padding:2px 16px 16px;border-top:1px solid var(--card-border)}
+.aw-item.open .aw-detail{display:block}
+.aw-sec-h{font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted);margin:16px 0 8px}
+.aw-aw{background:rgba(255,255,255,0.02);border:1px solid var(--card-border);border-radius:9px;padding:10px 12px;margin-bottom:7px}
+.aw-aw.earned{border-color:rgba(39,174,96,0.45)}
+.aw-aw.close{border-color:rgba(240,214,138,0.4)}
+.aw-aw.presented{border-color:rgba(212,169,82,0.35)}
+.aw-aw-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.aw-aw-name{font-size:14px}
+.aw-pill{font-family:'Barlow Condensed',sans-serif;font-size:10.5px;letter-spacing:1px;text-transform:uppercase;padding:2px 8px;border-radius:5px;white-space:nowrap}
+.aw-pill.presented{color:var(--gold);background:rgba(212,169,82,0.14)}
+.aw-pill.earned{color:var(--green);background:rgba(39,174,96,0.14)}
+.aw-pill.close{color:var(--gold-light);background:rgba(217,119,6,0.16)}
+.aw-pill.progress{color:#9fb3d1;background:rgba(255,255,255,0.07)}
+.aw-pill.none{color:var(--text-muted);background:rgba(255,255,255,0.05)}
+.aw-mini{margin-left:auto;background:none;border:1px solid var(--card-border);color:var(--text-muted);font-family:'Barlow Condensed',sans-serif;font-size:10.5px;letter-spacing:1px;text-transform:uppercase;padding:5px 10px;border-radius:7px;cursor:pointer;white-space:nowrap}
+.aw-mini:hover{color:var(--white);border-color:var(--gold)}
+.aw-mini.gold{background:var(--gold);border-color:var(--gold);color:#1a2036;font-weight:600;margin-left:0}
+.aw-mini.gold:hover{color:#1a2036;filter:brightness(1.08)}
+.aw-aw-line{font-size:13px;margin-top:6px}
+.aw-aw-detail{font-size:12px;color:var(--text-muted);margin-top:2px;line-height:1.45}
+.aw-bar{height:5px;border-radius:3px;background:rgba(255,255,255,0.08);margin-top:8px;overflow:hidden}
+.aw-bar>i{display:block;height:100%;border-radius:3px;background:#9fb3d1}
+.aw-bar>i.earned,.aw-bar>i.presented{background:var(--green)}
+.aw-bar>i.close{background:var(--gold-light)}
+.aw-pres-wrap{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.aw-pres{display:inline-flex;align-items:center;gap:6px;background:rgba(212,169,82,0.1);border:1px solid rgba(212,169,82,0.3);border-radius:7px;padding:3px 6px 3px 9px;font-size:12px}
+.aw-pres.row{background:rgba(255,255,255,0.04);border-color:var(--card-border);margin:0 6px 6px 0}
+.aw-pres i{color:var(--text-muted);font-style:italic}
+.aw-x{background:none;border:none;color:var(--text-muted);font-size:16px;line-height:1;cursor:pointer;padding:0 2px}
+.aw-x:hover{color:#f87171}
+.aw-check{display:flex;align-items:center;gap:8px;font-size:12.5px;margin-top:8px;color:var(--text-muted);cursor:pointer}
+.aw-check input{accent-color:var(--gold);width:15px;height:15px}
+.aw-rows{margin-top:8px}
+.aw-rows-h{font-family:'Barlow Condensed',sans-serif;font-size:10.5px;letter-spacing:1.2px;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px}
+.aw-inline{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end;margin-top:6px}
+.aw-inline label{display:flex;flex-direction:column;gap:3px;font-family:'Barlow Condensed',sans-serif;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text-muted)}
+.aw-inline input,.aw-inline select{background:var(--input-bg);border:1px solid var(--input-border);border-radius:8px;padding:7px 10px;color:var(--white);font-family:'Barlow',sans-serif;font-size:13px;outline:none;color-scheme:dark}
+.aw-inline select option{background:var(--navy)}
+.aw-form{margin-top:4px}
+.aw-form .aw-inline{background:rgba(255,255,255,0.03);border:1px solid var(--card-border);border-radius:8px;padding:10px}
+.aw-req{font-size:11.5px;color:var(--text-muted);margin-top:8px;line-height:1.5}
+.aw-fill{color:#9fb3d1}
+.aw-muted{font-size:12px;color:var(--text-muted);margin-top:6px;line-height:1.45}
+.aw-years-list{margin-top:8px;display:flex;flex-direction:column;gap:4px}
+.aw-yr{display:grid;grid-template-columns:auto auto auto 1fr;gap:10px;align-items:center;font-size:12px}
+.aw-yr-n{font-weight:600}
+.aw-yr-d,.aw-yr-note{color:var(--text-muted)}
+.aw-buckets{margin:0 0 18px}
+.aw-bk{display:grid;grid-template-columns:1fr minmax(220px,360px);gap:12px;align-items:center;padding:7px 0;border-bottom:1px solid var(--card-border);font-size:13px}
+.aw-bk-typed{font-style:normal;font-family:'Barlow Condensed',sans-serif;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:#e6a23c;border:1px solid rgba(217,119,6,0.45);border-radius:4px;padding:1px 5px;margin-left:8px}
+.aw-bk-sel{background:var(--input-bg);border:1px solid var(--input-border);border-radius:8px;padding:7px 26px 7px 10px;color:var(--white);font-family:'Barlow',sans-serif;font-size:12.5px;outline:none;width:100%;color-scheme:dark;appearance:none;cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%238899b0' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 9px center}
+.aw-inline select{color-scheme:dark}
+.aw-bk-sel option{background:var(--navy)}
+@media(max-width:640px){.aw-yr{grid-template-columns:auto 1fr;gap:4px 10px}.aw-bk{grid-template-columns:1fr}.aw-ribs{display:none}.aw-top{gap:8px 14px}}
 </style>
 </head>
 <body>
@@ -745,7 +819,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
     <button class="lock-btn" id="goBtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg><span id="goLabel">Unlock</span></button>
     <div class="lock-error" id="lockErr">Incorrect passcode.</div>
     <div class="lock-home"><a href="index.html">← Return to Home</a></div>
-    <div style="margin-top:16px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v44</div>
+    <div style="margin-top:16px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v45</div>
   </div>
 </div>
 
@@ -775,7 +849,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
       <button class="back-link" id="rosterBack"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Admin Console</button>
       <div class="bar">
         <div class="status-pill" id="pill"><span class="dot"></span><span id="pillText">Synced</span></div>
-        <span style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v44</span>
+        <span style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v45</span>
         <button class="btn ghost" id="syncMembersBtn" title="One-time: pull titles and alumni from the Members page into the shared roster">Sync members data</button>
         <button class="btn add" id="addBtn">+ Add Person</button>
       </div>
@@ -953,6 +1027,30 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
     </div>
   </div>
 
+  <!-- CADET AWARDS (Build v45) -->
+  <div class="view" id="awardsView">
+    <div class="page-header">
+      <div class="section-label">Awards</div>
+      <h1 class="section-title">Cadet Awards</h1>
+      <p class="page-desc">What each cadet has earned, what is close, and what has been presented. Hours, events, attendance, and join dates feed the counted awards; the rest is recorded here with the date presented. Cadets see the same on their PDF from the Trackers page.</p>
+    </div>
+    <div class="container">
+      <button class="back-link" id="awBack"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Admin Console</button>
+      <div id="awApp">
+        <div class="aw-top">
+          <div id="awYears"></div>
+          <div id="awFilters"><span class="aw-lbl">Show</span><button type="button" class="aw-chip on" data-f="all">Active</button><button type="button" class="aw-chip" data-f="ready">Ready to present</button><button type="button" class="aw-chip" data-f="close">Close</button><button type="button" class="aw-chip" data-f="alumni">Alumni</button></div>
+        </div>
+        <div class="att-stats" id="awStats"></div>
+        <div class="bar">
+          <input type="text" id="awSearch" placeholder="Search cadet…" style="flex:1;min-width:160px;background:var(--input-bg);border:1px solid var(--input-border);border-radius:9px;padding:10px 14px;color:var(--white);font-family:'Barlow',sans-serif;font-size:14px;outline:none">
+        </div>
+        <div class="att-log-wrap aw-buckets" id="awBuckets"></div>
+        <div id="awRows"></div>
+      </div>
+    </div>
+  </div>
+
   <!-- QUARTERMASTER TOOLBOX: ITEM CATALOG -->
   <div class="view" id="catalogView">
     <div class="page-header">
@@ -1089,12 +1187,13 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
 
 <div class="toast" id="toast"></div>
 
-<script src="roster.js?v=36"></script>
+<script src="roster.js?v=37"></script>
 <script src="opr.js?v=7"></script>
 <script src="wv.js?v=2"></script>
+<script src="awards.js?v=1"></script>
 <script src="vendor/qrcode-generator-1.4.4.min.js"></script>
 <script>
-console.log('[admin] Build v44');
+console.log('[admin] Build v45');
 const SESSION_KEY = 'rpd761_admin_auth';   // advisor-only; NOT shared with cadet pages
 const TIER_KEY = 'rpd761_admin_tier';      // 'full' (golden) or 'ltd' (limited advisor)
 const LIMITED_TOOLS = ['records','ridealongs','donations'];
@@ -1177,6 +1276,13 @@ const TOOLS = [
     desc: 'Per-cadet attendance and service hours from weekly meetings and events. Click a cadet for the full breakdown; filter by date range.',
     icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>',
     open: openAttendance
+  },
+  {
+    id: 'awards',
+    name: 'Cadet Awards',
+    desc: 'What each cadet has earned, what is close, and what has been presented. Record the advisor-only awards, rowing scores, and past awards here.',
+    icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="6"/><path d="M8.5 13.5L7 22l5-3 5 3-1.5-8.5"/></svg>',
+    open: openAwards
   },
   {
     id: 'training',
@@ -3708,6 +3814,239 @@ function attExportCSV(){
   showToast('CSV downloaded');
 }
 
+/* ══════════ CADET AWARDS (Build v45) ══════════
+   Award rules and the status computation live in awards.js (RPDAwards); the data in
+   roster/awards (RPDRoster.awards, roster key). This block is the /admin tool: year chips,
+   filters, the event bucket manager, and one card per cadet with every award's status, the
+   presented history, the manual awards with their date presented, the rowing log, and the
+   drug abuse training flag. Alumni cards show what was presented and what the data still
+   supports; dismissed cadets are not listed. */
+let awData = null;        // { v, buckets:{}, people:{} }
+let awYear = null;        // selected award year (calendar)
+let awFilter = 'all';     // all | ready | close | alumni
+let awOpen = {};          // which cards are open, by cadet name
+let awNames = [];         // event names list (from the Event names manager)
+let awRoll = [];          // attendance rollup, all time
+let awEvAll = [];         // every logged event
+let awAttAll = {};        // attendance map
+function awStripRank(n){ return String(n==null?'':n).replace(/^(Act\. Sgt\.|Capt\.|Captain|Lt\.|Sgt\.)\s+/,'').trim(); }
+async function openAwards(){
+  if(TIER==='ltd') return;
+  showView('awardsView');
+  const host=document.getElementById('awRows');
+  host.innerHTML='<p class="att-empty">Loading…</p>';
+  document.getElementById('awStats').innerHTML='';
+  if(!window.RPDAwards){ host.innerHTML='<p class="att-empty">awards.js did not load. Hard reload (Cmd+Shift+R) and try again.</p>'; return; }
+  try{
+    awAttAll=(await RPDRoster.attendance.get())||{};
+    try{ awEvAll=(await RPDRoster.events.get())||[]; }catch(e){ awEvAll=[]; }
+    try{ awNames=(await RPDRoster.eventNames.get())||[]; }catch(e){ awNames=[]; }
+    awData=(await RPDRoster.awards.get())||{ v:1, buckets:{}, people:{} };
+  }catch(e){
+    console.error('Awards load failed:', e);
+    host.innerHTML='<p class="att-empty">Could not reach the database. Check your connection and try again.</p>';
+    return;
+  }
+  if(!awYear) awYear=+RPDAwards.todayIso().slice(0,4);
+  try{ awRender(); }
+  catch(e){ console.error('Awards render failed:', e); host.innerHTML='<p class="att-empty">The data loaded, but the page hit a display error. Open the browser console and send Claude a screenshot of the red error.</p>'; }
+}
+function awSessionsFrom(){ return RPDAwards.sessionsFrom(awAttAll); }
+// one status list per cadet, cached per render
+function awComputeAll(){
+  awRoll=RPDRoster.attendance.rollup({ attData: awAttAll, events: awEvAll });
+  const from=awSessionsFrom();
+  const list=awRoll.map(r=>({ p:r.p, roll:r, alumni:false }));
+  // alumni: still on the roster with status alumni; build the same roll shape by hand
+  const sessions=Object.values(awAttAll||{}).filter(s=>s && !s.noMeeting).sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+  RPDRoster.getAlumni().forEach(p=>{
+    const t=awStripRank(p.name);
+    const inL=l=>(l||[]).some(x=>awStripRank(x)===t);
+    const meetings=[]; let present=0;
+    sessions.forEach(s=>{ let st='none'; if(inL(s.present)){ st='present'; present++; } else if(inL(s.excused)) st='excused'; else if(inL(s.unexcused)) st='unexcused'; if(st!=='none') meetings.push({date:s.date,status:st}); });
+    const events=(awEvAll||[]).filter(e=>awStripRank(e.cadet)===t);
+    list.push({ p, roll:{ meetings, events, present }, alumni:true });
+  });
+  return list.map(x=>Object.assign(x, { res: RPDAwards.compute({ p:x.p, roll:x.roll, buckets:awData.buckets, ledger:awData, year:awYear, sessionsFrom:from }) }));
+}
+function awRender(){
+  const host=document.getElementById('awRows'); if(!host || !awData) return;
+  // year chips
+  const years=RPDAwards.yearsAvailable({ events:awEvAll, attData:awAttAll, rosterJoins:RPDRoster.get().map(p=>p.joinDate) });
+  if(years.indexOf(awYear)<0) years.unshift(awYear);
+  document.getElementById('awYears').innerHTML='<span class="aw-lbl">Award year</span>'+years.map(y=>`<button type="button" class="aw-chip${y===awYear?' on':''}" data-y="${y}">${y}</button>`).join('');
+  document.querySelectorAll('#awYears .aw-chip').forEach(b=> b.addEventListener('click', ()=>{ awYear=+b.dataset.y; awRender(); }));
+  document.querySelectorAll('#awFilters .aw-chip').forEach(b=> b.classList.toggle('on', b.dataset.f===awFilter));
+  const all=awComputeAll();
+  // stats (active cadets only)
+  let ready=0, close=0, presented=0;
+  all.filter(x=>!x.alumni).forEach(x=>{ const s=RPDAwards.summary(x.res); ready+=s.ready; close+=s.close; presented+=x.res.reduce((n,r)=>n+(r.presented||[]).filter(e=>String(e.on||'').slice(0,4)===String(awYear)).length,0); });
+  document.getElementById('awStats').innerHTML=
+    `<div class="att-stat"><div class="num" style="color:var(--green)">${ready}</div><div class="lbl">Earned, not yet presented</div></div>
+     <div class="att-stat"><div class="num" style="color:var(--gold-light)">${close}</div><div class="lbl">Close</div></div>
+     <div class="att-stat"><div class="num">${presented}</div><div class="lbl">Presented in ${awYear}</div></div>
+     <div class="att-stat"><div class="num">${all.filter(x=>!x.alumni).length}</div><div class="lbl">Active cadets</div></div>`;
+  awRenderBuckets();
+  const q=((document.getElementById('awSearch')||{}).value||'').toLowerCase().trim();
+  let rows=all.filter(x=> awFilter==='alumni' ? x.alumni : !x.alumni);
+  if(awFilter==='ready') rows=rows.filter(x=>x.res.some(r=>r.ready));
+  if(awFilter==='close') rows=rows.filter(x=>x.res.some(r=>r.state==='close'));
+  if(q) rows=rows.filter(x=>x.p.name.toLowerCase().includes(q));
+  rows.sort((a,b)=>{ const sa=RPDAwards.summary(a.res), sb=RPDAwards.summary(b.res); return (sb.ready-sa.ready)||(sb.close-sa.close)||a.p.name.localeCompare(b.p.name); });
+  host.innerHTML='';
+  if(!rows.length){ host.innerHTML='<p class="att-empty">'+(awFilter==='alumni'?'No alumni on the roster.':awFilter==='all'?'No cadet matches.':'No cadet matches this filter.')+'</p>'; return; }
+  rows.forEach(x=> host.appendChild(awCard(x)));
+}
+function awPill(r){
+  const map={ presented:'presented', earned:'earned', close:'close', progress:'progress', none:'none', manual:'none', info:'progress' };
+  return `<span class="aw-pill ${map[r.state]||'none'}">${RPDAwards.stateLabel(r.state)}</span>`;
+}
+function awCard(x){
+  const p=x.p, res=x.res, s=RPDAwards.summary(res);
+  const item=document.createElement('div'); item.className='aw-item'+(awOpen[p.name]?' open':'');
+  item.dataset.name=p.name;
+  const parts=[]; if(s.ready) parts.push(`<span class="aw-sum earned">${s.ready} earned, not yet presented</span>`); if(s.close) parts.push(`<span class="aw-sum close">${s.close} close</span>`); if(s.presented) parts.push(`<span class="aw-sum">${s.presented} presented</span>`);
+  const sub=parts.length?parts.join('<span class="aw-dot">·</span>'):'<span class="aw-sum">Nothing earned or close yet</span>';
+  const counted=res.filter(r=>r.how!=='manual'), manual=res.filter(r=>r.how==='manual');
+  item.innerHTML=
+    `<div class="aw-row">
+       <div class="aw-id"><div class="att-name"><span class="att-rank">${escapeHtmlA(p.rank||'')}</span>${escapeHtmlA(p.name)}${x.alumni?'<span class="aw-alum">Alumni</span>':''}</div><div class="aw-sub">${sub}</div></div>
+       <div class="aw-right"><span class="aw-ribs">${res.filter(r=>r.state==='presented').map(r=>RPDAwards.ribbonHtml(r.ribbon,26,8)).join('')}</span><svg class="aw-caret" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div>
+     </div>
+     <div class="aw-detail">
+       <div class="aw-sec-h">Counted from hours, events, attendance, and the join date</div>
+       ${counted.map(r=>awAwardHtml(p, r)).join('')}
+       <div class="aw-sec-h">Recorded by the advisor</div>
+       ${manual.map(r=>awAwardHtml(p, r)).join('')}
+     </div>`;
+  item.querySelector('.aw-row').addEventListener('click', ()=>{ item.classList.toggle('open'); awOpen[p.name]=item.classList.contains('open'); });
+  awBindCard(item, p, res);
+  return item;
+}
+function awAwardHtml(p, r){
+  const a=RPDAwards.BY_KEY[r.key];
+  const pres=(r.presented||[]).map(e=>`<span class="aw-pres">${e.lvl?escapeHtmlA(e.lvl)+', ':''}${RPDAwards.fmt(e.on)}${e.year && (r.how==='year'||r.how==='anniv'||r.how==='tenure')?' (for '+escapeHtmlA(String(e.year)).replace(/^Y/,'year ')+')':''}${e.note?' <i>'+escapeHtmlA(e.note)+'</i>':''}<button type="button" class="aw-x" data-at="${e.at||''}" data-on="${escapeHtmlA(e.on||'')}" data-key="${r.key}" title="Remove this entry">&times;</button></span>`).join('');
+  const bar=(r.pct!=null && r.how!=='manual')?`<div class="aw-bar"><i style="width:${Math.max(0,Math.min(100,r.pct))}%" class="${r.state}"></i></div>`:'';
+  let extra='';
+  if(r.how==='drug'){
+    const t=r.progress||{};
+    extra=`<label class="aw-check"><input type="checkbox" data-flag="drugTraining"${t.trained?' checked':''}> 6 hours of drug abuse prevention training done${t.trained&&t.trainedOn?' ('+RPDAwards.fmt(t.trainedOn)+')':''}</label>`;
+  }
+  if(r.how==='fitness'){
+    const rows=((awData.people[p.name]||{}).rows||[]).filter(x=>x&&x.on).slice().sort((x,y)=>String(x.on).localeCompare(String(y.on)));
+    extra=`<div class="aw-rows"><div class="aw-rows-h">Rowing log (percentage)</div>
+      ${rows.length?rows.map(x=>`<span class="aw-pres row">${RPDAwards.fmt(x.on)}: <b>${escapeHtmlA(RPDAwards.fmtH(x.pct))}%</b><button type="button" class="aw-x" data-row="${escapeHtmlA(String(x.on))}" data-rowpct="${escapeHtmlA(String(x.pct))}" title="Remove">&times;</button></span>`).join(''):'<span class="aw-muted">No rows recorded.</span>'}
+      <div class="aw-inline"><input type="date" class="aw-row-date" value="${RPDAwards.todayIso()}"><input type="number" class="aw-row-pct" placeholder="%" min="0" max="999" step="0.1" style="width:80px"><button type="button" class="aw-mini aw-row-add">Add row</button></div></div>`;
+  }
+  if(r.how==='anniv' && r.progress && r.progress.years){
+    const L={ ontrack:['On track','progress'], broken:['Not this year','none'], missed:['Not earned','none'], check:['Check manually','close'], earned:['Earned','earned'] };
+    extra=`<div class="aw-years-list">${r.progress.years.slice().reverse().map(y=>`<div class="aw-yr"><span class="aw-yr-n">Year ${y.n}</span><span class="aw-yr-d">${RPDAwards.fmt(y.start)} to ${RPDAwards.fmt(y.last)}</span><span class="aw-pill ${y.presented.length?'presented':L[y.st][1]}">${y.presented.length?'Presented':L[y.st][0]}</span><span class="aw-yr-note">${escapeHtmlA(y.note)}</span></div>`).join('')}</div>`;
+  }
+  if(r.how==='congress' && r.progress){
+    extra=`<div class="aw-muted">Levels by hours: ${RPDAwards.CONGRESS.map(L=>L[0]+' '+L[1]+'/'+L[2]+'/'+L[3]).join(' · ')}</div>`;
+  }
+  const canAdd=true;
+  const addLbl=r.ready?'Mark presented':(r.how==='manual'?'Add':'Record a past presentation');
+  return `<div class="aw-aw ${r.state}" data-key="${r.key}">
+    <div class="aw-aw-top">${RPDAwards.ribbonHtml(r.ribbon)}<b class="aw-aw-name">${escapeHtmlA(r.name)}</b>${awPill(r)}<button type="button" class="aw-mini aw-add" data-key="${r.key}">${addLbl}</button></div>
+    ${r.line && r.line!==RPDAwards.stateLabel(r.state)?`<div class="aw-aw-line">${escapeHtmlA(r.line)}</div>`:''}
+    ${r.detail && !(r.how==='anniv' && r.progress && r.progress.years)?`<div class="aw-aw-detail">${escapeHtmlA(r.detail)}</div>`:''}
+    ${bar}
+    ${pres?`<div class="aw-pres-wrap">${pres}</div>`:''}
+    ${extra}
+    <div class="aw-form" data-for="${r.key}"></div>
+    <div class="aw-req">${escapeHtmlA(a.req)} <span class="aw-fill">${escapeHtmlA(a.fill)}</span></div>
+  </div>`;
+}
+function awYearDefault(r){
+  if(r.how==='year'||r.how==='fitness') return awYear;
+  if(r.how==='anniv'){ const ys=(r.progress&&r.progress.years)||[]; const ready=ys.filter(y=>y.done&&y.st==='earned'&&!y.presented.length); return ready.length?ready[0].label:(ys.length?ys[ys.length-1].label:awYear); }
+  if(r.how==='tenure') return (r.progress&&r.progress.years)||1;
+  return '';
+}
+function awBindCard(item, p, res){
+  const byKey={}; res.forEach(r=>{ byKey[r.key]=r; });
+  // open the inline form
+  item.querySelectorAll('.aw-add').forEach(btn=> btn.addEventListener('click', ()=>{
+    const key=btn.dataset.key, r=byKey[key], a=RPDAwards.BY_KEY[key];
+    const form=item.querySelector(`.aw-form[data-for="${key}"]`);
+    if(form.dataset.open){ form.innerHTML=''; form.dataset.open=''; return; }
+    form.dataset.open='1';
+    const yearly=(r.how==='year'||r.how==='fitness'||r.how==='anniv'||r.how==='tenure');
+    form.innerHTML=`<div class="aw-inline">
+        <label>Date presented <input type="date" class="aw-f-on" value="${RPDAwards.todayIso()}"></label>
+        ${yearly?`<label>${r.how==='tenure'?'Years completed':'For year'} <input type="number" class="aw-f-year" value="${awYearDefault(r)}" style="width:90px"></label>`:''}
+        ${a.levels?`<label>${key==='marksman'?'Place':'Level'} <select class="aw-f-lvl">${a.levels.map(l=>`<option>${escapeHtmlA(l)}</option>`).join('')}</select></label>`:''}
+        <label>Note <input type="text" class="aw-f-note" placeholder="optional" style="width:150px"></label>
+        <button type="button" class="aw-mini gold aw-f-save">Save</button><button type="button" class="aw-mini aw-f-cancel">Cancel</button>
+      </div>`;
+    form.querySelector('.aw-f-cancel').addEventListener('click', ()=>{ form.innerHTML=''; form.dataset.open=''; });
+    form.querySelector('.aw-f-save').addEventListener('click', async ()=>{
+      const on=form.querySelector('.aw-f-on').value; if(!on){ showToast('Pick the date presented'); return; }
+      const yEl=form.querySelector('.aw-f-year'); const year=yEl?String(yEl.value||'').trim():'';
+      if(yearly && !year){ showToast('Enter the year'); return; }
+      const lvlEl=form.querySelector('.aw-f-lvl'); const lvl=lvlEl?lvlEl.value:'';
+      const note=(form.querySelector('.aw-f-note').value||'').trim();
+      const rec={ key, on, year: yearly?(isNaN(+year)?year:+year):(+on.slice(0,4)), lvl, note, by:'Advisor', at:Date.now() };
+      try{
+        awData=await RPDRoster.awards.mutate(o=>{ const e=o.people[p.name]=o.people[p.name]||{earned:[],flags:{},rows:[]}; if(!Array.isArray(e.earned)) e.earned=[]; e.earned.push(rec); });
+        showToast(r.name+' recorded for '+p.name); awRender();
+      }catch(e){ showToast('Could not save. Try again.'); }
+    });
+  }));
+  // remove a presented entry or a rowing row
+  item.querySelectorAll('.aw-x').forEach(btn=> btn.addEventListener('click', async ()=>{
+    if(btn.dataset.row!==undefined){
+      if(!confirm('Remove the rowing entry from '+RPDAwards.fmt(btn.dataset.row)+'?')) return;
+      try{ awData=await RPDRoster.awards.mutate(o=>{ const e=o.people[p.name]; if(!e||!Array.isArray(e.rows)) return false; const i=e.rows.findIndex(x=>x&&String(x.on)===btn.dataset.row&&String(x.pct)===btn.dataset.rowpct); if(i<0) return false; e.rows.splice(i,1); }); awRender(); }
+      catch(e){ showToast('Could not save. Try again.'); }
+      return;
+    }
+    const key=btn.dataset.key, a=RPDAwards.BY_KEY[key];
+    if(!confirm('Remove this '+a.name+' entry ('+RPDAwards.fmt(btn.dataset.on)+') for '+p.name+'?')) return;
+    try{
+      awData=await RPDRoster.awards.mutate(o=>{ const e=o.people[p.name]; if(!e||!Array.isArray(e.earned)) return false;
+        let i=btn.dataset.at?e.earned.findIndex(x=>x&&String(x.at)===btn.dataset.at):-1;
+        if(i<0) i=e.earned.findIndex(x=>x&&x.key===key&&String(x.on||'')===btn.dataset.on);
+        if(i<0) return false; e.earned.splice(i,1); });
+      showToast('Entry removed'); awRender();
+    }catch(e){ showToast('Could not save. Try again.'); }
+  }));
+  // drug training flag
+  item.querySelectorAll('input[data-flag]').forEach(cb=> cb.addEventListener('change', async ()=>{
+    const flag=cb.dataset.flag, on=cb.checked;
+    try{ awData=await RPDRoster.awards.mutate(o=>{ const e=o.people[p.name]=o.people[p.name]||{earned:[],flags:{},rows:[]}; if(!e.flags||typeof e.flags!=='object') e.flags={}; if(on) e.flags[flag]=RPDAwards.todayIso(); else delete e.flags[flag]; }); awRender(); }
+    catch(e){ cb.checked=!on; showToast('Could not save. Try again.'); }
+  }));
+  // rowing log add
+  item.querySelectorAll('.aw-row-add').forEach(btn=> btn.addEventListener('click', async ()=>{
+    const wrap=btn.closest('.aw-rows'); const on=wrap.querySelector('.aw-row-date').value, pct=parseFloat(wrap.querySelector('.aw-row-pct').value);
+    if(!on){ showToast('Pick the date'); return; } if(isNaN(pct)){ showToast('Enter the percentage'); return; }
+    try{ awData=await RPDRoster.awards.mutate(o=>{ const e=o.people[p.name]=o.people[p.name]||{earned:[],flags:{},rows:[]}; if(!Array.isArray(e.rows)) e.rows=[]; e.rows.push({ on, pct: Math.round(pct*10)/10, at:Date.now() }); }); showToast('Row recorded'); awRender(); }
+    catch(e){ showToast('Could not save. Try again.'); }
+  }));
+}
+/* Event buckets: which award each event name feeds. Names typed under Other that are not in the list show too. */
+function awRenderBuckets(){
+  const wrap=document.getElementById('awBuckets'); if(!wrap) return;
+  const seen={}; const names=[];
+  (awNames||[]).forEach(n=>{ const k=RPDAwards.norm(n); if(k && !seen[k]){ seen[k]=1; names.push({ n, typed:false }); } });
+  (awEvAll||[]).forEach(e=>{ const k=RPDAwards.norm(e&&e.event); if(k && !seen[k]){ seen[k]=1; names.push({ n:e.event, typed:true }); } });
+  names.sort((a,b)=>a.n.localeCompare(b.n));
+  const opts=v=>RPDAwards.BUCKETS.map(b=>`<option value="${b[0]}"${b[0]===v?' selected':''}>${escapeHtmlA(b[1])}</option>`).join('');
+  wrap.innerHTML=`<button class="att-log-toggle" id="awBucketsToggle">Event buckets (${names.length}) <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></button>
+    <div class="att-log-list">
+      <p class="att-names-note">Each event name feeds one award. Change a bucket and every cadet's status updates. Names marked "typed" were entered under Other on the Trackers form and are not in the Event names list; retitle those in Attendance &amp; Hours (Logged events) or give them a bucket here.</p>
+      ${names.length?names.map(x=>`<div class="aw-bk"><span class="aw-bk-name">${escapeHtmlA(x.n)}${x.typed?'<em class="aw-bk-typed">typed</em>':''}</span><select class="aw-bk-sel" data-n="${escapeHtmlA(x.n)}">${opts(RPDAwards.bucketOf(x.n, awData.buckets))}</select></div>`).join(''):'<div class="att-d-empty">No event names yet.</div>'}
+    </div>`;
+  document.getElementById('awBucketsToggle').addEventListener('click', ()=> wrap.classList.toggle('open'));
+  wrap.querySelectorAll('.aw-bk-sel').forEach(sel=> sel.addEventListener('change', async ()=>{
+    const n=RPDAwards.norm(sel.dataset.n), v=sel.value;
+    try{ awData=await RPDRoster.awards.mutate(o=>{ o.buckets[n]=v; }); showToast('Bucket saved'); const wasOpen=wrap.classList.contains('open'); awRender(); if(wasOpen) document.getElementById('awBuckets').classList.add('open'); }
+    catch(e){ showToast('Could not save. Try again.'); }
+  }));
+}
+
 /* ── RIDE-ALONG LOG (advisor passcode) ── */
 let raData = [];
 let raOfficers = [];
@@ -4300,6 +4639,9 @@ async function loadRecNotes(){
 }
 document.getElementById('recSearch').addEventListener('input', renderRecords);
 document.getElementById('attBack').addEventListener('click', ()=>showView('hubView'));
+document.getElementById('awBack').addEventListener('click', ()=>showView('hubView'));
+document.getElementById('awSearch').addEventListener('input', ()=>{ if(awData) awRender(); });
+document.querySelectorAll('#awFilters .aw-chip').forEach(b=> b.addEventListener('click', ()=>{ awFilter=b.dataset.f; if(awData) awRender(); }));
 document.getElementById('attSearch').addEventListener('input', renderAttendance);
 document.getElementById('attCsv').addEventListener('click', attExportCSV);
 document.getElementById('attAddSession').addEventListener('click', openAddSession);

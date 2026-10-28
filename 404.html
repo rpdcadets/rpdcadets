@@ -1,8 +1,28 @@
 <!DOCTYPE html>
+<!-- 404.html | Build v2 | 10/28/26 | Forgiving addresses: any capitalization of a real page, with or without a trailing slash, plus the singular "waiver", is sent to the right page with the query and #code kept (so rpdcadets.com/Waivers#ABCD-EFGH and /waiver both open the signing page). GitHub Pages is case-sensitive and has no aliases, so this page does the forwarding before it renders. Anything else still shows the normal 404. -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>
+(function(){
+  // lowercase first path segment -> real address. Pages are served extensionless by GitHub Pages; folders keep their slash.
+  var PAGES = { index:'/', home:'/', members:'/members', training:'/training', uniforms:'/uniforms', trackers:'/trackers', faq:'/faq',
+    donate:'/donate', contact:'/contact', guest:'/guest', reference:'/reference', waivers:'/waivers', waiver:'/waivers',
+    'service-hours':'/service-hours', servicehours:'/service-hours', 'ride-along':'/ride-along', ridealong:'/ride-along',
+    quartermaster:'/quartermaster', sgt:'/sgt', admin:'/admin', patrol:'/patrol/', traffic:'/traffic/', go:'/go/', guide:'/guide/', psc:'/psc/', groupme:'/groupme/' };
+  var segs = location.pathname.split('/').filter(Boolean);
+  if(!segs.length) return;
+  var first = segs[0].toLowerCase().replace(/\.html?$/, '');
+  var target = PAGES[first];
+  if(!target) return;
+  if(segs.length > 1){ if(target.slice(-1) !== '/') return; target += segs.slice(1).join('/'); }   // deeper paths only under folders
+  var want = target.replace(/\/$/, '') || '/';
+  var have = location.pathname.replace(/\/$/, '') || '/';
+  if(want === have) return;   // already the real address: a true 404 inside a folder
+  location.replace(target + location.search + location.hash);
+})();
+</script>
 <title>404 — Page Not Found | RPD Cadets</title>
 <link rel="icon" type="image/x-icon" href="favicon.ico">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@300;400;500;600;700&family=Barlow+Condensed:wght@400;500;600;700&display=swap" rel="stylesheet">

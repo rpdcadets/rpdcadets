@@ -1,4 +1,4 @@
-/* wv.js  |  Build v1  |  updated 2026-10-28  |  Online waiver signing (e-sign), shared by /waivers (public, no roster.js),
+/* wv.js  |  Build v2  |  updated 2026-10-28  |  v2: the /admin block lists who has signed, with Clear per person and Clear all, so someone who messed up can start over with the same code; clearing deletes those signatures and flips every tracker cell that had been auto-marked Received from them back to Missing (a cell already Filed is left alone and named in the toast). Build v1 notes: Online waiver signing (e-sign), shared by /waivers (public, no roster.js),
    /sgt, and /admin. Holds everything the three pages must agree on: the code recipe, the three online forms (wording,
    who signs, PDF field maps), the signature status rules, the envelope format, the PDF filling, and the panel block that
    /sgt and /admin show on each tracker row (code, status, Copy link, Share, QR, admin PDFs and contact merge).
@@ -287,36 +287,34 @@
     }
     await pMerge();
   }
-  // Mark Received in the tracker for every online form that now has all its signatures (idempotent per code id)
+  // Mark Received in the tracker for every online form that now has all its signatures. The decision is made
+  // inside the mutate, against the freshly read tracker, so a mark made from the other panel (or a paper mark)
+  // is never overwritten and nothing is marked twice.
   async function pMerge() {
-    const todo = [];
+    const cand = [];
     Object.keys(P.st).forEach(name => {
       const st = P.st[name]; if (!st) return;
-      const sum = P.host.sum(name); if (!sum) return;
-      Object.keys(st.forms).forEach(k => {
-        const f = st.forms[k]; if (!f.complete) return;
-        const cell = sum.cells[k]; if (!cell) return;
-        const already = cell.state !== 'missing' && cell.state !== 'resign';
-        const entry = (P.host.entry ? P.host.entry(name, k) : null) || {};
-        if (already && entry.via === 'online' && entry.wvId === st._id) return;   // this signing already counted
-        if (already && entry.via !== 'online') return;                              // paper beat it; leave the paper mark
-        if (already && entry.via === 'online' && entry.wvId && entry.wvId !== st._id) return;   // an earlier code's signing
-        todo.push({ name, k, f, id: st._id });
-      });
+      Object.keys(st.forms).forEach(k => { const f = st.forms[k]; if (f.complete) cand.push({ name, k, f, id: st._id }); });
     });
-    if (!todo.length) return;
+    if (!cand.length) return;
+    const done = [];
     try {
       await RPDRoster.waivers.mutate(obj => {
-        todo.forEach(x => {
-          obj.cadets[x.name] = obj.cadets[x.name] || {};
-          const prev = obj.cadets[x.name][x.k];
-          obj.cadets[x.name][x.k] = { s: 'received', rAt: dateIso(x.f.at), rBy: 'Online: ' + x.f.by.join(', '), at: Date.now(), via: 'online', wvId: x.id, prev: prev && prev.s ? prev : undefined };
-          if (x.k === 'liability') obj.cadets[x.name][x.k].type = '';
+        cand.forEach(x => {
+          const rec = P.host.rec(x.name) || {};
+          const c = obj.cadets[x.name] || {};
+          const stt = RPDRoster.waivers.status(x.k, c[x.k], rec.waiverSet, rec.dob);
+          if (stt.state !== 'missing' && stt.state !== 'resign') return;   // paper, or already marked (from either panel)
+          const prev = c[x.k];
+          c[x.k] = { s: 'received', rAt: dateIso(x.f.at), rBy: 'Online: ' + x.f.by.join(', '), at: Date.now(), via: 'online', wvId: x.id, prev: (prev && prev.s) ? prev : undefined };
+          obj.cadets[x.name] = c; done.push(x);
         });
+        return done.length ? undefined : false;   // nothing to write: skip the save
       });
-      if (P.host.rerender) P.host.rerender();
-      if (P.host.toast) P.host.toast(todo.length === 1 ? 'Online signature received: ' + FORMS[todo[0].k].short + ' for ' + todo[0].name : todo.length + ' online signatures received');
-    } catch (e) { }
+    } catch (e) { return; }
+    if (!done.length) return;
+    if (P.host.rerender) await P.host.rerender();
+    if (P.host.toast) P.host.toast(done.length === 1 ? 'Online signature received: ' + FORMS[done[0].k].short + ' for ' + done[0].name : done.length + ' online signatures received');
   }
   function pForms(name) {   // which online forms this cadet still needs, from the tracker
     const sum = P.host.sum(name); if (!sum) return [];
@@ -373,9 +371,15 @@
       if (st.extraParents.length) rows += `<span class="wvo-f wait">Extra parent signatures not counted: ${esc(st.extraParents.join(', '))}</span>`;
     } else rows = '<span class="wvo-f wait">Could not read the signing status right now.</span>';
     const pdfs = (P.host.admin && st) ? Object.keys(st.forms).filter(k => Object.keys(st.forms[k].signed).length).map(k => `<button type="button" class="wvo-btn" data-wvoact="pdf" data-wvoname="${esc(name)}" data-wvoform="${k}">${esc(FORMS[k].short)} PDF${st.forms[k].complete ? '' : ' (partial)'}</button>`).join('') : '';
+    // admin: who has signed, each with a Clear so that person can start over
+    let people = '';
+    if (P.host.admin && st) {
+      const who = ['cadet', 'parent1', 'parent2'].filter(r => st.slots[r] && Object.keys(st.slots[r].forms).length);
+      if (who.length) people = `<div class="wvo-people"><span class="wvo-muted">Signed so far:</span>${who.map(r => `<span class="wvo-person">${esc(st.slots[r].name)} (${r === 'cadet' ? 'cadet' : (r === 'parent1' ? 'parent or guardian' : 'other parent')})<button type="button" class="wvo-btn danger" data-wvoact="clear" data-wvoname="${esc(name)}" data-wvoslot="${r}">Clear</button></span>`).join('')}<button type="button" class="wvo-btn danger" data-wvoact="clearall" data-wvoname="${esc(name)}">Clear all</button></div>`;
+    }
     return `<div class="wvo${st && st.allComplete ? ' done' : ''}">
       <div class="wvo-head"><span class="wvo-l">Online signing</span><span class="wvo-code">${esc(formatCode(c.code))}</span><span class="wvo-muted">${expired ? 'expired ' : 'expires '}${esc(fmtDate(c.exp))}${st && st.allComplete ? ' · all signed' : ''}</span></div>
-      <div class="wvo-forms">${rows}</div>
+      <div class="wvo-forms">${rows}</div>${people}
       <div class="wvo-acts">
         <button type="button" class="wvo-btn" data-wvoact="copy" data-wvoname="${esc(name)}">Copy link</button>
         <button type="button" class="wvo-btn" data-wvoact="share" data-wvoname="${esc(name)}">Share</button>
@@ -402,7 +406,40 @@
       if (act === 'share') { if (navigator.share) { await navigator.share({ title: 'Cadet waivers to sign', text: 'Richardson PD Public Safety Cadets: waivers for ' + name + ' to sign online. Code ' + formatCode(c.code), url }); } else { await navigator.clipboard.writeText(url); P.host.toast('Sharing is not available here; link copied instead'); } return; }
       if (act === 'qr') { qrPopup(url, formatCode(c.code), name); return; }
       if (act === 'pdf') { btn.disabled = true; try { await pPdf(name, formKey); } finally { btn.disabled = false; } return; }
+      if (act === 'clear' || act === 'clearall') { btn.disabled = true; await pClear(name, act === 'clearall' ? 'all' : btn.dataset.wvoslot); return; }
     } catch (e) { if (P.host.toast) P.host.toast('That did not work: ' + (e && e.message ? e.message : e)); }
+  }
+  // Admin: delete one person's signatures (or all of them) so they can start over with the same code, then put the
+  // tracker back for any cell that had been auto-marked from this code and is no longer complete.
+  async function pClear(name, slot) {
+    const st = P.st[name]; if (!st) return;
+    const who = slot === 'all' ? 'everyone' : ((st.slots[slot] || {}).name || slot);
+    if (!confirm('Delete the online signatures for ' + who + ' on ' + name + '? They can sign again with the same code. Tracker cells marked from those signatures go back to Missing.')) { pFill(name); return; }
+    if (slot === 'all') await RPDRoster.esign.sigsClear(st._id);
+    else for (const tok of ((st.slots[slot] || {}).tokens || [])) await RPDRoster.esign.sigsRemove(st._id, tok);
+    const raw = await RPDRoster.esign.sigsGet(st._id);
+    const signers = await decodeSigs(raw, st._key);
+    const next = status(P.inv[name], signers); next._id = st._id; next._key = st._key; next._raw = raw;
+    P.sigs[name] = signers; P.st[name] = next;
+    // revert tracker marks that came from this code and are no longer earned (decided against the fresh tracker)
+    const revert = [], filed = [];
+    try {
+      await RPDRoster.waivers.mutate(obj => {
+        const c = obj.cadets[name] || {};
+        ONLINE_KEYS.forEach(k => {
+          const e = c[k]; if (!e || e.via !== 'online' || e.wvId !== st._id) return;
+          if (next.forms[k] && next.forms[k].complete) return;
+          if (e.s === 'filed') { filed.push(FORMS[k].short); return; }
+          let prev = e.prev; while (prev && prev.via === 'online' && prev.wvId === st._id) prev = prev.prev;   // never fall back onto a mark from this same code
+          if (prev && prev.s) c[k] = prev; else delete c[k];
+          revert.push(k);
+        });
+        if (!revert.length) return false;
+        obj.cadets[name] = c;
+      });
+    } catch (e) { }
+    if (P.host.rerender) await P.host.rerender(); else pFill(name);
+    if (P.host.toast) P.host.toast('Signatures cleared for ' + who + (revert.length ? '; ' + revert.map(k => FORMS[k].short).join(', ') + ' back to Missing' : '') + (filed.length ? '. Already filed, left as is: ' + filed.join(', ') : ''));
   }
   function qrPopup(url, code, name) {
     let m = document.getElementById('wvoQr');
@@ -515,6 +552,9 @@
 .wvo-btn.gen{border-color:var(--gold);color:var(--gold-light);background:rgba(212,169,82,0.1)}
 .wvo-btn.go{border-color:var(--green,#27ae60);color:#b8f1cf;background:rgba(39,174,96,0.14)}
 .wvo-btn.danger{color:#f8a3a3}
+.wvo-people{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;width:100%;font-size:12.5px;color:#c6d0de}
+.wvo-person{display:inline-flex;align-items:center;gap:6px}
+.wvo-people .wvo-btn{padding:5px 9px;font-size:11px}
 .wvo-contacts{background:var(--card-bg);border:1px solid rgba(212,169,82,0.35);border-radius:12px;padding:12px;margin-bottom:12px;display:flex;flex-direction:column;gap:8px}
 .wvo-contact{display:flex;flex-direction:column;gap:6px;font-size:13.5px;padding:8px 0;border-top:1px solid var(--card-border)}
 .wvo-contact:first-of-type{border-top:none}

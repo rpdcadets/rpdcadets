@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- trackers.html  |  Build v22  |  updated 2026-10-28  |  pairs with roster.js v36  |  Back-dated weekly attendance: cadets whose roster join date is after the meeting date drop off the list (a note under the roster names them), so an older meeting can be submitted without marking people who had not joined yet. They are left out of the counts, the email, the Total Roster figure, and the saved session; a cadet whose join date equals the meeting date stays in. Cache-buster roster.js?v=36. Build v21 notes: Missed weekly attendance note: when the Weekly Meeting tab opens, a note at the top lists any Thursday meeting in the last 8 weeks with no attendance on file (one date reads as a single sentence, two or more as a list). A week counts as covered when any session or No Meeting marker falls in that Monday to Sunday week; today's Thursday is not counted until the next day; nothing before the earliest recorded session is flagged. Dates are plain text, not tappable. trackers.html only, roster.js unchanged. Prior v20 notes: Event/Activity hours guards (trackers.html only, roster.js unchanged): (1) Submit button locks while a submission is in flight. (2) Start and end times are rounded to the nearest 15 minutes before saving or emailing; the cadet gets one notice when a time changed. (3) Identical hours (same cadet, date, start, end) are blocked. (4) Hours that overlap an earlier entry for the same cadet are treated as a correction: the cadet may replace the earlier entry or entries, or cancel; both are never saved. Correction emails carry a CORRECTION field and subject. Overlaps with a ride-along entry are blocked (sergeant/advisor fixes those). Cache-buster bumped to roster.js?v=30. This restores and extends the July 8 double-submission guard that was overwritten by a cache-buster copy. Prior v19 notes: officer popup refetches the approved-officers list when the cached list is empty. Prior v18 notes: ride-along auto-log via officer popup, roster/raIndex duplicate ledger, RSA raInbox queue merged by /admin and /sgt, officer included in the Formspark email. -->
+<!-- trackers.html  |  Build v23  |  updated 2026-10-28  |  pairs with roster.js v36  |  Event Name picker matches word by word: any typed word that starts a word in a list entry brings that entry up, best matches first ("hillsboro competition" and "comp" both show Competition Related; "award" shows both Congressional Award entries). Before, only entries containing the exact typed text showed, so cadets fell through to Other and typed names like "Hillsboro comp" (Tony, 10/28/26). Build v22 notes: Back-dated weekly attendance: cadets whose roster join date is after the meeting date drop off the list (a note under the roster names them), so an older meeting can be submitted without marking people who had not joined yet. They are left out of the counts, the email, the Total Roster figure, and the saved session; a cadet whose join date equals the meeting date stays in. Cache-buster roster.js?v=36. Build v21 notes: Missed weekly attendance note: when the Weekly Meeting tab opens, a note at the top lists any Thursday meeting in the last 8 weeks with no attendance on file (one date reads as a single sentence, two or more as a list). A week counts as covered when any session or No Meeting marker falls in that Monday to Sunday week; today's Thursday is not counted until the next day; nothing before the earliest recorded session is flagged. Dates are plain text, not tappable. trackers.html only, roster.js unchanged. Prior v20 notes: Event/Activity hours guards (trackers.html only, roster.js unchanged): (1) Submit button locks while a submission is in flight. (2) Start and end times are rounded to the nearest 15 minutes before saving or emailing; the cadet gets one notice when a time changed. (3) Identical hours (same cadet, date, start, end) are blocked. (4) Hours that overlap an earlier entry for the same cadet are treated as a correction: the cadet may replace the earlier entry or entries, or cancel; both are never saved. Correction emails carry a CORRECTION field and subject. Overlaps with a ride-along entry are blocked (sergeant/advisor fixes those). Cache-buster bumped to roster.js?v=30. This restores and extends the July 8 double-submission guard that was overwritten by a cache-buster copy. Prior v19 notes: officer popup refetches the approved-officers list when the cached list is empty. Prior v18 notes: ride-along auto-log via officer popup, roster/raIndex duplicate ledger, RSA raInbox queue merged by /admin and /sgt, officer included in the Formspark email. -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -444,7 +444,7 @@ footer { background: var(--navy); border-top: 1px solid rgba(255,255,255,0.05); 
         Return to Home
       </a>
     </div>
-    <div style="margin-top:20px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v22</div>
+    <div style="margin-top:20px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v23</div>
   </div>
 </div>
 
@@ -937,9 +937,26 @@ document.addEventListener('click', e => { if(!e.target.closest('.name-select')) 
   evInput.dataset.wired = '1';
   let evHl = -1;
   function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;'); }
+  // Build v23: word-by-word matching. An entry shows when the typed text is inside it, or when any typed word
+  // starts a word of the entry ("comp" or "hillsboro competition" both find "Competition Related"). Best matches first.
+  function evMatches(q){
+    const list = eventNames||[];
+    const qn = String(q||'').toLowerCase().trim();
+    if(!qn) return list.slice();
+    const words = qn.split(/[^a-z0-9]+/).filter(w => w.length>=2);
+    const score = n => {
+      const nl = n.toLowerCase();
+      if(nl.includes(qn)) return 1000;
+      const nw = nl.split(/[^a-z0-9]+/).filter(Boolean);
+      let s = 0;
+      words.forEach(w => { if(nw.some(x => x === w)) s += 20; else if(nw.some(x => x.startsWith(w))) s += (w.length>=3 ? 10 : 3); });
+      return s;
+    };
+    return list.map((n,i) => ({ n, i, s:score(n) })).filter(x => x.s>0).sort((a,b) => (b.s-a.s) || (a.i-b.i)).map(x => x.n);
+  }
   function evRender(filter){
     const q = (filter||'').toLowerCase();
-    const matches = (eventNames||[]).filter(n => !q || n.toLowerCase().includes(q));
+    const matches = evMatches(q);
     let html = matches.map((n,i) => '<div class="option'+(i===evHl?' highlighted':'')+'" data-ev="'+esc(n)+'">'+esc(n)+'</div>').join('');
     html += '<div class="option'+(evHl===matches.length?' highlighted':'')+'" data-ev="__other__" style="color:var(--gold-light);font-style:italic">Other (type a custom name)\u2026</div>';
     dd.innerHTML = html; dd.classList.add('open');

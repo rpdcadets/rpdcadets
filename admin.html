@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- admin.html  |  Build v42  |  updated 2026-10-28  |  pairs with roster.js v34 and opr.js v7  |  v42: former cadets. The Roster Editor remove button now opens Mark as left: Alumni (stays on the roster as alumni with a date left and the Members-page note filled from the join and left dates when blank) or Dismissed (not in good standing: comes off the shared roster and every page; the status, date, and reason go to the advisor-only ledger RPDRoster.former, reference key, while the Cadet Records entry, waivers, hours, and sergeant notes stay put), plus Remove only for mistakes. Cadet Records gets a filter row (Active, Alumni, Dismissed, All; the limited tier never sees Dismissed) with a status strip on former cadets (dates, reason, Edit date or reason, Reinstate), Reinstate (back on the roster as active with a chosen squad, rank, and join date; the record is untouched), and recovery of records whose cadet was removed before this build (File as alumni, File as dismissed, or Reinstate). Alumni rows in the Roster Editor get a Left date. Cache-buster roster.js?v=34 (the v34 roll-up drops the Not recorded rows from before a cadet joined). Build v41 notes: v41: the review PDF downloads through the shared RPDOpr.pdfDownload (same output); cache-buster for opr.js Build v7. Build v40 notes: v40: cache-buster only, for opr.js Build v6 (Epieos and Have I Been Pwned rows, Open all per step). Build v39 notes: v39: cache-buster only, for opr.js Build v5 (username guesses collapsed into one chip row). Build v38 notes: v38: cache-buster only, for the opr.js Build v4 note rewording. Build v37 notes: v37: cache-buster only, for the opr.js Build v3 fix. Build v36 notes: v36: the review ends with a Reviewer recommendation (Proceed / Proceed with notes / Do not proceed, plus a reason) set by whoever runs it, shared with /sgt and shown as a pill on the card bar; the advisor result stays advisor-only; the PDF prints both side by side. Build v35 notes: Applicants & References gains the Online Presence Review: each applicant card has an Online presence section with Open review, the shared form from opr.js (applicant details, discovery with OSINT Industries and WhatsMyName, identity, accounts and platforms with one-tap links built from the typed handles, searches, reverse image, public records, household and family with a records list, the twelve categories, activity trail), plus the advisor-only result (Clear / Clear with notes / Concerns found / Recommend decline, stored under the reference key so /sgt can never read it), Screenshot in folder markers, Mark Advisor reviewed (locks the form on /sgt) and Reopen, Delete review, and a letterhead PDF (CADET/ONLINE V1) for the applicant folder. A settings strip at the top of the tool names the cleared sergeant whose name is stamped on every /sgt edit, shows how many devices have done the hidden unlock, and has Reset unlocks. Accept and add to roster moves the review to the files-on-hold list with the references; Delete file removes both. Visible build stamps are now version-only. No other tool changed. Prior v34 notes: New Waiver Tracker tool: every active cadet with the six waivers, most missing first. Sergeants mark Received on /sgt; here an advisor marks Filed (today's date), clears a Received mark, or un-files. Printable Missing Waivers list (PDF, CADET/WAIVERS V1). Cadets 18 or older show "Re-sign at 18" on every waiver signed before the birthday; cadets within 60 days of 18 get a "Turns 18 on" tag. Cadet Records: the Waivers chip and its panel now read from the tracker (tap a waiver to open the same dialog); the old checkbox toggles are gone and old checkmarks read as Filed with no date. Pending Approvals: a waiver change in an older sergeant proposal is applied to the tracker when approved. Prior v33 notes: Applicants & References: supports the longer questionnaire (reference.html Build v2). Free-text answers are recognized by their own tag (t:1) so new text questions lay out full width on screen and in the PDF; the PDF now sets short one-line answers two across and uses slightly tighter rows so a clean response still fits one page. No other tool changed. Prior v32 notes: New tool: Applicants & References (full advisor passcode only). Lists observers marked Applied; type in each reference from the paper application and the tool mints a one-time link (rpdcadets.com/reference#CODE) with a Copy link button for pasting into the Outlook email template; tracks Not sent / Sent / Reminder sent / Received / Unable to reach / Link expired; shows the decrypted responses with flagged answers highlighted and builds a letterhead PDF per reference or one file per applicant (pdf-lib, footer label CADET/REFCHECK V1). Responses are locked under a separate advisor-only key, so the sergeant and limited tiers cannot open them. Accept and add to roster: confirm name, pick squad, rank defaults to Probationary, join date defaults to today; adds the roster entry, copies observer contact info into Cadet Records (blank fields only), carries sergeant notes into cadet notes, removes the observer entry, and keeps the reference file on hold until deleted. Hub tile shows a badge for unread responses. Also bumped the roster.js cache-buster from 26 to 30. Prior v31 notes: Ride-Along Log now merges the Trackers inbox on open (cadet-submitted rides appear tagged "Trackers" and count toast shows how many arrived); add, edit, and delete maintain the roster/raIndex duplicate ledger so a deleted entry frees the cadet to resubmit; approving a sergeant ride-along proposal also claims its ledger hash. Prior v30 notes: Act. Sgt. rank dropdown; itemized six-waiver panel; per-cadet sergeant note lines; merged Sergeant Notes panel; waiver-item proposals in Pending Approvals. -->
+<!-- admin.html  |  Build v43  |  updated 2026-10-28  |  pairs with roster.js v35, opr.js v7, and wv.js v1  |  v43: online waiver signing. Every row in the Waiver Tracker gets an online block (Online code, Copy link, Share, QR, Refresh, New code, Cancel, and per-form status; a form with every signature it needs is marked Received automatically as "Online: name"), plus the advisor-only parts: a PDF button per signed form that unseals the records with the reference key and fills the official form with pdf-lib, and a "New parent contacts from online signing" card at the top of the tracker that adds or updates the parent (or new second parent) in Cadet Records, asking before it replaces a value. Cadet Records gains second parent or guardian name, phone, and email. Cache-busters roster.js?v=35, wv.js?v=1, plus the vendored QR library. Build v42 notes: v42: former cadets. The Roster Editor remove button now opens Mark as left: Alumni (stays on the roster as alumni with a date left and the Members-page note filled from the join and left dates when blank) or Dismissed (not in good standing: comes off the shared roster and every page; the status, date, and reason go to the advisor-only ledger RPDRoster.former, reference key, while the Cadet Records entry, waivers, hours, and sergeant notes stay put), plus Remove only for mistakes. Cadet Records gets a filter row (Active, Alumni, Dismissed, All; the limited tier never sees Dismissed) with a status strip on former cadets (dates, reason, Edit date or reason, Reinstate), Reinstate (back on the roster as active with a chosen squad, rank, and join date; the record is untouched), and recovery of records whose cadet was removed before this build (File as alumni, File as dismissed, or Reinstate). Alumni rows in the Roster Editor get a Left date. Cache-buster roster.js?v=34 (the v34 roll-up drops the Not recorded rows from before a cadet joined). Build v41 notes: v41: the review PDF downloads through the shared RPDOpr.pdfDownload (same output); cache-buster for opr.js Build v7. Build v40 notes: v40: cache-buster only, for opr.js Build v6 (Epieos and Have I Been Pwned rows, Open all per step). Build v39 notes: v39: cache-buster only, for opr.js Build v5 (username guesses collapsed into one chip row). Build v38 notes: v38: cache-buster only, for the opr.js Build v4 note rewording. Build v37 notes: v37: cache-buster only, for the opr.js Build v3 fix. Build v36 notes: v36: the review ends with a Reviewer recommendation (Proceed / Proceed with notes / Do not proceed, plus a reason) set by whoever runs it, shared with /sgt and shown as a pill on the card bar; the advisor result stays advisor-only; the PDF prints both side by side. Build v35 notes: Applicants & References gains the Online Presence Review: each applicant card has an Online presence section with Open review, the shared form from opr.js (applicant details, discovery with OSINT Industries and WhatsMyName, identity, accounts and platforms with one-tap links built from the typed handles, searches, reverse image, public records, household and family with a records list, the twelve categories, activity trail), plus the advisor-only result (Clear / Clear with notes / Concerns found / Recommend decline, stored under the reference key so /sgt can never read it), Screenshot in folder markers, Mark Advisor reviewed (locks the form on /sgt) and Reopen, Delete review, and a letterhead PDF (CADET/ONLINE V1) for the applicant folder. A settings strip at the top of the tool names the cleared sergeant whose name is stamped on every /sgt edit, shows how many devices have done the hidden unlock, and has Reset unlocks. Accept and add to roster moves the review to the files-on-hold list with the references; Delete file removes both. Visible build stamps are now version-only. No other tool changed. Prior v34 notes: New Waiver Tracker tool: every active cadet with the six waivers, most missing first. Sergeants mark Received on /sgt; here an advisor marks Filed (today's date), clears a Received mark, or un-files. Printable Missing Waivers list (PDF, CADET/WAIVERS V1). Cadets 18 or older show "Re-sign at 18" on every waiver signed before the birthday; cadets within 60 days of 18 get a "Turns 18 on" tag. Cadet Records: the Waivers chip and its panel now read from the tracker (tap a waiver to open the same dialog); the old checkbox toggles are gone and old checkmarks read as Filed with no date. Pending Approvals: a waiver change in an older sergeant proposal is applied to the tracker when approved. Prior v33 notes: Applicants & References: supports the longer questionnaire (reference.html Build v2). Free-text answers are recognized by their own tag (t:1) so new text questions lay out full width on screen and in the PDF; the PDF now sets short one-line answers two across and uses slightly tighter rows so a clean response still fits one page. No other tool changed. Prior v32 notes: New tool: Applicants & References (full advisor passcode only). Lists observers marked Applied; type in each reference from the paper application and the tool mints a one-time link (rpdcadets.com/reference#CODE) with a Copy link button for pasting into the Outlook email template; tracks Not sent / Sent / Reminder sent / Received / Unable to reach / Link expired; shows the decrypted responses with flagged answers highlighted and builds a letterhead PDF per reference or one file per applicant (pdf-lib, footer label CADET/REFCHECK V1). Responses are locked under a separate advisor-only key, so the sergeant and limited tiers cannot open them. Accept and add to roster: confirm name, pick squad, rank defaults to Probationary, join date defaults to today; adds the roster entry, copies observer contact info into Cadet Records (blank fields only), carries sergeant notes into cadet notes, removes the observer entry, and keeps the reference file on hold until deleted. Hub tile shows a badge for unread responses. Also bumped the roster.js cache-buster from 26 to 30. Prior v31 notes: Ride-Along Log now merges the Trackers inbox on open (cadet-submitted rides appear tagged "Trackers" and count toast shows how many arrived); add, edit, and delete maintain the roster/raIndex duplicate ledger so a deleted entry frees the cadet to resubmit; approving a sergeant ride-along proposal also claims its ledger hash. Prior v30 notes: Act. Sgt. rank dropdown; itemized six-waiver panel; per-cadet sergeant note lines; merged Sergeant Notes panel; waiver-item proposals in Pending Approvals. -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -745,7 +745,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
     <button class="lock-btn" id="goBtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg><span id="goLabel">Unlock</span></button>
     <div class="lock-error" id="lockErr">Incorrect passcode.</div>
     <div class="lock-home"><a href="index.html">← Return to Home</a></div>
-    <div style="margin-top:16px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v42</div>
+    <div style="margin-top:16px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v43</div>
   </div>
 </div>
 
@@ -775,7 +775,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
       <button class="back-link" id="rosterBack"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Admin Console</button>
       <div class="bar">
         <div class="status-pill" id="pill"><span class="dot"></span><span id="pillText">Synced</span></div>
-        <span style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v42</span>
+        <span style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v43</span>
         <button class="btn ghost" id="syncMembersBtn" title="One-time: pull titles and alumni from the Members page into the shared roster">Sync members data</button>
         <button class="btn add" id="addBtn">+ Add Person</button>
       </div>
@@ -819,6 +819,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
     <div class="container">
       <button class="back-link" id="wvBack"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Admin Console</button>
       <div class="rec-warning">Sergeants mark a waiver Received on the /sgt page when a cadet hands it in. Mark it Filed here once it is scanned and the original is in the binder. Checkmarks made in Cadet Records before the tracker show as Filed with no date. A cadet who has turned 18 shows "Re-sign at 18" on each waiver until a new one comes in.</div>
+      <div id="wvoContacts"></div>
       <div class="wvt-stats" id="wvtStats"></div>
       <div class="wvt-bar">
         <div class="wvt-filter">
@@ -1088,10 +1089,12 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
 
 <div class="toast" id="toast"></div>
 
-<script src="roster.js?v=34"></script>
+<script src="roster.js?v=35"></script>
 <script src="opr.js?v=7"></script>
+<script src="wv.js?v=1"></script>
+<script src="vendor/qrcode-generator-1.4.4.min.js"></script>
 <script>
-console.log('[admin] Build v42');
+console.log('[admin] Build v43');
 const SESSION_KEY = 'rpd761_admin_auth';   // advisor-only; NOT shared with cadet pages
 const TIER_KEY = 'rpd761_admin_tier';      // 'full' (golden) or 'ltd' (limited advisor)
 const LIMITED_TOOLS = ['records','ridealongs','donations'];
@@ -2387,6 +2390,32 @@ async function wvLoad(){
   try{ const d=await RPDRoster.waivers.get(); if(d){ wvData=d; wvLoadErr=false; } }
   catch(e){ wvLoadErr=true; }
   wvRender(); wvRefreshEmbeds();
+  wvoStart();   // Build v43: online signing blocks (codes, status, auto-Received, PDFs, parent contacts)
+}
+// Online waiver signing (Build v43): the block on each row comes from wv.js; this page supplies its hooks and the admin extras.
+let wvoInited=false;
+async function wvoStart(){
+  if(!window.RPDWv || !RPDRoster.esign) return;
+  if(!wvoInited){
+    wvoInited=true;
+    RPDWv.panel.init({
+      admin:true,
+      rec: wvRec, sum: wvSum, entry:(name,k)=>((wvEntries(name)||{})[k]),
+      toast: showToast,
+      who: ()=>'Advisor',
+      loadPdfLib: apLoadPdfLib,
+      recSave: async (name, patch)=>{ recData[name]=recData[name]||{}; Object.assign(recData[name], patch); await RPDRoster.records.save(recData); showToast('Cadet Records updated for '+name); },
+      rerender: async ()=>{ try{ const d=await RPDRoster.waivers.get(); if(d) wvData=d; }catch(e){} wvRender(); wvRefreshEmbeds(); wvoContacts(); }
+    });
+    RPDWv.panel.bind(document.getElementById('waiversView'));
+  }
+  try{ await RPDRoster.references.unlock(sessionStorage.getItem(SESSION_KEY)); }catch(e){}   // PDFs and contacts need the reference key
+  await RPDWv.panel.refresh();
+  wvoContacts();
+}
+async function wvoContacts(){
+  const host=document.getElementById('wvoContacts'); if(!host) return;
+  try{ host.innerHTML = await RPDWv.panel.contactsHtml(); }catch(e){ host.innerHTML=''; }
 }
 function wvCellHtml(name, key, st){
   const it=wvItem(key);
@@ -2424,8 +2453,9 @@ function wvRender(){
     if(s.received) tags.push(`<span class="wvt-tag recv">${s.received} awaiting filing</span>`);
     if(s.age.soon) tags.push(`<span class="wvt-tag age">Turns 18 on ${wvE(wvFmtLong(s.age.b18))}</span>`);
     if(!s.age.known) tags.push('<span class="wvt-tag">No birthdate on file</span>');
-    return `<div class="wvt-row${s.complete?' done':''}"><div class="wvt-who">${x.p.rank?`<span class="wvt-rank">${wvE(x.p.rank)}</span>`:''}<span class="wvt-name">${wvE(x.p.name)}</span>${tags.join('')}</div><div class="wvt-cells">${wvCellsHtml(x.p.name, s)}</div></div>`;
+    return `<div class="wvt-row${s.complete?' done':''}"><div class="wvt-who">${x.p.rank?`<span class="wvt-rank">${wvE(x.p.rank)}</span>`:''}<span class="wvt-name">${wvE(x.p.name)}</span>${tags.join('')}</div><div class="wvt-cells">${wvCellsHtml(x.p.name, s)}</div><div data-wvo="${wvE(x.p.name)}"></div></div>`;
   }).join('');
+  if(window.RPDWv) RPDWv.panel.fill();   // online signing block per row, from the panel's cached state
 }
 // Waiver chips, lists, and cells that live outside the tracker (the Cadet Records cards).
 function wvChipState(sum){ const have=sum.total-sum.need; return { have:have, cls: sum.complete ? 'full' : (have>0 ? 'part' : 'none') }; }
@@ -2793,7 +2823,7 @@ function renderRecords(){
 }
 function recFilledCount(rec, name){
   let n = 0;
-  ['radio','shirt','school','dob','email','phone','parentName','parentPhone','parentEmail','notes'].forEach(k => { if((rec[k]||'').toString().trim()) n++; });
+  ['radio','shirt','school','dob','email','phone','parentName','parentPhone','parentEmail','parent2Name','parent2Phone','parent2Email','notes'].forEach(k => { if((rec[k]||'').toString().trim()) n++; });
   REC_CHECKS.forEach(([k]) => { if(rec[k]) n++; });
   if(name){ const ws = wvSum(name); if(ws.total - ws.need > 0) n++; }
   return n;
@@ -2849,6 +2879,11 @@ function recCard(p){
          <label class="rec-field"><span>Parent / guardian name</span><input type="text" data-k="parentName" value="${escapeHtmlA(rec.parentName||'')}" placeholder="Full name"></label>
          <label class="rec-field"><span>Parent phone</span><input type="text" data-k="parentPhone" value="${escapeHtmlA(rec.parentPhone||'')}" placeholder="(972) 555-0100"></label>
          <label class="rec-field"><span>Parent email</span><input type="text" data-k="parentEmail" value="${escapeHtmlA(rec.parentEmail||'')}" placeholder="parent@example.com"></label>
+       </div>
+       <div class="rec-grid3">
+         <label class="rec-field"><span>Second parent / guardian</span><input type="text" data-k="parent2Name" value="${escapeHtmlA(rec.parent2Name||'')}" placeholder="Full name (if any)"></label>
+         <label class="rec-field"><span>Second parent phone</span><input type="text" data-k="parent2Phone" value="${escapeHtmlA(rec.parent2Phone||'')}" placeholder="(972) 555-0100"></label>
+         <label class="rec-field"><span>Second parent email</span><input type="text" data-k="parent2Email" value="${escapeHtmlA(rec.parent2Email||'')}" placeholder="parent@example.com"></label>
        </div>
        <label class="rec-field"><span>Notes</span><textarea data-k="notes" rows="2" placeholder="Program notes">${escapeHtmlA(rec.notes||'')}</textarea></label>
        <div class="rec-cnotes"><div class="wv-h" style="margin:14px 0 6px">Sergeant notes on this cadet</div><div class="rec-cnotes-list">${cnRows}</div></div>

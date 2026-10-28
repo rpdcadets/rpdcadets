@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<!-- waivers.html | Build v1 | 10/28/26 | New page: online signing of the cadet waivers (rpdcadets.com/waivers). A parent or cadet enters the 8-character code an advisor or sergeant generated, picks who they are (cadet, parent or guardian, other parent or guardian), reads each form in full, agrees to sign electronically once, draws or types a signature once and applies it per form, and each form saves the moment it is signed. Which forms and which signatures are needed comes from wv.js (PSC Agreement, Photo and Video Release, Simunitions; adult cadets sign alone, minors need a parent, the Photo and Simunitions forms need the other parent only when the first parent says so or the other parent asks to sign). Everything written is encrypted: status stubs under the code-derived key, the signed records sealed to the reference public key so only the full advisor passcode opens them. This page deliberately does NOT load roster.js (its seed carries cadet names). Download a copy builds the signer's own PDF from the official form with pdf-lib. -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Cadet Waivers | Richardson PD Public Safety Cadets</title>
+<link rel="icon" href="favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@300;400;500;600;700&family=Barlow+Condensed:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
+<script src="wv.js?v=1"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--navy:#1a2744;--navy-deep:#0f1a30;--red:#c0392b;--red-glow:#e74c3c;--gold:#d4a952;--gold-light:#f0d68a;--green:#27ae60;--white:#fff;--text-muted:#8899b0;--card-bg:rgba(255,255,255,0.025);--card-border:rgba(255,255,255,0.06);--input-bg:rgba(255,255,255,0.04);--input-border:rgba(255,255,255,0.1);--input-focus:rgba(192,57,43,0.4)}
+body{font-family:'Barlow',sans-serif;background:var(--navy-deep);color:var(--white);min-height:100vh;-webkit-font-smoothing:antialiased}
+.wrap{max-width:660px;margin:0 auto;padding:36px 18px 60px}
+.head{text-align:center;margin-bottom:22px}
+.head img{height:72px;width:auto;margin-bottom:14px}
+.section-label{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:var(--gold);margin-bottom:8px}
+h1{font-family:'Bebas Neue',sans-serif;font-size:38px;letter-spacing:2px;line-height:1.05}
+.card{background:var(--card-bg);border:1px solid var(--card-border);border-radius:16px;padding:28px 22px 26px;position:relative;display:none}
+.card.on{display:block}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--red),var(--gold),var(--red));border-radius:16px 16px 0 0}
+h2{font-family:'Bebas Neue',sans-serif;font-size:30px;letter-spacing:1.5px;line-height:1.1;margin-bottom:10px}
+h3{font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin:22px 0 8px}
+p.lead{font-size:15.5px;line-height:1.65;color:#dbe3ee;margin-bottom:14px}
+p.fine{font-size:13.5px;line-height:1.6;color:var(--text-muted);margin-top:8px}
+.who{background:rgba(212,169,82,0.07);border:1px solid rgba(212,169,82,0.28);border-radius:12px;padding:14px 16px;margin-bottom:18px}
+.who-l{font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--gold)}
+.who-name{font-family:'Bebas Neue',sans-serif;font-size:30px;letter-spacing:1.5px;line-height:1.1;margin:3px 0 4px;overflow-wrap:anywhere}
+.who-by{font-size:14px;color:#b6c2d4}
+.code-in{width:100%;font-family:'Barlow Condensed',sans-serif;font-size:30px;font-weight:700;letter-spacing:6px;text-align:center;text-transform:uppercase;background:var(--input-bg);border:1px solid var(--input-border);border-radius:12px;padding:16px 10px;color:var(--white);outline:none}
+.code-in:focus{border-color:var(--gold)}
+.code-in::placeholder{letter-spacing:3px;color:rgba(255,255,255,0.22);font-weight:500}
+.btn-main{width:100%;margin-top:18px;padding:16px;background:var(--red);color:var(--white);border:none;border-radius:12px;font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:600;letter-spacing:2px;text-transform:uppercase;cursor:pointer}
+.btn-main:hover{background:var(--red-glow)}
+.btn-main:disabled{opacity:.5;cursor:wait}
+.btn-sub{background:rgba(255,255,255,0.03);border:1px solid var(--card-border);color:#c6d0de;border-radius:10px;padding:12px 16px;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;cursor:pointer}
+.btn-sub:hover{color:#fff;border-color:rgba(255,255,255,0.25)}
+.btn-sub:disabled{opacity:.5;cursor:wait}
+.btn-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.err{min-height:20px;margin-top:12px;font-size:14px;color:#ff9a8f;line-height:1.5}
+.status-list{display:flex;flex-direction:column;gap:7px;margin:6px 0 4px}
+.st-row{display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;background:var(--input-bg);border:1px solid var(--input-border);border-radius:10px;padding:10px 12px;font-size:14px}
+.st-row .n{font-weight:600;color:#fff}
+.st-row .s{color:var(--gold-light);font-size:13px}
+.st-row.ok .s{color:#8fe3b3}
+.st-row.mine{border-color:rgba(212,169,82,0.5)}
+.roles{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+.role{text-align:left;background:var(--input-bg);border:1px solid var(--input-border);border-radius:12px;padding:14px 16px;color:#fff;font-family:'Barlow',sans-serif;font-size:16px;cursor:pointer;line-height:1.3}
+.role:hover{border-color:rgba(255,255,255,0.3)}
+.role small{display:block;color:var(--text-muted);font-size:13px;margin-top:2px}
+.role:disabled{opacity:.55;cursor:default}
+.role.link{background:none;border:none;color:var(--gold-light);text-decoration:underline;padding:6px 2px;font-size:14px}
+label.f{display:block;font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:var(--text-muted);margin:14px 0 6px}
+label.f .req{color:var(--red-glow)}
+input.t{width:100%;background:var(--input-bg);border:1px solid var(--input-border);border-radius:10px;padding:13px 14px;color:var(--white);font-family:'Barlow',sans-serif;font-size:16px;outline:none}
+input.t:focus{border-color:var(--gold)}
+input.t[readonly]{color:#c6d0de}
+input.t.miss{border-color:rgba(231,76,60,0.7)}
+.progress{font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--gold);margin-bottom:6px}
+.doc{background:#fff;color:#1b1f27;border-radius:12px;padding:18px 16px;font-family:Georgia,'Times New Roman',serif;font-size:14.5px;line-height:1.6;max-height:46vh;overflow:auto;margin:10px 0 4px;border:1px solid rgba(0,0,0,0.1)}
+.doc h4{font-family:'Barlow Condensed',sans-serif;font-size:13px;letter-spacing:1.5px;text-transform:uppercase;color:#1a2744;margin:14px 0 6px}
+.doc h4:first-child{margin-top:0}
+.doc p{margin:0 0 10px}
+.doc p.wv-minor{font-style:italic;color:#4a5568}
+.doc .wv-blank{border-bottom:1px solid #1a2744;padding:0 4px;font-weight:600;color:#1a2744}
+.doc-hint{font-size:12.5px;color:var(--text-muted);display:flex;justify-content:space-between;gap:10px}
+.consent{display:flex;align-items:flex-start;gap:12px;background:rgba(212,169,82,0.07);border:1px solid rgba(212,169,82,0.3);border-radius:12px;padding:14px;margin-top:16px;cursor:pointer;font-size:14.5px;line-height:1.5;color:#dbe3ee}
+.consent input{width:22px;height:22px;margin-top:2px;flex:none;accent-color:var(--gold)}
+.consent.miss{border-color:rgba(231,76,60,0.7)}
+.sig-wrap{margin-top:16px}
+.sig-box{position:relative;background:#fff;border-radius:12px;border:1px solid rgba(0,0,0,0.15);overflow:hidden;touch-action:none}
+.sig-box canvas{display:block;width:100%;height:170px}
+.sig-box .line{position:absolute;left:14px;right:14px;bottom:38px;border-top:1px dashed #9aa5b5;pointer-events:none}
+.sig-box .hint{position:absolute;left:0;right:0;bottom:12px;text-align:center;font-size:13px;color:#9aa5b5;pointer-events:none;font-family:'Barlow',sans-serif}
+.sig-box.has .hint{display:none}
+.sig-box.miss{box-shadow:0 0 0 2px rgba(231,76,60,0.7)}
+.sig-preview{background:#fff;border-radius:12px;padding:10px;text-align:center}
+.sig-preview img{max-height:90px;max-width:100%}
+.typed-row{display:flex;gap:8px;margin-top:8px}
+.typed-row input{flex:1}
+.date-line{font-size:14px;color:#b6c2d4;margin-top:12px}
+.date-line b{color:#fff}
+.done-ico{width:70px;height:70px;margin:4px auto 18px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(39,174,96,0.12);border:1px solid rgba(39,174,96,0.35);color:#6fdc9d}
+.paper{background:var(--input-bg);border:1px solid var(--input-border);border-radius:12px;padding:12px 14px;margin-bottom:8px}
+.paper .pt{font-weight:600;font-size:15px;color:#fff;display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px}
+.paper .notary{font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;border-radius:20px;padding:3px 9px;border:1px solid rgba(212,169,82,0.55);color:var(--gold-light)}
+.paper .pw{font-size:13.5px;color:var(--text-muted);margin-top:3px;line-height:1.5}
+.paper .btn-row{margin-top:10px}
+.paper a.btn-sub{text-decoration:none;display:inline-block}
+.paper .alt{font-size:13px;color:var(--text-muted);margin-top:8px;line-height:1.6}
+.paper .alt a{color:var(--gold-light)}
+.center{text-align:center}
+.foot{text-align:center;margin-top:22px;font-size:12.5px;color:var(--text-muted);line-height:1.6}
+.spin{width:34px;height:34px;border:3px solid rgba(255,255,255,0.12);border-top-color:var(--gold);border-radius:50%;margin:8px auto 20px;animation:spin .9s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.spin{animation-duration:2.4s}}
+@media(max-width:420px){.card{padding:22px 16px 22px}h1{font-size:34px}.code-in{font-size:26px;letter-spacing:5px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <img src="logo_transparent.png" alt="Richardson Police Department Public Safety Cadets badge logo">
+    <div class="section-label">Richardson Police Department</div>
+    <h1>Cadet Waivers</h1>
+  </div>
+
+  <!-- 1. code -->
+  <div class="card on" id="cEnter">
+    <h2>Enter your code</h2>
+    <p class="lead">An advisor or sergeant gave your family an 8-character code. Enter it to sign the cadet's program forms on this phone.</p>
+    <input type="text" class="code-in" id="codeIn" placeholder="XXXX-XXXX" autocomplete="off" autocapitalize="characters" spellcheck="false" inputmode="text" maxlength="9">
+    <div class="err" id="enterErr" role="alert"></div>
+    <button type="button" class="btn-main" id="enterBtn">Continue</button>
+    <p class="fine">Everything you sign is encrypted on this phone before it is saved, and only the cadet program's advisors can open it.</p>
+  </div>
+
+  <!-- 2. who -->
+  <div class="card" id="cWho">
+    <div class="who"><div class="who-l">Signing for</div><div class="who-name" id="whoCadet"></div><div class="who-by" id="whoSub"></div></div>
+    <h3>Forms</h3>
+    <div class="status-list" id="whoForms"></div>
+    <h3>Who are you?</h3>
+    <div class="roles" id="whoRoles"></div>
+    <div class="err" id="whoErr" role="alert"></div>
+    <p class="fine">Each person signs from their own phone with this same code, or back to back on one phone. Come back any time; what is already signed stays signed.</p>
+  </div>
+
+  <!-- 3. your name (and, for a parent, the second-parent question) -->
+  <div class="card" id="cName">
+    <h2 id="nameTitle">Your name</h2>
+    <p class="lead" id="nameLead"></p>
+    <label class="f" for="nameIn">Full legal name <span class="req">*</span></label>
+    <input type="text" class="t" id="nameIn" autocomplete="name">
+    <div id="secondQ" style="display:none">
+      <h3>One more question</h3>
+      <p class="lead">Does a second parent or guardian also need to sign?</p>
+      <p class="fine" style="margin-top:0">A second signature is required on the Photo and Simunitions forms only when the cadet's parents are divorced or unmarried with shared rights. It is not required if one parent has sole legal custody, or for married parents or a single guardian.</p>
+      <div class="roles" id="secondBtns">
+        <button type="button" class="role" data-second="no">No, my signature is enough<small>Married parents, a single guardian, or sole legal custody</small></button>
+        <button type="button" class="role" data-second="yes">Yes, the other parent or guardian also signs<small>Divorced or unmarried with shared rights; they use this same code</small></button>
+      </div>
+    </div>
+    <div class="err" id="nameErr" role="alert"></div>
+    <button type="button" class="btn-main" id="nameBtn">Continue</button>
+    <div class="btn-row"><button type="button" class="btn-sub" id="nameBack">Back</button></div>
+  </div>
+
+  <!-- 4. one form -->
+  <div class="card" id="cForm">
+    <div class="progress" id="fProg"></div>
+    <h2 id="fTitle"></h2>
+    <p class="lead" id="fLead"></p>
+    <div class="doc" id="fDoc"></div>
+    <div class="doc-hint"><span>Scroll to read the whole form</span><span id="fDocLen"></span></div>
+    <div id="fFields"></div>
+    <label class="consent" id="consentWrap" style="display:none"><input type="checkbox" id="consentChk"><span id="consentTxt"></span></label>
+    <div class="sig-wrap">
+      <label class="f" style="margin-bottom:8px">Your signature <span class="req">*</span></label>
+      <div id="sigPadWrap">
+        <div class="sig-box" id="sigBox"><canvas id="sigCanvas"></canvas><div class="line"></div><div class="hint">Sign here with your finger</div></div>
+        <div class="btn-row"><button type="button" class="btn-sub" id="sigClear">Clear</button><button type="button" class="btn-sub" id="sigTypeBtn">Type instead</button></div>
+        <div class="typed-row" id="typedRow" style="display:none"><input type="text" class="t" id="typedIn" placeholder="Type your full name"><button type="button" class="btn-sub" id="typedUse">Use</button></div>
+      </div>
+      <div id="sigReuseWrap" style="display:none">
+        <div class="sig-preview"><img id="sigReuseImg" alt="Your signature"></div>
+        <div class="btn-row"><button type="button" class="btn-sub" id="sigRedo">Sign again instead</button></div>
+        <p class="fine" style="margin-top:8px">Tapping Sign and continue applies this signature to this form.</p>
+      </div>
+    </div>
+    <div class="date-line">Date: <b id="fDate"></b> (today)</div>
+    <div class="err" id="fErr" role="alert"></div>
+    <button type="button" class="btn-main" id="fSign">Sign and continue</button>
+    <div class="btn-row"><button type="button" class="btn-sub" id="fBack">Back to the list</button></div>
+  </div>
+
+  <!-- 5. done -->
+  <div class="card" id="cDone">
+    <div class="center"><div class="done-ico"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></div></div>
+    <h2 class="center" id="doneTitle">Done</h2>
+    <p class="lead center" id="doneLead"></p>
+    <h3>Where things stand</h3>
+    <div class="status-list" id="doneForms"></div>
+    <div id="doneDl"></div>
+    <div id="donePaper"></div>
+    <div class="err" id="doneErr" role="alert"></div>
+    <div class="btn-row"><button type="button" class="btn-sub" id="doneBack">Back to the list</button></div>
+  </div>
+
+  <!-- busy -->
+  <div class="card" id="cBusy"><div class="spin"></div><p class="lead center" id="busyTxt">One moment</p></div>
+
+  <div class="foot">Richardson Police Department Public Safety Cadets<br>200 N. Greenville Ave, Richardson, TX 75081 &nbsp;|&nbsp; (972) 744-4801<br><span style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase">Build v1</span></div>
+</div>
+
+<script>
+console.log('[waivers] Build v1');
+/* Same Firebase project as the rest of the site. This page deliberately does NOT load roster.js. */
+const firebaseConfig = {
+  apiKey:            "AIzaSyDV0vuyGg7gpPXJd2jRqZtUTeKiP3yPxhU",
+  authDomain:        "rpdcadets-quartermaster.firebaseapp.com",
+  databaseURL:       "https://rpdcadets-quartermaster-default-rtdb.firebaseio.com",
+  projectId:         "rpdcadets-quartermaster",
+  storageBucket:     "rpdcadets-quartermaster.firebasestorage.app",
+  messagingSenderId: "832497600166",
+  appId:             "1:832497600166:web:67895b333e07b8806c1667"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+const W = RPDWv, ROOT = W.ROOT;
+const TS = () => (firebase.database.ServerValue && firebase.database.ServerValue.TIMESTAMP) || Date.now();
+const $ = id => document.getElementById(id);
+const esc = W.esc;
+
+const S = { code:'', id:'', key:null, invite:null, signers:[], st:null, token:'', role:'', slot:'', name:'', isSecond:false, fields:{ phone:'', email:'', address:'' }, queue:[], idx:0, sig:'', sigMode:'', consentAt:0, pub:'', signedNow:[], records:{} };
+
+function show(id){ document.querySelectorAll('.card').forEach(c=>c.classList.toggle('on', c.id===id)); window.scrollTo(0,0); }
+function busy(txt){ $('busyTxt').textContent = txt || 'One moment'; show('cBusy'); }
+/* One saved entry per signer (role + name) per code, so a cadet and a parent sharing one phone never inherit each other's token or details. */
+function storeKey(role, name){ return 'rpdwv_' + S.id + '_' + role + '_' + W.normName(name); }
+function saveLocal(){ if(!S.token) return; try{ localStorage.setItem(storeKey(S.role, S.name), JSON.stringify({ token:S.token, fields:S.fields, isSecond:S.isSecond })); }catch(e){} }
+function loadLocal(role, name){ try{ return JSON.parse(localStorage.getItem(storeKey(role, name))||'null'); }catch(e){ return null; } }
+
+/* ── 1. code ── */
+$('codeIn').addEventListener('input', e=>{ const n=W.normalizeCode(e.target.value).slice(0,8); e.target.value = n.length>4 ? n.slice(0,4)+'-'+n.slice(4) : n; });
+$('codeIn').addEventListener('keydown', e=>{ if(e.key==='Enter') enter(); });
+$('enterBtn').addEventListener('click', enter);
+async function enter(){
+  const code = W.normalizeCode($('codeIn').value);
+  const err = $('enterErr'); err.textContent='';
+  if(code.length!==8){ err.textContent='The code is 8 letters and numbers.'; return; }
+  $('enterBtn').disabled = true; busy('Opening');
+  try{
+    const d = await W.derive(code);
+    const snap = await db.ref(ROOT+'/wvInvites/'+d.id).once('value');
+    const inv = snap.exists() ? snap.val() : null;
+    if(!inv || !inv.blob){ throw new Error('nf'); }
+    let obj; try{ obj = JSON.parse(await W.keyDecrypt(inv.blob, d.key)); }catch(e){ throw new Error('nf'); }
+    if(inv.exp && Date.now() > inv.exp) throw new Error('exp');
+    S.code=code; S.id=d.id; S.key=d.key; S.invite=obj;
+    await loadStatus();
+    try{ location.hash = W.formatCode(code); }catch(e){}
+    renderWho();
+  }catch(e){
+    show('cEnter');
+    err.textContent = e.message==='nf' ? 'That code did not open anything. Check it with the advisor or sergeant who gave it to you.' : (e.message==='exp' ? 'That code has expired. Ask the advisor or sergeant for a new one.' : 'Could not reach the server. Check your connection and try again.');
+  }
+  $('enterBtn').disabled = false;
+}
+async function loadStatus(){
+  const snap = await db.ref(ROOT+'/wvSigs/'+S.id).once('value');
+  const raw = snap.exists() ? snap.val() : {};
+  S.signers = await W.decodeSigs(raw, S.key);
+  S.st = W.status(S.invite, S.signers);
+}
+function mySlot(){
+  if(S.role==='cadet') return 'cadet';
+  if(S.role!=='parent') return '';
+  const sl = S.st.slots, me = W.normName(S.name);
+  if(sl.parent1 && W.normName(sl.parent1.name)===me) return 'parent1';
+  if(sl.parent2 && W.normName(sl.parent2.name)===me) return 'parent2';
+  if(!sl.parent1) return 'parent1';
+  if(!sl.parent2) return 'parent2';
+  return '';
+}
+function formRows(host, mineSlot){
+  host.innerHTML = Object.keys(S.st.forms).map(k=>{
+    const f=S.st.forms[k];
+    const mine = mineSlot && f.needed.includes(mineSlot) && !f.signed[mineSlot];
+    let s;
+    if(f.complete) s = 'Signed '+W.fmtDate(f.at)+(f.by.length?' by '+esc(f.by.join(', ')):'');
+    else { const have=Object.keys(f.signed).map(r=>f.signed[r].name); s = 'Waiting on '+esc(f.waiting.map(W.roleLabel).join(' and '))+(have.length?' (signed by '+esc(have.join(', '))+')':''); }
+    return `<div class="st-row${f.complete?' ok':''}${mine?' mine':''}"><span class="n">${esc(f.title)}</span><span class="s">${s}</span></div>`;
+  }).join('');
+}
+/* ── 2. who ── */
+function renderWho(){
+  const inv=S.invite, st=S.st;
+  $('whoCadet').textContent = inv.cadet;
+  $('whoSub').textContent = inv.adult ? 'Adult cadet: signs for themselves.' : 'Minor cadet: a parent or guardian signs with the cadet.';
+  formRows($('whoForms'), '');
+  const roles=[]; const sl=st.slots;
+  const cadetDone = Object.keys(st.forms).every(k=>!st.forms[k].needed.includes('cadet') || st.forms[k].signed.cadet);
+  roles.push(`<button type="button" class="role" data-role="cadet" ${cadetDone?'disabled':''}>${esc(inv.cadet)}<small>${inv.adult?'The cadet, 18 or older':'The cadet'}${cadetDone?' · everything signed':''}</small></button>`);
+  if(!inv.adult){
+    const parentDone = p => Object.keys(st.forms).every(k=>!st.forms[k].needed.includes(p) || st.forms[k].signed[p]);
+    const named = n => (sl.parent1 && W.normName(sl.parent1.name)===W.normName(n)) || (sl.parent2 && W.normName(sl.parent2.name)===W.normName(n));
+    if(sl.parent1) roles.push(`<button type="button" class="role" data-role="parent" data-name="${esc(sl.parent1.name)}" ${parentDone('parent1')?'disabled':''}>${esc(sl.parent1.name)}<small>Parent or guardian${parentDone('parent1')?' · everything signed':' · continue signing'}</small></button>`);
+    if(sl.parent2) roles.push(`<button type="button" class="role" data-role="parent" data-name="${esc(sl.parent2.name)}" ${parentDone('parent2')?'disabled':''}>${esc(sl.parent2.name)}<small>Other parent or guardian${parentDone('parent2')?' · everything signed':' · continue signing'}</small></button>`);
+    const onFile = (inv.parent && inv.parent.name && !named(inv.parent.name)) ? inv.parent.name : '';
+    const onFile2 = (inv.parent2 && inv.parent2.name && !named(inv.parent2.name)) ? inv.parent2.name : '';
+    if(!sl.parent1){
+      roles.push(`<button type="button" class="role" data-role="parent" data-name="${esc(onFile)}">${onFile?esc(onFile):'Parent or guardian'}<small>${onFile?'Parent or guardian on file':'Signs for the cadet'}</small></button>`);
+      if(onFile) roles.push(`<button type="button" class="role link" data-role="parent" data-name="">I'm a different parent or guardian</button>`);
+    } else if(!sl.parent2){
+      const prefill = onFile2 || onFile;
+      if(st.second) roles.push(`<button type="button" class="role" data-role="parent" data-name="${esc(prefill)}" data-second="1">${prefill?esc(prefill):'Other parent or guardian'}<small>The second parent or guardian</small></button>`);
+      else roles.push(`<button type="button" class="role link" data-role="parent" data-name="${esc(prefill)}" data-second="1">${esc(sl.parent1.name)} has signed as parent or guardian. I also need to sign (other parent or guardian)</button>`);
+    }
+  }
+  $('whoRoles').innerHTML = roles.join('');
+  $('whoRoles').querySelectorAll('[data-role]').forEach(b=>b.addEventListener('click', ()=>pickRole(b.dataset.role, b.dataset.name||'', b.dataset.second==='1')));
+  $('whoErr').textContent='';
+  show('cWho');
+}
+function pickRole(role, name, isSecond){
+  S.role = role; S.isSecond = !!isSecond; S.token = ''; S.fields = { phone:'', email:'', address:'' };
+  S.name = role==='cadet' ? S.invite.cadet : (name || '');
+  renderName();
+}
+// Details on file for this signer (from the invite), then anything this device saved for the same role and name.
+function prefillFor(role, name){
+  const f = { phone:'', email:'', address:'' };
+  if(role==='cadet'){ f.phone = S.invite.cadetPhone||''; f.email = S.invite.cadetEmail||''; }
+  else {
+    const src = (S.invite.parent && W.normName(S.invite.parent.name)===W.normName(name)) ? S.invite.parent : ((S.invite.parent2 && W.normName(S.invite.parent2.name)===W.normName(name)) ? S.invite.parent2 : null);
+    if(src){ f.phone = src.phone||''; f.email = src.email||''; }
+  }
+  const loc = loadLocal(role, name);
+  if(loc && loc.fields){ ['phone','email','address'].forEach(k=>{ if(loc.fields[k]) f[k]=loc.fields[k]; }); }
+  return { fields:f, token:(loc && loc.token) || '' };
+}
+/* ── 3. name + second-parent question ── */
+let secondAnswer = null;
+function renderName(){
+  const parent = S.role==='parent';
+  $('nameTitle').textContent = S.role==='cadet' ? 'Confirm your name' : 'Your name';
+  $('nameLead').textContent = S.role==='cadet' ? 'This is the name that goes on the forms.' : 'Your full legal name, as it should appear on the forms.';
+  $('nameIn').value = S.name; $('nameIn').readOnly = (S.role==='cadet'); $('nameIn').classList.remove('miss');
+  const askSecond = parent && !S.invite.adult && !S.isSecond && !S.st.answered && !S.st.slots.parent2 && S.invite.forms.some(k=>k==='photo'||k==='sim');
+  $('secondQ').style.display = askSecond ? 'block' : 'none';
+  secondAnswer = null;
+  $('secondBtns').querySelectorAll('[data-second]').forEach(b=>{ b.classList.remove('on'); b.style.borderColor=''; b.onclick=()=>{ secondAnswer=b.dataset.second==='yes'; $('secondBtns').querySelectorAll('[data-second]').forEach(x=>x.style.borderColor = x===b ? 'var(--gold)' : ''); }; });
+  $('nameErr').textContent='';
+  show('cName');
+}
+$('nameBack').addEventListener('click', renderWho);
+$('nameBtn').addEventListener('click', async ()=>{
+  const name = $('nameIn').value.trim().replace(/\s+/g,' ');
+  const err=$('nameErr'); err.textContent='';
+  if(name.length<3){ $('nameIn').classList.add('miss'); err.textContent='Enter your full name.'; return; }
+  if(S.role==='parent' && W.normName(name)===W.normName(S.invite.cadet)){ err.textContent='That is the cadet\'s name. A parent or guardian signs here under their own name.'; return; }
+  const askSecond = $('secondQ').style.display!=='none';
+  if(askSecond && secondAnswer===null){ err.textContent='Answer the question about a second parent or guardian.'; return; }
+  S.name = name;
+  const pre = prefillFor(S.role, name); S.fields = pre.fields; S.token = pre.token;   // a returning signer on this phone keeps their token
+  $('nameBtn').disabled=true; busy('Saving');
+  try{
+    await loadStatus();
+    if(!S.token) S.token = W.newToken();
+    const slot = mySlot();
+    if(S.role==='parent' && !slot) throw new Error('full');
+    S.slot = slot;
+    const regS = await W.keyEncrypt(JSON.stringify({ role:S.role, name:S.name, at:Date.now(), ua:navigator.userAgent }), S.key);
+    await db.ref(ROOT+'/wvSigs/'+S.id+'/'+S.token+'/reg').set({ s:regS, t:TS() });
+    if(S.role==='parent' && (askSecond || S.isSecond)){
+      const second = S.isSecond ? true : !!secondAnswer;
+      const metaS = await W.keyEncrypt(JSON.stringify({ second, at:Date.now() }), S.key);
+      await db.ref(ROOT+'/wvSigs/'+S.id+'/'+S.token+'/meta').set({ s:metaS, t:TS() });
+    }
+    saveLocal();
+    await loadStatus();
+    S.slot = mySlot();
+    buildQueue();
+    if(!S.queue.length){ renderDone('Nothing left for you to sign.'); }
+    else { S.idx=0; renderForm(); }
+  }catch(e){
+    show('cName');
+    err.textContent = e.message==='full' ? 'Two parents or guardians have already signed under other names. Ask the advisor if a third signature is needed.' : 'Could not save. Check your connection and try again.';
+  }
+  $('nameBtn').disabled=false;
+});
+function buildQueue(){
+  S.queue = [];
+  S.invite.forms.forEach(k=>{ const f=S.st.forms[k]; if(f && f.needed.includes(S.slot) && !f.signed[S.slot]) S.queue.push(k); });
+}
+/* ── 4. forms ── */
+const pad = { c:null, ctx:null, down:false, last:null, has:false, mode:'' };
+function padInit(){
+  if(pad.c) return;
+  pad.c = $('sigCanvas'); pad.ctx = pad.c.getContext('2d');
+  const resize = ()=>{ const r=pad.c.getBoundingClientRect(); const dpr=window.devicePixelRatio||1; const img = pad.has ? pad.c.toDataURL() : null; pad.c.width=Math.round(r.width*dpr); pad.c.height=Math.round(r.height*dpr); pad.ctx.setTransform(dpr,0,0,dpr,0,0); pad.ctx.lineCap='round'; pad.ctx.lineJoin='round'; pad.ctx.strokeStyle='#1a2744'; pad.ctx.lineWidth=2.4; if(img){ const im=new Image(); im.onload=()=>pad.ctx.drawImage(im,0,0,r.width,r.height); im.src=img; } };
+  resize(); window.addEventListener('resize', resize);
+  const pos = e => { const r=pad.c.getBoundingClientRect(); return { x:e.clientX-r.left, y:e.clientY-r.top }; };
+  pad.c.addEventListener('pointerdown', e=>{ e.preventDefault(); pad.c.setPointerCapture(e.pointerId); pad.down=true; pad.last=pos(e); pad.ctx.beginPath(); pad.ctx.moveTo(pad.last.x, pad.last.y); pad.ctx.lineTo(pad.last.x+0.1, pad.last.y+0.1); pad.ctx.stroke(); pad.has=true; pad.mode='drawn'; $('sigBox').classList.add('has'); $('sigBox').classList.remove('miss'); });
+  pad.c.addEventListener('pointermove', e=>{ if(!pad.down) return; e.preventDefault(); const p=pos(e); pad.ctx.beginPath(); pad.ctx.moveTo(pad.last.x,pad.last.y); pad.ctx.lineTo(p.x,p.y); pad.ctx.stroke(); pad.last=p; });
+  const up = e=>{ pad.down=false; };
+  pad.c.addEventListener('pointerup', up); pad.c.addEventListener('pointercancel', up); pad.c.addEventListener('pointerleave', up);
+  $('sigClear').addEventListener('click', padClear);
+  $('sigTypeBtn').addEventListener('click', ()=>{ $('typedRow').style.display='flex'; $('typedIn').value = S.name; $('typedIn').focus(); });
+  $('typedUse').addEventListener('click', ()=>{ const t=$('typedIn').value.trim(); if(!t) return; padClear(); const r=pad.c.getBoundingClientRect(); pad.ctx.save(); pad.ctx.fillStyle='#1a2744'; let size=46; pad.ctx.font = 'italic '+size+'px "Brush Script MT","Segoe Script","Bradley Hand","Apple Chancery",cursive'; while(pad.ctx.measureText(t).width > r.width-40 && size>18){ size-=2; pad.ctx.font='italic '+size+'px "Brush Script MT","Segoe Script","Bradley Hand","Apple Chancery",cursive'; } pad.ctx.fillText(t, 20, r.height-50); pad.ctx.restore(); pad.has=true; pad.mode='typed'; $('sigBox').classList.add('has'); $('sigBox').classList.remove('miss'); $('typedRow').style.display='none'; });
+}
+function padClear(){ const r=pad.c.getBoundingClientRect(); pad.ctx.clearRect(0,0,r.width,r.height); pad.has=false; pad.mode=''; $('sigBox').classList.remove('has'); }
+function padExport(){
+  const c=pad.c, ctx=pad.ctx; const w=c.width, h=c.height; const data=ctx.getImageData(0,0,w,h).data;
+  let x0=w, y0=h, x1=0, y1=0;
+  for(let y=0;y<h;y++) for(let x=0;x<w;x++){ if(data[(y*w+x)*4+3]>10){ if(x<x0)x0=x; if(x>x1)x1=x; if(y<y0)y0=y; if(y>y1)y1=y; } }
+  if(x1<x0) return '';
+  const padPx=8; x0=Math.max(0,x0-padPx); y0=Math.max(0,y0-padPx); x1=Math.min(w-1,x1+padPx); y1=Math.min(h-1,y1+padPx);
+  const out=document.createElement('canvas'); const cw=x1-x0+1, ch=y1-y0+1; const scale=Math.min(1, 900/cw); out.width=Math.round(cw*scale); out.height=Math.round(ch*scale);
+  out.getContext('2d').drawImage(c, x0, y0, cw, ch, 0, 0, out.width, out.height);
+  return out.toDataURL('image/png');
+}
+function fieldSpec(){ const F=W.FORMS[S.queue[S.idx]]; return F.fields[S.role==='cadet'?'cadet':'parent'] || ['name']; }
+function renderForm(){
+  const k=S.queue[S.idx], F=W.FORMS[k];
+  $('fProg').textContent = 'Form '+(S.idx+1)+' of '+S.queue.length;
+  $('fTitle').textContent = F.title;
+  const roleTxt = S.role==='cadet' ? (S.invite.adult ? 'You are signing as the cadet, 18 or older.' : 'You are signing as the cadet; a parent or guardian signs this form too.') : (S.slot==='parent2' ? 'You are signing as the other parent or guardian of '+S.invite.cadet+'.' : 'You are signing as the parent or guardian of '+S.invite.cadet+'.');
+  $('fLead').textContent = roleTxt;
+  let html = F.html.replace(/<span class="wv-blank" data-blank="cadet">[^<]*<\/span>/g, '<span class="wv-blank">'+esc(S.invite.cadet)+'</span>')
+                   .replace(/<span class="wv-blank" data-blank="parent">[^<]*<\/span>/g, '<span class="wv-blank">'+esc(S.role==='parent'?S.name:'the parent or guardian')+'</span>');
+  $('fDoc').innerHTML = html; $('fDoc').scrollTop=0;
+  $('fDocLen').textContent = Math.max(1, Math.round($('fDoc').textContent.split(/\s+/).length/200)) + ' min read';
+  const spec = fieldSpec(); const f=S.fields;
+  const labels = { name:'Printed name', phone:'Phone number', email:'Email', address:'Home address' };
+  const req = { name:true, phone:S.role==='parent', email:false, address:false };
+  $('fFields').innerHTML = spec.map(x=>`<label class="f" for="fld_${x}">${labels[x]}${req[x]?' <span class="req">*</span>':' <span style="color:var(--text-muted);letter-spacing:0;text-transform:none;font-weight:400">(optional)</span>'}</label><input type="text" class="t" id="fld_${x}" value="${esc(x==='name'?S.name:(f[x]||''))}" ${x==='name'?'readonly':''} autocomplete="${x==='phone'?'tel':x==='email'?'email':x==='address'?'street-address':'name'}" inputmode="${x==='phone'?'tel':x==='email'?'email':'text'}">`).join('');
+  $('consentWrap').style.display = S.consentAt ? 'none' : 'flex'; $('consentChk').checked=false; $('consentTxt').textContent = W.CONSENT; $('consentWrap').classList.remove('miss');
+  $('fDate').textContent = new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+  $('fErr').textContent='';
+  if(S.sig){ $('sigPadWrap').style.display='none'; $('sigReuseWrap').style.display='block'; $('sigReuseImg').src=S.sig; }
+  else { $('sigPadWrap').style.display='block'; $('sigReuseWrap').style.display='none'; show('cForm'); padInit(); padClear(); }
+  show('cForm'); if(!S.sig){ padInit(); setTimeout(()=>{ window.dispatchEvent(new Event('resize')); },50); }
+}
+$('sigRedo').addEventListener('click', ()=>{ S.sig=''; S.sigMode=''; renderForm(); });
+$('fBack').addEventListener('click', async ()=>{ busy('Refreshing'); try{ await loadStatus(); }catch(e){} renderWho(); });
+$('fSign').addEventListener('click', async ()=>{
+  const k=S.queue[S.idx], F=W.FORMS[k]; const err=$('fErr'); err.textContent='';
+  const spec=fieldSpec(); let bad=false;
+  spec.forEach(x=>{ const el=$('fld_'+x); const v=(el.value||'').trim(); el.classList.remove('miss'); if(x!=='name') S.fields[x]=v; if((x==='phone' && S.role==='parent' && v.replace(/\D/g,'').length<7)){ el.classList.add('miss'); bad=true; } if(x==='email' && v && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)){ el.classList.add('miss'); bad=true; } });
+  if(bad){ err.textContent='Check the highlighted field.'; return; }
+  if(!S.consentAt){ if(!$('consentChk').checked){ $('consentWrap').classList.add('miss'); err.textContent='Tick the box to agree to sign electronically.'; return; } S.consentAt=Date.now(); }
+  if(!S.sig){ if(!pad.has){ $('sigBox').classList.add('miss'); err.textContent='Sign in the white box, or tap Type instead.'; return; } S.sig=padExport(); S.sigMode=pad.mode||'drawn'; if(!S.sig){ err.textContent='The signature came out empty. Try again.'; return; } }
+  $('fSign').disabled=true; busy('Saving your signature');
+  try{
+    if(!S.pub){ const ps=await db.ref(ROOT+'/refPub').once('value'); if(!ps.exists()) throw new Error('nokey'); S.pub=ps.val(); }
+    const at=Date.now();
+    const rec = { v:1, form:k, formVersion:F.version, id:S.id, token:S.token, role:S.role, slot:S.slot, cadet:S.invite.cadet, name:S.name, phone:S.fields.phone||'', email:S.fields.email||'', address:S.fields.address||'', at, consent:W.CONSENT, consentAt:S.consentAt, ua:navigator.userAgent, sig:S.sig, sigMode:S.sigMode, second:S.role==='parent'?(S.isSecond||secondAnswer===true):undefined };
+    const e = await W.envelope(JSON.stringify(rec), S.pub);
+    const s = await W.keyEncrypt(JSON.stringify({ at, name:S.name, role:S.role }), S.key);
+    await db.ref(ROOT+'/wvSigs/'+S.id+'/'+S.token+'/forms/'+k).set({ s, e, t:TS() });
+    S.records[k]=rec; S.signedNow.push(k); saveLocal();
+    S.idx++;
+    if(S.idx < S.queue.length) renderForm(); else renderDone();
+  }catch(e){
+    show('cForm');
+    err.textContent = e.message==='nokey' ? 'Signing is not set up yet on the server. Tell the advisor.' : 'Could not save. Check your connection and tap Sign and continue again.';
+  }
+  $('fSign').disabled=false;
+});
+/* ── 5. done ── */
+async function renderDone(lead){
+  busy('Checking');
+  try{ await loadStatus(); }catch(e){}
+  const mineLeft = S.invite.forms.filter(k=>{ const f=S.st.forms[k]; return f && f.needed.includes(S.slot) && !f.signed[S.slot]; });
+  $('doneTitle').textContent = S.signedNow.length ? 'Signed' : 'Nothing to sign';
+  $('doneLead').textContent = lead || (S.signedNow.length===1 ? 'Your signature is saved on 1 form.' : 'Your signature is saved on '+S.signedNow.length+' forms.') + (S.st.allComplete ? ' Every form for '+S.invite.cadet+' is now complete; the advisors have it.' : ' The list below shows who still needs to sign.');
+  formRows($('doneForms'), S.slot);
+  $('doneDl').innerHTML = S.signedNow.length ? '<h3>Your copy</h3><p class="fine" style="margin-top:0">A PDF of each form with your signature and details, built here on your phone.</p><div class="btn-row">'+S.signedNow.map(k=>`<button type="button" class="btn-sub" data-dl="${k}">${esc(W.FORMS[k].short)} PDF</button>`).join('')+'</div>' : '';
+  $('doneDl').querySelectorAll('[data-dl]').forEach(b=>b.addEventListener('click', ()=>downloadCopy(b.dataset.dl, b)));
+  $('donePaper').innerHTML = paperHtml(); paperBind();
+  $('doneErr').textContent='';
+  show('cDone');
+}
+/* Paper forms the tracker showed missing when the code was made: download, print, sign (in front of a notary where
+   marked), and hand in. The Release of Liability has three versions, so the family is asked which one applies;
+   the answer starts from what this parent already said about a second signature. */
+let liabPick = '';
+function paperHtml(){
+  const keys=(S.invite.paper||[]).filter(k=>W.PAPER[k]); if(!keys.length) return '';
+  const notary = keys.some(k=>W.PAPER[k].notary);
+  let html='<h3>Still needed on paper</h3><p class="fine" style="margin-top:0">These forms cannot be signed online. Your cadet should already have the printed copies, so printing is only needed if a form is lost or it is easier for you. Sign'+(notary?' (in front of a notary where marked)':'')+' and give it to a sergeant or advisor at the next meeting.'+(notary?' Need a notary? Come to the Richardson City Jail before the weekly meeting and it will be notarized for free; bring a photo ID.':'')+'</p>';
+  keys.forEach(k=>{
+    const F=W.PAPER[k];
+    let body='';
+    if(F.versions){
+      if(S.invite.adult){
+        const v=F.versions.find(x=>x.id==='adult');
+        body=`<div class="pw">Adult cadet (18 or older). ${esc(F.who)}</div><div class="btn-row"><a class="btn-sub" href="${esc(v.file)}" download>Download</a></div>`;
+      } else {
+        if(!liabPick) liabPick = (S.st && S.st.second) ? 'divorced' : 'married';
+        const opts=F.versions.filter(x=>x.id!=='adult');
+        const v=opts.find(x=>x.id===liabPick);
+        body=`<div class="pw">${esc(F.who)} Which version applies to the cadet's family?</div>`+
+          `<div class="roles" style="margin-top:8px">${opts.map(x=>{ const l=x.label.replace('Minor cadet: ',''); return `<button type="button" class="role" data-liab="${x.id}" style="${x.id===liabPick?'border-color:var(--gold);background:rgba(212,169,82,0.12)':''}">${esc(l.charAt(0).toUpperCase()+l.slice(1))}</button>`; }).join('')}</div>`+
+          `<div class="btn-row"><a class="btn-sub" href="${esc(v.file)}" download>Download this version</a></div>`;
+      }
+    } else body=`<div class="pw">${esc(F.who)}</div><div class="btn-row"><a class="btn-sub" href="${esc(F.file)}" download>Download</a></div>`;
+    html+=`<div class="paper"><div class="pt">${esc(F.title)}${F.notary?'<span class="notary">Needs a notary</span>':''}</div>${body}</div>`;
+  });
+  return html;
+}
+function paperBind(){
+  $('donePaper').querySelectorAll('[data-liab]').forEach(b=>b.addEventListener('click', ()=>{ liabPick=b.dataset.liab; $('donePaper').innerHTML=paperHtml(); paperBind(); }));
+}
+$('doneBack').addEventListener('click', async ()=>{ busy('Refreshing'); try{ await loadStatus(); }catch(e){} renderWho(); });
+let pdfLibP=null;
+function loadPdfLib(){ if(window.PDFLib) return Promise.resolve(); if(!pdfLibP) pdfLibP=new Promise((res,rej)=>{ const s=document.createElement('script'); s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js'; s.onload=()=>res(); s.onerror=()=>{ pdfLibP=null; rej(new Error('pdf-lib')); }; document.head.appendChild(s); }); return pdfLibP; }
+async function downloadCopy(k, btn){
+  const rec=S.records[k]; if(!rec) return; btn.disabled=true; $('doneErr').textContent='';
+  try{
+    await loadPdfLib();
+    const F=W.FORMS[k];
+    const blank = await (await fetch(F.file+'?v='+encodeURIComponent(F.version))).arrayBuffer();
+    const sections={}; sections[S.slot] = { name:rec.name, phone:rec.phone, email:rec.email, address:rec.address, date:W.fmtDateUS(rec.at), at:rec.at, sig:rec.sig };
+    const bytes = await W.fillPdf(window.PDFLib, k, blank, { cadet:S.invite.cadet, sections });
+    const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([bytes],{type:'application/pdf'})); a.download=(S.invite.cadet.replace(/[^A-Za-z0-9]+/g,'_')+'_'+F.short.replace(/[^A-Za-z0-9]+/g,'_')+'.pdf'); document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },2000);
+  }catch(e){ $('doneErr').textContent='Could not build the PDF right now. The signature itself is saved.'; }
+  btn.disabled=false;
+}
+/* code in the link: rpdcadets.com/waivers#ABCD-EFGH */
+(function(){ const h=W.normalizeCode(location.hash.replace('#','')); if(h.length===8){ $('codeIn').value=h.slice(0,4)+'-'+h.slice(4); enter(); } })();
+</script>
+</body>
+</html>

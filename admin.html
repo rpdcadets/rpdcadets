@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- admin.html  |  Build v41  |  updated 2026-10-21  |  pairs with roster.js v33 and opr.js v7  |  v41: the review PDF downloads through the shared RPDOpr.pdfDownload (same output); cache-buster for opr.js Build v7. Build v40 notes: v40: cache-buster only, for opr.js Build v6 (Epieos and Have I Been Pwned rows, Open all per step). Build v39 notes: v39: cache-buster only, for opr.js Build v5 (username guesses collapsed into one chip row). Build v38 notes: v38: cache-buster only, for the opr.js Build v4 note rewording. Build v37 notes: v37: cache-buster only, for the opr.js Build v3 fix. Build v36 notes: v36: the review ends with a Reviewer recommendation (Proceed / Proceed with notes / Do not proceed, plus a reason) set by whoever runs it, shared with /sgt and shown as a pill on the card bar; the advisor result stays advisor-only; the PDF prints both side by side. Build v35 notes: Applicants & References gains the Online Presence Review: each applicant card has an Online presence section with Open review, the shared form from opr.js (applicant details, discovery with OSINT Industries and WhatsMyName, identity, accounts and platforms with one-tap links built from the typed handles, searches, reverse image, public records, household and family with a records list, the twelve categories, activity trail), plus the advisor-only result (Clear / Clear with notes / Concerns found / Recommend decline, stored under the reference key so /sgt can never read it), Screenshot in folder markers, Mark Advisor reviewed (locks the form on /sgt) and Reopen, Delete review, and a letterhead PDF (CADET/ONLINE V1) for the applicant folder. A settings strip at the top of the tool names the cleared sergeant whose name is stamped on every /sgt edit, shows how many devices have done the hidden unlock, and has Reset unlocks. Accept and add to roster moves the review to the files-on-hold list with the references; Delete file removes both. Visible build stamps are now version-only. No other tool changed. Prior v34 notes: New Waiver Tracker tool: every active cadet with the six waivers, most missing first. Sergeants mark Received on /sgt; here an advisor marks Filed (today's date), clears a Received mark, or un-files. Printable Missing Waivers list (PDF, CADET/WAIVERS V1). Cadets 18 or older show "Re-sign at 18" on every waiver signed before the birthday; cadets within 60 days of 18 get a "Turns 18 on" tag. Cadet Records: the Waivers chip and its panel now read from the tracker (tap a waiver to open the same dialog); the old checkbox toggles are gone and old checkmarks read as Filed with no date. Pending Approvals: a waiver change in an older sergeant proposal is applied to the tracker when approved. Prior v33 notes: Applicants & References: supports the longer questionnaire (reference.html Build v2). Free-text answers are recognized by their own tag (t:1) so new text questions lay out full width on screen and in the PDF; the PDF now sets short one-line answers two across and uses slightly tighter rows so a clean response still fits one page. No other tool changed. Prior v32 notes: New tool: Applicants & References (full advisor passcode only). Lists observers marked Applied; type in each reference from the paper application and the tool mints a one-time link (rpdcadets.com/reference#CODE) with a Copy link button for pasting into the Outlook email template; tracks Not sent / Sent / Reminder sent / Received / Unable to reach / Link expired; shows the decrypted responses with flagged answers highlighted and builds a letterhead PDF per reference or one file per applicant (pdf-lib, footer label CADET/REFCHECK V1). Responses are locked under a separate advisor-only key, so the sergeant and limited tiers cannot open them. Accept and add to roster: confirm name, pick squad, rank defaults to Probationary, join date defaults to today; adds the roster entry, copies observer contact info into Cadet Records (blank fields only), carries sergeant notes into cadet notes, removes the observer entry, and keeps the reference file on hold until deleted. Hub tile shows a badge for unread responses. Also bumped the roster.js cache-buster from 26 to 30. Prior v31 notes: Ride-Along Log now merges the Trackers inbox on open (cadet-submitted rides appear tagged "Trackers" and count toast shows how many arrived); add, edit, and delete maintain the roster/raIndex duplicate ledger so a deleted entry frees the cadet to resubmit; approving a sergeant ride-along proposal also claims its ledger hash. Prior v30 notes: Act. Sgt. rank dropdown; itemized six-waiver panel; per-cadet sergeant note lines; merged Sergeant Notes panel; waiver-item proposals in Pending Approvals. -->
+<!-- admin.html  |  Build v42  |  updated 2026-10-28  |  pairs with roster.js v34 and opr.js v7  |  v42: former cadets. The Roster Editor remove button now opens Mark as left: Alumni (stays on the roster as alumni with a date left and the Members-page note filled from the join and left dates when blank) or Dismissed (not in good standing: comes off the shared roster and every page; the status, date, and reason go to the advisor-only ledger RPDRoster.former, reference key, while the Cadet Records entry, waivers, hours, and sergeant notes stay put), plus Remove only for mistakes. Cadet Records gets a filter row (Active, Alumni, Dismissed, All; the limited tier never sees Dismissed) with a status strip on former cadets (dates, reason, Edit date or reason, Reinstate), Reinstate (back on the roster as active with a chosen squad, rank, and join date; the record is untouched), and recovery of records whose cadet was removed before this build (File as alumni, File as dismissed, or Reinstate). Alumni rows in the Roster Editor get a Left date. Cache-buster roster.js?v=34 (the v34 roll-up drops the Not recorded rows from before a cadet joined). Build v41 notes: v41: the review PDF downloads through the shared RPDOpr.pdfDownload (same output); cache-buster for opr.js Build v7. Build v40 notes: v40: cache-buster only, for opr.js Build v6 (Epieos and Have I Been Pwned rows, Open all per step). Build v39 notes: v39: cache-buster only, for opr.js Build v5 (username guesses collapsed into one chip row). Build v38 notes: v38: cache-buster only, for the opr.js Build v4 note rewording. Build v37 notes: v37: cache-buster only, for the opr.js Build v3 fix. Build v36 notes: v36: the review ends with a Reviewer recommendation (Proceed / Proceed with notes / Do not proceed, plus a reason) set by whoever runs it, shared with /sgt and shown as a pill on the card bar; the advisor result stays advisor-only; the PDF prints both side by side. Build v35 notes: Applicants & References gains the Online Presence Review: each applicant card has an Online presence section with Open review, the shared form from opr.js (applicant details, discovery with OSINT Industries and WhatsMyName, identity, accounts and platforms with one-tap links built from the typed handles, searches, reverse image, public records, household and family with a records list, the twelve categories, activity trail), plus the advisor-only result (Clear / Clear with notes / Concerns found / Recommend decline, stored under the reference key so /sgt can never read it), Screenshot in folder markers, Mark Advisor reviewed (locks the form on /sgt) and Reopen, Delete review, and a letterhead PDF (CADET/ONLINE V1) for the applicant folder. A settings strip at the top of the tool names the cleared sergeant whose name is stamped on every /sgt edit, shows how many devices have done the hidden unlock, and has Reset unlocks. Accept and add to roster moves the review to the files-on-hold list with the references; Delete file removes both. Visible build stamps are now version-only. No other tool changed. Prior v34 notes: New Waiver Tracker tool: every active cadet with the six waivers, most missing first. Sergeants mark Received on /sgt; here an advisor marks Filed (today's date), clears a Received mark, or un-files. Printable Missing Waivers list (PDF, CADET/WAIVERS V1). Cadets 18 or older show "Re-sign at 18" on every waiver signed before the birthday; cadets within 60 days of 18 get a "Turns 18 on" tag. Cadet Records: the Waivers chip and its panel now read from the tracker (tap a waiver to open the same dialog); the old checkbox toggles are gone and old checkmarks read as Filed with no date. Pending Approvals: a waiver change in an older sergeant proposal is applied to the tracker when approved. Prior v33 notes: Applicants & References: supports the longer questionnaire (reference.html Build v2). Free-text answers are recognized by their own tag (t:1) so new text questions lay out full width on screen and in the PDF; the PDF now sets short one-line answers two across and uses slightly tighter rows so a clean response still fits one page. No other tool changed. Prior v32 notes: New tool: Applicants & References (full advisor passcode only). Lists observers marked Applied; type in each reference from the paper application and the tool mints a one-time link (rpdcadets.com/reference#CODE) with a Copy link button for pasting into the Outlook email template; tracks Not sent / Sent / Reminder sent / Received / Unable to reach / Link expired; shows the decrypted responses with flagged answers highlighted and builds a letterhead PDF per reference or one file per applicant (pdf-lib, footer label CADET/REFCHECK V1). Responses are locked under a separate advisor-only key, so the sergeant and limited tiers cannot open them. Accept and add to roster: confirm name, pick squad, rank defaults to Probationary, join date defaults to today; adds the roster entry, copies observer contact info into Cadet Records (blank fields only), carries sergeant notes into cadet notes, removes the observer entry, and keeps the reference file on hold until deleted. Hub tile shows a badge for unread responses. Also bumped the roster.js cache-buster from 26 to 30. Prior v31 notes: Ride-Along Log now merges the Trackers inbox on open (cadet-submitted rides appear tagged "Trackers" and count toast shows how many arrived); add, edit, and delete maintain the roster/raIndex duplicate ledger so a deleted entry frees the cadet to resubmit; approving a sergeant ride-along proposal also claims its ledger hash. Prior v30 notes: Act. Sgt. rank dropdown; itemized six-waiver panel; per-cadet sergeant note lines; merged Sergeant Notes panel; waiver-item proposals in Pending Approvals. -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -150,6 +150,29 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
 .wvt-btn.main:hover{background:var(--red-glow)}
 .wvt-btn.go{background:rgba(39,174,96,0.16);border-color:var(--green);color:#b8f1cf}
 .wvt-btn.danger{color:#f8a3a3}
+/* Former cadets (Build v42): filter row, status strips, leave/reinstate dialog */
+.rec-filters{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0 0 14px}
+.rec-filter{background:var(--input-bg);border:1px solid var(--input-border);border-radius:20px;padding:7px 14px;color:var(--text-muted);font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all .18s}
+.rec-filter:hover{color:#fff}
+.rec-filter.on{border-color:var(--gold);background:rgba(212,169,82,0.12);color:#fff}
+.rec-filter b{font-weight:700;margin-left:6px;color:inherit;opacity:.8}
+.rec-pill{display:inline-block;font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;border-radius:4px;padding:2px 7px;margin-left:8px;vertical-align:middle;border:1px solid var(--card-border);color:var(--text-muted);white-space:nowrap}
+.rec-pill.alumni{border-color:rgba(212,169,82,0.5);color:var(--gold-light)}
+.rec-pill.dismissed{border-color:rgba(220,38,38,0.55);color:#f8a3a3}
+.rec-pill.unlabeled{border-color:rgba(217,119,6,0.6);color:#f3c27a}
+.rec-left{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin-top:14px;padding:11px 13px;border-radius:10px;border:1px solid var(--card-border);background:rgba(255,255,255,0.03);font-size:13.5px;color:#d5dde9;line-height:1.5}
+.rec-left b{color:#fff}
+.rec-left.alumni{border-color:rgba(212,169,82,0.35)}
+.rec-left.dismissed{border-color:rgba(220,38,38,0.45);background:rgba(220,38,38,0.07)}
+.rec-left.unlabeled{border-color:rgba(217,119,6,0.5);background:rgba(217,119,6,0.07)}
+.rec-left .sub{display:block;width:100%;color:var(--text-muted);font-size:12.5px}
+.rec-left .acts{display:flex;flex-wrap:wrap;gap:8px;width:100%;margin-top:4px}
+.rec-card.former [data-r]{opacity:.55;pointer-events:none}
+.row-extra.has-left{grid-template-columns:120px 140px 140px 1fr 1fr}
+.fm-card .wvt-type b{color:#fff;display:block}
+.fm-card .wvt-type .sub{display:block;color:var(--text-muted);font-size:12.5px;margin-top:3px;line-height:1.4}
+.fm-card textarea,.fm-card input[type=text],.fm-card input[type=date]{width:100%;background:var(--input-bg);border:1px solid var(--input-border);border-radius:9px;padding:12px;color:var(--white);font-family:'Barlow',sans-serif;font-size:15px;outline:none;resize:vertical;color-scheme:dark}
+.fm-card textarea:focus,.fm-card input:focus{border-color:var(--input-focus)}
 .wvt-legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12px;color:var(--text-muted);margin:0 2px 14px}
 .wvt-legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
 .wvt-legend .need i{background:#dc2626}.wvt-legend .recv i{background:var(--amber)}.wvt-legend .filed i{background:var(--green)}
@@ -722,7 +745,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
     <button class="lock-btn" id="goBtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg><span id="goLabel">Unlock</span></button>
     <div class="lock-error" id="lockErr">Incorrect passcode.</div>
     <div class="lock-home"><a href="index.html">← Return to Home</a></div>
-    <div style="margin-top:16px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v41</div>
+    <div style="margin-top:16px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v42</div>
   </div>
 </div>
 
@@ -752,7 +775,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
       <button class="back-link" id="rosterBack"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Admin Console</button>
       <div class="bar">
         <div class="status-pill" id="pill"><span class="dot"></span><span id="pillText">Synced</span></div>
-        <span style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v41</span>
+        <span style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v42</span>
         <button class="btn ghost" id="syncMembersBtn" title="One-time: pull titles and alumni from the Members page into the shared roster">Sync members data</button>
         <button class="btn add" id="addBtn">+ Add Person</button>
       </div>
@@ -775,6 +798,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
           <div class="status-pill" id="recPill"><span class="dot"></span><span id="recPillText">Synced</span></div>
           <input type="text" id="recSearch" placeholder="Search cadet…" style="flex:1;min-width:160px;background:var(--input-bg);border:1px solid var(--input-border);border-radius:9px;padding:10px 14px;color:var(--white);font-family:'Barlow',sans-serif;font-size:14px;outline:none">
         </div>
+        <div class="rec-filters" id="recFilters"></div>
         <div class="rec-warning">Program info: school, date of birth, certifications, dates, shirt size, radio number, cadet and parent/guardian contact. Records sit behind the advisor passcode, not per-cadet sign-in, so keep home addresses, Social Security numbers, and medical details out of this tool.</div>
         <div class="recnotes" id="recNotesWrap" style="display:none">
           <div class="recnotes-head" id="recNotesHead">Sergeant Notes <span id="recNotesCount" style="color:var(--text-muted)"></span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div>
@@ -1064,10 +1088,10 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
 
 <div class="toast" id="toast"></div>
 
-<script src="roster.js?v=33"></script>
+<script src="roster.js?v=34"></script>
 <script src="opr.js?v=7"></script>
 <script>
-console.log('[admin] Build v41');
+console.log('[admin] Build v42');
 const SESSION_KEY = 'rpd761_admin_auth';   // advisor-only; NOT shared with cadet pages
 const TIER_KEY = 'rpd761_admin_tier';      // 'full' (golden) or 'ltd' (limited advisor)
 const LIMITED_TOOLS = ['records','ridealongs','donations'];
@@ -1370,11 +1394,12 @@ function rowEl(p){
        <input type="text" value="${(p.name||'').replace(/"/g,'&quot;')}" data-i="${idx}" data-f="name" placeholder="Full name">
        <select data-i="${idx}" data-f="rank">${rankOpts}</select>
        <select class="squad-sel" data-i="${idx}" data-f="squad">${sqOpts}</select>
-       <button class="del" data-i="${idx}" title="Remove">&times;</button>
+       <button class="del" data-i="${idx}" title="Mark as left or remove">&times;</button>
      </div>
-     <div class="row-extra">
+     <div class="row-extra${p.status==='alumni'?' has-left':''}">
        <select data-i="${idx}" data-f="status">${statusOpts}</select>
        <label class="row-date"><span>Joined</span><input type="date" value="${(p.joinDate||'')}" data-i="${idx}" data-f="joinDate"></label>
+       <label class="row-date"${p.status==='alumni'?'':' style="display:none"'}><span>Left</span><input type="date" value="${(p.leftDate||'')}" data-i="${idx}" data-f="leftDate"></label>
        <input type="text" value="${(p.title||'').replace(/"/g,'&quot;')}" data-i="${idx}" data-f="title" placeholder="Custom title (optional)">
        <input type="text" value="${(p.note||'').replace(/"/g,'&quot;')}" data-i="${idx}" data-f="note" placeholder="Note (optional)">
      </div>`;
@@ -1388,14 +1413,14 @@ function rowEl(p){
       else if(f==='title' && !v.trim()) delete data[i].title;
       else if(f==='note' && !v.trim()) delete data[i].note;
       else if(f==='joinDate' && !v) delete data[i].joinDate;
+      else if(f==='leftDate' && !v) delete data[i].leftDate;
       else data[i][f] = v;
       if(f==='squad' || f==='rank' || f==='status'){ scheduleSave(); renderRows(); }
       else scheduleSave();
     });
   });
-  wrap.querySelector('.del').addEventListener('click', () => {
-    if(confirm('Remove '+(p.name||'this person')+' from the roster?')){ const i=data.indexOf(p); if(i>-1) data.splice(i,1); scheduleSave(); renderRows(); }
-  });
+  // Build v42: the remove button opens Mark as left (Alumni, Dismissed, or Remove only)
+  wrap.querySelector('.del').addEventListener('click', () => openLeaveDialog(p));
   return wrap;
 }
 function syncMembersData(){
@@ -2743,7 +2768,7 @@ async function openRecords(){
   try {
     let res = await RPDRoster.records.connect(adv);
     if(res.needsSetup){ await RPDRoster.records.setup(adv); res = { ok:true }; }
-    if(res.ok){ recData = (await RPDRoster.records.get()) || {}; try{ cadNotes = (await RPDRoster.cadetnotes.get()) || []; }catch(e){ cadNotes=[]; } try{ const wv = await RPDRoster.waivers.get(); if(wv){ wvData = wv; wvLoadErr = false; } }catch(e){ wvLoadErr = true; } migrateJoinDates(); renderRecords(); loadRecNotes(); }
+    if(res.ok){ recData = (await RPDRoster.records.get()) || {}; try{ cadNotes = (await RPDRoster.cadetnotes.get()) || []; }catch(e){ cadNotes=[]; } try{ const wv = await RPDRoster.waivers.get(); if(wv){ wvData = wv; wvLoadErr = false; } }catch(e){ wvLoadErr = true; } migrateJoinDates(); await fmUnlock(); renderRecords(); loadRecNotes(); }
     else { host.innerHTML = '<p style="color:var(--red-glow);padding:24px;text-align:center">Could not unlock records. Re-open the admin page and try again.</p>'; }
   } catch(e){ host.innerHTML = '<p style="color:var(--red-glow);padding:24px;text-align:center">Could not reach the database. Check your connection.</p>'; }
 }
@@ -2751,8 +2776,19 @@ async function openRecords(){
 function renderRecords(){
   const host = document.getElementById('recRows'); host.innerHTML='';
   const q = (document.getElementById('recSearch').value||'').toLowerCase().trim();
-  const cadets = RPDRoster.activeSorted().filter(p => !q || p.name.toLowerCase().includes(q));
-  if(!cadets.length){ host.innerHTML='<p style="color:var(--text-muted);padding:24px;text-align:center">No cadet matches.</p>'; return; }
+  // Build v42: Active (the roster minus alumni), Alumni (roster rows with status alumni),
+  // Dismissed (the advisor-only ledger plus records whose cadet left before the ledger), or All.
+  renderRecFilters();
+  let cadets;
+  if(recFilter==='alumni') cadets = recAlumniList();
+  else if(recFilter==='dismissed') cadets = recFormerList();
+  else if(recFilter==='all') cadets = RPDRoster.activeSorted().concat(recAlumniList(), recFormerList());
+  else cadets = RPDRoster.activeSorted();
+  cadets = cadets.filter(p => !q || p.name.toLowerCase().includes(q));
+  if(!cadets.length){
+    const empty = q ? 'No cadet matches.' : (recFilter==='alumni' ? 'No alumni on the roster.' : (recFilter==='dismissed' ? (fmLoadErr ? 'The former-cadets ledger could not be opened. Re-open the admin page with the full advisor passcode.' : 'No dismissed cadets.') : 'No cadet matches.'));
+    host.innerHTML='<p style="color:var(--text-muted);padding:24px;text-align:center">'+empty+'</p>'; return;
+  }
   cadets.forEach(p => host.appendChild(recCard(p)));
 }
 function recFilledCount(rec, name){
@@ -2763,11 +2799,14 @@ function recFilledCount(rec, name){
   return n;
 }
 function recCard(p){
-  const wrap = document.createElement('div'); wrap.className='rec-card';
+  const wrap = document.createElement('div'); wrap.className='rec-card'+((p.former && p.former!=='alumni')?' former':'');
   const rec = recData[p.name] || (recData[p.name] = {});
+  const fmPill = fmPillHtml(p), fmStrip = fmStripHtml(p);   // Build v42
   const shirtOpts = REC_SHIRT.map(s => `<option value="${s}" ${s===(rec.shirt||'')?'selected':''}>${s||'Shirt size…'}</option>`).join('');
-  const sqOpts = SQUADS.map(([v,l])=>`<option value="${v}" ${String(v)===String(p.squad)?'selected':''}>${l}</option>`).join('');
-  const rankOpts = RANKS.map(r=>`<option value="${r}" ${r===p.rank?'selected':''}>${r}</option>`).join('');
+  // Build v42: a former cadet whose squad or rank was never recorded shows "Not recorded" instead of the first option
+  const fmRO = !!(p.former && p.former!=='alumni');
+  const sqOpts = ((fmRO && (p.squad===undefined||p.squad===null||p.squad==='')) ? '<option value="" selected>Not recorded</option>' : '') + SQUADS.map(([v,l])=>`<option value="${v}" ${String(v)===String(p.squad)?'selected':''}>${l}</option>`).join('');
+  const rankOpts = ((fmRO && !p.rank) ? '<option value="" selected>Not recorded</option>' : '') + RANKS.map(r=>`<option value="${r}" ${r===p.rank?'selected':''}>${r}</option>`).join('');
   const checks = REC_CHECKS.map(([k,l]) => `<button type="button" class="rec-check ${rec[k]?'on':''}" data-k="${k}"><span class="box">${rec[k]?'✓':''}</span>${l}</button>`).join('');
   const wsum = wvSum(p.name), wch = wvChipState(wsum);
   const wvChip = `<button type="button" class="rec-check wv-chip ${wch.cls}" data-act="wv" data-wvchip="${escapeHtmlA(p.name)}"><span class="box">${wch.cls==='full'?'✓':(wch.cls==='part'?'…':'')}</span><span class="wv-lbl">Waivers ${wch.have} of ${wsum.total}</span></button>`;
@@ -2777,17 +2816,17 @@ function recCard(p){
   ).join('') : '<div class="recnotes-empty">No sergeant notes on this cadet yet.</div>';
   wrap.innerHTML =
     `<div class="rec-head" data-act="toggle">
-       <div><span class="rec-rank">${p.rank}</span> <span class="rec-name">${escapeHtmlA(p.name)}</span></div>
+       <div><span class="rec-rank">${escapeHtmlA(p.rank||'')}</span> <span class="rec-name">${escapeHtmlA(p.name)}</span>${fmPill}</div>
        <div class="rec-meta"><span class="rec-filled">${recFilledCount(rec, p.name)?recFilledCount(rec, p.name)+' filled':'empty'}</span> <svg class="rec-chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div>
      </div>
      <div class="rec-body" style="display:none">
-       <div class="rec-synced">Squad, rank, and join date stay in step with the Roster Editor.</div>
+       <div class="rec-synced">${(p.former && p.former!=='alumni') ? 'Squad, rank, and join date as they were when this cadet left.' : 'Squad, rank, and join date stay in step with the Roster Editor.'}</div>${fmStrip}
        <div class="rec-grid3">
          <label class="rec-field"><span>Squad</span><select data-r="squad">${sqOpts}</select></label>
          <label class="rec-field"><span>Rank</span><select data-r="rank">${rankOpts}</select></label>
          <label class="rec-field"><span>Date of join</span><input type="date" data-r="joinDate" value="${escapeHtmlA(p.joinDate||'')}"></label>
        </div>
-       <div class="rec-compute" data-role="compute">${recComputeText(p)}</div>
+       <div class="rec-compute" data-role="compute">${p.former ? fmComputeText(p) : recComputeText(p)}</div>
        <div class="rec-grid3">
          <label class="rec-field"><span>Radio #</span><input type="text" data-k="radio" value="${escapeHtmlA(rec.radio||'')}" placeholder="e.g. 311"></label>
          <label class="rec-field"><span>Shirt size</span><select data-k="shirt">${shirtOpts}</select></label>
@@ -2856,6 +2895,15 @@ function recCard(p){
       loadRecNotes();   // keep the merged panel in step
     }catch(e){ showToast('Could not delete. Try again.'); }
   }));
+  // Build v42: former-cadet actions on the status strip
+  wrap.querySelectorAll('[data-fm]').forEach(btn => btn.addEventListener('click', () => {
+    const a = btn.dataset.fm;
+    if(a==='reinstate') openReinstateDialog(p);
+    else if(a==='reason') openReasonDialog(p);
+    else if(a==='label-alumni') openLabelDialog(p, 'alumni');
+    else if(a==='label-dismissed') openLabelDialog(p, 'dismissed');
+    else if(a==='offroster') fmOffRoster(p);
+  }));
   return wrap;
 }
 function recComputeText(entry){
@@ -2880,6 +2928,332 @@ function migrateJoinDates(){
 function recSchedule(){ setRecStatus('saving'); clearTimeout(recSaveTimer); recSaveTimer=setTimeout(recFlush,700); }
 async function recFlush(){ clearTimeout(recSaveTimer); recSaveTimer=null; try { await RPDRoster.records.save(recData); setRecStatus('synced'); } catch(e){ setRecStatus('saving'); showToast('Records save failed'); } }
 function setRecStatus(s){ const p=document.getElementById('recPill'); p.className='status-pill '+s; document.getElementById('recPillText').textContent = s==='saving'?'Saving':'Synced'; }
+
+/* ══════════ FORMER CADETS (Build v42) ══════════
+   Mark as left from the Roster Editor (Alumni or Dismissed, or Remove only for
+   mistakes), the Cadet Records filter row (Active / Alumni / Dismissed / All),
+   the status strip on former cadets, Reinstate, and the advisor-only ledger
+   behind it (RPDRoster.former: reference key, so the full advisor passcode
+   only, never the limited or sergeant tiers).
+   Alumni stay in the shared roster (status 'alumni', leftDate) so the Members
+   page keeps listing them. Dismissed cadets come off the shared roster entirely
+   and exist only in the ledger plus their untouched Cadet Records entry,
+   waivers, hours, and sergeant notes (all keyed by name as before).
+   Ledger shape: { v:1, people:{ <name>: { status, leftAt, reason, at,
+   snap:{rank,squad,joinDate,title,note}, history:[{action,on,reason,at}] } } } */
+let fmData = null, fmReady = false, fmLoadErr = false, fmCtx = null, recFilter = 'active';
+function fmE(x){ return escapeHtmlA(x); }
+function fmToday(){ return RPDRoster.waivers.today(); }
+function fmIsIso(d){ return /^\d{4}-\d{2}-\d{2}$/.test(String(d||'')); }
+function fmMonYr(iso){ if(!fmIsIso(iso)) return ''; const d=new Date(iso+'T12:00:00'); return isNaN(d)?'':d.toLocaleDateString('en-US',{month:'short',year:'numeric'}); }
+// Members-page note in the same shape as the existing alumni notes ("Sep 2022 – May 2025")
+function fmAutoNote(joinDate, leftDate){ const a=fmMonYr(joinDate), b=fmMonYr(leftDate); if(!a && !b) return ''; return (a ? a+' ' : '')+'–'+(b ? ' '+b : ''); }
+function fmSpan(a, b){
+  if(!fmIsIso(a) || !fmIsIso(b)) return '';
+  const A=new Date(a+'T00:00:00'), B=new Date(b+'T00:00:00'); if(isNaN(A)||isNaN(B)||B<A) return '';
+  let y=B.getFullYear()-A.getFullYear(), m=B.getMonth()-A.getMonth(), d=B.getDate()-A.getDate();
+  if(d<0){ m--; d+=new Date(B.getFullYear(),B.getMonth(),0).getDate(); }
+  if(m<0){ y--; m+=12; }
+  return `${y} year${y!==1?'s':''}, ${m} month${m!==1?'s':''}, ${d} day${d!==1?'s':''}`;
+}
+function fmPeople(){ return (fmData && fmData.people) || {}; }
+function fmEntry(name){ return fmPeople()[name] || null; }
+function fmSnap(p){ return { rank:p.rank||'', squad:(p.squad===undefined||p.squad===null)?'':p.squad, joinDate:p.joinDate||'', title:p.title||'', note:p.note||'' }; }
+function fmHistoryPush(e, action, on, reason){ if(!Array.isArray(e.history)) e.history=[]; e.history.push({ action, on, reason:reason||'', at:Date.now() }); }
+function fmRowIndex(p, name){ let i=data.indexOf(p); if(i<0) i=data.findIndex(x=>x && (x.name||'').trim()===name && (x.status||'')===(p.status||'')); if(i<0) i=data.findIndex(x=>x && (x.name||'').trim()===name); return i; }
+// Opens the ledger once per visit. Needs the full advisor passcode (the reference
+// key set already exists from the reference checks); any failure just hides Dismissed.
+async function fmUnlock(){
+  if(TIER!=='full') return false;
+  if(fmReady) return true;
+  try{
+    const ru = await RPDRoster.references.unlock(sessionStorage.getItem(SESSION_KEY));
+    if(!ru || !ru.ok) throw new Error('locked');
+    fmData = (await RPDRoster.former.get()) || { v:1, people:{} };
+    fmReady = true; fmLoadErr = false; return true;
+  }catch(e){ fmLoadErr = true; return false; }
+}
+async function fmWrite(fn){ fmData = await RPDRoster.former.mutate(fn); return fmData; }
+
+/* lists for the Cadet Records filter */
+function recAlumniList(){
+  return (data||[]).filter(p => p && !p.open && p.status==='alumni' && (p.name||'').trim())
+    .map(p => Object.assign({}, p, { former:'alumni' }))
+    .sort((a,b)=>a.name.localeCompare(b.name));
+}
+function recFormerList(){
+  if(TIER!=='full') return [];
+  const out=[], onRoster=new Set((data||[]).map(p=>(p && p.name)||'')), people=fmPeople();
+  Object.keys(people).forEach(name => {
+    const e=people[name]; if(!e || e.status!=='dismissed' || onRoster.has(name)) return;
+    const sn=e.snap||{};
+    out.push({ name, rank:sn.rank||'', squad:sn.squad, joinDate:sn.joinDate||'', title:sn.title||'', former:'dismissed' });
+  });
+  Object.keys(recData||{}).forEach(name => {
+    if(onRoster.has(name)) return;
+    const e=people[name]; if(e && e.status==='dismissed') return;
+    const rec=recData[name]; if(!rec || typeof rec!=='object' || !Object.keys(rec).some(k=>rec[k]!=='' && rec[k]!==null && rec[k]!==undefined && rec[k]!==false)) return;
+    const sn=(e && e.snap)||{};
+    out.push({ name, rank:sn.rank||'', squad:sn.squad, joinDate:sn.joinDate||rec.joinDate||'', title:sn.title||'', former:'unlabeled' });
+  });
+  return out.sort((a,b)=>a.name.localeCompare(b.name));
+}
+function renderRecFilters(){
+  const host=document.getElementById('recFilters'); if(!host) return;
+  const active=RPDRoster.activeSorted().length, alumni=recAlumniList().length, former=recFormerList().length;
+  if(TIER!=='full' && recFilter==='dismissed') recFilter='active';
+  const chips=[['active','Active',active],['alumni','Alumni',alumni]];
+  if(TIER==='full') chips.push(['dismissed','Dismissed',former]);
+  chips.push(['all','All',active+alumni+former]);
+  host.innerHTML = chips.map(c=>`<button type="button" class="rec-filter${recFilter===c[0]?' on':''}" data-recf="${c[0]}">${c[1]}<b>${c[2]}</b></button>`).join('')
+    + ((TIER==='full' && fmLoadErr) ? '<span class="recnotes-empty" style="padding:0">Former-cadets ledger unavailable right now.</span>' : '');
+  host.querySelectorAll('[data-recf]').forEach(b=>b.addEventListener('click', ()=>{ recFilter=b.dataset.recf; renderRecords(); }));
+}
+
+/* card pieces */
+function fmPillHtml(p){
+  if(p.former==='alumni') return '<span class="rec-pill alumni">Alumni</span>';
+  if(p.former==='dismissed') return '<span class="rec-pill dismissed">Dismissed</span>';
+  if(p.former==='unlabeled') return '<span class="rec-pill unlabeled">Not labeled</span>';
+  return '';
+}
+function fmHistoryText(e){
+  const h=(e && Array.isArray(e.history)) ? e.history : [];
+  if(h.length<2) return '';
+  return ' History: '+h.map(x=>fmE((x.action==='alumni'?'Alumni':x.action==='dismissed'?'Dismissed':'Reinstated')+(fmIsIso(x.on)?' '+wvFmtLong(x.on):''))).join(', ')+'.';
+}
+function fmStripHtml(p){
+  const e=fmEntry(p.name)||{};
+  if(p.former==='alumni'){
+    const left=p.leftDate||e.leftAt||'';
+    return `<div class="rec-left alumni"><b>Alumni</b><span>&middot; joined ${fmE(wvFmtLong(p.joinDate)||'date unknown')}</span><span>&middot; left ${fmE(wvFmtLong(left)||'date not set')}</span>`+
+      `<span class="sub">Listed on the Members page under Alumni${p.note?' as "'+fmE(p.note)+'"':''}. The Left date and note are in this cadet's Roster Editor row.${fmHistoryText(e)}</span>`+
+      `<div class="acts"><button type="button" class="wvt-btn go" data-fm="reinstate">Reinstate</button></div></div>`;
+  }
+  if(p.former==='dismissed'){
+    return `<div class="rec-left dismissed"><b>Dismissed</b><span>&middot; left ${fmE(wvFmtLong(e.leftAt)||'date not set')}</span>${e.reason?'<span>&middot; '+fmE(e.reason)+'</span>':''}`+
+      `<span class="sub">Off the roster and every page. Visible only here, with the full advisor passcode.${fmHistoryText(e)}</span>`+
+      `<div class="acts"><button type="button" class="wvt-btn" data-fm="reason">Edit date or reason</button><button type="button" class="wvt-btn go" data-fm="reinstate">Reinstate</button></div></div>`;
+  }
+  if(p.former==='unlabeled'){
+    return `<div class="rec-left unlabeled"><b>Not on the roster</b><span>&middot; record kept from before this build</span>`+
+      `<span class="sub">This cadet was removed before the ledger existed. File the record so it stays findable, or reinstate them.</span>`+
+      `<div class="acts"><button type="button" class="wvt-btn" data-fm="label-alumni">File as alumni</button><button type="button" class="wvt-btn danger" data-fm="label-dismissed">File as dismissed</button><button type="button" class="wvt-btn go" data-fm="reinstate">Reinstate</button></div></div>`;
+  }
+  // an active cadet whose dismissal never finished (ledger written, roster save failed)
+  if(!p.former && e.status==='dismissed'){
+    return `<div class="rec-left dismissed"><b>Marked dismissed ${fmE(wvFmtLong(e.leftAt))}</b><span>but still on the roster</span>`+
+      `<span class="sub">The roster save did not finish. Remove the row to complete the dismissal, or clear it to keep the cadet active.</span>`+
+      `<div class="acts"><button type="button" class="wvt-btn danger" data-fm="offroster">Remove from roster</button><button type="button" class="wvt-btn" data-fm="reinstate">Clear the dismissal</button></div></div>`;
+  }
+  return '';
+}
+function fmComputeText(p){
+  const e=fmEntry(p.name)||{}; const left=p.leftDate||e.leftAt||'', join=p.joinDate||'';
+  if(!join) return left ? `Left <b>${fmE(wvFmtLong(left))}</b> &nbsp;&middot;&nbsp; no join date on record.` : 'No join date on record.';
+  const span=fmSpan(join, left);
+  return `Joined <b>${fmE(wvFmtLong(join))}</b>`+(left ? ` &nbsp;&middot;&nbsp; Left <b>${fmE(wvFmtLong(left))}</b>`+(span ? ` &nbsp;&middot;&nbsp; Time in: <b>${span}</b>` : '') : '');
+}
+
+/* dialog shell (same look as the waiver tracker dialog) */
+function fmModalEl(){
+  let m=document.getElementById('fmModal');
+  if(!m){
+    m=document.createElement('div'); m.id='fmModal'; m.className='wvt-modal'; m.setAttribute('role','dialog'); m.setAttribute('aria-modal','true');
+    m.innerHTML='<div class="wvt-card fm-card"><div class="eb" id="fmMWho"></div><h3 id="fmMTitle"></h3><div id="fmMBody"></div><div class="wvt-err" id="fmMErr" role="alert"></div><div class="wvt-acts" id="fmMActs"></div></div>';
+    document.body.appendChild(m);
+    m.addEventListener('click', e=>{
+      if(e.target===m){ fmClose(); return; }
+      const c=e.target.closest('[data-fmchoice]'); if(c){ fmChoose(c.dataset.fmchoice); return; }
+      const b=e.target.closest('[data-fmact]'); if(b && !b.disabled) fmAct(b.dataset.fmact);
+    });
+  }
+  return m;
+}
+function fmShow(who, title, body, acts){
+  const m=fmModalEl();
+  document.getElementById('fmMWho').textContent=who; document.getElementById('fmMTitle').textContent=title;
+  document.getElementById('fmMBody').innerHTML=body; document.getElementById('fmMErr').textContent='';
+  document.getElementById('fmMActs').innerHTML=acts; m.classList.add('show');
+}
+function fmClose(){ const m=document.getElementById('fmModal'); if(m) m.classList.remove('show'); fmCtx=null; }
+function fmErr(msg){ const e=document.getElementById('fmMErr'); if(e) e.textContent=msg||''; }
+function fmBusy(on){ document.querySelectorAll('#fmMActs button').forEach(b=>b.disabled=!!on); }
+function fmRefresh(){ if(document.getElementById('recordsView').classList.contains('on')) renderRecords(); if(document.getElementById('rosterView').classList.contains('on')) renderRows(); }
+function fmAct(act){
+  if(act==='close'){ fmClose(); return; }
+  const ctx=fmCtx; if(!ctx) return;
+  if(act==='leave') fmDoLeave(ctx);
+  else if(act==='reinstate') fmDoReinstate(ctx);
+  else if(act==='reason') fmDoReason(ctx);
+  else if(act==='label') fmDoLabel(ctx);
+}
+
+/* Mark as left (Roster Editor) */
+function openLeaveDialog(p){
+  const name=(p.name||'').trim();
+  if(!name){ const i=data.indexOf(p); if(i>-1) data.splice(i,1); scheduleSave(); renderRows(); return; }   // blank row: nothing to keep
+  const hasRec = !!(recData && recData[name] && Object.keys(recData[name]).length);
+  fmCtx={ kind:'leave', p, name, hasRec, choice:'' };
+  const body =
+    '<div class="wvt-types">'+
+    '<button type="button" class="wvt-type" data-fmchoice="alumni"><b>Alumni</b><span class="sub">Left in good standing. Stays on the roster as alumni and on the Members page.</span></button>'+
+    '<button type="button" class="wvt-type" data-fmchoice="dismissed"><b>Dismissed</b><span class="sub">Not in good standing. Comes off the roster and every page. The record stays in Cadet Records under Dismissed, advisor-only.</span></button>'+
+    '<button type="button" class="wvt-type" data-fmchoice="remove"><b>Remove only</b><span class="sub">Added by mistake or a duplicate row. Nothing is filed.</span></button>'+
+    '</div><div id="fmLeaveMore"></div>';
+  fmShow('Roster', 'Mark '+name+' as left', body, '<button type="button" class="wvt-btn" data-fmact="close">Cancel</button><button type="button" class="wvt-btn" data-fmact="leave" disabled>Confirm</button>');
+}
+function fmChoose(choice){
+  const ctx=fmCtx; if(!ctx || ctx.kind!=='leave') return;
+  ctx.choice=choice;
+  document.querySelectorAll('#fmMBody .wvt-type').forEach(b=>b.classList.toggle('on', b.dataset.fmchoice===choice));
+  const more=document.getElementById('fmLeaveMore'); if(!more) return;
+  const today=fmToday(), p=ctx.p;
+  if(choice==='alumni'){
+    more.innerHTML='<label for="fmLeftAt">Date left</label><input type="date" id="fmLeftAt" value="'+today+'"><div class="wvt-date" id="fmNotePrev"></div>';
+    const upd=()=>{ const v=document.getElementById('fmLeftAt').value; const note=p.note||fmAutoNote(p.joinDate, v); document.getElementById('fmNotePrev').innerHTML='Members page note: <b>'+fmE(note||'none')+'</b>'+(p.note?' (the note already on the row)':' (filled from the join and left dates; edit it on the row any time)'); };
+    document.getElementById('fmLeftAt').addEventListener('input', upd); upd();
+  } else if(choice==='dismissed'){
+    more.innerHTML='<label for="fmLeftAt">Date left</label><input type="date" id="fmLeftAt" value="'+today+'">'+
+      '<label for="fmReason">Reason (advisor-only)</label><textarea id="fmReason" rows="3" placeholder="Short note on why. Only the full advisor passcode can read it."></textarea>';
+  } else {
+    more.innerHTML='<div class="wvt-date">'+(ctx.hasRec ? '<b>'+fmE(ctx.name)+' has a Cadet Records entry.</b> Remove only is for mistakes; pick Alumni or Dismissed to keep the record findable.' : 'Nothing is filed. Use this for a row added by mistake.')+'</div>';
+  }
+  const go=document.querySelector('#fmMActs [data-fmact="leave"]');
+  if(go){ go.disabled=false; go.textContent = choice==='alumni' ? 'Mark as alumni' : (choice==='dismissed' ? 'Dismiss' : 'Remove'); go.classList.toggle('go', choice==='alumni'); go.classList.toggle('danger', choice!=='alumni'); }
+}
+async function fmDoLeave(ctx){
+  const p=ctx.p, name=ctx.name, choice=ctx.choice; if(!choice) return;
+  const leftAt=(document.getElementById('fmLeftAt')||{}).value||'';
+  if(choice==='remove'){
+    if(!confirm('Remove '+name+' from the roster? Nothing is filed.')) return;
+    const i=fmRowIndex(p, name); if(i>-1) data.splice(i,1); scheduleSave(); renderRows(); fmClose(); showToast(name+' removed'); return;
+  }
+  if(!fmIsIso(leftAt)){ fmErr('Pick the date they left.'); return; }
+  fmBusy(true); fmErr('');
+  if(choice==='alumni'){
+    const i=fmRowIndex(p, name); const row = i>-1 ? data[i] : p;
+    row.status='alumni'; row.leftDate=leftAt;
+    if(!row.note){ const n=fmAutoNote(row.joinDate, leftAt); if(n) row.note=n; }
+    scheduleSave(); renderRows();
+    if(await fmUnlock()){   // the ledger copy is a courtesy for alumni; the roster carries the truth
+      try{ await fmWrite(obj=>{ const e=obj.people[name]||{}; e.status='alumni'; e.leftAt=leftAt; e.at=Date.now(); e.snap=fmSnap(row); if(!e.reason) e.reason=''; fmHistoryPush(e,'alumni',leftAt,''); obj.people[name]=e; }); }catch(e){}
+    }
+    fmClose(); showToast(name+' marked as alumni'); fmRefresh(); return;
+  }
+  // Dismissed: the ledger first, then off the roster. If the ledger fails nothing moves.
+  const reason=((document.getElementById('fmReason')||{}).value||'').trim();
+  if(!(await fmUnlock())){ fmBusy(false); fmErr('Could not open the former-cadets ledger (it needs the full advisor passcode). '+name+' is still on the roster.'); return; }
+  try{
+    await fmWrite(obj=>{ const e=obj.people[name]||{}; e.status='dismissed'; e.leftAt=leftAt; e.reason=reason; e.at=Date.now(); e.snap=fmSnap(p); fmHistoryPush(e,'dismissed',leftAt,reason); obj.people[name]=e; });
+  }catch(e){ fmBusy(false); fmErr('Could not save to the ledger. '+name+' is still on the roster. Try again.'); return; }
+  const i=fmRowIndex(p, name); if(i>-1) data.splice(i,1); scheduleSave(); renderRows();
+  fmClose(); showToast(name+' dismissed. Record kept under Cadet Records, Dismissed.'); fmRefresh();
+}
+function fmOffRoster(p){
+  const name=p.name; if(!confirm('Remove '+name+' from the roster to complete the dismissal?')) return;
+  const i=fmRowIndex(p, name); if(i>-1) data.splice(i,1); scheduleSave(); showToast(name+' removed from the roster'); fmRefresh();
+}
+
+/* Reinstate (Cadet Records) */
+function openReinstateDialog(p){
+  const name=p.name, e=fmEntry(name)||{}, sn=e.snap||{};
+  if(!p.former){   // active cadet with a stale dismissal: just clear the ledger mark
+    fmCtx={ kind:'reinstate', p, name };
+    fmShow('Cadet Records', 'Clear the dismissal for '+name, '<div class="st"><b>'+fmE(name)+' stays active.</b><span class="sub">The dismissal mark in the ledger is cleared; nothing else changes.</span></div>',
+      '<button type="button" class="wvt-btn" data-fmact="close">Cancel</button><button type="button" class="wvt-btn go" data-fmact="reinstate">Clear</button>');
+    return;
+  }
+  const rank=p.rank||sn.rank||'Cadet';
+  const squad=(p.squad!==undefined && p.squad!=='' && p.squad!==null) ? p.squad : ((sn.squad!==undefined && sn.squad!=='' && sn.squad!==null) ? sn.squad : 1);
+  const joinDate=p.joinDate||sn.joinDate||'';
+  fmCtx={ kind:'reinstate', p, name };
+  const rankOpts=RANKS.map(r=>`<option value="${fmE(r)}"${r===rank?' selected':''}>${fmE(r)}</option>`).join('');
+  const sqOpts=SQUADS.map(([v,l])=>`<option value="${fmE(v)}"${String(v)===String(squad)?' selected':''}>${fmE(l)}</option>`).join('');
+  const body='<div class="st"><b>Back on the roster as active.</b><span class="sub">Cadet Records, waivers, hours, and sergeant notes are kept as they were.'+(p.former==='alumni'?' They come off the Members page alumni list.':'')+'</span></div>'+
+    '<label for="fmSquad">Squad</label><select id="fmSquad">'+sqOpts+'</select>'+
+    '<label for="fmRank">Rank</label><select id="fmRank">'+rankOpts+'</select>'+
+    '<label for="fmJoin">Date of join</label><input type="date" id="fmJoin" value="'+fmE(joinDate)+'">'+
+    '<div class="wvt-date">Keep the original join date, or set today if this counts as a fresh start.</div>';
+  fmShow('Cadet Records', 'Reinstate '+name, body, '<button type="button" class="wvt-btn" data-fmact="close">Cancel</button><button type="button" class="wvt-btn go" data-fmact="reinstate">Reinstate</button>');
+}
+async function fmDoReinstate(ctx){
+  const name=ctx.name, p=ctx.p;
+  fmBusy(true); fmErr('');
+  if(!p.former){
+    try{ await fmWrite(obj=>{ const e=obj.people[name]; if(!e) return false; e.status='reinstated'; e.at=Date.now(); fmHistoryPush(e,'reinstated',fmToday(),''); }); }
+    catch(e){ fmBusy(false); fmErr('Could not save. Try again.'); return; }
+    fmClose(); showToast('Dismissal cleared'); fmRefresh(); return;
+  }
+  const sqEl=document.getElementById('fmSquad'), rkEl=document.getElementById('fmRank'), jnEl=document.getElementById('fmJoin');
+  const squadV=sqEl?sqEl.value:'1', rank=rkEl?rkEl.value:'Cadet', joinDate=jnEl?jnEl.value:'';
+  const squad = squadV==='leadership' ? 'leadership' : +squadV;
+  const clash=(data||[]).find(x=>x && (x.name||'').trim().toLowerCase()===name.toLowerCase() && x.status!=='alumni');
+  if(clash){ fmBusy(false); fmErr('An active roster row already has that name.'); return; }
+  let entry=(data||[]).find(x=>x && (x.name||'').trim()===name && x.status==='alumni');
+  if(entry){
+    delete entry.status; delete entry.leftDate; entry.rank=rank; entry.squad=squad;
+    if(joinDate) entry.joinDate=joinDate; else delete entry.joinDate;
+    if(entry.note && /–/.test(entry.note)) delete entry.note;   // the alumni date-range note
+  } else {
+    entry={ name, rank, squad }; if(joinDate) entry.joinDate=joinDate;
+    const sn=(fmEntry(name)||{}).snap||{}; if(sn.title) entry.title=sn.title;
+    data.push(entry);
+  }
+  scheduleSave();
+  if(fmEntry(name) && fmReady){
+    try{ await fmWrite(obj=>{ const e=obj.people[name]; if(!e) return false; e.status='reinstated'; e.at=Date.now(); fmHistoryPush(e,'reinstated',fmToday(),''); }); }catch(e){}
+  }
+  fmClose(); showToast(name+' reinstated'); fmRefresh();
+}
+
+/* Edit the date or reason on a dismissed cadet */
+function openReasonDialog(p){
+  const name=p.name, e=fmEntry(name)||{};
+  fmCtx={ kind:'reason', p, name };
+  const body='<label for="fmLeftAt">Date left</label><input type="date" id="fmLeftAt" value="'+fmE(e.leftAt||'')+'">'+
+    '<label for="fmReason">Reason (advisor-only)</label><textarea id="fmReason" rows="4" placeholder="Short note on why.">'+fmE(e.reason||'')+'</textarea>';
+  fmShow('Cadet Records', name, body, '<button type="button" class="wvt-btn" data-fmact="close">Cancel</button><button type="button" class="wvt-btn go" data-fmact="reason">Save</button>');
+}
+async function fmDoReason(ctx){
+  const name=ctx.name;
+  const leftAt=(document.getElementById('fmLeftAt')||{}).value||'', reason=((document.getElementById('fmReason')||{}).value||'').trim();
+  if(leftAt && !fmIsIso(leftAt)){ fmErr('That date is not valid.'); return; }
+  fmBusy(true); fmErr('');
+  try{ await fmWrite(obj=>{ const e=obj.people[name]; if(!e) return false; if(leftAt) e.leftAt=leftAt; e.reason=reason; e.at=Date.now(); }); }
+  catch(e){ fmBusy(false); fmErr('Could not save. Try again.'); return; }
+  fmClose(); showToast('Saved'); fmRefresh();
+}
+
+/* File a record whose cadet was removed before this build */
+function openLabelDialog(p, kind){
+  const name=p.name, today=fmToday();
+  fmCtx={ kind:'label', p, name, choice:kind };
+  let body='<div class="st"><b>'+(kind==='alumni'?'File as alumni':'File as dismissed')+'</b><span class="sub">'+
+    (kind==='alumni' ? 'Puts them back on the roster as alumni so the Members page lists them; the record then shows under Alumni.' : 'Stays off the roster and every page; the record shows here under Dismissed, advisor-only.')+'</span></div>'+
+    '<label for="fmLeftAt">Date left</label><input type="date" id="fmLeftAt" value="'+today+'">';
+  if(kind==='dismissed') body+='<label for="fmReason">Reason (advisor-only)</label><textarea id="fmReason" rows="3" placeholder="Short note on why."></textarea>';
+  fmShow('Cadet Records', name, body, '<button type="button" class="wvt-btn" data-fmact="close">Cancel</button><button type="button" class="wvt-btn '+(kind==='alumni'?'go':'danger')+'" data-fmact="label">'+(kind==='alumni'?'File as alumni':'File as dismissed')+'</button>');
+}
+async function fmDoLabel(ctx){
+  const name=ctx.name, kind=ctx.choice;
+  const leftAt=(document.getElementById('fmLeftAt')||{}).value||'';
+  if(!fmIsIso(leftAt)){ fmErr('Pick the date they left.'); return; }
+  const reason=((document.getElementById('fmReason')||{}).value||'').trim();
+  fmBusy(true); fmErr('');
+  if(!(await fmUnlock())){ fmBusy(false); fmErr('Could not open the former-cadets ledger.'); return; }
+  const old=fmEntry(name)||{}; const rec=(recData && recData[name])||{};
+  const snap=old.snap||{ rank:'Cadet', squad:1, joinDate:rec.joinDate||'', title:'', note:'' };
+  try{ await fmWrite(obj=>{ const e=obj.people[name]||{}; e.status=kind; e.leftAt=leftAt; e.reason=(kind==='dismissed') ? reason : (e.reason||''); e.at=Date.now(); e.snap=snap; fmHistoryPush(e,kind,leftAt,reason); obj.people[name]=e; }); }
+  catch(e){ fmBusy(false); fmErr('Could not save. Try again.'); return; }
+  if(kind==='alumni' && !(data||[]).find(x=>x && (x.name||'').trim()===name)){
+    const entry={ name, rank:snap.rank||'Cadet', squad:(snap.squad===undefined||snap.squad===''||snap.squad===null)?1:snap.squad, status:'alumni', leftDate:leftAt };
+    if(snap.joinDate) entry.joinDate=snap.joinDate;
+    const n=fmAutoNote(snap.joinDate, leftAt); if(n) entry.note=n;
+    data.push(entry); scheduleSave();
+  }
+  fmClose(); showToast(name+(kind==='alumni'?' filed as alumni':' filed as dismissed')); fmRefresh();
+}
 
 /* ── ATTENDANCE ROLL-UP (advisor passcode; reads shared-key attendance node) ── */
 let attData = null;    // { 'YYYY-MM-DD': {date,dateFmt,submittedBy,roster,present:[],excused:[],unexcused:[],ts} }

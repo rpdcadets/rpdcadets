@@ -1,4 +1,4 @@
-/* roster.js  |  VERSION 33  |  updated 2026-10-21  |  Online Presence Review (applicant vetting) data layer: RPDRoster.vet with get/mutate for the shared review node (roster/vet, records key: the cleared sergeant on /sgt and advisors on /admin both edit it) and advGet/advMutate for the advisor-only result (roster/vetAdv, reference key, full advisor passcode only). The form, link builder, guide, and PDF live in opr.js Build v1, loaded only by sgt.html and admin.html. No existing function changed. Prior VERSION 32 notes: FIX: VERSION 31 failed to start in the browser. The public RPDRoster object (built near the top of this file) read the waiver constants WV_ITEMS / WV_LIAB / WV_SOON_DAYS before the lines that declare them had run, which throws "Cannot access before initialization" and left RPDRoster undefined on every page. The four waiver constants now sit directly above the RPDRoster object. No logic changed. Prior v31 notes: Waiver tracker: new RPDRoster.waivers module. One encrypted node (roster/waivers, same records key, so the advisor, limited advisor, and sergeant tiers can open it and cadet tiers cannot) holds a per-cadet, per-waiver entry: Received (date + who accepted it, marked on /sgt) then Filed (marked on /admin). Existing Cadet Records checkmarks are read as Filed with no date and are never rewritten. waivers.status() also applies the turning-18 rule (re-sign each waiver once the cadet is 18; the liability release must be the adult version). waivers.mutate() re-reads the node before every write so two people marking at once do not overwrite each other. Nothing else changed. Prior v30 notes: Reference checks: new RPDRoster.references module for applicant reference questionnaires. The public /reference page encrypts each response in the reference's browser (RSA envelope, same idea as /guest) under a NEW reference key pair whose private half is wrapped ONLY under the full advisor passcode (roster/refKeyWrap), so the sergeant and limited-advisor tiers cannot open responses. Nodes: roster/refPub, refKeyWrap, refPrivWrap, refVault (advisor-only reference list), refInvites/{id} (one per emailed link, encrypted under a key derived from the link code), refAnswers/{id}, refDone/{id}. REF_SALT 'rpdcadets-reference-v1' and the derive recipe are duplicated in reference.html and must change together. No other module changed. Prior v29 notes: Task categories config: RPDRoster.taskconfig gains get/save (records key, node roster/taskConfig) holding {cats:[{id,label,color,retired}]} so the Tasks tab on /sgt can manage its own category list. Same isolation as tasks: reads and writes only roster/taskConfig. Prior v28 notes: Tasks board: RPDRoster.tasks gains get/save (records key, node roster/tasks), a flat array of {id, text, cat, cadet, assignee, due, priority, by, at, done, doneBy, doneAt} backing the new Tasks tab on /sgt. This module reads and writes ONLY roster/tasks; it never touches roster, records, requests, notes, or any other node. Prior v27 notes: Requests board: RPDRoster.requests gains get/save (records key, node roster/requests), a flat array of {id, name, text, at, done, doneAt} backing the new Requests tab on /sgt: sergeants post wants, changes, and policy proposals for the post; the advisor checks items off as they are completed and checked items sink below the open list. Prior v26 notes: Ride-Along Trackers inbox (submit cadet-tier via RSA envelope to roster/raInbox, merge records-tier into the log tagged via:'trackers', duplicate ledger at roster/raIndex, RA_SALT 'rpdcadets-ridealongs-v1' lives only in this file). Prior v25: RPDRoster.observers module for the public /guest interest form. */
+/* roster.js  |  VERSION 34  |  updated 2026-10-28  |  Former cadets and the attendance join-date fix. (1) New RPDRoster.former module: an advisor-only ledger of cadets who have left (node roster/former, encrypted under the reference key, so the full advisor passcode only, like refVault and vetAdv). Shape { v:1, people:{ <name>: { status:'alumni'|'dismissed'|'reinstated', leftAt:YYYY-MM-DD, reason, at, snap:{rank,squad,joinDate,title,note}, history:[{action,on,reason,at}] } } }. /admin removes a Dismissed cadet from the shared roster and keeps them only here plus their untouched Cadet Records, waivers, hours, and notes; an Alumni cadet stays in the shared roster with status alumni and a leftDate. Reinstate puts the snapshot back on the roster. former.mutate re-reads the node before every write (same clobber protection as waivers). (2) attRollup: a meeting dated before the cadet's roster joinDate is left off that cadet's meetings list unless a status was recorded for it; present/excused/unexcused counts, rate, and streak are unchanged, only the "Not recorded" rows from before the cadet joined disappear (on /admin, /sgt, Trackers, and the cadet PDF, which all share this roll-up). No other function changed. Prior VERSION 33 notes: Online Presence Review (applicant vetting) data layer: RPDRoster.vet with get/mutate for the shared review node (roster/vet, records key: the cleared sergeant on /sgt and advisors on /admin both edit it) and advGet/advMutate for the advisor-only result (roster/vetAdv, reference key, full advisor passcode only). The form, link builder, guide, and PDF live in opr.js Build v1, loaded only by sgt.html and admin.html. No existing function changed. Prior VERSION 32 notes: FIX: VERSION 31 failed to start in the browser. The public RPDRoster object (built near the top of this file) read the waiver constants WV_ITEMS / WV_LIAB / WV_SOON_DAYS before the lines that declare them had run, which throws "Cannot access before initialization" and left RPDRoster undefined on every page. The four waiver constants now sit directly above the RPDRoster object. No logic changed. Prior v31 notes: Waiver tracker: new RPDRoster.waivers module. One encrypted node (roster/waivers, same records key, so the advisor, limited advisor, and sergeant tiers can open it and cadet tiers cannot) holds a per-cadet, per-waiver entry: Received (date + who accepted it, marked on /sgt) then Filed (marked on /admin). Existing Cadet Records checkmarks are read as Filed with no date and are never rewritten. waivers.status() also applies the turning-18 rule (re-sign each waiver once the cadet is 18; the liability release must be the adult version). waivers.mutate() re-reads the node before every write so two people marking at once do not overwrite each other. Nothing else changed. Prior v30 notes: Reference checks: new RPDRoster.references module for applicant reference questionnaires. The public /reference page encrypts each response in the reference's browser (RSA envelope, same idea as /guest) under a NEW reference key pair whose private half is wrapped ONLY under the full advisor passcode (roster/refKeyWrap), so the sergeant and limited-advisor tiers cannot open responses. Nodes: roster/refPub, refKeyWrap, refPrivWrap, refVault (advisor-only reference list), refInvites/{id} (one per emailed link, encrypted under a key derived from the link code), refAnswers/{id}, refDone/{id}. REF_SALT 'rpdcadets-reference-v1' and the derive recipe are duplicated in reference.html and must change together. No other module changed. Prior v29 notes: Task categories config: RPDRoster.taskconfig gains get/save (records key, node roster/taskConfig) holding {cats:[{id,label,color,retired}]} so the Tasks tab on /sgt can manage its own category list. Same isolation as tasks: reads and writes only roster/taskConfig. Prior v28 notes: Tasks board: RPDRoster.tasks gains get/save (records key, node roster/tasks), a flat array of {id, text, cat, cadet, assignee, due, priority, by, at, done, doneBy, doneAt} backing the new Tasks tab on /sgt. This module reads and writes ONLY roster/tasks; it never touches roster, records, requests, notes, or any other node. Prior v27 notes: Requests board: RPDRoster.requests gains get/save (records key, node roster/requests), a flat array of {id, name, text, at, done, doneAt} backing the new Requests tab on /sgt: sergeants post wants, changes, and policy proposals for the post; the advisor checks items off as they are completed and checked items sink below the open list. Prior v26 notes: Ride-Along Trackers inbox (submit cadet-tier via RSA envelope to roster/raInbox, merge records-tier into the log tagged via:'trackers', duplicate ledger at roster/raIndex, RA_SALT 'rpdcadets-ridealongs-v1' lives only in this file). Prior v25: RPDRoster.observers module for the public /guest interest form. */
 /* ═══════════════════════════════════════════════════════════════════════
    RPD CADETS — SHARED ROSTER ENGINE
    One encrypted roster in Firebase, read by members, trackers, and
@@ -453,6 +453,13 @@
     vet: {
       get: vetGet, mutate: vetMutate, advGet: vetAdvGet, advMutate: vetAdvMutate,
       advIsUnlocked: () => !!refKey
+    },
+    // Former cadets (v34). Advisor-only ledger of who left, when, and why:
+    // reference key (full advisor passcode), node roster/former. Unlock it
+    // with references.unlock(passcode) first. See the module comment above
+    // formerGet.
+    former: {
+      get: formerGet, mutate: formerMutate, isUnlocked: () => !!refKey
     }
   };
 
@@ -1111,6 +1118,38 @@
     return obj;
   }
 
+  /* ── Former cadets ledger (v34): reference key, node roster/former ──
+     Shape: { v:1, people: { "<cadet name>": entry } }
+       entry = { status:'alumni'|'dismissed'|'reinstated', leftAt:'YYYY-MM-DD',
+                 reason:'', at:<ms>, snap:{ rank, squad, joinDate, title, note },
+                 history:[ { action:'alumni'|'dismissed'|'reinstated', on:'YYYY-MM-DD', reason:'', at:<ms> } ] }
+     Only /admin with the full advisor passcode can read or write it (the same
+     key that guards reference answers and the advisor's vetting result), so a
+     dismissal and its reason never reach the sergeant or limited tiers. The
+     cadet's own Cadet Records entry, waivers, notes, and hours are left where
+     they are, keyed by name as before. A blob that will not decrypt THROWS so
+     a bad read can never be saved back over real data. */
+  function formerBlank() { return { v: 1, people: {} }; }
+  async function formerGet() {
+    if (!refKey) return null;
+    const blob = await once('former');
+    if (!blob) return formerBlank();
+    const obj = JSON.parse(await keyDecrypt(blob, refKey));   // throws on a bad read, by design
+    if (!obj || typeof obj !== 'object') throw new Error('former unreadable');
+    if (!obj.people || typeof obj.people !== 'object') obj.people = {};
+    return obj;
+  }
+  // Read fresh, let fn(obj) change it in place, save, return the saved copy.
+  // fn may return false to cancel the save (the fresh copy is still returned).
+  async function formerMutate(fn) {
+    if (!refKey) throw new Error('references locked');
+    const obj = await formerGet();
+    const res = fn(obj);
+    if (res === false) return obj;
+    await db.ref(ROOT + '/former').set(await keyEncrypt(JSON.stringify(obj), refKey));
+    return obj;
+  }
+
   // Pending proposal queue — same records key, node roster/pending. The /sgt
   // page appends proposals; /admin approves (applies + removes) or rejects
   // (removes). Nothing in a proposal is live until approved.
@@ -1279,6 +1318,7 @@
     const cadets = activeSorted();
     return cadets.map(p => {
       const name = p.name;
+      const joined = String(p.joinDate || '');   // v34: meetings before this date are not "Not recorded"
       let present=0, excused=0, unexcused=0, lastPresent=null, streak=0, streakBroken=false;
       const meetings = [];
       sessions.forEach(s => {
@@ -1286,6 +1326,9 @@
         if(attInList(s.present,name)) { present++; lastPresent=s.date; status='present'; }
         else if(attInList(s.excused,name)) { excused++; status='excused'; }
         else if(attInList(s.unexcused,name)) { unexcused++; status='unexcused'; }
+        // v34: a meeting held before the cadet joined is left off the list when
+        // nothing was recorded for them; a recorded status always shows.
+        if(status==='none' && joined && String(s.date||'') < joined) return;
         meetings.push({ date:s.date, status });
       });
       for(let i=sessions.length-1;i>=0 && !streakBroken;i--){

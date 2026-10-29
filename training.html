@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- training.html  |  Build v2  |  updated 2026-10-28  |  pairs with roster.js v37  |  v2: the saved schedule groups months by year, so a 2027 schedule no longer collides with 2026 (month sections and jump links were keyed by month name only); when more than one year is on the schedule the jump links read "Jan 2027"; on open the page scrolls to the current month when earlier months are above it. Cache-buster roster.js?v=37. First build stamp on this page. Encrypted content unchanged. -->
+<!-- training.html  |  Build v3  |  updated 2026-10-28  |  pairs with roster.js v37  |  v3: months that have fully passed are collapsed behind one "Show earlier months (N)" button under the legend, so the page opens at the current month with nothing to scroll past; the sticky month links hide the collapsed months as well; the button toggles them back. Meetings sit two per row on screens wider than 720px (the type tag no longer floats at the far right of a full-width row); phones stay single column; competition and special-date cards keep the full width. Months only collapse when a current or later month exists, and a link to an earlier month (#sep-2026) opens with them shown. Replaces the v2 scroll-to-current-month. Build v2 notes: v2: the saved schedule groups months by year, so a 2027 schedule no longer collides with 2026 (month sections and jump links were keyed by month name only); when more than one year is on the schedule the jump links read "Jan 2027"; on open the page scrolls to the current month when earlier months are above it. Cache-buster roster.js?v=37. First build stamp on this page. Encrypted content unchanged. -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -87,11 +87,19 @@ footer{background:var(--navy);border-top:1px solid rgba(255,255,255,0.05);paddin
 .month-jump{padding:6px 14px;border-radius:6px;background:rgba(255,255,255,0.03);border:1px solid var(--card-border);font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted);cursor:pointer;transition:all .3s;text-decoration:none}
 .month-jump:hover,.month-jump.active{background:var(--red);color:var(--white);border-color:var(--red)}
 .legend{display:flex;gap:16px;justify-content:center;margin-bottom:24px;flex-wrap:wrap}
+/* Build v3: collapsed past months */
+.past-collapsed{display:none!important}
+.sched-past{display:flex;justify-content:center;margin:-6px 0 22px}
+.sched-past-btn{padding:8px 16px;border-radius:6px;background:rgba(255,255,255,0.03);border:1px solid var(--card-border);font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted);cursor:pointer;transition:all .3s}
+.sched-past-btn:hover{color:var(--white);border-color:rgba(255,255,255,0.2)}
 .legend-item{display:flex;align-items:center;gap:6px;font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--text-muted)}
 .legend-dot{width:8px;height:8px;border-radius:3px}
 .legend-dot.training{background:var(--blue)}.legend-dot.competition{background:var(--gold)}.legend-dot.special{background:var(--purple)}.legend-dot.off{background:var(--red)}
-.month-section{margin-bottom:36px}
-.month-header{display:flex;align-items:center;gap:14px;margin-bottom:14px}
+.month-section{margin-bottom:36px;display:grid;grid-template-columns:1fr 1fr;gap:6px 12px}   /* Build v3: two meetings per row on wide screens, phones stay single column */
+.month-header{display:flex;align-items:center;gap:14px;margin-bottom:8px;grid-column:1/-1}
+.month-section>.ev{margin-bottom:0}
+.month-section>.ev-feat{grid-column:1/-1;margin-bottom:0}
+@media(max-width:720px){.month-section{grid-template-columns:1fr}}
 .month-name{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:2px}
 .month-line{flex:1;height:1px;background:rgba(255,255,255,0.08)}
 .month-year{font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:2px;color:var(--text-muted)}
@@ -201,7 +209,7 @@ footer{background:var(--navy);border-top:1px solid rgba(255,255,255,0.05);paddin
 <button class="lock-btn" id="unlockBtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>Unlock</button>
 <div class="lock-error" id="lockError">Incorrect passcode. Please try again.</div>
 <div class="lock-home"><a href="index.html"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>Return to Home</a></div>
-<div style="margin-top:20px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v2</div>
+<div style="margin-top:20px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v3</div>
 </div>
 </div>
 
@@ -265,11 +273,13 @@ footer{background:var(--navy);border-top:1px solid rgba(255,255,255,0.05);paddin
     var seen={}, order=[];
     entries.forEach(function(e){var p=parse(e.date); if(!p)return; var id=mid(p); if(!seen[id]){seen[id]=true; order.push({id:id,m:p.m,y:p.y});}});
 
-    var nav=order.map(function(o){return '<a href="#'+o.id+'" class="month-jump">'+MON3[o.m-1]+(multi?' '+o.y:'')+'</a>';}).join('');
+    var ym=function(y,m){return y+'-'+(m<10?'0':'')+m;};
+    var nav=order.map(function(o){return '<a href="#'+o.id+'" class="month-jump" data-ym="'+ym(o.y,o.m)+'">'+MON3[o.m-1]+(multi?' '+o.y:'')+'</a>';}).join('');
 
     var html='<div class="info-banner"><div class="info-banner-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div class="info-banner-text"><div class="info-banner-main">Every Thursday &middot; '+esc(time)+' &middot; '+esc(loc)+'</div>'+(meta.ptNote?'<div class="info-banner-sub">'+esc(meta.ptNote)+'</div>':'')+'</div></div>';
     html+='<div class="month-nav-bar" id="monthNav">'+nav+'</div>';
     html+='<div class="legend"><div class="legend-item"><div class="legend-dot training"></div>Training</div><div class="legend-item"><div class="legend-dot competition"></div>Competition</div><div class="legend-item"><div class="legend-dot special"></div>Special Event</div><div class="legend-item"><div class="legend-dot off"></div>No Meeting</div></div>';
+    html+='<div class="sched-past" id="schedPast"></div>';   // Build v3: Show earlier months button
 
     var curId=null;
     entries.forEach(function(e){
@@ -278,7 +288,7 @@ footer{background:var(--navy);border-top:1px solid rgba(255,255,255,0.05);paddin
         if(curId!==null) html+='</div>';
         curId=id;
         var name=p?MON_FULL[p.m-1]:'Undated', yr=p?p.y:'';
-        html+='<div class="month-section" id="'+id+'"><div class="month-header"><span class="month-name">'+name+'</span><div class="month-line"></div><span class="month-year">'+yr+'</span></div>';
+        html+='<div class="month-section" id="'+id+'" data-ym="'+(p?ym(p.y,p.m):'')+'"><div class="month-header"><span class="month-name">'+name+'</span><div class="month-line"></div><span class="month-year">'+yr+'</span></div>';
       }
       html+= e.k==='m' ? mtgRow(e.o,meta) : featRow(e.o);
     });
@@ -290,9 +300,21 @@ footer{background:var(--navy);border-top:1px solid rgba(255,255,255,0.05);paddin
     var today=new Date();today.setHours(0,0,0,0);
     document.querySelectorAll('#panelSchedule [data-date]').forEach(function(el){var d=new Date(el.dataset.date+'T12:00:00');var diff=d-today;if(diff<0)el.classList.add('is-past');else if(diff<864e5){el.classList.add('is-today');var tt=el.querySelector('.ev-topic')||el.querySelector('.feat-title');if(tt){var dot=document.createElement('span');dot.style.cssText='width:6px;height:6px;border-radius:50%;background:#c0392b;animation:pulse 2s ease infinite;margin-left:8px;display:inline-block';tt.appendChild(dot);}}});
     var sects=document.querySelectorAll('#panelSchedule .month-section');var navs=document.querySelectorAll('#panelSchedule .month-jump');
-    // Build v2: with earlier months above it, open at the current month
-    var now=new Date(); var curSec=document.getElementById(MON3L[now.getMonth()]+'-'+now.getFullYear())||document.getElementById(MON3L[now.getMonth()]);
-    if(curSec && sects.length && curSec!==sects[0] && !location.hash){ setTimeout(function(){ var y=curSec.getBoundingClientRect().top+window.pageYOffset-90; window.scrollTo(0,y); },60); }
+    // Build v3: months that have fully passed collapse behind one button, so the page opens at the current month
+    var now=new Date(); var curYm=now.getFullYear()+'-'+(now.getMonth()<9?'0':'')+(now.getMonth()+1);
+    var past=[].filter.call(sects,function(s){return s.dataset.ym && s.dataset.ym<curYm;});
+    var hasCurrent=[].some.call(sects,function(s){return s.dataset.ym && s.dataset.ym>=curYm;});
+    var box=document.getElementById('schedPast');
+    if(box && past.length && hasCurrent){
+      var setHidden=function(h){
+        past.forEach(function(s){s.classList.toggle('past-collapsed',h);});
+        navs.forEach(function(l){ if(l.dataset.ym && l.dataset.ym<curYm) l.classList.toggle('past-collapsed',h); });
+        box.innerHTML='<button type="button" class="sched-past-btn">'+(h?'Show earlier months ('+past.length+')':'Hide earlier months')+'</button>';
+        box.querySelector('button').addEventListener('click',function(){ setHidden(!h); });
+      };
+      var target=null; try{ target=location.hash?document.querySelector(location.hash):null; }catch(e){ target=null; }
+      setHidden(!(target && target.dataset && target.dataset.ym && target.dataset.ym<curYm));
+    }
     var obs=new IntersectionObserver(function(entries){entries.forEach(function(e){if(e.isIntersecting){navs.forEach(function(l){l.classList.remove('active')});var a=document.querySelector('.month-jump[href="#'+e.target.id+'"]');if(a)a.classList.add('active');}});},{threshold:0.3,rootMargin:'-100px 0px -60% 0px'});
     sects.forEach(function(s){obs.observe(s);});
     document.querySelectorAll('#panelSchedule .month-jump').forEach(function(l){l.addEventListener('click',function(e){e.preventDefault();var tgt=document.querySelector(l.getAttribute('href'));if(!tgt)return;var y=tgt.getBoundingClientRect().top+window.pageYOffset-90;window.scrollTo({top:y,behavior:'smooth'});});});

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- waivers.html | Build v2 | 10/28/26 | v2: picking who you are now starts that person clean: the signature, the electronic-signing consent, and the session's signed-forms list are reset, so a cadet who signs first and a parent who signs next on the same phone never share a signature (Tony caught the cadet's typed signature prefilled on the parent's form, 10/28/26). Build v1 notes: New page: online signing of the cadet waivers (rpdcadets.com/waivers). A parent or cadet enters the 8-character code an advisor or sergeant generated, picks who they are (cadet, parent or guardian, other parent or guardian), reads each form in full, agrees to sign electronically once, draws or types a signature once and applies it per form, and each form saves the moment it is signed. Which forms and which signatures are needed comes from wv.js (PSC Agreement, Photo and Video Release, Simunitions; adult cadets sign alone, minors need a parent, the Photo and Simunitions forms need the other parent only when the first parent says so or the other parent asks to sign). Everything written is encrypted: status stubs under the code-derived key, the signed records sealed to the reference public key so only the full advisor passcode opens them. This page deliberately does NOT load roster.js (its seed carries cadet names). Download a copy builds the signer's own PDF from the official form with pdf-lib. -->
+<!-- waivers.html | Build v3 | 10/28/26 | v3: every parent or guardian of a minor cadet is asked which Release of Liability applies (married parents or a single guardian, or divorced parents) on the name screen, required before continuing while that paper form is still missing; the answer is stored on their signing record (meta.liab, next to the second-parent answer) so the advisors and sergeants see which paper version the family needs. The finish screen starts from that answer, and tapping the other version there updates it. Phone number and home address are required wherever a form asks for them (cadet and parent); only email stays optional. Cache-buster wv.js?v=3. Build v2 notes: v2: picking who you are now starts that person clean: the signature, the electronic-signing consent, and the session's signed-forms list are reset, so a cadet who signs first and a parent who signs next on the same phone never share a signature (Tony caught the cadet's typed signature prefilled on the parent's form, 10/28/26). Build v1 notes: New page: online signing of the cadet waivers (rpdcadets.com/waivers). A parent or cadet enters the 8-character code an advisor or sergeant generated, picks who they are (cadet, parent or guardian, other parent or guardian), reads each form in full, agrees to sign electronically once, draws or types a signature once and applies it per form, and each form saves the moment it is signed. Which forms and which signatures are needed comes from wv.js (PSC Agreement, Photo and Video Release, Simunitions; adult cadets sign alone, minors need a parent, the Photo and Simunitions forms need the other parent only when the first parent says so or the other parent asks to sign). Everything written is encrypted: status stubs under the code-derived key, the signed records sealed to the reference public key so only the full advisor passcode opens them. This page deliberately does NOT load roster.js (its seed carries cadet names). Download a copy builds the signer's own PDF from the official form with pdf-lib. -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -11,7 +11,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@300;400;500;600;700&family=Barlow+Condensed:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
-<script src="wv.js?v=2"></script>
+<script src="wv.js?v=3"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{--navy:#1a2744;--navy-deep:#0f1a30;--red:#c0392b;--red-glow:#e74c3c;--gold:#d4a952;--gold-light:#f0d68a;--green:#27ae60;--white:#fff;--text-muted:#8899b0;--card-bg:rgba(255,255,255,0.025);--card-border:rgba(255,255,255,0.06);--input-bg:rgba(255,255,255,0.04);--input-border:rgba(255,255,255,0.1);--input-focus:rgba(192,57,43,0.4)}
@@ -146,6 +146,14 @@ input.t.miss{border-color:rgba(231,76,60,0.7)}
         <button type="button" class="role" data-second="yes">Yes, the other parent or guardian also signs<small>Divorced or unmarried with shared rights; they use this same code</small></button>
       </div>
     </div>
+    <div id="liabQ" style="display:none">
+      <h3>Which Release of Liability applies?</h3>
+      <p class="lead">The Release of Liability is signed on paper, and there are two versions for a minor cadet. Pick the one that fits the cadet's family so the advisors know which to expect.</p>
+      <div class="roles" id="liabBtns">
+        <button type="button" class="role" data-liabq="married">Married parents or a single guardian<small>Also one parent with sole legal custody</small></button>
+        <button type="button" class="role" data-liabq="divorced">Divorced parents</button>
+      </div>
+    </div>
     <div class="err" id="nameErr" role="alert"></div>
     <button type="button" class="btn-main" id="nameBtn">Continue</button>
     <div class="btn-row"><button type="button" class="btn-sub" id="nameBack">Back</button></div>
@@ -195,11 +203,11 @@ input.t.miss{border-color:rgba(231,76,60,0.7)}
   <!-- busy -->
   <div class="card" id="cBusy"><div class="spin"></div><p class="lead center" id="busyTxt">One moment</p></div>
 
-  <div class="foot">Richardson Police Department Public Safety Cadets<br>200 N. Greenville Ave, Richardson, TX 75081 &nbsp;|&nbsp; (972) 744-4801<br><span style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase">Build v2</span></div>
+  <div class="foot">Richardson Police Department Public Safety Cadets<br>200 N. Greenville Ave, Richardson, TX 75081 &nbsp;|&nbsp; (972) 744-4801<br><span style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase">Build v3</span></div>
 </div>
 
 <script>
-console.log('[waivers] Build v2');
+console.log('[waivers] Build v3');
 /* Same Firebase project as the rest of the site. This page deliberately does NOT load roster.js. */
 const firebaseConfig = {
   apiKey:            "AIzaSyDV0vuyGg7gpPXJd2jRqZtUTeKiP3yPxhU",
@@ -331,6 +339,7 @@ function prefillFor(role, name){
 }
 /* ── 3. name + second-parent question ── */
 let secondAnswer = null;
+let liabPre = '', liabAnswer = '';   // Build v3: the family's current answer (preselected) and what this parent tapped
 function renderName(){
   const parent = S.role==='parent';
   $('nameTitle').textContent = S.role==='cadet' ? 'Confirm your name' : 'Your name';
@@ -340,6 +349,11 @@ function renderName(){
   $('secondQ').style.display = askSecond ? 'block' : 'none';
   secondAnswer = null;
   $('secondBtns').querySelectorAll('[data-second]').forEach(b=>{ b.classList.remove('on'); b.style.borderColor=''; b.onclick=()=>{ secondAnswer=b.dataset.second==='yes'; $('secondBtns').querySelectorAll('[data-second]').forEach(x=>x.style.borderColor = x===b ? 'var(--gold)' : ''); }; });
+  // Build v3: every parent or guardian of a minor is asked which Release of Liability applies while that paper form is still missing
+  const askLiab = parent && !S.invite.adult && (S.invite.paper||[]).includes('liability');
+  $('liabQ').style.display = askLiab ? 'block' : 'none';
+  liabPre = (askLiab && S.st && S.st.liab && S.st.liab.how==='chosen') ? S.st.liab.type : ''; liabAnswer = '';
+  $('liabBtns').querySelectorAll('[data-liabq]').forEach(b=>{ b.style.borderColor = (b.dataset.liabq===liabPre) ? 'var(--gold)' : ''; b.onclick=()=>{ liabAnswer=b.dataset.liabq; $('liabBtns').querySelectorAll('[data-liabq]').forEach(x=>x.style.borderColor = x===b ? 'var(--gold)' : ''); }; });
   $('nameErr').textContent='';
   show('cName');
 }
@@ -351,6 +365,8 @@ $('nameBtn').addEventListener('click', async ()=>{
   if(S.role==='parent' && W.normName(name)===W.normName(S.invite.cadet)){ err.textContent='That is the cadet\'s name. A parent or guardian signs here under their own name.'; return; }
   const askSecond = $('secondQ').style.display!=='none';
   if(askSecond && secondAnswer===null){ err.textContent='Answer the question about a second parent or guardian.'; return; }
+  const askLiab = $('liabQ').style.display!=='none';   // Build v3
+  if(askLiab && !liabAnswer && !liabPre){ err.textContent='Pick which Release of Liability applies to the cadet\'s family.'; return; }
   S.name = name;
   const pre = prefillFor(S.role, name); S.fields = pre.fields; S.token = pre.token;   // a returning signer on this phone keeps their token
   $('nameBtn').disabled=true; busy('Saving');
@@ -362,9 +378,12 @@ $('nameBtn').addEventListener('click', async ()=>{
     S.slot = slot;
     const regS = await W.keyEncrypt(JSON.stringify({ role:S.role, name:S.name, at:Date.now(), ua:navigator.userAgent }), S.key);
     await db.ref(ROOT+'/wvSigs/'+S.id+'/'+S.token+'/reg').set({ s:regS, t:TS() });
-    if(S.role==='parent' && (askSecond || S.isSecond)){
-      const second = S.isSecond ? true : !!secondAnswer;
-      const metaS = await W.keyEncrypt(JSON.stringify({ second, at:Date.now() }), S.key);
+    if(S.role==='parent' && (askSecond || S.isSecond || (askLiab && liabAnswer))){
+      // Build v3: one meta record per signer: the second-parent answer and the Release of Liability answer, merged with what this token already holds
+      const me=(S.signers||[]).find(s=>s.token===S.token); const meta=Object.assign({}, (me && me.meta) || {});
+      if(askSecond || S.isSecond){ meta.second = S.isSecond ? true : !!secondAnswer; meta.at = Date.now(); }
+      if(askLiab && liabAnswer){ meta.liab = liabAnswer; meta.liabAt = Date.now(); meta.liabHow = 'asked'; }
+      const metaS = await W.keyEncrypt(JSON.stringify(meta), S.key);
       await db.ref(ROOT+'/wvSigs/'+S.id+'/'+S.token+'/meta').set({ s:metaS, t:TS() });
     }
     saveLocal();
@@ -423,7 +442,7 @@ function renderForm(){
   $('fDocLen').textContent = Math.max(1, Math.round($('fDoc').textContent.split(/\s+/).length/200)) + ' min read';
   const spec = fieldSpec(); const f=S.fields;
   const labels = { name:'Printed name', phone:'Phone number', email:'Email', address:'Home address' };
-  const req = { name:true, phone:S.role==='parent', email:false, address:false };
+  const req = { name:true, phone:true, email:false, address:true };   // Build v3: phone and address are required wherever a form asks for them
   $('fFields').innerHTML = spec.map(x=>`<label class="f" for="fld_${x}">${labels[x]}${req[x]?' <span class="req">*</span>':' <span style="color:var(--text-muted);letter-spacing:0;text-transform:none;font-weight:400">(optional)</span>'}</label><input type="text" class="t" id="fld_${x}" value="${esc(x==='name'?S.name:(f[x]||''))}" ${x==='name'?'readonly':''} autocomplete="${x==='phone'?'tel':x==='email'?'email':x==='address'?'street-address':'name'}" inputmode="${x==='phone'?'tel':x==='email'?'email':'text'}">`).join('');
   $('consentWrap').style.display = S.consentAt ? 'none' : 'flex'; $('consentChk').checked=false; $('consentTxt').textContent = W.CONSENT; $('consentWrap').classList.remove('miss');
   $('fDate').textContent = new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
@@ -437,7 +456,7 @@ $('fBack').addEventListener('click', async ()=>{ busy('Refreshing'); try{ await 
 $('fSign').addEventListener('click', async ()=>{
   const k=S.queue[S.idx], F=W.FORMS[k]; const err=$('fErr'); err.textContent='';
   const spec=fieldSpec(); let bad=false;
-  spec.forEach(x=>{ const el=$('fld_'+x); const v=(el.value||'').trim(); el.classList.remove('miss'); if(x!=='name') S.fields[x]=v; if((x==='phone' && S.role==='parent' && v.replace(/\D/g,'').length<7)){ el.classList.add('miss'); bad=true; } if(x==='email' && v && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)){ el.classList.add('miss'); bad=true; } });
+  spec.forEach(x=>{ const el=$('fld_'+x); const v=(el.value||'').trim(); el.classList.remove('miss'); if(x!=='name') S.fields[x]=v; if(x==='phone' && v.replace(/\D/g,'').length<7){ el.classList.add('miss'); bad=true; } if(x==='address' && v.length<5){ el.classList.add('miss'); bad=true; } if(x==='email' && v && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)){ el.classList.add('miss'); bad=true; } });
   if(bad){ err.textContent='Check the highlighted field.'; return; }
   if(!S.consentAt){ if(!$('consentChk').checked){ $('consentWrap').classList.add('miss'); err.textContent='Tick the box to agree to sign electronically.'; return; } S.consentAt=Date.now(); }
   if(!S.sig){ if(!pad.has){ $('sigBox').classList.add('miss'); err.textContent='Sign in the white box, or tap Type instead.'; return; } S.sig=padExport(); S.sigMode=pad.mode||'drawn'; if(!S.sig){ err.textContent='The signature came out empty. Try again.'; return; } }
@@ -488,7 +507,7 @@ function paperHtml(){
         const v=F.versions.find(x=>x.id==='adult');
         body=`<div class="pw">Adult cadet (18 or older). ${esc(F.who)}</div><div class="btn-row"><a class="btn-sub" href="${esc(v.file)}" download>Download</a></div>`;
       } else {
-        if(!liabPick) liabPick = (S.st && S.st.second) ? 'divorced' : 'married';
+        if(!liabPick) liabPick = (S.st && S.st.liab && S.st.liab.how==='chosen') ? S.st.liab.type : ((S.st && S.st.second) ? 'divorced' : 'married');   // Build v3: the family's answer first
         const opts=F.versions.filter(x=>x.id!=='adult');
         const v=opts.find(x=>x.id===liabPick);
         body=`<div class="pw">${esc(F.who)} Which version applies to the cadet's family?</div>`+
@@ -501,7 +520,20 @@ function paperHtml(){
   return html;
 }
 function paperBind(){
-  $('donePaper').querySelectorAll('[data-liab]').forEach(b=>b.addEventListener('click', ()=>{ liabPick=b.dataset.liab; $('donePaper').innerHTML=paperHtml(); paperBind(); }));
+  $('donePaper').querySelectorAll('[data-liab]').forEach(b=>b.addEventListener('click', ()=>{ liabPick=b.dataset.liab; $('donePaper').innerHTML=paperHtml(); paperBind(); saveLiabPick(); }));
+}
+// Build v3: a parent who taps the other version on the finish screen updates the family's answer on their signing record
+// (meta.liab, merged with the second-parent answer already there). The cadet's taps only switch the download.
+async function saveLiabPick(){
+  if(S.role!=='parent' || !S.token || !S.key || !S.id || !liabPick || !S.invite || S.invite.adult) return;
+  try{
+    const me=(S.signers||[]).find(s=>s.token===S.token); const prev=(me && me.meta) ? me.meta : {};
+    if(prev.liab===liabPick) return;
+    const meta=Object.assign({}, prev, { liab:liabPick, liabAt:Date.now(), liabHow:'tapped' });
+    const metaS=await W.keyEncrypt(JSON.stringify(meta), S.key);
+    await db.ref(ROOT+'/wvSigs/'+S.id+'/'+S.token+'/meta').set({ s:metaS, t:TS() });
+    if(me) me.meta=meta;
+  }catch(e){}
 }
 $('doneBack').addEventListener('click', async ()=>{ busy('Refreshing'); try{ await loadStatus(); }catch(e){} renderWho(); });
 let pdfLibP=null;

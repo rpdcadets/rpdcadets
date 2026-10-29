@@ -1,4 +1,4 @@
-/* wv.js  |  Build v2  |  updated 2026-10-28  |  v2: the /admin block lists who has signed, with Clear per person and Clear all, so someone who messed up can start over with the same code; clearing deletes those signatures and flips every tracker cell that had been auto-marked Received from them back to Missing (a cell already Filed is left alone and named in the toast). Build v1 notes: Online waiver signing (e-sign), shared by /waivers (public, no roster.js),
+/* wv.js  |  Build v3  |  updated 2026-10-28  |  v3: which paper Release of Liability version the family needs now comes from the online signing. waivers.html v3 asks every parent or guardian of a minor cadet which version applies (required, on the name screen) and stores the answer on their signing record (meta.liab); a tap on the finish screen updates it. status() returns liab: the latest parent answer (how: chosen), else, for families who signed before the question existed, the version the second-parent answer suggests (how: inferred), else adult for an adult cadet. panel.liabFor(name) hands it to the tracker dialogs on /admin and /sgt, which preselect a chosen version and say who chose it (an inferred one is only suggested, never preselected); the tracker row block names it while the paper release is still missing. Build v2 notes: v2: the /admin block lists who has signed, with Clear per person and Clear all, so someone who messed up can start over with the same code; clearing deletes those signatures and flips every tracker cell that had been auto-marked Received from them back to Missing (a cell already Filed is left alone and named in the toast). Build v1 notes: Online waiver signing (e-sign), shared by /waivers (public, no roster.js),
    /sgt, and /admin. Holds everything the three pages must agree on: the code recipe, the three online forms (wording,
    who signs, PDF field maps), the signature status rules, the envelope format, the PDF filling, and the panel block that
    /sgt and /admin show on each tracker row (code, status, Copy link, Share, QR, admin PDFs and contact merge).
@@ -12,7 +12,8 @@
                      (PTC Release, Release of Liability, Medical), listed on the finish screen with downloads.
      wvSigs/<id>/<token>  one subtree per signer device:
         reg   { s:AES(code){ role:'cadet'|'parent', name, at, ua }, t }
-        meta  { s:AES(code){ second:true|false, at }, t }            (parents only: does a second parent also sign)
+        meta  { s:AES(code){ second:true|false, at, liab:'married'|'divorced', liabAt, liabHow:'asked'|'tapped' }, t }
+              (parents only; second: does a second parent also sign; liab: which Release of Liability version applies, v3)
         forms/<formKey>  { s:AES(code){ at, name, role }, e:RSA envelope to refPub { the full signed record }, t }
      wvCodes  records key, kept by roster.js (RPDRoster.esign): which code belongs to which cadet, plus contact merges.
    The signed record (inside e): { v, form, formVersion, id, token, role, cadet, name, phone, email, address, at,
@@ -191,9 +192,19 @@
       if (!complete) allComplete = false;
       forms[k] = { needed, signed, waiting, complete, at, by, title: F.title, short: F.short };
     });
-    return { adult, second, answered, slots, extraParents, forms, allComplete };
+    // Build v3: the paper Release of Liability version this family needs, and where that came from
+    let liab = null;
+    const picks = (signers || []).filter(s => s.role === 'parent' && s.meta && (s.meta.liab === 'married' || s.meta.liab === 'divorced'))
+      .sort((a, b) => (b.meta.liabAt || 0) - (a.meta.liabAt || 0));
+    if (adult) liab = { type: 'adult', how: 'adult', by: '', second: false };
+    else if (picks.length) liab = { type: picks[0].meta.liab, how: 'chosen', by: picks[0].name || '', at: picks[0].meta.liabAt || 0, second };
+    else if (answered || slots.parent2) liab = { type: second ? 'divorced' : 'married', how: 'inferred', by: '', second };
+    return { adult, second, answered, slots, extraParents, forms, allComplete, liab };
   }
   function roleLabel(r) { return ROLE_LABEL[r] || r; }
+  // Build v3: short name of a Release of Liability version, without the Minor: prefix (the tracker's LIAB list when roster.js is loaded)
+  function liabShort(t) { let s = ''; try { const f = (global.RPDRoster && RPDRoster.waivers && RPDRoster.waivers.LIAB || []).find(x => x[0] === t); if (f) s = f[2]; } catch (e) { s = ''; }
+    if (!s) s = { married: 'married parents or single guardian', divorced: 'divorced parents', adult: 'adult' }[t] || t; return s.replace(/^Minor:\s*/, ''); }
   function dateIso(ms) { const d = new Date(ms || Date.now()); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
   function fmtDate(ms) { if (!ms) return ''; return new Date(ms).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); }
   function fmtDateTime(ms) { if (!ms) return ''; return new Date(ms).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }); }
@@ -369,6 +380,11 @@
         return `<span class="wvo-f wait">${esc(FORMS[k].short)}: waiting on ${esc(f.waiting.map(roleLabel).join(' and '))}${have.length ? ' (signed by ' + esc(have.join(', ')) + ')' : ''}</span>`;
       }).join('');
       if (st.extraParents.length) rows += `<span class="wvo-f wait">Extra parent signatures not counted: ${esc(st.extraParents.join(', '))}</span>`;
+      // Build v3: which paper Release of Liability version the family needs, while that waiver is still missing on the tracker
+      if (st.liab && st.liab.how !== 'adult') { let cell = null; try { cell = ((P.host.sum(name) || {}).cells || {}).liability || null; } catch (e) { cell = null; }
+        if (!cell || cell.state === 'missing' || cell.state === 'resign') rows += st.liab.how === 'chosen'
+          ? `<span class="wvo-f">Paper Release of Liability needed: ${esc(liabShort(st.liab.type))} version (${esc(st.liab.by || 'the parent')} chose it online)</span>`
+          : `<span class="wvo-f">Paper Release of Liability: not asked online; the second-parent answer suggests the ${esc(liabShort(st.liab.type))} version</span>`; }
     } else rows = '<span class="wvo-f wait">Could not read the signing status right now.</span>';
     const pdfs = (P.host.admin && st) ? Object.keys(st.forms).filter(k => Object.keys(st.forms[k].signed).length).map(k => `<button type="button" class="wvo-btn" data-wvoact="pdf" data-wvoname="${esc(name)}" data-wvoform="${k}">${esc(FORMS[k].short)} PDF${st.forms[k].complete ? '' : ' (partial)'}</button>`).join('') : '';
     // admin: who has signed, each with a Clear so that person can start over
@@ -574,6 +590,7 @@
     keyEncrypt, keyDecrypt, envelope, b64ToArr, arrToB64,
     decodeSigs, assignRoles, status, roleLabel, dateIso, fmtDate, fmtDateTime, fmtDateUS, esc, normName,
     fillPdf, qrSvg,
-    panel: { init: pInit, bind: pBind, refresh: pRefresh, fill: pFill, contactsHtml: pContactsHtml, state: P, blockHtml: pBlockHtml, pdf: pPdf }
+    panel: { init: pInit, bind: pBind, refresh: pRefresh, fill: pFill, contactsHtml: pContactsHtml, state: P, blockHtml: pBlockHtml, pdf: pPdf,
+             liabFor: name => (P.st[name] && P.st[name].liab) || null }   // Build v3: the Release of Liability version the online signing points to
   };
 })(window);

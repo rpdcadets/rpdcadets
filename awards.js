@@ -1,4 +1,4 @@
-/* awards.js  |  Build v1  |  updated 2026-10-28  |  Cadet awards, shared by /admin (Awards tool) and the Trackers cadet PDF.
+/* awards.js  |  Build v2  |  updated 2026-10-28  |  Build v2: ribbon swatch colors sampled from the PSC Proficiency Awards document (red d81e00, blue 021eaa, yellow fffb00, gold ffd300, green 007600, silver a9a9a9; Chief's gold cba000) so the /admin swatches match the guide. No rule changed. Build v1 notes: Cadet awards, shared by /admin (Awards tool) and the Trackers cadet PDF.
    The 21-award list (PSC proficiency awards as the unit applies them, the Congressional Award, and the four RPD unit
    awards), the event buckets that feed the counted awards, and one compute() that turns a cadet's attendance,
    logged events, roster join date, and the advisor's award ledger into a status per award. Rules (Tony, 10/28/26):
@@ -13,7 +13,7 @@
 (function (global) {
   'use strict';
 
-  const BUILD = 1;
+  const BUILD = 2;
   const MEETING_HOURS = 3;
 
   /* ── Event buckets. One bucket per event name; 'crime+drug' counts for both. ── */
@@ -63,57 +63,57 @@
 
   /* ── The awards, in the order they print. how: hours | drug | congress | year | fitness | anniv | tenure | manual ── */
   const AWARDS = [
-    { key: 'train', name: 'Law Enforcement Training', group: 'psc', how: 'hours', target: 60, ribbon: ['#c0392b', '#1f4e9c'],
+    { key: 'train', name: 'Law Enforcement Training', group: 'psc', how: 'hours', target: 60, ribbon: ['#d81e00', '#021eaa'],
       req: '60 hours of training, accumulated from the day the cadet joined.',
       fill: 'Weekly meetings marked Present (3 hrs each), Bi-Weekly, Competition Related, Ride Along Academy, SWAT Camp.' },
-    { key: 'comm', name: 'Community Service', group: 'psc', how: 'hours', target: 100, ribbon: ['#1f4e9c', '#f1c40f'],
+    { key: 'comm', name: 'Community Service', group: 'psc', how: 'hours', target: 100, ribbon: ['#021eaa', '#fffb00'],
       req: '100 hours of community service, accumulated. Crime prevention events and department service hours do not count here.',
       fill: 'Christmas Parade, Cottonwood Arts Festival, Gobble Hobble, July 4th, RISD Football, Santa\'s Village, Summer Safety Camp, Wildflower Festival.' },
-    { key: 'serv', name: 'Law Enforcement Service', group: 'psc', how: 'hours', target: 100, ribbon: ['#c0392b', '#d4a952'],
+    { key: 'serv', name: 'Law Enforcement Service', group: 'psc', how: 'hours', target: 100, ribbon: ['#d81e00', '#ffd300'],
       req: '100 hours of service to the department, accumulated: records, communications, property and evidence, detention, ride-alongs, and similar.',
       fill: 'Criminal Investigations Division | Service Hours, Ride Along | Service Hours, UAS Drone Unit, and every Service Hours | entry (Communications Division, Crime Scene Unit, Desk Officer, Detention, Drone as First Responder, Property & Evidence, Records Unit).' },
-    { key: 'drug', name: 'Drug Abuse Prevention', group: 'psc', how: 'drug', target: 50, projects: 2, ribbon: ['#1f4e9c', '#bdc3c7'],
+    { key: 'drug', name: 'Drug Abuse Prevention', group: 'psc', how: 'drug', target: 50, projects: 2, ribbon: ['#021eaa', '#a9a9a9'],
       req: '6 hours of drug abuse prevention training plus 50 hours of service in at least two different drug abuse prevention projects.',
       fill: 'Drug Take Back (hours also count here). The training hours are recorded by the advisor.' },
     { key: 'congress', name: 'Congressional Award', group: 'psc', how: 'congress', ribbon: ['#cd7f32', '#bdc3c7', '#d4a952'],
       req: 'Certified by the Congressional Award program, cumulative from the cadet\'s registration. Hours in Voluntary Public Service, Personal Development, and Physical Fitness plus an Expedition/Exploration: Bronze certificate 30/15/15 hrs and 1 day; Silver 60/30/30 and 2 days; Gold 90/45/45, 3 days, 6 months; Bronze medal 100/50/50, 2 days 1 night, 7 months; Silver medal 200/100/100, 3 days 2 nights, 12 months; Gold medal 400/200/200, 5 days 4 nights, 24 months.',
       fill: 'Congressional Award | Personal Development, | Physical Fitness, | Expedition/Exploration. Public Service is the Community Service and Law Enforcement Service hours.' },
-    { key: 'crime', name: 'Crime Prevention', group: 'psc', how: 'year', target: 4, ribbon: ['#1e8449', '#d4a952'],
+    { key: 'crime', name: 'Crime Prevention', group: 'psc', how: 'year', target: 4, ribbon: ['#007600', '#ffd300'],
       req: 'Four crime prevention events in the calendar year.',
       fill: 'National Night Out, Drug Take Back, CPAAA Support, Youth Citizen Police Academy, Public Safety Expo, Recycle Event, UNIDOS.' },
-    { key: 'fitness', name: 'Physical Fitness', group: 'psc', how: 'fitness', ribbon: ['#c0392b', '#f1c40f', '#1f4e9c', '#1e8449'],
+    { key: 'fitness', name: 'Physical Fitness', group: 'psc', how: 'fitness', ribbon: ['#12174d', '#b25c0e', '#b8b7ab', '#242a1f', '#79070b'],
       req: 'A rowing percentage recorded at the start of the calendar year and again at the end; a higher percentage at the end earns it.',
       fill: 'Rowing log kept by the advisor on the cadet\'s awards card.' },
-    { key: 'attendance', name: 'Perfect Attendance', group: 'psc', how: 'anniv', ribbon: ['#f1c40f', '#ffffff'],
+    { key: 'attendance', name: 'Perfect Attendance', group: 'psc', how: 'anniv', ribbon: ['#fffb00', '#ffffff'],
       req: 'A full year of membership, from the join date to the anniversary, with no unexcused absence at a weekly meeting. Excused absences are fine. Checked again every anniversary year.',
       fill: 'Weekly attendance tracker.' },
-    { key: 'tenure', name: 'Tenure', group: 'psc', how: 'tenure', ribbon: ['#c0392b'],
+    { key: 'tenure', name: 'Tenure', group: 'psc', how: 'tenure', ribbon: ['#d81e00'],
       req: 'One year of satisfactory service from the join date. A silver star for each additional year; a gold star at five years.',
       fill: 'Roster join date.' },
-    { key: 'outstanding', name: 'Outstanding Cadet/Cadet of The Year', group: 'psc', how: 'manual', ribbon: ['#1f4e9c'],
+    { key: 'outstanding', name: 'Outstanding Cadet/Cadet of The Year', group: 'psc', how: 'manual', ribbon: ['#021eaa'],
       req: 'One cadet each year, selected on dependability, attitude, attendance, and contributions to the unit, department, and community.', fill: 'Selected by the advisors.' },
-    { key: 'chief', name: 'Chief\'s Award', group: 'psc', how: 'manual', ribbon: ['#d4a952'],
+    { key: 'chief', name: 'Chief\'s Award', group: 'psc', how: 'manual', ribbon: ['#cba000'],
       req: 'An outstanding contribution to the Public Safety Cadets program or the community, on the recommendation of the Chief of Police.', fill: 'Recorded by the advisor.' },
-    { key: 'conference', name: 'National Conference', group: 'psc', how: 'manual', ribbon: ['#145a32'],
+    { key: 'conference', name: 'National Conference', group: 'psc', how: 'manual', ribbon: ['#007600'],
       req: 'Attended a National Public Safety Cadets Conference.', fill: 'Recorded by the advisor.' },
     { key: 'nla', name: 'National Leadership Academy', group: 'psc', how: 'manual', ribbon: ['#111111'],
       req: 'Competitively selected for and completed a National Leadership Academy certified by the PSC National Committee, Law Enforcement Sector. Black bar with a torch attachment.', fill: 'Recorded by the advisor.' },
-    { key: 'academy', name: 'Training Academy', group: 'psc', how: 'manual', ribbon: ['#1f4e9c', '#f1c40f', '#95a5a6', '#c0392b'],
+    { key: 'academy', name: 'Training Academy', group: 'psc', how: 'manual', ribbon: ['#353d8f', '#e9b006', '#808080', '#a11617', '#808080', '#e9b006', '#353d8f'],
       req: 'Attended a Unit, State, or Regional Training Academy of at least forty consecutive hours of training sanctioned by Public Safety Cadets.', fill: 'Recorded by the advisor.' },
-    { key: 'emergency', name: 'Emergency Preparedness', group: 'psc', how: 'manual', ribbon: ['#c0392b', '#ffffff'],
+    { key: 'emergency', name: 'Emergency Preparedness', group: 'psc', how: 'manual', ribbon: ['#d81e00', '#ffffff'],
       req: 'Training in advanced first aid and CPR, training in how the unit would assist in a disaster (flood, tornado, hurricane), and at least one civil defense or community-wide disaster training exercise.',
       fill: 'Recorded by the advisor; the card shows whether the Red Cross AED, CPR, and First Aid events are logged.' },
-    { key: 'firearms', name: 'Firearms Safety Training', group: 'psc', how: 'manual', levels: ['Marksman', 'Sharpshooter', 'Expert', 'Distinguished'], ribbon: ['#cd7f32', '#bdc3c7', '#d4a952'],
+    { key: 'firearms', name: 'Firearms Safety Training', group: 'psc', how: 'manual', levels: ['Marksman', 'Sharpshooter', 'Expert', 'Distinguished'], ribbon: ['#6e6f4f'],
       req: 'Eight hours of firearms safety training and a demonstration of safe and proper handling under the PSC Law Enforcement Sector firearms certification program. PSC Marksmanship bar: Marksman (bronze), Sharpshooter (silver), Expert (gold), or Distinguished.', fill: 'Recorded by the advisor with the level reached.' },
     { key: 'marksman', name: 'Competitive Marksmanship Distinction', group: 'psc', how: 'manual', levels: ['1st place (gold)', '2nd place (silver)', '3rd place (bronze)'], ribbon: ['#d4a952', '#bdc3c7', '#cd7f32'],
       req: 'Safe and proper handling of firearms while placing first, second, or third in a competitive marksmanship event, individual or team. Gold, silver, or bronze; a silver star for each repeat, gold at five.', fill: 'Recorded by the advisor with the place.' },
-    { key: 'leadership', name: 'Cadet Leadership Excellence Award', group: 'rpd', how: 'manual', ribbon: ['#c0392b', '#ffffff', '#1f4e9c'],
+    { key: 'leadership', name: 'Cadet Leadership Excellence Award', group: 'rpd', how: 'manual', ribbon: ['#d81e00', '#ffffff', '#021eaa'],
       req: 'A specific contribution to improving and growing the unit through leadership: policies and procedures, training programs, recruiting, fundraisers, and other lasting work. Selected by the advisors and the advisory committee. Red, white, and blue bar with a gold border.', fill: 'Recorded by the advisor.' },
-    { key: 'academic', name: 'Academic Achievement Award', group: 'rpd', how: 'manual', ribbon: ['#f1c40f', '#1f4e9c', '#c0392b'],
+    { key: 'academic', name: 'Academic Achievement Award', group: 'rpd', how: 'manual', ribbon: ['#fffb00', '#021eaa', '#d81e00'],
       req: 'A 4.0 grade point average for an entire academic year or two full semesters while in good standing and active with the unit.', fill: 'Recorded by the advisor.' },
     { key: 'ridealong', name: 'Ride-Along Certification Award', group: 'rpd', how: 'manual', ribbon: ['#d2b48c'],
       req: 'Completion of the Richardson Police Department Ride-Along Certification Course. Tan bar with a gold star.', fill: 'Recorded by the advisor; Ride Along Academy hours show as a hint.' },
-    { key: 'efr', name: 'Emergency First Responder Award', group: 'rpd', how: 'manual', ribbon: ['#c0392b', '#ffffff', '#1f4e9c'],
+    { key: 'efr', name: 'Emergency First Responder Award', group: 'rpd', how: 'manual', ribbon: ['#d81e00', '#ffffff', '#021eaa'],
       req: 'American Red Cross Professional Rescuer First Aid, CPR, and AED certification. Red, white, and blue bar with a red cross.',
       fill: 'Shows ready once the Red Cross AED, CPR, and First Aid events are all logged; the advisor records the date presented.' }
   ];

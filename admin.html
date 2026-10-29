@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- admin.html  |  Build v46  |  updated 2026-10-28  |  pairs with roster.js v37, opr.js v7, wv.js v2, and awards.js v2  |  v46: cache-buster only, for awards.js Build v2 (ribbon swatch colors matched to the PSC Proficiency Awards document). Build v45 notes: v45: Cadet Awards tool. New hub tile and view: one card per active cadet (Alumni under their own filter) with every award's status, computed by awards.js from the weekly attendance, logged events, the roster join date, and the award ledger: Presented, Earned (criteria met, not yet presented), Close, In progress, Not started, or Not yet awarded for the advisor-recorded ones. Law Enforcement Training (60 hrs, weekly meetings at 3 hrs plus training events), Community Service (100 hrs), and Law Enforcement Service (100 hrs) accumulate from the join date; Crime Prevention is 4 events in the selected award year; Physical Fitness compares the first and last rowing percentage of the year (rowing log on the card); Perfect Attendance runs join date to anniversary with no unexcused absence (every membership year listed, with a manual-check flag when the attendance records do not cover the whole year); Tenure counts anniversaries with the star device. Mark presented / Add / Record a past presentation store the date presented (and the year, level, or place where it applies) so past awards can be entered; entries can be removed. Drug Abuse Prevention has a training checkbox. Event buckets panel: which award each event name feeds (starting map built in, names typed under Other flagged). Award year chips, filters (Active, Ready to present, Close, Alumni), search. Stored at roster/awards under the shared roster key so the Trackers cadet PDF can show the same statuses. Cache-busters roster.js?v=37, awards.js?v=1. Build v44 notes: v44: cache-busters only, for wv.js Build v2 (Clear per person and Clear all on the online signing block) and roster.js VERSION 36. Build v43 notes: v43: online waiver signing. Every row in the Waiver Tracker gets an online block (Online code, Copy link, Share, QR, Refresh, New code, Cancel, and per-form status; a form with every signature it needs is marked Received automatically as "Online: name"), plus the advisor-only parts: a PDF button per signed form that unseals the records with the reference key and fills the official form with pdf-lib, and a "New parent contacts from online signing" card at the top of the tracker that adds or updates the parent (or new second parent) in Cadet Records, asking before it replaces a value. Cadet Records gains second parent or guardian name, phone, and email. Cache-busters roster.js?v=35, wv.js?v=1, plus the vendored QR library. Build v42 notes: v42: former cadets. The Roster Editor remove button now opens Mark as left: Alumni (stays on the roster as alumni with a date left and the Members-page note filled from the join and left dates when blank) or Dismissed (not in good standing: comes off the shared roster and every page; the status, date, and reason go to the advisor-only ledger RPDRoster.former, reference key, while the Cadet Records entry, waivers, hours, and sergeant notes stay put), plus Remove only for mistakes. Cadet Records gets a filter row (Active, Alumni, Dismissed, All; the limited tier never sees Dismissed) with a status strip on former cadets (dates, reason, Edit date or reason, Reinstate), Reinstate (back on the roster as active with a chosen squad, rank, and join date; the record is untouched), and recovery of records whose cadet was removed before this build (File as alumni, File as dismissed, or Reinstate). Alumni rows in the Roster Editor get a Left date. Cache-buster roster.js?v=34 (the v34 roll-up drops the Not recorded rows from before a cadet joined). Build v41 notes: v41: the review PDF downloads through the shared RPDOpr.pdfDownload (same output); cache-buster for opr.js Build v7. Build v40 notes: v40: cache-buster only, for opr.js Build v6 (Epieos and Have I Been Pwned rows, Open all per step). Build v39 notes: v39: cache-buster only, for opr.js Build v5 (username guesses collapsed into one chip row). Build v38 notes: v38: cache-buster only, for the opr.js Build v4 note rewording. Build v37 notes: v37: cache-buster only, for the opr.js Build v3 fix. Build v36 notes: v36: the review ends with a Reviewer recommendation (Proceed / Proceed with notes / Do not proceed, plus a reason) set by whoever runs it, shared with /sgt and shown as a pill on the card bar; the advisor result stays advisor-only; the PDF prints both side by side. Build v35 notes: Applicants & References gains the Online Presence Review: each applicant card has an Online presence section with Open review, the shared form from opr.js (applicant details, discovery with OSINT Industries and WhatsMyName, identity, accounts and platforms with one-tap links built from the typed handles, searches, reverse image, public records, household and family with a records list, the twelve categories, activity trail), plus the advisor-only result (Clear / Clear with notes / Concerns found / Recommend decline, stored under the reference key so /sgt can never read it), Screenshot in folder markers, Mark Advisor reviewed (locks the form on /sgt) and Reopen, Delete review, and a letterhead PDF (CADET/ONLINE V1) for the applicant folder. A settings strip at the top of the tool names the cleared sergeant whose name is stamped on every /sgt edit, shows how many devices have done the hidden unlock, and has Reset unlocks. Accept and add to roster moves the review to the files-on-hold list with the references; Delete file removes both. Visible build stamps are now version-only. No other tool changed. Prior v34 notes: New Waiver Tracker tool: every active cadet with the six waivers, most missing first. Sergeants mark Received on /sgt; here an advisor marks Filed (today's date), clears a Received mark, or un-files. Printable Missing Waivers list (PDF, CADET/WAIVERS V1). Cadets 18 or older show "Re-sign at 18" on every waiver signed before the birthday; cadets within 60 days of 18 get a "Turns 18 on" tag. Cadet Records: the Waivers chip and its panel now read from the tracker (tap a waiver to open the same dialog); the old checkbox toggles are gone and old checkmarks read as Filed with no date. Pending Approvals: a waiver change in an older sergeant proposal is applied to the tracker when approved. Prior v33 notes: Applicants & References: supports the longer questionnaire (reference.html Build v2). Free-text answers are recognized by their own tag (t:1) so new text questions lay out full width on screen and in the PDF; the PDF now sets short one-line answers two across and uses slightly tighter rows so a clean response still fits one page. No other tool changed. Prior v32 notes: New tool: Applicants & References (full advisor passcode only). Lists observers marked Applied; type in each reference from the paper application and the tool mints a one-time link (rpdcadets.com/reference#CODE) with a Copy link button for pasting into the Outlook email template; tracks Not sent / Sent / Reminder sent / Received / Unable to reach / Link expired; shows the decrypted responses with flagged answers highlighted and builds a letterhead PDF per reference or one file per applicant (pdf-lib, footer label CADET/REFCHECK V1). Responses are locked under a separate advisor-only key, so the sergeant and limited tiers cannot open them. Accept and add to roster: confirm name, pick squad, rank defaults to Probationary, join date defaults to today; adds the roster entry, copies observer contact info into Cadet Records (blank fields only), carries sergeant notes into cadet notes, removes the observer entry, and keeps the reference file on hold until deleted. Hub tile shows a badge for unread responses. Also bumped the roster.js cache-buster from 26 to 30. Prior v31 notes: Ride-Along Log now merges the Trackers inbox on open (cadet-submitted rides appear tagged "Trackers" and count toast shows how many arrived); add, edit, and delete maintain the roster/raIndex duplicate ledger so a deleted entry frees the cadet to resubmit; approving a sergeant ride-along proposal also claims its ledger hash. Prior v30 notes: Act. Sgt. rank dropdown; itemized six-waiver panel; per-cadet sergeant note lines; merged Sergeant Notes panel; waiver-item proposals in Pending Approvals. -->
+<!-- admin.html  |  Build v48  |  updated 2026-10-28  |  pairs with roster.js v37, opr.js v7, wv.js v2, and awards.js v2  |  v48: Training Hub gains "Paste from spreadsheet": paste the Date and Topic columns copied from the schedule spreadsheet (extra columns ignored; dates as 1/7/2027, 2027-01-07, or 3-Apr-27), Preview lists what was read with an editable topic and type per row, and Add puts them on the schedule: a date already on the schedule gets its topic and type updated, competitions go in as special dates, everything else as meetings with advisors left blank. NO MEETING rows become No Meeting, Banquet / Fun Day / Holiday Party become Special Event, "Explorer" is replaced with "Cadet". Saves through the same auto-save as the rest of the hub. Build v47 notes: v47: Roster Editor status dropdown gains "Dismissed..." (Tony could not find Dismissed, which lived only behind the row's x button). Picking it opens the same Mark as left dialog with Dismissed preselected (date left and the advisor-only reason); nothing changes until Confirm, and Cancel puts the dropdown back to the previous status. The x button route is unchanged. Build v46 notes: v46: cache-buster only, for awards.js Build v2 (ribbon swatch colors matched to the PSC Proficiency Awards document). Build v45 notes: v45: Cadet Awards tool. New hub tile and view: one card per active cadet (Alumni under their own filter) with every award's status, computed by awards.js from the weekly attendance, logged events, the roster join date, and the award ledger: Presented, Earned (criteria met, not yet presented), Close, In progress, Not started, or Not yet awarded for the advisor-recorded ones. Law Enforcement Training (60 hrs, weekly meetings at 3 hrs plus training events), Community Service (100 hrs), and Law Enforcement Service (100 hrs) accumulate from the join date; Crime Prevention is 4 events in the selected award year; Physical Fitness compares the first and last rowing percentage of the year (rowing log on the card); Perfect Attendance runs join date to anniversary with no unexcused absence (every membership year listed, with a manual-check flag when the attendance records do not cover the whole year); Tenure counts anniversaries with the star device. Mark presented / Add / Record a past presentation store the date presented (and the year, level, or place where it applies) so past awards can be entered; entries can be removed. Drug Abuse Prevention has a training checkbox. Event buckets panel: which award each event name feeds (starting map built in, names typed under Other flagged). Award year chips, filters (Active, Ready to present, Close, Alumni), search. Stored at roster/awards under the shared roster key so the Trackers cadet PDF can show the same statuses. Cache-busters roster.js?v=37, awards.js?v=1. Build v44 notes: v44: cache-busters only, for wv.js Build v2 (Clear per person and Clear all on the online signing block) and roster.js VERSION 36. Build v43 notes: v43: online waiver signing. Every row in the Waiver Tracker gets an online block (Online code, Copy link, Share, QR, Refresh, New code, Cancel, and per-form status; a form with every signature it needs is marked Received automatically as "Online: name"), plus the advisor-only parts: a PDF button per signed form that unseals the records with the reference key and fills the official form with pdf-lib, and a "New parent contacts from online signing" card at the top of the tracker that adds or updates the parent (or new second parent) in Cadet Records, asking before it replaces a value. Cadet Records gains second parent or guardian name, phone, and email. Cache-busters roster.js?v=35, wv.js?v=1, plus the vendored QR library. Build v42 notes: v42: former cadets. The Roster Editor remove button now opens Mark as left: Alumni (stays on the roster as alumni with a date left and the Members-page note filled from the join and left dates when blank) or Dismissed (not in good standing: comes off the shared roster and every page; the status, date, and reason go to the advisor-only ledger RPDRoster.former, reference key, while the Cadet Records entry, waivers, hours, and sergeant notes stay put), plus Remove only for mistakes. Cadet Records gets a filter row (Active, Alumni, Dismissed, All; the limited tier never sees Dismissed) with a status strip on former cadets (dates, reason, Edit date or reason, Reinstate), Reinstate (back on the roster as active with a chosen squad, rank, and join date; the record is untouched), and recovery of records whose cadet was removed before this build (File as alumni, File as dismissed, or Reinstate). Alumni rows in the Roster Editor get a Left date. Cache-buster roster.js?v=34 (the v34 roll-up drops the Not recorded rows from before a cadet joined). Build v41 notes: v41: the review PDF downloads through the shared RPDOpr.pdfDownload (same output); cache-buster for opr.js Build v7. Build v40 notes: v40: cache-buster only, for opr.js Build v6 (Epieos and Have I Been Pwned rows, Open all per step). Build v39 notes: v39: cache-buster only, for opr.js Build v5 (username guesses collapsed into one chip row). Build v38 notes: v38: cache-buster only, for the opr.js Build v4 note rewording. Build v37 notes: v37: cache-buster only, for the opr.js Build v3 fix. Build v36 notes: v36: the review ends with a Reviewer recommendation (Proceed / Proceed with notes / Do not proceed, plus a reason) set by whoever runs it, shared with /sgt and shown as a pill on the card bar; the advisor result stays advisor-only; the PDF prints both side by side. Build v35 notes: Applicants & References gains the Online Presence Review: each applicant card has an Online presence section with Open review, the shared form from opr.js (applicant details, discovery with OSINT Industries and WhatsMyName, identity, accounts and platforms with one-tap links built from the typed handles, searches, reverse image, public records, household and family with a records list, the twelve categories, activity trail), plus the advisor-only result (Clear / Clear with notes / Concerns found / Recommend decline, stored under the reference key so /sgt can never read it), Screenshot in folder markers, Mark Advisor reviewed (locks the form on /sgt) and Reopen, Delete review, and a letterhead PDF (CADET/ONLINE V1) for the applicant folder. A settings strip at the top of the tool names the cleared sergeant whose name is stamped on every /sgt edit, shows how many devices have done the hidden unlock, and has Reset unlocks. Accept and add to roster moves the review to the files-on-hold list with the references; Delete file removes both. Visible build stamps are now version-only. No other tool changed. Prior v34 notes: New Waiver Tracker tool: every active cadet with the six waivers, most missing first. Sergeants mark Received on /sgt; here an advisor marks Filed (today's date), clears a Received mark, or un-files. Printable Missing Waivers list (PDF, CADET/WAIVERS V1). Cadets 18 or older show "Re-sign at 18" on every waiver signed before the birthday; cadets within 60 days of 18 get a "Turns 18 on" tag. Cadet Records: the Waivers chip and its panel now read from the tracker (tap a waiver to open the same dialog); the old checkbox toggles are gone and old checkmarks read as Filed with no date. Pending Approvals: a waiver change in an older sergeant proposal is applied to the tracker when approved. Prior v33 notes: Applicants & References: supports the longer questionnaire (reference.html Build v2). Free-text answers are recognized by their own tag (t:1) so new text questions lay out full width on screen and in the PDF; the PDF now sets short one-line answers two across and uses slightly tighter rows so a clean response still fits one page. No other tool changed. Prior v32 notes: New tool: Applicants & References (full advisor passcode only). Lists observers marked Applied; type in each reference from the paper application and the tool mints a one-time link (rpdcadets.com/reference#CODE) with a Copy link button for pasting into the Outlook email template; tracks Not sent / Sent / Reminder sent / Received / Unable to reach / Link expired; shows the decrypted responses with flagged answers highlighted and builds a letterhead PDF per reference or one file per applicant (pdf-lib, footer label CADET/REFCHECK V1). Responses are locked under a separate advisor-only key, so the sergeant and limited tiers cannot open them. Accept and add to roster: confirm name, pick squad, rank defaults to Probationary, join date defaults to today; adds the roster entry, copies observer contact info into Cadet Records (blank fields only), carries sergeant notes into cadet notes, removes the observer entry, and keeps the reference file on hold until deleted. Hub tile shows a badge for unread responses. Also bumped the roster.js cache-buster from 26 to 30. Prior v31 notes: Ride-Along Log now merges the Trackers inbox on open (cadet-submitted rides appear tagged "Trackers" and count toast shows how many arrived); add, edit, and delete maintain the roster/raIndex duplicate ledger so a deleted entry frees the cadet to resubmit; approving a sergeant ride-along proposal also claims its ledger hash. Prior v30 notes: Act. Sgt. rank dropdown; itemized six-waiver panel; per-cadet sergeant note lines; merged Sergeant Notes panel; waiver-item proposals in Pending Approvals. -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -557,6 +557,19 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
 .trn-chip button{background:none;border:none;color:var(--text-muted);font-size:16px;line-height:1;cursor:pointer;padding:0 2px}
 .trn-chip button:hover{color:var(--red-glow)}
 .trn-advadd{display:flex;gap:8px;margin-top:4px}
+/* Paste from spreadsheet (Build v48) */
+.trn-paste{min-height:96px;resize:vertical;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;line-height:1.5;white-space:pre}
+.trn-pv{margin-top:12px;border:1px solid var(--card-border);border-radius:10px;overflow:hidden}
+.trn-pv-row{display:grid;grid-template-columns:92px 1fr 150px 86px;gap:8px;align-items:center;padding:7px 10px;border-bottom:1px solid var(--card-border);font-size:13px}
+.trn-pv-row:last-child{border-bottom:none}
+.trn-pv-row.h{font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted);background:rgba(255,255,255,0.02)}
+.trn-pv-row .trn-input,.trn-pv-row .trn-sel{padding:6px 9px;font-size:13px}
+.trn-pv-act{font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--text-muted)}
+.trn-pv-act.add{color:var(--green)}.trn-pv-act.update{color:var(--gold-light)}
+.trn-pv-skip{font-size:12px;color:var(--text-muted);margin-top:8px;line-height:1.5}
+.trn-pv-bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:12px 0 10px}
+.trn-pv-bar .note{font-size:12.5px;color:var(--text-muted)}
+@media(max-width:640px){.trn-pv-row{grid-template-columns:80px 1fr;gap:6px}.trn-pv-row.h{display:none}}
 .trn-advadd .trn-input{flex:1}
 .trn-month{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:1.5px;color:var(--gold-light);margin:24px 0 10px;display:flex;align-items:center;gap:12px}
 .trn-month::after{content:'';flex:1;height:1px;background:var(--card-border)}
@@ -819,7 +832,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
     <button class="lock-btn" id="goBtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg><span id="goLabel">Unlock</span></button>
     <div class="lock-error" id="lockErr">Incorrect passcode.</div>
     <div class="lock-home"><a href="index.html">← Return to Home</a></div>
-    <div style="margin-top:16px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v46</div>
+    <div style="margin-top:16px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v48</div>
   </div>
 </div>
 
@@ -849,7 +862,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
       <button class="back-link" id="rosterBack"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Admin Console</button>
       <div class="bar">
         <div class="status-pill" id="pill"><span class="dot"></span><span id="pillText">Synced</span></div>
-        <span style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v46</span>
+        <span style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v48</span>
         <button class="btn ghost" id="syncMembersBtn" title="One-time: pull titles and alumni from the Members page into the shared roster">Sync members data</button>
         <button class="btn add" id="addBtn">+ Add Person</button>
       </div>
@@ -1193,7 +1206,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,26,48,0.
 <script src="awards.js?v=2"></script>
 <script src="vendor/qrcode-generator-1.4.4.min.js"></script>
 <script>
-console.log('[admin] Build v46');
+console.log('[admin] Build v48');
 const SESSION_KEY = 'rpd761_admin_auth';   // advisor-only; NOT shared with cadet pages
 const TIER_KEY = 'rpd761_admin_tier';      // 'full' (golden) or 'ltd' (limited advisor)
 const LIMITED_TOOLS = ['records','ridealongs','donations'];
@@ -1471,7 +1484,7 @@ async function removeSgt(){
 function openRoster(){ showView('rosterView'); renderRows(); }
 
 /* ── ROSTER EDITOR ── */
-const STATUSES = [['','Active'],['loa','LOA'],['suspended','Suspended'],['alumni','Alumni']];
+const STATUSES = [['','Active'],['loa','LOA'],['suspended','Suspended'],['alumni','Alumni'],['dismissed','Dismissed\u2026']];   // Build v47: Dismissed opens Mark as left; it is never stored as a status
 
 function renderRows(){
   const groups = [['leadership','Leadership','c-gold'],[1,'Squad 1','c-red'],[2,'Squad 2','c-yellow'],[3,'Squad 3','c-blue'],[4,'Squad 4 (Admin)','c-green']];
@@ -1517,6 +1530,12 @@ function rowEl(p){
     el.addEventListener(ev, () => {
       const i = +el.dataset.i, f = el.dataset.f;
       let v = el.value;
+      if(f==='status' && v==='dismissed'){   // Build v47: Dismissed in the dropdown opens Mark as left on Dismissed; nothing is stored until Confirm
+        el.value = data[i].status || '';
+        openLeaveDialog(data[i]);
+        if(fmCtx && fmCtx.kind==='leave') fmChoose('dismissed');
+        return;
+      }
       if(f==='squad' && v!=='leadership') v = +v;
       if(f==='status' && v==='') delete data[i].status;
       else if(f==='title' && !v.trim()) delete data[i].title;
@@ -2380,6 +2399,13 @@ function renderTraining(){
     <div class="trn-panel-head">Advisors</div>
     <div class="trn-advchips">${ adv.length ? adv.map((a,i)=>`<span class="trn-chip">${escapeHtmlA(a)}<button data-advdel="${i}" type="button" title="Remove">&times;</button></span>`).join('') : '<span style="color:var(--text-muted);font-size:13px">No advisors yet. Add the people who teach, then pick two per meeting.</span>' }</div>
     <div class="trn-advadd"><input class="trn-input" id="trnNewAdv" placeholder="Add advisor name"><button class="trn-add" id="trnAddAdv" type="button">Add</button></div>
+  </div>
+  <div class="trn-panel">
+    <div class="trn-panel-head">Paste from spreadsheet</div>
+    <p class="att-names-note" style="margin-top:0">Copy the Date and Topic columns from the schedule spreadsheet (extra columns are ignored) and paste them here. NO MEETING weeks become No Meeting; Banquet, Fun Day, and Holiday Party become Special Event; competitions go in as special dates. A date already on the schedule gets its topic updated instead of a duplicate. Advisors are left blank.</p>
+    <textarea class="trn-input trn-paste" id="trnPaste" placeholder="1/7/2027&#9;Mental Health Call&#10;1/14/2027&#9;Gangs"></textarea>
+    <div class="trn-advadd"><button class="trn-add" id="trnPastePreview" type="button">Preview</button></div>
+    <div id="trnPasteOut"></div>
   </div>`;
 
   const entries = [];
@@ -2446,8 +2472,99 @@ function bindTraining(){
   document.getElementById('trnAddAdv').addEventListener('click', addAdv);
   document.getElementById('trnNewAdv').addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); addAdv(); } });
 
+  const pvBtn=document.getElementById('trnPastePreview'); if(pvBtn) pvBtn.addEventListener('click', trnPastePreview);   // Build v48
   document.getElementById('trnAddMtg').addEventListener('click', ()=>{ trnData.meetings.push({date:trnNextDate(),type:'t',topic:'',location:trnData.meta.location||'',a1:'',a2:''}); renderTraining(); trnSchedule(); });
   document.getElementById('trnAddFeat').addEventListener('click', ()=>{ trnData.featured.push({date:trnNextDate(),type:'s',title:'',desc:''}); renderTraining(); trnSchedule(); });
+}
+
+/* ── Paste from spreadsheet (Build v48) ──
+   Reads lines of "date<TAB>topic..." (any extra columns ignored). Dates: 1/7/2027, 1/7/27, 2027-01-07, 3-Apr-27.
+   Type from the topic: NO MEETING / break weeks -> No Meeting; Banquet, Fun Day, Holiday Party -> Special Event;
+   competition -> Competition (added as a special date card, not a meeting). "Explorer" -> "Cadet". Preview rows
+   keep an editable topic and type; Add applies them (existing date = update, otherwise add) through the hub's auto-save. */
+const TRN_MON3 = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
+let trnPasteRows = null;
+function trnPasteDate(tok){
+  tok=(tok||'').trim(); let m;
+  if((m=tok.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/))) return m[1]+'-'+m[2].padStart(2,'0')+'-'+m[3].padStart(2,'0');
+  if((m=tok.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{2,4})$/))){ let y=+m[3]; if(y<100) y+=2000; return y+'-'+m[1].padStart(2,'0')+'-'+m[2].padStart(2,'0'); }
+  if((m=tok.match(/^(\d{1,2})-([A-Za-z]{3})[A-Za-z]*-(\d{2,4})$/))){ const mi=TRN_MON3.indexOf(m[2].toLowerCase()); if(mi<0) return ''; let y=+m[3]; if(y<100) y+=2000; return y+'-'+String(mi+1).padStart(2,'0')+'-'+m[1].padStart(2,'0'); }
+  return '';
+}
+function trnTitleCase(str){
+  const small={of:1,the:1,and:1,a:1,an:1,for:1,to:1,in:1,on:1,at:1};
+  return str.toLowerCase().split(/\s+/).map((w,i)=> (i>0 && small[w]) ? w : w.charAt(0).toUpperCase()+w.slice(1)).join(' ');
+}
+function trnPasteType(topic){
+  const t=topic.toLowerCase();
+  if(/no meeting|spring break|summer break|winter break|first week of school|thanksgiving|christmas|new year/.test(t)) return 'o';
+  if(/competition|\bcomp\b|tleeaa|nationals|10-33/.test(t)) return 'c';
+  if(/banquet|fun day|holiday party|party|picnic|graduation|awards night|field day/.test(t)) return 's';
+  return 't';
+}
+function trnPasteTopic(raw, type){
+  let t=String(raw||'').replace(/\*+/g,'').replace(/\s+/g,' ').trim();
+  t=t.replace(/\bExplorers\b/g,'Cadets').replace(/\bExplorer\b/g,'Cadet');
+  if(type==='o'){
+    let reason=t.replace(/no meeting/i,'').replace(/^[\s:\-\u2013\u2014()]+|[\s:\-\u2013\u2014()]+$/g,'').trim();
+    if(reason && reason===reason.toUpperCase()) reason=trnTitleCase(reason);
+    return reason ? 'No Meeting ('+reason+')' : 'No Meeting';
+  }
+  if(t && t===t.toUpperCase() && /[A-Z]{4,}/.test(t)) t=trnTitleCase(t);
+  return t;
+}
+function trnPasteParse(text){
+  const rows=[], skipped=[], seen={};
+  String(text||'').split(/\r?\n/).forEach(line=>{
+    const raw=line.replace(/\u00a0/g,' '); if(!raw.trim()) return;
+    const cells=raw.split('\t').map(c=>c.trim());
+    let date='', topic='';
+    if(cells.length>1){ date=trnPasteDate(cells[0]); topic=cells[1]||''; if(!date){ skipped.push(raw.trim()); return; } }   // the topic is the column right after the date; time and location columns are ignored
+    else { const m=raw.trim().match(/^(\S+)\s*(.*)$/); date=m?trnPasteDate(m[1]):''; topic=m?m[2].trim():''; if(!date){ skipped.push(raw.trim()); return; } }
+    if(seen[date]){ skipped.push(raw.trim()+'  (duplicate date)'); return; }
+    seen[date]=1;
+    const type=topic?trnPasteType(topic):'o';
+    rows.push({ date, topic: trnPasteTopic(topic, type), type });
+  });
+  rows.sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:0);
+  return { rows, skipped };
+}
+function trnPasteAction(r){
+  if(r.type==='c') return trnData.featured.some(f=>f.date===r.date && f.type==='c') ? 'update' : 'add';
+  return trnData.meetings.some(m=>m.date===r.date) ? 'update' : 'add';
+}
+function trnPastePreview(){
+  const out=document.getElementById('trnPasteOut'); const text=(document.getElementById('trnPaste')||{}).value||'';
+  const { rows, skipped } = trnPasteParse(text);
+  trnPasteRows=rows;
+  if(!rows.length){ out.innerHTML='<p class="trn-pv-skip">Nothing with a date was found. Each line needs a date first, then the topic (copied from the spreadsheet, or typed as 1/7/2027 and the topic).</p>'; return; }
+  const typeOpts=v=>TRN_TYPES.map(([k,l])=>`<option value="${k}"${k===v?' selected':''}>${l}</option>`).join('');
+  const fmt=d=>{ const p=trnParse(d); return p ? (p.m+'/'+p.day+'/'+p.y+' '+TRN_DOW[p.date.getDay()]) : d; };
+  const counts={add:0,update:0};
+  const body=rows.map((r,i)=>{ const act=trnPasteAction(r); counts[act]++; return `<div class="trn-pv-row" data-pv="${i}"><span>${escapeHtmlA(fmt(r.date))}</span><input class="trn-input" data-pvf="topic" value="${escapeHtmlA(r.topic)}"><select class="trn-sel" data-pvf="type">${typeOpts(r.type)}</select><span class="trn-pv-act ${act}">${act==='update'?'Update':'Add'}</span></div>`; }).join('');
+  out.innerHTML=`<div class="trn-pv"><div class="trn-pv-row h"><span>Date</span><span>Topic</span><span>Type</span><span></span></div>${body}</div>`+
+    (skipped.length?`<div class="trn-pv-skip">Skipped (no date): ${skipped.map(escapeHtmlA).join(' · ')}</div>`:'')+
+    `<div class="trn-pv-bar"><button class="trn-add" id="trnPasteApply" type="button">Add to schedule</button><span class="note">${counts.add} to add, ${counts.update} to update. Competitions go in as special dates; everything else as meetings with advisors blank.</span></div>`;
+  out.querySelectorAll('[data-pvf]').forEach(el=> el.addEventListener(el.tagName==='SELECT'?'change':'input', ()=>{ const i=+el.closest('[data-pv]').dataset.pv; trnPasteRows[i][el.dataset.pvf]=el.value; }));
+  document.getElementById('trnPasteApply').addEventListener('click', trnPasteApply);
+}
+function trnPasteApply(){
+  const rows=trnPasteRows||[]; if(!rows.length) return;
+  let added=0, updated=0;
+  rows.forEach(r=>{
+    const topic=(r.topic||'').trim(); if(!topic && r.type!=='o') return;
+    if(r.type==='c'){
+      const f=trnData.featured.find(x=>x.date===r.date && x.type==='c');
+      if(f){ f.title=topic; updated++; } else { trnData.featured.push({ date:r.date, type:'c', title:topic, desc:'' }); added++; }
+      return;
+    }
+    const m=trnData.meetings.find(x=>x.date===r.date);
+    if(m){ m.topic=topic||m.topic; m.type=r.type; updated++; }
+    else { trnData.meetings.push({ date:r.date, type:r.type, topic:topic||'No Meeting', location:trnData.meta.location||'', a1:'', a2:'' }); added++; }
+  });
+  trnPasteRows=null;
+  renderTraining(); trnSchedule();
+  showToast('Schedule: '+added+' added, '+updated+' updated');
 }
 
 function trnClean(t){

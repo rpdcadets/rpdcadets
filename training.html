@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- training.html  |  Build v2  |  updated 2026-10-28  |  pairs with roster.js v37  |  v2: the saved schedule groups months by year, so a 2027 schedule no longer collides with 2026 (month sections and jump links were keyed by month name only); when more than one year is on the schedule the jump links read "Jan 2027"; on open the page scrolls to the current month when earlier months are above it. Cache-buster roster.js?v=37. First build stamp on this page. Encrypted content unchanged. -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -200,6 +201,7 @@ footer{background:var(--navy);border-top:1px solid rgba(255,255,255,0.05);paddin
 <button class="lock-btn" id="unlockBtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>Unlock</button>
 <div class="lock-error" id="lockError">Incorrect passcode. Please try again.</div>
 <div class="lock-home"><a href="index.html"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>Return to Home</a></div>
+<div style="margin-top:20px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Build v2</div>
 </div>
 </div>
 
@@ -210,7 +212,7 @@ footer{background:var(--navy);border-top:1px solid rgba(255,255,255,0.05);paddin
 
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
-<script src="roster.js?v=14"></script>
+<script src="roster.js?v=37"></script>
 <script>
 /* Training schedule overlay: when an advisor has saved a schedule in /admin
    (Firebase node roster/training), render it here in place of the baked-in
@@ -256,10 +258,14 @@ footer{background:var(--navy);border-top:1px solid rgba(255,255,255,0.05);paddin
     entries.sort(function(a,b){return a.date<b.date?-1:a.date>b.date?1:0;});
 
     // months present, in order
+    // Build v2: months are keyed by year, so two years on one schedule never share a section or a jump link
+    var years={}; entries.forEach(function(e){var p=parse(e.date); if(p) years[p.y]=1;});
+    var multi=Object.keys(years).length>1;
+    var mid=function(p){return MON3L[p.m-1]+(multi?'-'+p.y:'');};
     var seen={}, order=[];
-    entries.forEach(function(e){var p=parse(e.date); if(!p)return; var id=MON3L[p.m-1]; if(!seen[id]){seen[id]=true; order.push({id:id,m:p.m,y:p.y});}});
+    entries.forEach(function(e){var p=parse(e.date); if(!p)return; var id=mid(p); if(!seen[id]){seen[id]=true; order.push({id:id,m:p.m,y:p.y});}});
 
-    var nav=order.map(function(o){return '<a href="#'+o.id+'" class="month-jump">'+MON3[o.m-1]+'</a>';}).join('');
+    var nav=order.map(function(o){return '<a href="#'+o.id+'" class="month-jump">'+MON3[o.m-1]+(multi?' '+o.y:'')+'</a>';}).join('');
 
     var html='<div class="info-banner"><div class="info-banner-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div class="info-banner-text"><div class="info-banner-main">Every Thursday &middot; '+esc(time)+' &middot; '+esc(loc)+'</div>'+(meta.ptNote?'<div class="info-banner-sub">'+esc(meta.ptNote)+'</div>':'')+'</div></div>';
     html+='<div class="month-nav-bar" id="monthNav">'+nav+'</div>';
@@ -267,7 +273,7 @@ footer{background:var(--navy);border-top:1px solid rgba(255,255,255,0.05);paddin
 
     var curId=null;
     entries.forEach(function(e){
-      var p=parse(e.date); var id=p?MON3L[p.m-1]:'undated';
+      var p=parse(e.date); var id=p?mid(p):'undated';
       if(id!==curId){
         if(curId!==null) html+='</div>';
         curId=id;
@@ -284,6 +290,9 @@ footer{background:var(--navy);border-top:1px solid rgba(255,255,255,0.05);paddin
     var today=new Date();today.setHours(0,0,0,0);
     document.querySelectorAll('#panelSchedule [data-date]').forEach(function(el){var d=new Date(el.dataset.date+'T12:00:00');var diff=d-today;if(diff<0)el.classList.add('is-past');else if(diff<864e5){el.classList.add('is-today');var tt=el.querySelector('.ev-topic')||el.querySelector('.feat-title');if(tt){var dot=document.createElement('span');dot.style.cssText='width:6px;height:6px;border-radius:50%;background:#c0392b;animation:pulse 2s ease infinite;margin-left:8px;display:inline-block';tt.appendChild(dot);}}});
     var sects=document.querySelectorAll('#panelSchedule .month-section');var navs=document.querySelectorAll('#panelSchedule .month-jump');
+    // Build v2: with earlier months above it, open at the current month
+    var now=new Date(); var curSec=document.getElementById(MON3L[now.getMonth()]+'-'+now.getFullYear())||document.getElementById(MON3L[now.getMonth()]);
+    if(curSec && sects.length && curSec!==sects[0] && !location.hash){ setTimeout(function(){ var y=curSec.getBoundingClientRect().top+window.pageYOffset-90; window.scrollTo(0,y); },60); }
     var obs=new IntersectionObserver(function(entries){entries.forEach(function(e){if(e.isIntersecting){navs.forEach(function(l){l.classList.remove('active')});var a=document.querySelector('.month-jump[href="#'+e.target.id+'"]');if(a)a.classList.add('active');}});},{threshold:0.3,rootMargin:'-100px 0px -60% 0px'});
     sects.forEach(function(s){obs.observe(s);});
     document.querySelectorAll('#panelSchedule .month-jump').forEach(function(l){l.addEventListener('click',function(e){e.preventDefault();var tgt=document.querySelector(l.getAttribute('href'));if(!tgt)return;var y=tgt.getBoundingClientRect().top+window.pageYOffset-90;window.scrollTo({top:y,behavior:'smooth'});});});

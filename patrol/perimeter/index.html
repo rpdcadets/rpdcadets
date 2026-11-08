@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- patrol/perimeter/index.html | Build v1 | 2026-11-08 | New tool. Perimeter: drop the last-seen pin (tap the map, type an address or an intersection such as "Custer and Mimosa", or use the phone's GPS), pick Foot or Vehicle, pick how long ago the suspect was last seen, and the map shows where they could be. Foot: a red containment ring that grows with the clock at 2.5 blocks per minute (K9 containment doctrine, 2 to 3; adjustable; Violent felony / officer down adds a block per minute), a shaded likely-hiding area of 4 blocks (most urban foot suspects go to ground within about 4 blocks), an optional direction-of-travel wedge (half of subjects within 30 degrees, three quarters within 66), and numbered "Suggested spots to set the perimeter" on the real intersections just outside the ring with cross-street names from OpenStreetMap (corners first; markers can be dragged and snap to the nearest corner). Block size is measured from the streets around the pin (default 500 ft until the street data loads). Set perimeter freezes the ring and the spots; a faint ring keeps growing to show how far they could have reached if not contained. Vehicle: road-network reach polygon for the delay from OpenRouteService (posted speeds; falls back to a 35 mph circle if the service cannot be reached), capped at 10 minutes, plus "Bailed out here" which starts a foot perimeter at the abandoned car. Copy link and QR share the whole picture through the URL; nothing is stored anywhere. Map tiles: OpenStreetMap (street), Esri World Imagery (satellite); night mode. -->
+<!-- patrol/perimeter/index.html | Build v2 | 2026-11-08 | Address suggestions: a dropdown lists matching addresses, streets and places while the officer types (OpenRouteService autocomplete, Photon as fallback), Richardson results first, addresses above streets and places when a house number is typed, intersections for "X and Y"; Enter or Go takes the top suggestion. One-shot lookups (Go with no suggestions) now also try the US Census geocoder for exact house numbers before falling back. Found 11/08/26 on an MDC: "1466 west spring valley, richardson tx" landed on the Spring Valley station instead of the address. v1: New tool. Perimeter: drop the last-seen pin (tap the map, type an address or an intersection such as "Custer and Mimosa", or use the phone's GPS), pick Foot or Vehicle, pick how long ago the suspect was last seen, and the map shows where they could be. Foot: a red containment ring that grows with the clock at 2.5 blocks per minute (K9 containment doctrine, 2 to 3; adjustable; Violent felony / officer down adds a block per minute), a shaded likely-hiding area of 4 blocks (most urban foot suspects go to ground within about 4 blocks), an optional direction-of-travel wedge (half of subjects within 30 degrees, three quarters within 66), and numbered "Suggested spots to set the perimeter" on the real intersections just outside the ring with cross-street names from OpenStreetMap (corners first; markers can be dragged and snap to the nearest corner). Block size is measured from the streets around the pin (default 500 ft until the street data loads). Set perimeter freezes the ring and the spots; a faint ring keeps growing to show how far they could have reached if not contained. Vehicle: road-network reach polygon for the delay from OpenRouteService (posted speeds; falls back to a 35 mph circle if the service cannot be reached), capped at 10 minutes, plus "Bailed out here" which starts a foot perimeter at the abandoned car. Copy link and QR share the whole picture through the URL; nothing is stored anywhere. Map tiles: OpenStreetMap (street), Esri World Imagery (satellite); night mode. -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -44,11 +44,21 @@
   body.night .mapwrap{background:#0b1220;}
   body.night #map .leaflet-tile-pane.street{filter:invert(1) hue-rotate(180deg) brightness(.85) contrast(.95);}
   .maptools{position:absolute;z-index:800;display:flex;gap:6px;}
-  .maptools.tl{top:8px;left:8px;right:8px;}
+  .maptools.tl{top:8px;left:8px;right:8px;z-index:850;}  /* above the Move pin / Sat / Night row so the suggestions list covers it while open */
   .maptools.tr{top:50px;right:8px;}
   .searchrow{display:flex;gap:6px;flex:1;min-width:0;}
-  #q{flex:1;min-width:0;font-family:"Barlow",sans-serif;font-size:16px;padding:9px 10px;border:1.5px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.25);}
+  .qwrap{flex:1;min-width:0;position:relative;}
+  #q{width:100%;min-width:0;font-family:"Barlow",sans-serif;font-size:16px;padding:9px 10px;border:1.5px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.25);}
   #q::placeholder{color:#8a93a3;}
+  .sug{display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;z-index:900;background:var(--card);border:1px solid var(--line);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.3);max-height:46vh;overflow:auto;}
+  .sug.show{display:block;}
+  .si{padding:9px 12px;min-height:46px;cursor:pointer;border-bottom:1px solid var(--line);}
+  .si:last-child{border-bottom:0;}
+  .si.active,.si:hover{background:var(--field);}
+  .si .p{font-size:16px;font-weight:600;color:var(--ink);line-height:1.25;}
+  .si .s{font-size:13px;color:var(--muted);margin-top:1px;}
+  .si .tag{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#0f6e56;border:1px solid #0f6e56;border-radius:999px;padding:1px 7px;margin-left:6px;vertical-align:1px;}
+  body.night .si .tag{color:#5dcaa5;border-color:#5dcaa5;}
   .mbtn{font-family:"Barlow Condensed",sans-serif;font-size:15px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;min-height:40px;min-width:40px;padding:6px 10px;border:1.5px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.25);display:inline-flex;align-items:center;gap:6px;}
   .mbtn.on{background:#0b1f3a;color:#fff;border-color:#0b1f3a;}
   .mbtn svg{width:18px;height:18px;}
@@ -136,7 +146,10 @@
     <div id="map" role="application" aria-label="Map"></div>
     <div class="maptools tl">
       <div class="searchrow">
-        <input id="q" type="search" placeholder="Address, or Custer and Mimosa" autocomplete="off" autocorrect="off" autocapitalize="words" spellcheck="false" enterkeyhint="search">
+        <div class="qwrap">
+          <input id="q" type="search" placeholder="Address, or Custer and Mimosa" autocomplete="off" autocorrect="off" autocapitalize="words" spellcheck="false" enterkeyhint="search" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="sug">
+          <div id="sug" class="sug" role="listbox" aria-label="Address suggestions"></div>
+        </div>
         <button class="mbtn" id="qgo" aria-label="Find">Go</button>
         <button class="mbtn" id="gps" aria-label="Use my location" title="Use my location"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="8"/></svg></button>
       </div>
@@ -225,7 +238,7 @@
   </div>
 </main>
 
-<footer class="foot">Build v1</footer>
+<footer class="foot">Build v2</footer>
 <div class="toast" id="toast"></div>
 <div class="modal-bg" id="qrModal" role="dialog" aria-modal="true" aria-label="QR code for this perimeter">
   <div class="modal">
@@ -239,7 +252,7 @@
 <script>
 (function(){
   'use strict';
-  var BUILD = '1';
+  var BUILD = '2';
   // Free OpenRouteService Standard key (HeiGIT account, 500 isochrone and 3,000 geocode lookups a day). Public by design, like the Uploadcare key.
   var ORS_KEY = 'eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6IjIyOTQxOWZlZTc1MzQ3NGVhYzdhOTA2NmU4YTI5MzBjIiwiaCI6Im11cm11cjY0In0=';
   var CFG = {
@@ -367,36 +380,132 @@
   function parseIntersection(q){ var m = q.match(/^(.+?)\s*(?:\band\b|&|\/|@|\bat\b)\s*(.+)$/i); if (!m) return null; var a = cleanStreet(m[1]), b = cleanStreet(m[2]); if (a.length < 2 || b.length < 2) return null; return [a, b]; }
   function rxEsc(s){ return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
   function overpassPost(query){ return fetch('https://overpass-api.de/api/interpreter', { method: 'POST', body: 'data=' + encodeURIComponent(query) }).then(function(r){ if (!r.ok) throw new Error('Overpass ' + r.status); return r.json(); }); }
-  function findIntersection(a, b){
-    var bb = CFG.lookupBox.join(',');
-    var q = '[out:json][timeout:20];way["highway"]["name"~"^' + rxEsc(a) + '( |$)",i](' + bb + ')->.a;way["highway"]["name"~"^' + rxEsc(b) + '( |$)",i](' + bb + ')->.b;node(w.a)(w.b);out;';
-    return overpassPost(q).then(function(j){
-      var pts = (j.elements || []).filter(function(e){ return e.type === 'node'; });
-      if (!pts.length) return null;
-      var c = map.getCenter(), ref = { lat: c.lat, lon: c.lng }; pts.sort(function(p, q2){ return distM(ref, p) - distM(ref, q2); });
-      return { lat: pts[0].lat, lon: pts[0].lon };
+  // Geocoding: suggestions while typing (OpenRouteService autocomplete, Photon fallback), Richardson first.
+  var GEO_RECT = { minLat: 32.65, minLon: -97.10, maxLat: 33.25, maxLon: -96.40 }; // Dallas, Richardson, Plano, Garland, Frisco and neighbors
+  function isRichardson(city){ return /richardson/i.test(city || ''); }
+  function startsWithNumber(t){ return /^\s*\d/.test(t); }
+  function rankItems(items, text){
+    var num = startsWithNumber(text), f = CFG.richardson;
+    items.forEach(function(it, i){
+      var sc = i * 0.01;                                   // keep the service's own order as a tiebreaker
+      if (isRichardson(it.city)) sc -= 10;                 // Richardson first
+      if (num){ if (it.layer === 'address') sc -= 5; else if (it.layer === 'street') sc -= 1; else sc += 2; } // a typed house number wants an address, not a station or a park
+      else if (it.layer === 'venue' || it.layer === 'address') sc -= 0.5;
+      var d = distM(f, it); sc += Math.min(3, d / 15000);   // then nearer to Richardson
+      it.score = sc;
+    });
+    items.sort(function(a, b){ return a.score - b.score; });
+    var seen = {}; return items.filter(function(it){ var k = it.primary.toLowerCase() + '|' + (it.city || '').toLowerCase(); if (seen[k]) return false; seen[k] = 1; return true; }).slice(0, 7);
+  }
+  function peliasItems(j){
+    return (j.features || []).map(function(ft){
+      var pr = ft.properties || {}, c = ft.geometry.coordinates;
+      var city = pr.locality || pr.localadmin || pr.county || '';
+      var primary = pr.housenumber && pr.street ? pr.housenumber + ' ' + pr.street : (pr.name || pr.street || pr.label || '');
+      var secondary = [city, pr.region_a || pr.region || ''].filter(Boolean).join(', ');
+      return { lat: c[1], lon: c[0], primary: primary, secondary: secondary, city: city, layer: pr.layer || '', label: pr.label || primary };
     });
   }
-  function geocode(text){
-    var f = CFG.richardson;
-    var u1 = 'https://api.heigit.org/pelias/v1/search?api_key=' + encodeURIComponent(ORS_KEY) + '&text=' + encodeURIComponent(text) + '&focus.point.lat=' + f.lat + '&focus.point.lon=' + f.lon + '&boundary.country=USA&size=1';
-    return fetch(u1).then(function(r){ if (!r.ok) throw new Error('geocode ' + r.status); return r.json(); }).then(function(j){ var ft = j.features && j.features[0]; if (!ft) throw new Error('no match'); return { lat: ft.geometry.coordinates[1], lon: ft.geometry.coordinates[0] }; })
-      .catch(function(){
-        var u2 = 'https://nominatim.openstreetmap.org/search?format=json&limit=1&viewbox=' + CFG.lookupBox[1] + ',' + CFG.lookupBox[2] + ',' + CFG.lookupBox[3] + ',' + CFG.lookupBox[0] + '&q=' + encodeURIComponent(text);
-        return fetch(u2).then(function(r){ return r.json(); }).then(function(j){ if (!j || !j[0]) return null; return { lat: parseFloat(j[0].lat), lon: parseFloat(j[0].lon) }; });
-      });
+  function photonItems(j){
+    return (j.features || []).map(function(ft){
+      var pr = ft.properties || {}, c = ft.geometry.coordinates;
+      var city = pr.city || pr.town || pr.village || pr.county || '';
+      var layer = pr.housenumber ? 'address' : (pr.type === 'street' || pr.osm_key === 'highway') ? 'street' : (pr.type === 'city' || pr.type === 'district' || pr.type === 'locality') ? 'locality' : 'venue';
+      var primary = pr.housenumber && pr.street ? pr.housenumber + ' ' + pr.street : (pr.name || pr.street || '');
+      var secondary = [city, pr.state || ''].filter(Boolean).join(', ');
+      return { lat: c[1], lon: c[0], primary: primary, secondary: secondary, city: city, layer: layer, label: primary + (secondary ? ', ' + secondary : '') };
+    }).filter(function(it){ return it.primary; });
   }
+  function peliasUrl(endpoint, text, size){
+    var f = CFG.richardson, r = GEO_RECT;
+    return 'https://api.heigit.org/pelias/v1/' + endpoint + '?api_key=' + encodeURIComponent(ORS_KEY) + '&text=' + encodeURIComponent(text) + '&focus.point.lat=' + f.lat + '&focus.point.lon=' + f.lon +
+      '&boundary.rect.min_lat=' + r.minLat + '&boundary.rect.min_lon=' + r.minLon + '&boundary.rect.max_lat=' + r.maxLat + '&boundary.rect.max_lon=' + r.maxLon + '&boundary.country=USA&layers=address,street,venue,locality&size=' + size;
+  }
+  function photonUrl(text, size){ var f = CFG.richardson, r = GEO_RECT; return 'https://photon.komoot.io/api/?q=' + encodeURIComponent(text) + '&lat=' + f.lat + '&lon=' + f.lon + '&limit=' + size + '&lang=en&bbox=' + r.minLon + ',' + r.minLat + ',' + r.maxLon + ',' + r.maxLat; }
+  function getJson(url, signal){ return fetch(url, { signal: signal }).then(function(r){ if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }); }
+  function suggestions(text, signal){
+    return getJson(peliasUrl('autocomplete', text, 8), signal).then(peliasItems)
+      .catch(function(e){ if (e.name === 'AbortError') throw e; return getJson(photonUrl(text, 8), signal).then(photonItems); })
+      .then(function(items){ return rankItems(items, text); });
+  }
+  // US Census geocoder (JSONP, no key): exact house numbers for a one-shot lookup when the suggestion services miss
+  function censusLookup(text){
+    return new Promise(function(resolve){
+      var cb = '__censusCb' + Date.now(), sc = document.createElement('script'), done = false;
+      var finish = function(v){ if (done) return; done = true; try { delete window[cb]; } catch(e){ window[cb] = undefined; } if (sc.parentNode) sc.parentNode.removeChild(sc); resolve(v); };
+      window[cb] = function(j){ var ms = (j && j.result && j.result.addressMatches) || []; finish(ms.map(function(m){ var a = m.matchedAddress || ''; var city = (m.addressComponents && m.addressComponents.city) || (a.split(',')[1] || '').trim(); return { lat: m.coordinates.y, lon: m.coordinates.x, primary: a.split(',')[0], secondary: [city, (m.addressComponents && m.addressComponents.state) || 'TX'].join(', '), city: city, layer: 'address', label: a }; })); };
+      sc.onerror = function(){ finish([]); }; setTimeout(function(){ finish([]); }, 6000);
+      var q = /\b(tx|texas)\b/i.test(text) ? text : text + ', TX';
+      sc.src = 'https://geocoding.geo.census.gov/geocoder/locations/onelineaddress?benchmark=Public_AR_Current&format=jsonp&callback=' + cb + '&address=' + encodeURIComponent(q);
+      document.head.appendChild(sc);
+    });
+  }
+  function lookupOnce(text){
+    // Go or Enter with nothing to pick from: ranked one-shot search, then Census for a typed house number, then Nominatim
+    return getJson(peliasUrl('search', text, 6)).then(peliasItems).catch(function(){ return []; }).then(function(items){
+      items = rankItems(items, text);
+      var good = items[0] && (!startsWithNumber(text) || items[0].layer === 'address');
+      if (good) return items[0];
+      if (!startsWithNumber(text)) return items[0] || null;
+      return censusLookup(text).then(function(cs){ cs = rankItems(cs, text); return cs[0] || items[0] || null; });
+    }).then(function(hit){
+      if (hit) return hit;
+      var r = GEO_RECT, u2 = 'https://nominatim.openstreetmap.org/search?format=json&limit=1&viewbox=' + r.minLon + ',' + r.maxLat + ',' + r.maxLon + ',' + r.minLat + '&q=' + encodeURIComponent(text);
+      return getJson(u2).then(function(j){ if (!j || !j[0]) return null; return { lat: parseFloat(j[0].lat), lon: parseFloat(j[0].lon), primary: j[0].display_name.split(',')[0], secondary: '', label: j[0].display_name }; }).catch(function(){ return null; });
+    });
+  }
+  function intersectionItems(a, b, signal){
+    var bb = CFG.lookupBox.join(',');
+    var q = '[out:json][timeout:20];way["highway"]["name"~"^' + rxEsc(a) + '( |$)",i](' + bb + ')->.a;way["highway"]["name"~"^' + rxEsc(b) + '( |$)",i](' + bb + ')->.b;node(w.a)(w.b);out;';
+    return fetch('https://overpass-api.de/api/interpreter', { method: 'POST', body: 'data=' + encodeURIComponent(q), signal: signal }).then(function(r){ if (!r.ok) throw new Error('Overpass ' + r.status); return r.json(); }).then(function(j){
+      var pts = (j.elements || []).filter(function(e){ return e.type === 'node'; }), f = CFG.richardson;
+      pts.sort(function(p1, p2){ return distM(f, p1) - distM(f, p2); });
+      var out = []; pts.forEach(function(pt){ if (out.some(function(o){ return distM(o, pt) < 400; })) return; out.push({ lat: pt.lat, lon: pt.lon, primary: cap(a) + ' at ' + cap(b), secondary: 'Intersection, ' + fmtMi(distM(f, pt)) + ' from downtown Richardson', city: '', layer: 'intersection', label: cap(a) + ' at ' + cap(b) }); });
+      return out.slice(0, 5);
+    });
+  }
+  function cap(t){ return t.replace(/\b\w/g, function(c){ return c.toUpperCase(); }); }
+
+  // ---- dropdown ----
+  var SUG = { items: [], active: -1, seq: 0, timer: null, ctrl: null, open: false };
+  var qEl = $('q'), sugEl = $('sug');
+  function hideSug(){ SUG.open = false; SUG.items = []; SUG.active = -1; sugEl.classList.remove('show'); sugEl.innerHTML = ''; qEl.setAttribute('aria-expanded', 'false'); }
+  function showSug(items){
+    SUG.items = items; SUG.active = -1;
+    if (!items.length){ hideSug(); return; }
+    sugEl.innerHTML = items.map(function(it, i){ return '<div class="si" role="option" data-i="' + i + '"><div class="p">' + esc(it.primary) + (it.layer === 'street' ? '<span class="tag">street</span>' : it.layer === 'intersection' ? '<span class="tag">corner</span>' : '') + '</div>' + (it.secondary ? '<div class="s">' + esc(it.secondary) + '</div>' : '') + '</div>'; }).join('');
+    sugEl.classList.add('show'); SUG.open = true; qEl.setAttribute('aria-expanded', 'true');
+  }
+  function setActive(i){ SUG.active = i; Array.prototype.forEach.call(sugEl.children, function(el, k){ el.classList.toggle('active', k === i); }); if (i >= 0 && sugEl.children[i]) sugEl.children[i].scrollIntoView({ block: 'nearest' }); }
+  function pickItem(it){ if (!it) return; hideSug(); qEl.value = it.primary + (it.secondary ? ', ' + it.secondary : ''); setPin(it.lat, it.lon); qEl.blur(); }
+  function requestSuggestions(text){
+    var seq = ++SUG.seq; if (SUG.ctrl) SUG.ctrl.abort(); var ctrl = new AbortController(); SUG.ctrl = ctrl;
+    var ix = parseIntersection(text);
+    var p = ix ? intersectionItems(ix[0], ix[1], ctrl.signal).catch(function(e){ if (e.name === 'AbortError') throw e; return []; }) : suggestions(text, ctrl.signal);
+    p.then(function(items){ if (seq !== SUG.seq) return; showSug(items); }).catch(function(e){ if (e.name === 'AbortError') return; if (seq === SUG.seq) hideSug(); });
+  }
+  qEl.addEventListener('input', function(){ var v = qEl.value.trim(); clearTimeout(SUG.timer); if (v.length < 3){ hideSug(); return; } SUG.timer = setTimeout(function(){ requestSuggestions(v); }, 320); });
+  qEl.addEventListener('keydown', function(e){
+    if (e.key === 'ArrowDown' && SUG.open){ e.preventDefault(); setActive(Math.min(SUG.items.length - 1, SUG.active + 1)); }
+    else if (e.key === 'ArrowUp' && SUG.open){ e.preventDefault(); setActive(Math.max(0, SUG.active - 1)); }
+    else if (e.key === 'Escape'){ hideSug(); }
+    else if (e.key === 'Enter'){ e.preventDefault(); if (SUG.open && SUG.items.length) pickItem(SUG.items[SUG.active >= 0 ? SUG.active : 0]); else doSearch(); }
+  });
+  qEl.addEventListener('blur', function(){ setTimeout(hideSug, 180); });
+  qEl.addEventListener('focus', function(){ var v = qEl.value.trim(); if (v.length >= 3 && !S.pin) requestSuggestions(v); });
+  sugEl.addEventListener('pointerdown', function(e){ e.preventDefault(); var el = e.target.closest('.si'); if (!el) return; pickItem(SUG.items[parseInt(el.getAttribute('data-i'), 10)]); });
   function doSearch(){
-    var q = $('q').value.trim(); if (!q) return;
+    var q = qEl.value.trim(); if (!q) return;
+    if (SUG.open && SUG.items.length){ pickItem(SUG.items[SUG.active >= 0 ? SUG.active : 0]); return; }
+    clearTimeout(SUG.timer); if (SUG.ctrl) SUG.ctrl.abort(); SUG.seq++;
     $('qgo').disabled = true; toast('Looking up ' + q + '...');
     var ix = parseIntersection(q);
-    var p = ix ? findIntersection(ix[0], ix[1]).then(function(r){ return r || geocode(q); }) : geocode(q);
-    p.then(function(r){ if (!r){ toast('Not found. Try another spelling, or tap the map.'); return; } setPin(r.lat, r.lon); $('q').blur(); })
+    var p = ix ? intersectionItems(ix[0], ix[1]).then(function(items){ return items[0] || lookupOnce(q); }).catch(function(){ return lookupOnce(q); }) : lookupOnce(q);
+    p.then(function(hit){ if (!hit){ toast('Not found. Try another spelling, or tap the map.'); return; } pickItem(hit); })
      .catch(function(){ toast('Lookup failed. Tap the map to place the pin.'); })
      .then(function(){ $('qgo').disabled = false; });
   }
   $('qgo').addEventListener('click', doSearch);
-  $('q').addEventListener('keydown', function(e){ if (e.key === 'Enter'){ e.preventDefault(); doSearch(); } });
 
   // ---------- chips ----------
   function chipGroup(id, attr, onPick){ $(id).addEventListener('click', function(e){ var b = e.target.closest('button.chip'); if (!b) return; onPick(b.getAttribute(attr), b); }); }
@@ -439,6 +548,7 @@
     S.blockFt = CFG.defaultBlockFt; S.blockSrc = 'default'; S.streets = null; S.streetsBox = null;
     S.placing = true; $('placeBtn').classList.remove('on'); $('mapnote').textContent = 'Tap the map where the suspect was last seen'; $('mapnote').classList.add('show');
     markChip('agoChips', 'data-min', '__none__'); $('otherMin').classList.remove('show'); $('otherMin').value = '';
+    qEl.value = ''; hideSug();
     $('setBtn').classList.remove('set-on'); $('bailBtn').classList.remove('on');
     syncChips(); pushUrl(); render(true);
   });
@@ -716,7 +826,7 @@
   })();
 
   // exposed for tests only
-  window.__perim = { S: S, CFG: CFG, spotLayer: spotLayer, computeSpots: computeSpots, buildGraph: buildGraph, localBlockFt: localBlockFt, parseIntersection: parseIntersection, cleanStreet: cleanStreet, footRadiusM: footRadiusM, isoRangeSec: isoRangeSec, render: render, setPin: setPin, map: map, dest: dest, distM: distM, bearing: bearing, wedge: wedge };
+  window.__perim = { S: S, CFG: CFG, spotLayer: spotLayer, rankItems: rankItems, SUG: SUG, computeSpots: computeSpots, buildGraph: buildGraph, localBlockFt: localBlockFt, parseIntersection: parseIntersection, cleanStreet: cleanStreet, footRadiusM: footRadiusM, isoRangeSec: isoRangeSec, render: render, setPin: setPin, map: map, dest: dest, distM: distM, bearing: bearing, wedge: wedge };
 })();
 </script>
 </body>

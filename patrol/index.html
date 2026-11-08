@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- patrol/index.html | Build v13 | 2026-10-20 | Driver Exchange and Vehicle Impound cards removed along with the "In testing" group (the tool pages stay on the site, just unlinked, because e-citation and CIS computer updates keep breaking in-car printing); Traffic Stop Notice card gains an amber note that e-citation and CIS updates may make the tool unusable; Desktop code text no longer lists Driver Exchange (a D code still routes to it if entered). v12: Desktop code box now routes D codes to the Driver Exchange (phone-filled exchange forms picked up on the MDC) and mentions it; Driver Exchange card description notes phone scanning. v11: Card redesign: short officer-speak titles (Booking Slip + Medical, APOWW, EPO Packet, Driver Exchange, Vehicle Impound), one- or two-line descriptions, printer or form icon on each card, a status slot under the title (red DRAFT pill for tools in testing, green check line for confirmations such as MRMC Campbell), the two draft tools moved under their own muted "In testing" heading at the bottom, pressed-state tint, a "Have a desktop code?" jump button in the header on phones, and a two-column layout (tools left, Desktop code box pinned right) on screens at least 900px wide that have a mouse or touchpad pointer, so sideways phones stay single-column. APOWW description now says Apprehension by Peace Officer Without Warrant. v10: APOWW and EPO cards cleared for use (DRAFT tags removed); APOWW card gains the green note that the form is confirmed accepted at MRMC Campbell. v9: Traffic card renamed "Traffic Stop Notice" (DL/ID and VIN barcode modes retired with Brazos). v8: Electronic Vehicle Impound card (draft) added at the end. v7: Driver Information Exchange card (draft) added. v6: Traffic Stop card mentions the Traffic Feedback Notice mode. v5: New card copy; APOWW card (draft) above EPO; code box routes A-codes to /patrol/apoww; 20-minute expiry wording. v4: EPO card marked DRAFT -->
+<!-- patrol/index.html | Build v14 | 2026-11-08 | Perimeter card added at the end (Draft, do not use): new /patrol/perimeter tool that draws the containment ring, likely hiding area and suggested corners from a last-seen pin, foot or vehicle, and the time since last seen. v13: Driver Exchange and Vehicle Impound cards removed along with the "In testing" group (the tool pages stay on the site, just unlinked, because e-citation and CIS computer updates keep breaking in-car printing); Traffic Stop Notice card gains an amber note that e-citation and CIS updates may make the tool unusable; Desktop code text no longer lists Driver Exchange (a D code still routes to it if entered). v12: Desktop code box now routes D codes to the Driver Exchange (phone-filled exchange forms picked up on the MDC) and mentions it; Driver Exchange card description notes phone scanning. v11: Card redesign: short officer-speak titles (Booking Slip + Medical, APOWW, EPO Packet, Driver Exchange, Vehicle Impound), one- or two-line descriptions, printer or form icon on each card, a status slot under the title (red DRAFT pill for tools in testing, green check line for confirmations such as MRMC Campbell), the two draft tools moved under their own muted "In testing" heading at the bottom, pressed-state tint, a "Have a desktop code?" jump button in the header on phones, and a two-column layout (tools left, Desktop code box pinned right) on screens at least 900px wide that have a mouse or touchpad pointer, so sideways phones stay single-column. APOWW description now says Apprehension by Peace Officer Without Warrant. v10: APOWW and EPO cards cleared for use (DRAFT tags removed); APOWW card gains the green note that the form is confirmed accepted at MRMC Campbell. v9: Traffic card renamed "Traffic Stop Notice" (DL/ID and VIN barcode modes retired with Brazos). v8: Electronic Vehicle Impound card (draft) added at the end. v7: Driver Information Exchange card (draft) added. v6: Traffic Stop card mentions the Traffic Feedback Notice mode. v5: New card copy; APOWW card (draft) above EPO; code box routes A-codes to /patrol/apoww; 20-minute expiry wording. v4: EPO card marked DRAFT -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -142,6 +142,15 @@
           </div>
           <div class="desc">Every required EPO form from one set of answers, plus the two extra forms the jail asked for.</div>
         </a>
+        <a class="tool testing" href="/patrol/perimeter/">
+          <div class="row">
+            <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.5"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/></svg></span>
+            <div class="name">Perimeter</div>
+            <span class="go">&rsaquo;</span>
+          </div>
+          <div class="desc">Drop the last-seen pin, pick foot or vehicle and how long ago, and the map shows the containment ring, the likely hiding area, and suggested corners to set the perimeter.</div>
+          <div class="status"><span class="pill">Draft &middot; do not use</span></div>
+        </a>
       </div>
     </div>
   </div>
@@ -157,10 +166,10 @@
   </aside>
 </main>
 
-<footer class="foot">Internal field tools &middot; Build v13</footer>
+<footer class="foot">Internal field tools &middot; Build v14</footer>
 
 <script>
-  const BUILD = '13';
+  const BUILD = '14';
   (async () => {
     try {
       const r = await fetch(location.pathname + '?cb=' + Date.now(), {cache:'no-store'}); if (!r.ok) return;

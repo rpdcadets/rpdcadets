@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<!-- patrol/perimeter/index.html | Build v1 | 2026-11-08 | New tool. Perimeter: drop the last-seen pin (tap the map, type an address or an intersection such as "Custer and Mimosa", or use the phone's GPS), pick Foot or Vehicle, pick how long ago the suspect was last seen, and the map shows where they could be. Foot: a red containment ring that grows with the clock at 2.5 blocks per minute (K9 containment doctrine, 2 to 3; adjustable; Violent felony / officer down adds a block per minute), a shaded likely-hiding area of 4 blocks (most urban foot suspects go to ground within about 4 blocks), an optional direction-of-travel wedge (half of subjects within 30 degrees, three quarters within 66), and numbered "Suggested spots to set the perimeter" on the real intersections just outside the ring with cross-street names from OpenStreetMap (corners first; markers can be dragged and snap to the nearest corner). Block size is measured from the streets around the pin (default 500 ft until the street data loads). Set perimeter freezes the ring and the spots; a faint ring keeps growing to show how far they could have reached if not contained. Vehicle: road-network reach polygon for the delay from OpenRouteService (posted speeds; falls back to a 35 mph circle if the service cannot be reached), capped at 10 minutes, plus "Bailed out here" which starts a foot perimeter at the abandoned car. Copy link and QR share the whole picture through the URL; nothing is stored anywhere. Map tiles: OpenStreetMap (street), Esri World Imagery (satellite); night mode. -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Perimeter</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<style>
+  :root{
+    --navy:#0b1f3a; --navy-2:#13294b; --paper:#f4f1ea; --ink:#1a1d24;
+    --line:#c9c2b4; --red:#9b2030; --gold:#b8923a; --field:#fbfaf6; --muted:#5f6675; --ok:#1f6b3a; --warn:#8a5a00;
+    --card:#fff; --teal:#0f6e56;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:"Barlow","Segoe UI",system-ui,sans-serif;
+    background:var(--paper); color:var(--ink); line-height:1.4; min-height:100vh;
+    display:flex; flex-direction:column;
+  }
+  body.night{ --paper:#0e1522; --ink:#e8e6df; --line:#2c3850; --field:#162036; --muted:#a3acbf; --card:#121b2e; --navy:#e8e6df; --navy-2:#0b1f3a; }
+  body.night .masthead{background:linear-gradient(180deg,#0b1f3a 0%,#13294b 100%);}
+  body.night .masthead h1{color:#fff;}
+  header.masthead{
+    background:linear-gradient(180deg,var(--navy) 0%,var(--navy-2) 100%);
+    border-bottom:3px solid var(--gold);
+    box-shadow:0 2px 0 var(--red) inset, 0 6px 20px rgba(0,0,0,.25);
+    padding:12px 0 10px;
+  }
+  .masthead .in{max-width:1180px;margin:0 auto;padding:0 14px;display:flex;align-items:flex-end;justify-content:space-between;gap:12px;}
+  .masthead .kick{margin:0 0 2px;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);font-weight:600;}
+  .masthead h1{margin:0;font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:28px;letter-spacing:.02em;color:#fff;line-height:1.05;}
+  .masthead .sub{margin-top:2px;font-size:12.5px;color:rgba(255,255,255,.72);}
+  .masthead a.back{color:var(--gold);text-decoration:none;font-size:13px;font-weight:600;white-space:nowrap;padding:6px 0;}
+
+  main{flex:1;width:100%;max-width:1180px;margin:0 auto;padding:10px 10px 30px;display:grid;grid-template-columns:minmax(0,1fr);gap:12px;align-items:start;}
+  .mapwrap{position:relative;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#dfe6ea;}
+  #map{height:52vh;min-height:330px;width:100%;}
+  body.night .mapwrap{background:#0b1220;}
+  body.night #map .leaflet-tile-pane.street{filter:invert(1) hue-rotate(180deg) brightness(.85) contrast(.95);}
+  .maptools{position:absolute;z-index:800;display:flex;gap:6px;}
+  .maptools.tl{top:8px;left:8px;right:8px;}
+  .maptools.tr{top:50px;right:8px;}
+  .searchrow{display:flex;gap:6px;flex:1;min-width:0;}
+  #q{flex:1;min-width:0;font-family:"Barlow",sans-serif;font-size:16px;padding:9px 10px;border:1.5px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.25);}
+  #q::placeholder{color:#8a93a3;}
+  .mbtn{font-family:"Barlow Condensed",sans-serif;font-size:15px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;min-height:40px;min-width:40px;padding:6px 10px;border:1.5px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.25);display:inline-flex;align-items:center;gap:6px;}
+  .mbtn.on{background:#0b1f3a;color:#fff;border-color:#0b1f3a;}
+  .mbtn svg{width:18px;height:18px;}
+  .mapnote{position:absolute;z-index:800;left:8px;right:8px;bottom:28px;display:none;background:rgba(11,31,58,.92);color:#fff;font-size:14px;padding:8px 12px;border-radius:8px;text-align:center;}
+  .mapnote.show{display:block;}
+  .leaflet-container{font-family:"Barlow",sans-serif;}
+  .leaflet-control-attribution{font-size:10px;}
+  .pin{width:22px;height:22px;border-radius:50%;background:var(--red);border:3px solid #fff;box-shadow:0 0 0 2px rgba(155,32,48,.6),0 2px 6px rgba(0,0,0,.5);}
+  .spot{width:30px;height:30px;border-radius:50%;background:#0f6e56;color:#fff;border:2.5px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.5);display:grid;place-items:center;font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:16px;}
+  .spot.custom{background:#b8923a;color:#0b1f3a;}
+
+  .panel{display:grid;gap:10px;}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 12px 12px;}
+  .lab{font-family:"Barlow Condensed",sans-serif;font-size:14px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin:0 0 6px;display:flex;align-items:center;gap:8px;}
+  .lab .r{margin-left:auto;font-family:"Barlow",sans-serif;font-weight:600;letter-spacing:0;text-transform:none;font-size:14px;color:var(--muted);}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;}
+  .chip{font-family:"Barlow Condensed",sans-serif;font-size:17px;font-weight:700;letter-spacing:.04em;min-height:44px;min-width:44px;padding:6px 14px;border:1.5px solid var(--line);border-radius:8px;background:var(--field);color:var(--ink);cursor:pointer;}
+  .chip.on{background:#0b1f3a;color:#fff;border-color:#0b1f3a;}
+  body.night .chip.on{background:#b8923a;color:#0b1f3a;border-color:#b8923a;}
+  .chip.sm{font-size:15px;min-height:38px;padding:4px 10px;}
+  .chip.warn.on{background:var(--red);border-color:var(--red);color:#fff;}
+  #otherMin{width:84px;font-family:"Barlow",sans-serif;font-size:17px;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px;background:var(--field);color:var(--ink);display:none;}
+  #otherMin.show{display:inline-block;}
+  .clock{font-family:"Barlow Condensed",sans-serif;font-size:30px;font-weight:700;color:var(--ink);line-height:1;margin-top:8px;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;}
+  .clock small{font-family:"Barlow",sans-serif;font-size:14px;font-weight:500;color:var(--muted);}
+  .btn{display:block;width:100%;font-family:"Barlow Condensed",sans-serif;font-size:24px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;min-height:60px;padding:12px 18px;border:0;border-radius:8px;background:var(--gold);color:#0b1f3a;cursor:pointer;}
+  .btn:disabled{opacity:.45;cursor:default;}
+  .btn.set-on{background:var(--red);color:#fff;}
+  .btn.sec{font-size:18px;min-height:48px;background:var(--card);border:1.5px solid var(--line);color:var(--ink);}
+  .row3{display:grid;grid-template-columns:1.15fr .55fr 1.3fr;gap:8px;margin-top:8px;}
+  .row3 .btn.sec{font-size:16px;padding:10px 6px;letter-spacing:.05em;}
+  .read{display:grid;gap:6px;font-size:15.5px;}
+  .read .big{font-family:"Barlow Condensed",sans-serif;font-size:26px;font-weight:700;line-height:1.1;}
+  .read .ring{color:var(--red);}
+  body.night .read .ring{color:#ff8f9b;}
+  .read .hide{color:var(--teal);}
+  body.night .read .hide{color:#5dcaa5;}
+  .read .mute{color:var(--muted);font-size:14px;}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--muted);margin-top:4px;}
+  .legend i{display:inline-block;width:14px;height:14px;border-radius:50%;vertical-align:-2px;margin-right:5px;}
+  ol.spots{margin:0;padding:0;list-style:none;display:grid;gap:4px;}
+  ol.spots li{display:flex;align-items:center;gap:10px;font-size:16px;padding:7px 6px;border-radius:8px;cursor:pointer;min-height:44px;}
+  ol.spots li:active{background:var(--field);}
+  ol.spots .n{flex:none;width:30px;height:30px;border-radius:50%;background:#0f6e56;color:#fff;display:grid;place-items:center;font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:16px;}
+  ol.spots li.custom .n{background:#b8923a;color:#0b1f3a;}
+  ol.spots .s{flex:1;min-width:0;}
+  ol.spots .d{flex:none;font-size:13px;color:var(--muted);}
+  .note{font-size:14px;color:var(--muted);}
+  .note.warn{color:var(--warn);font-weight:600;}
+  body.night .note.warn{color:#f5c060;}
+  .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:2000;background:#0b1f3a;color:#fff;padding:10px 16px;border-radius:999px;font-size:15px;box-shadow:0 6px 20px rgba(0,0,0,.35);opacity:0;pointer-events:none;transition:opacity .2s;}
+  .toast.show{opacity:1;}
+  details.how{font-size:13.5px;color:var(--muted);}
+  details.how summary{cursor:pointer;font-weight:600;color:var(--ink);}
+  details.how p{margin:8px 0 0;}
+  .modal-bg{display:none;position:fixed;inset:0;background:rgba(6,11,22,.85);z-index:1500;align-items:center;justify-content:center;padding:24px;}
+  .modal-bg.show{display:flex;}
+  .modal{background:#fff;color:#0b1f3a;border-radius:16px;padding:22px 22px 18px;max-width:360px;width:100%;text-align:center;position:relative;}
+  .modal h3{margin:0 0 8px;font-family:"Barlow Condensed",sans-serif;font-size:22px;letter-spacing:.04em;text-transform:uppercase;}
+  .modal canvas{display:block;margin:0 auto;width:min(280px,70vw);height:auto;}
+  .modal .x{position:absolute;top:8px;right:12px;background:none;border:0;font-size:28px;line-height:1;color:#5f6675;cursor:pointer;}
+  .modal .u{font-size:12px;color:#5f6675;word-break:break-all;margin-top:10px;}
+  footer.foot{text-align:center;font-size:12px;color:var(--muted);padding:14px 18px 22px;border-top:1px solid var(--line);}
+  @media (min-width: 900px) and (hover: hover) and (pointer: fine){
+    main{grid-template-columns:minmax(0,1fr) 380px;gap:14px;}
+    #map{height:calc(100vh - 150px);min-height:520px;}
+    .mapwrap{position:sticky;top:10px;}
+  }
+</style>
+</head>
+<body>
+<header class="masthead">
+  <div class="in">
+    <div>
+      <p class="kick">Public Safety &middot; Field Tools</p>
+      <h1>Perimeter</h1>
+      <div class="sub">Where they were last seen, how they fled, how long ago. Nothing is stored.</div>
+    </div>
+    <a class="back" href="/patrol/">&lsaquo; Field Tools</a>
+  </div>
+</header>
+
+<main>
+  <div class="mapwrap">
+    <div id="map" role="application" aria-label="Map"></div>
+    <div class="maptools tl">
+      <div class="searchrow">
+        <input id="q" type="search" placeholder="Address, or Custer and Mimosa" autocomplete="off" autocorrect="off" autocapitalize="words" spellcheck="false" enterkeyhint="search">
+        <button class="mbtn" id="qgo" aria-label="Find">Go</button>
+        <button class="mbtn" id="gps" aria-label="Use my location" title="Use my location"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="8"/></svg></button>
+      </div>
+    </div>
+    <div class="maptools tr">
+      <button class="mbtn" id="placeBtn" title="Tap the map to place or move the pin">Move pin</button>
+      <button class="mbtn" id="satBtn" title="Satellite">Sat</button>
+      <button class="mbtn" id="nightBtn" title="Night mode">Night</button>
+    </div>
+    <div class="mapnote" id="mapnote">Tap the map where the suspect was last seen</div>
+  </div>
+
+  <div class="panel">
+    <div class="card">
+      <div class="lab">How they fled</div>
+      <div class="chips" id="modeChips">
+        <button class="chip on" data-mode="foot">On foot</button>
+        <button class="chip" data-mode="car">Vehicle</button>
+      </div>
+      <div class="lab" style="margin-top:12px">Last seen <span class="r" id="lastSeenAbs"></span></div>
+      <div class="chips" id="agoChips">
+        <button class="chip" data-min="0">Just now</button>
+        <button class="chip" data-min="1">1 min</button>
+        <button class="chip" data-min="2">2</button>
+        <button class="chip" data-min="3">3</button>
+        <button class="chip" data-min="5">5</button>
+        <button class="chip" data-min="10">10</button>
+        <button class="chip" data-min="15">15</button>
+        <button class="chip" data-min="20">20</button>
+        <button class="chip" data-min="other">Other</button>
+        <input id="otherMin" type="number" inputmode="numeric" min="0" max="180" placeholder="min">
+      </div>
+      <div class="clock"><span id="elapsed">--:--</span><small id="elapsedNote">since last seen</small></div>
+    </div>
+
+    <div class="card" id="footOpts">
+      <div class="lab">Direction of travel <span class="r">optional</span></div>
+      <div class="chips" id="dirChips">
+        <button class="chip sm on" data-dir="">Unknown</button>
+        <button class="chip sm" data-dir="0">N</button>
+        <button class="chip sm" data-dir="45">NE</button>
+        <button class="chip sm" data-dir="90">E</button>
+        <button class="chip sm" data-dir="135">SE</button>
+        <button class="chip sm" data-dir="180">S</button>
+        <button class="chip sm" data-dir="225">SW</button>
+        <button class="chip sm" data-dir="270">W</button>
+        <button class="chip sm" data-dir="315">NW</button>
+      </div>
+      <div class="chips" style="margin-top:10px">
+        <button class="chip sm warn" id="seriousBtn">Violent felony / officer down: bigger ring</button>
+      </div>
+      <div class="lab" style="margin-top:12px">Ring growth <span class="r">blocks per minute</span></div>
+      <div class="chips" id="rateChips">
+        <button class="chip sm" data-rate="2">2</button>
+        <button class="chip sm on" data-rate="2.5">2.5</button>
+        <button class="chip sm" data-rate="3">3</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <button class="btn" id="setBtn" disabled>Set perimeter</button>
+      <button class="btn sec" id="bailBtn" style="display:none;margin-top:8px">Bailed out here</button>
+      <div class="row3">
+        <button class="btn sec" id="linkBtn">Copy link</button>
+        <button class="btn sec" id="qrBtn">QR</button>
+        <button class="btn sec" id="resetBtn">New incident</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="lab">Where they could be</div>
+      <div class="read" id="readout"><div class="mute">Place the pin and pick how long ago they were last seen.</div></div>
+      <div class="legend" id="legend"></div>
+    </div>
+
+    <div class="card" id="spotsCard">
+      <div class="lab">Suggested spots to set the perimeter <span class="r" id="spotsState"></span></div>
+      <ol class="spots" id="spots"></ol>
+      <div class="note" id="spotsNote">Corners just outside the ring, from the street map. Drag a marker to move a spot; it snaps to the nearest corner.</div>
+    </div>
+
+    <details class="how card">
+      <summary>How the picture is drawn</summary>
+      <p>Containment ring: K9 containment doctrine, 2 to 3 blocks for every minute since the suspect was last seen (2.5 by default), using the block size measured from the streets around the pin. Likely hiding area: most urban foot suspects go to ground within about 4 blocks of where they were last seen (Calgary Police dog-section study). Direction wedge: about half of fleeing or lost subjects are found within 30 degrees of their last direction of travel and three quarters within 66 (search-and-rescue dispersion data). Vehicle reach: travel time over the road network at posted speeds from OpenRouteService; a fleeing driver can beat it. Spots: real intersections just outside the ring, corners first. Map data &copy; OpenStreetMap contributors.</p>
+    </details>
+  </div>
+</main>
+
+<footer class="foot">Build v1</footer>
+<div class="toast" id="toast"></div>
+<div class="modal-bg" id="qrModal" role="dialog" aria-modal="true" aria-label="QR code for this perimeter">
+  <div class="modal">
+    <button class="x" id="qrClose" aria-label="Close">&times;</button>
+    <h3>Scan to open this perimeter</h3>
+    <canvas id="qrCanvas" width="280" height="280"></canvas>
+    <div class="u" id="qrUrl"></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  'use strict';
+  var BUILD = '1';
+  // Free OpenRouteService Standard key (HeiGIT account, 500 isochrone and 3,000 geocode lookups a day). Public by design, like the Uploadcare key.
+  var ORS_KEY = 'eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6IjIyOTQxOWZlZTc1MzQ3NGVhYzdhOTA2NmU4YTI5MzBjIiwiaCI6Im11cm11cjY0In0=';
+  var CFG = {
+    defaultBlockFt: 500,        // PROVISIONAL default until the citywide block measurement replaces it; the page measures the blocks around the pin once street data loads
+    rate: 2.5,                  // blocks per minute of delay (doctrine range 2 to 3)
+    seriousBonus: 1,            // extra blocks per minute with Violent felony / officer down on
+    hideBlocks: 4, hideBlocksSerious: 6,
+    minRadiusBlocks: 1,
+    carFallbackMph: 35,
+    carMaxSec: 600,
+    spotsMaxRadiusM: 2414,      // 1.5 miles; past that, hold major roads
+    richardson: { lat: 32.9483, lon: -96.7299 },
+    // DFW north bounding box for intersection lookups: S, W, N, E
+    lookupBox: [32.80, -96.95, 33.15, -96.50]
+  };
+  var FT = 3.28084, MI = 1609.344;
+
+  // ---------- geometry ----------
+  var RE = 6371008.8, toR = Math.PI / 180, toD = 180 / Math.PI;
+  function distM(a, b){ var dLat = (b.lat - a.lat) * toR, dLon = (b.lon - a.lon) * toR; var s = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(a.lat * toR) * Math.cos(b.lat * toR) * Math.sin(dLon / 2) * Math.sin(dLon / 2); return 2 * RE * Math.asin(Math.sqrt(s)); }
+  function bearing(a, b){ var y = Math.sin((b.lon - a.lon) * toR) * Math.cos(b.lat * toR); var x = Math.cos(a.lat * toR) * Math.sin(b.lat * toR) - Math.sin(a.lat * toR) * Math.cos(b.lat * toR) * Math.cos((b.lon - a.lon) * toR); return (Math.atan2(y, x) * toD + 360) % 360; }
+  function dest(p, brg, d){ var dl = d / RE, th = brg * toR, p1 = p.lat * toR, l1 = p.lon * toR; var p2 = Math.asin(Math.sin(p1) * Math.cos(dl) + Math.cos(p1) * Math.sin(dl) * Math.cos(th)); var l2 = l1 + Math.atan2(Math.sin(th) * Math.sin(dl) * Math.cos(p1), Math.cos(dl) - Math.sin(p1) * Math.sin(p2)); return { lat: p2 * toD, lon: ((l2 * toD + 540) % 360) - 180 }; }
+  function bboxAround(p, halfM){ var dLat = halfM / 111320, dLon = halfM / (111320 * Math.cos(p.lat * toR)); return { s: p.lat - dLat, w: p.lon - dLon, n: p.lat + dLat, e: p.lon + dLon }; }
+  function pct(arr, q){ if (!arr.length) return NaN; var s = arr.slice().sort(function(x, y){ return x - y; }); var i = (s.length - 1) * q, lo = Math.floor(i), hi = Math.ceil(i); return s[lo] + (s[hi] - s[lo]) * (i - lo); }
+
+  // ---------- state ----------
+  var S = {
+    pin: null,            // {lat, lon}
+    mode: 'foot',         // 'foot' | 'car'
+    lastSeen: null,       // ms epoch
+    setAt: null,          // ms epoch when the perimeter was set (frozen)
+    dir: null,            // bearing degrees or null
+    serious: false,
+    rate: CFG.rate,
+    blockFt: CFG.defaultBlockFt,
+    blockSrc: 'default',  // 'default' | 'measured' | 'link'
+    placing: true,        // tap the map to place the pin
+    bailing: false,       // tap the map to mark where the car was left
+    spots: [],            // [{lat, lon, label, custom}]
+    spotsPinned: false,   // true after a manual drag: stop auto-recomputing until the next pin, mode or incident
+    spotsR: null,         // ring radius the spots were computed for (m)
+    streets: null,        // processed street graph
+    streetsBox: null,     // {center:{lat,lon}, half:m}
+    streetsBusy: false,
+    iso: null,            // {geojson, sec, pin:{lat,lon}}
+    isoBusy: false, isoLast: 0, isoLastKey: '', isoCount: 0, isoFailed: false,
+    sat: false,
+    userMovedAt: 0
+  };
+
+  // ---------- helpers ----------
+  var $ = function(id){ return document.getElementById(id); };
+  function fmtFt(m){ return Math.round(m * FT).toLocaleString('en-US') + ' ft'; }
+  function fmtMi(m){ var mi = m / MI; return (mi < 0.1 ? mi.toFixed(2) : mi.toFixed(mi < 1 ? 2 : 1)) + ' mi'; }
+  function fmtBlocks(m){ var b = m / (S.blockFt / FT); return b < 3 ? (Math.round(b * 2) / 2).toString() : Math.round(b).toString(); }
+  function fmtClock(ms){ if (ms < 0) ms = 0; var s = Math.floor(ms / 1000), m = Math.floor(s / 60); s = s % 60; if (m >= 60) return Math.floor(m / 60) + 'h ' + (m % 60) + 'm'; return m + ':' + (s < 10 ? '0' : '') + s; }
+  function fmtTime(ms){ var d = new Date(ms); var h = d.getHours(), mi = d.getMinutes(); return (h < 10 ? '0' : '') + h + ':' + (mi < 10 ? '0' : '') + mi; }
+  var toastT = null;
+  function toast(msg){ var t = $('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(function(){ t.classList.remove('show'); }, 2600); }
+  function esc(s){ return String(s).replace(/[&<>"']/g, function(c){ return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function blockM(){ return S.blockFt / FT; }
+  function rateEff(){ return S.rate + (S.serious ? CFG.seriousBonus : 0); }
+  function hideBlocks(){ return S.serious ? CFG.hideBlocksSerious : CFG.hideBlocks; }
+  function delayMs(now){ if (!S.lastSeen) return 0; return Math.max(0, (S.setAt || now) - S.lastSeen); }
+  function footRadiusM(ms){ var min = ms / 60000; return Math.max(CFG.minRadiusBlocks, rateEff() * min) * blockM(); }
+  function footRadius(now){ return footRadiusM(delayMs(now)); }
+  function liveRadius(now){ return footRadiusM(Math.max(0, now - S.lastSeen)); }
+  function carFallbackRadius(ms){ return Math.max(blockM(), CFG.carFallbackMph * MI * (ms / 3600000)); }
+
+  // ---------- map ----------
+  var map = L.map('map', { zoomControl: false, attributionControl: true, tap: true }).setView([CFG.richardson.lat, CFG.richardson.lon], 14);
+  L.control.zoom({ position: 'bottomleft' }).addTo(map);
+  var streetLayer = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' });
+  var satLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, attribution: 'Imagery &copy; Esri and its data providers' });
+  streetLayer.addTo(map);
+  map.getPane('tilePane').classList.add('street');
+  var shapes = L.layerGroup().addTo(map);   // ring, hide zone, wedge, iso polygon
+  var spotLayer = L.layerGroup().addTo(map);
+  var pinMarker = null;
+  var programmaticMove = false, lastFitR = 0;
+  map.on('movestart zoomstart', function(){ if (!programmaticMove) S.userMovedAt = Date.now(); });
+  function fitRing(R){
+    if (!S.pin) return; lastFitR = R; programmaticMove = true;
+    var nn = dest(S.pin, 0, R), ss = dest(S.pin, 180, R), ee = dest(S.pin, 90, R), ww = dest(S.pin, 270, R);
+    try { map.fitBounds(L.latLngBounds([[ss.lat, ww.lon], [nn.lat, ee.lon]]), { padding: [36, 36], maxZoom: 17, animate: false }); } catch(e){}
+    setTimeout(function(){ programmaticMove = false; }, 400);
+  }
+
+  function setPin(lat, lon, opts){
+    opts = opts || {};
+    S.pin = { lat: lat, lon: lon };
+    if (!pinMarker){
+      pinMarker = L.marker([lat, lon], { draggable: true, icon: L.divIcon({ className: '', html: '<div class="pin"></div>', iconSize: [22, 22], iconAnchor: [11, 11] }), zIndexOffset: 1000, title: 'Last seen' }).addTo(map);
+      pinMarker.on('dragend', function(){ var ll = pinMarker.getLatLng(); setPin(ll.lat, ll.lng, { keepView: true }); });
+    } else pinMarker.setLatLng([lat, lon]);
+    S.placing = false; $('placeBtn').classList.remove('on'); $('mapnote').classList.remove('show');
+    if (!opts.keepView){ programmaticMove = true; map.setView([lat, lon], Math.max(map.getZoom(), 15), { animate: false }); setTimeout(function(){ programmaticMove = false; }, 400); S.userMovedAt = 0; lastFitR = 0; }
+    S.spots = []; S.spotsR = null; S.spotsPinned = false; S.iso = null; S.isoFailed = false;
+    loadStreets();
+    if (!S.lastSeen && !opts.silent) toast('Now pick how long ago they were last seen');
+    pushUrl(); render(true);
+  }
+
+  map.on('click', function(e){
+    if (S.bailing){ S.bailing = false; $('bailBtn').classList.remove('on'); S.mode = 'foot'; S.lastSeen = Date.now(); S.setAt = null; S.dir = null; syncChips(); setPin(e.latlng.lat, e.latlng.lng, { silent: true }); toast('Foot perimeter started at the car'); return; }
+    if (S.placing || !S.pin){ setPin(e.latlng.lat, e.latlng.lng); }
+  });
+  $('placeBtn').addEventListener('click', function(){ S.placing = !S.placing; this.classList.toggle('on', S.placing); $('mapnote').textContent = 'Tap the map where the suspect was last seen'; $('mapnote').classList.toggle('show', S.placing); });
+  $('satBtn').addEventListener('click', function(){ S.sat = !S.sat; this.classList.toggle('on', S.sat); if (S.sat){ map.removeLayer(streetLayer); satLayer.addTo(map); map.getPane('tilePane').classList.remove('street'); } else { map.removeLayer(satLayer); streetLayer.addTo(map); map.getPane('tilePane').classList.add('street'); } });
+  $('nightBtn').addEventListener('click', function(){ var on = document.body.classList.toggle('night'); this.classList.toggle('on', on); try { localStorage.setItem('rpd_perim_night', on ? '1' : '0'); } catch(e){} });
+  try { if (localStorage.getItem('rpd_perim_night') === '1'){ document.body.classList.add('night'); $('nightBtn').classList.add('on'); } } catch(e){}
+  $('mapnote').classList.add('show');
+
+  // ---------- GPS ----------
+  $('gps').addEventListener('click', function(){
+    if (!navigator.geolocation){ toast('No location on this device. Tap the map instead.'); return; }
+    toast('Getting your location...');
+    navigator.geolocation.getCurrentPosition(function(pos){ setPin(pos.coords.latitude, pos.coords.longitude); if (pos.coords.accuracy > 150) toast('Location is rough (about ' + Math.round(pos.coords.accuracy * FT) + ' ft). Drag the pin if needed.'); },
+      function(){ toast('Location unavailable here. Tap the map or type an address.'); }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 15000 });
+  });
+
+  // ---------- search: intersection or address ----------
+  var SUFFIX = /\s+(rd|road|dr|drive|st|street|ave|avenue|blvd|boulevard|pkwy|parkway|ln|lane|ct|court|pl|place|way|trl|trail|cir|circle|hwy|highway|expy|expressway|fwy|freeway|loop)\.?$/i;
+  function cleanStreet(s){ s = s.trim().replace(/^(n|s|e|w|north|south|east|west)\.?\s+/i, '').replace(SUFFIX, '').trim(); return s.replace(/[^A-Za-z0-9 '\-]/g, ''); }
+  function parseIntersection(q){ var m = q.match(/^(.+?)\s*(?:\band\b|&|\/|@|\bat\b)\s*(.+)$/i); if (!m) return null; var a = cleanStreet(m[1]), b = cleanStreet(m[2]); if (a.length < 2 || b.length < 2) return null; return [a, b]; }
+  function rxEsc(s){ return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+  function overpassPost(query){ return fetch('https://overpass-api.de/api/interpreter', { method: 'POST', body: 'data=' + encodeURIComponent(query) }).then(function(r){ if (!r.ok) throw new Error('Overpass ' + r.status); return r.json(); }); }
+  function findIntersection(a, b){
+    var bb = CFG.lookupBox.join(',');
+    var q = '[out:json][timeout:20];way["highway"]["name"~"^' + rxEsc(a) + '( |$)",i](' + bb + ')->.a;way["highway"]["name"~"^' + rxEsc(b) + '( |$)",i](' + bb + ')->.b;node(w.a)(w.b);out;';
+    return overpassPost(q).then(function(j){
+      var pts = (j.elements || []).filter(function(e){ return e.type === 'node'; });
+      if (!pts.length) return null;
+      var c = map.getCenter(), ref = { lat: c.lat, lon: c.lng }; pts.sort(function(p, q2){ return distM(ref, p) - distM(ref, q2); });
+      return { lat: pts[0].lat, lon: pts[0].lon };
+    });
+  }
+  function geocode(text){
+    var f = CFG.richardson;
+    var u1 = 'https://api.heigit.org/pelias/v1/search?api_key=' + encodeURIComponent(ORS_KEY) + '&text=' + encodeURIComponent(text) + '&focus.point.lat=' + f.lat + '&focus.point.lon=' + f.lon + '&boundary.country=USA&size=1';
+    return fetch(u1).then(function(r){ if (!r.ok) throw new Error('geocode ' + r.status); return r.json(); }).then(function(j){ var ft = j.features && j.features[0]; if (!ft) throw new Error('no match'); return { lat: ft.geometry.coordinates[1], lon: ft.geometry.coordinates[0] }; })
+      .catch(function(){
+        var u2 = 'https://nominatim.openstreetmap.org/search?format=json&limit=1&viewbox=' + CFG.lookupBox[1] + ',' + CFG.lookupBox[2] + ',' + CFG.lookupBox[3] + ',' + CFG.lookupBox[0] + '&q=' + encodeURIComponent(text);
+        return fetch(u2).then(function(r){ return r.json(); }).then(function(j){ if (!j || !j[0]) return null; return { lat: parseFloat(j[0].lat), lon: parseFloat(j[0].lon) }; });
+      });
+  }
+  function doSearch(){
+    var q = $('q').value.trim(); if (!q) return;
+    $('qgo').disabled = true; toast('Looking up ' + q + '...');
+    var ix = parseIntersection(q);
+    var p = ix ? findIntersection(ix[0], ix[1]).then(function(r){ return r || geocode(q); }) : geocode(q);
+    p.then(function(r){ if (!r){ toast('Not found. Try another spelling, or tap the map.'); return; } setPin(r.lat, r.lon); $('q').blur(); })
+     .catch(function(){ toast('Lookup failed. Tap the map to place the pin.'); })
+     .then(function(){ $('qgo').disabled = false; });
+  }
+  $('qgo').addEventListener('click', doSearch);
+  $('q').addEventListener('keydown', function(e){ if (e.key === 'Enter'){ e.preventDefault(); doSearch(); } });
+
+  // ---------- chips ----------
+  function chipGroup(id, attr, onPick){ $(id).addEventListener('click', function(e){ var b = e.target.closest('button.chip'); if (!b) return; onPick(b.getAttribute(attr), b); }); }
+  function markChip(id, attr, val){ Array.prototype.forEach.call($(id).querySelectorAll('button.chip'), function(b){ b.classList.toggle('on', b.getAttribute(attr) === String(val)); }); }
+  chipGroup('modeChips', 'data-mode', function(v){ if (S.setAt){ toast('Perimeter is set. Tap New incident to change.'); return; } S.mode = v; S.iso = null; S.isoFailed = false; S.spots = []; S.spotsR = null; S.spotsPinned = false; syncChips(); pushUrl(); render(true); });
+  chipGroup('agoChips', 'data-min', function(v, b){
+    if (S.setAt){ toast('Perimeter is set. Tap New incident to change.'); return; }
+    if (v === 'other'){ var inp = $('otherMin'); inp.classList.add('show'); markChip('agoChips', 'data-min', 'other'); inp.focus(); return; }
+    $('otherMin').classList.remove('show');
+    S.lastSeen = Date.now() - parseFloat(v) * 60000; S.iso = null; S.isoFailed = false; S.spots = []; S.spotsR = null; S.spotsPinned = false;
+    markChip('agoChips', 'data-min', v); pushUrl(); render(true);
+    if (!S.pin) toast('Now tap the map where they were last seen');
+  });
+  $('otherMin').addEventListener('change', function(){ var v = parseFloat(this.value); if (isNaN(v) || v < 0) return; S.lastSeen = Date.now() - v * 60000; S.iso = null; S.spots = []; S.spotsR = null; S.spotsPinned = false; pushUrl(); render(true); });
+  $('otherMin').addEventListener('keydown', function(e){ if (e.key === 'Enter'){ this.blur(); } });
+  chipGroup('dirChips', 'data-dir', function(v){ S.dir = v === '' ? null : parseFloat(v); markChip('dirChips', 'data-dir', v); pushUrl(); render(true); });
+  $('seriousBtn').addEventListener('click', function(){ if (S.setAt){ toast('Perimeter is set. Tap New incident to change.'); return; } S.serious = !S.serious; this.classList.toggle('on', S.serious); S.spots = []; S.spotsR = null; S.spotsPinned = false; pushUrl(); render(true); });
+  chipGroup('rateChips', 'data-rate', function(v){ if (S.setAt){ toast('Perimeter is set. Tap New incident to change.'); return; } S.rate = parseFloat(v); markChip('rateChips', 'data-rate', v); S.spots = []; S.spotsR = null; S.spotsPinned = false; pushUrl(); render(true); });
+  function syncChips(){
+    markChip('modeChips', 'data-mode', S.mode);
+    markChip('dirChips', 'data-dir', S.dir === null ? '' : S.dir);
+    markChip('rateChips', 'data-rate', S.rate);
+    $('seriousBtn').classList.toggle('on', S.serious);
+    $('footOpts').style.display = S.mode === 'foot' ? '' : 'none';
+    $('spotsCard').style.display = S.mode === 'foot' ? '' : 'none';
+    $('bailBtn').style.display = S.mode === 'car' ? '' : 'none';
+    if (S.lastSeen && !document.querySelector('#agoChips .chip.on')){ /* restored from a link: no chip highlighted */ }
+  }
+
+  // ---------- set / reset / bail ----------
+  $('setBtn').addEventListener('click', function(){
+    if (!S.pin || !S.lastSeen) return;
+    if (S.setAt){ S.setAt = null; this.classList.remove('set-on'); toast('Perimeter released; the ring is growing again'); }
+    else { S.setAt = Date.now(); this.classList.add('set-on'); toast('Perimeter set and held'); }
+    pushUrl(); render(true);
+  });
+  $('resetBtn').addEventListener('click', function(){
+    S.pin = null; if (pinMarker){ map.removeLayer(pinMarker); pinMarker = null; }
+    S.lastSeen = null; S.setAt = null; S.dir = null; S.serious = false; S.rate = CFG.rate; S.mode = 'foot'; S.spots = []; S.spotsR = null; S.spotsPinned = false; S.iso = null; S.isoFailed = false; S.isoLastKey = ''; S.bailing = false;
+    S.blockFt = CFG.defaultBlockFt; S.blockSrc = 'default'; S.streets = null; S.streetsBox = null;
+    S.placing = true; $('placeBtn').classList.remove('on'); $('mapnote').textContent = 'Tap the map where the suspect was last seen'; $('mapnote').classList.add('show');
+    markChip('agoChips', 'data-min', '__none__'); $('otherMin').classList.remove('show'); $('otherMin').value = '';
+    $('setBtn').classList.remove('set-on'); $('bailBtn').classList.remove('on');
+    syncChips(); pushUrl(); render(true);
+  });
+  $('bailBtn').addEventListener('click', function(){ S.bailing = !S.bailing; this.classList.toggle('on', S.bailing); $('mapnote').textContent = 'Tap the map where the car was left'; $('mapnote').classList.toggle('show', S.bailing); });
+
+  // ---------- share ----------
+  function pushUrl(){
+    var p = new URLSearchParams();
+    var fresh = new URLSearchParams(location.search).get('fresh'); if (fresh) p.set('fresh', fresh);
+    if (S.pin){ p.set('lat', S.pin.lat.toFixed(5)); p.set('lon', S.pin.lon.toFixed(5)); }
+    if (S.mode !== 'foot') p.set('m', S.mode);
+    if (S.lastSeen) p.set('ls', String(S.lastSeen));
+    if (S.setAt) p.set('set', String(S.setAt));
+    if (S.dir !== null) p.set('dir', String(S.dir));
+    if (S.serious) p.set('sev', '1');
+    if (S.rate !== CFG.rate) p.set('rate', String(S.rate));
+    if (S.pin && S.lastSeen) p.set('blk', String(Math.round(S.blockFt)));
+    var qs = p.toString();
+    try { history.replaceState(null, '', location.pathname + (qs ? '?' + qs : '')); } catch(e){}
+  }
+  function readUrl(){
+    var p = new URLSearchParams(location.search); var restored = false;
+    var lat = parseFloat(p.get('lat')), lon = parseFloat(p.get('lon'));
+    if (p.get('m') === 'car') S.mode = 'car';
+    if (p.get('ls')) { S.lastSeen = parseInt(p.get('ls'), 10) || null; }
+    if (p.get('set')) { S.setAt = parseInt(p.get('set'), 10) || null; if (S.setAt) $('setBtn').classList.add('set-on'); }
+    if (p.get('dir') !== null && p.get('dir') !== '') S.dir = parseFloat(p.get('dir'));
+    if (p.get('sev') === '1') S.serious = true;
+    if (p.get('rate')) S.rate = parseFloat(p.get('rate')) || CFG.rate;
+    if (p.get('blk')) { var b = parseInt(p.get('blk'), 10); if (b >= 150 && b <= 1500){ S.blockFt = b; S.blockSrc = 'link'; } }
+    syncChips();
+    if (!isNaN(lat) && !isNaN(lon)){ restored = true; setPin(lat, lon, { silent: true }); }
+    return restored;
+  }
+  function shareUrl(){ pushUrl(); var u = location.href.replace(/([?&])fresh=\d+&?/, '$1').replace(/[?&]$/, ''); return u; }
+  $('linkBtn').addEventListener('click', function(){
+    var u = shareUrl();
+    var done = function(){ toast('Link copied. Paste it to another unit.'); };
+    if (navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(u).then(done, function(){ fallbackCopy(u); }); } else fallbackCopy(u);
+  });
+  function fallbackCopy(u){ var ta = document.createElement('textarea'); ta.value = u; ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.select(); var ok = false; try { ok = document.execCommand('copy'); } catch(e){} document.body.removeChild(ta); toast(ok ? 'Link copied. Paste it to another unit.' : 'Could not copy. Use the QR instead.'); }
+  $('qrBtn').addEventListener('click', function(){
+    var u = shareUrl(); $('qrUrl').textContent = u;
+    try {
+      var q = window.qrcode(0, 'M'); q.addData(u); q.make();
+      var n = q.getModuleCount(), c = $('qrCanvas'), size = 280, cell = Math.floor((size - 16) / n), off = Math.floor((size - cell * n) / 2);
+      var ctx = c.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, size, size); ctx.fillStyle = '#000';
+      for (var r = 0; r < n; r++) for (var cc = 0; cc < n; cc++) if (q.isDark(r, cc)) ctx.fillRect(off + cc * cell, off + r * cell, cell, cell);
+    } catch(e){ toast('QR unavailable; use Copy link.'); return; }
+    $('qrModal').classList.add('show');
+  });
+  $('qrClose').addEventListener('click', function(){ $('qrModal').classList.remove('show'); });
+  $('qrModal').addEventListener('click', function(e){ if (e.target === this) this.classList.remove('show'); });
+  document.addEventListener('keydown', function(e){ if (e.key === 'Escape') $('qrModal').classList.remove('show'); });
+
+  // ---------- street data (OpenStreetMap via Overpass) ----------
+  var HW = '^(motorway|trunk|primary|secondary|tertiary|unclassified|residential|living_street|motorway_link|trunk_link|primary_link|secondary_link|tertiary_link)$';
+  function neededHalf(){ var now = Date.now(); var R = S.mode === 'foot' ? footRadius(now) : 0; return Math.min(2900, Math.max(650, R + 3 * blockM())); }
+  function loadStreets(){
+    if (!S.pin || S.mode !== 'foot' || S.streetsBusy) return;
+    var half = neededHalf();
+    if (S.streetsBox && distM(S.streetsBox.center, S.pin) + half <= S.streetsBox.half) return; // already covered
+    if (footRadius(Date.now()) > CFG.spotsMaxRadiusM) return;
+    S.streetsBusy = true; S.streetsErr = null; var center = { lat: S.pin.lat, lon: S.pin.lon }; var fetchHalf = Math.min(2900, half + 400);
+    var b = bboxAround(center, fetchHalf);
+    var q = '[out:json][timeout:25];way["highway"~"' + HW + '"](' + b.s.toFixed(5) + ',' + b.w.toFixed(5) + ',' + b.n.toFixed(5) + ',' + b.e.toFixed(5) + ');out body;>;out skel qt;';
+    $('spotsState').textContent = 'loading streets...';
+    overpassPost(q).then(function(j){
+      S.streets = buildGraph(j.elements || []); S.streetsBox = { center: center, half: fetchHalf };
+      if (S.blockSrc !== 'link'){ var mb = localBlockFt(S.streets, center, 800); if (mb){ S.blockFt = mb; S.blockSrc = 'measured'; } }
+      S.spots = []; S.spotsR = null; S.spotsPinned = false; S.streetsBusy = false; pushUrl(); render(true);
+    }).catch(function(e){ S.streetsBusy = false; S.streetsErr = e.message || 'error'; S.streetsErrAt = Date.now(); render(true); });
+  }
+  function buildGraph(elements){
+    var nodes = new Map(), ways = [];
+    elements.forEach(function(e){ if (e.type === 'node') nodes.set(e.id, { lat: e.lat, lon: e.lon }); else if (e.type === 'way' && e.nodes && e.nodes.length > 1) ways.push(e); });
+    var inc = new Map(), interior = new Map();
+    ways.forEach(function(w, i){ w.nodes.forEach(function(n, k){ var s = inc.get(n); if (!s){ s = []; inc.set(n, s); } s.push(i); if (k > 0 && k < w.nodes.length - 1) interior.set(n, (interior.get(n) || 0) + 1); }); });
+    function nameOf(w){ return (w.tags && (w.tags.name || w.tags.ref)) || ''; }
+    var junctions = [];
+    inc.forEach(function(ws, n){
+      var isJ = ws.length >= 3 || (ws.length === 2 && (interior.get(n) || 0) >= 1);
+      if (!isJ) return; var p = nodes.get(n); if (!p) return;
+      var names = []; ws.forEach(function(i){ var nm = nameOf(ways[i]); if (nm && names.indexOf(nm) < 0) names.push(nm); });
+      var major = ws.some(function(i){ return /^(primary|secondary|tertiary)/.test(ways[i].tags.highway || ''); });
+      var freeway = ws.some(function(i){ return /^(motorway|trunk)/.test(ways[i].tags.highway || ''); });
+      junctions.push({ id: n, lat: p.lat, lon: p.lon, names: names, degree: ws.length, major: major, freeway: freeway });
+    });
+    return { nodes: nodes, ways: ways, inc: inc, interior: interior, junctions: junctions, nameOf: nameOf };
+  }
+  function localBlockFt(g, center, withinM){
+    // residential street stretches between two intersections near the pin; median length in feet
+    var isJ = function(n){ var s = g.inc.get(n); return !!s && (s.length >= 3 || (s.length === 2 && (g.interior.get(n) || 0) >= 1)); };
+    var adj = new Map(); function add(a, b, len, i){ if (!adj.has(a)) adj.set(a, []); adj.get(a).push({ to: b, len: len, w: i }); }
+    g.ways.forEach(function(w, i){ if (!(w.tags && w.tags.highway === 'residential')) return; for (var k = 0; k < w.nodes.length - 1; k++){ var a = w.nodes[k], b = w.nodes[k + 1], pa = g.nodes.get(a), pb = g.nodes.get(b); if (!pa || !pb) continue; var len = distM(pa, pb); add(a, b, len, i); add(b, a, len, i); } });
+    var used = new Set(); function key(a, b, i){ return a < b ? a + '|' + b + '|' + i : b + '|' + a + '|' + i; }
+    var lens = [];
+    adj.forEach(function(edges, start){
+      if (!isJ(start)) return;
+      edges.forEach(function(e0){
+        if (used.has(key(start, e0.to, e0.w))) return;
+        var cur = e0.to, len = e0.len, wIdx = e0.w, steps = 0, dead = false; used.add(key(start, cur, wIdx));
+        while (!isJ(cur)){ var nexts = (adj.get(cur) || []).filter(function(e){ return !used.has(key(cur, e.to, e.w)); }); if (!nexts.length){ dead = true; break; } var nx = nexts.filter(function(e){ return e.w === wIdx; })[0] || nexts.filter(function(e){ return g.nameOf(g.ways[e.w]) === g.nameOf(g.ways[wIdx]); })[0] || nexts[0]; used.add(key(cur, nx.to, nx.w)); cur = nx.to; len += nx.len; wIdx = nx.w; if (++steps > 5000) break; }
+        if (dead) return; var a = g.nodes.get(start), b = g.nodes.get(cur); var mid = { lat: (a.lat + b.lat) / 2, lon: (a.lon + b.lon) / 2 };
+        if (distM(mid, center) <= withinM) lens.push(len * FT);
+      });
+    });
+    if (lens.length < 8) return null;
+    var med = pct(lens, 0.5); return Math.round(Math.min(900, Math.max(250, med)));
+  }
+
+  // ---------- suggested spots ----------
+  function computeSpots(R){
+    if (!S.streets || !S.pin) return [];
+    var B = blockM(), pin = S.pin, cands = [];
+    S.streets.junctions.forEach(function(j){
+      if (!j.names.length || j.freeway) return;
+      var d = distM(pin, j); if (d < R - 0.3 * B || d > R + 2.5 * B) return;
+      var brg = bearing(pin, j); var sector = Math.round(brg / 45) % 8;
+      var score = Math.abs(d - (R + 0.6 * B)) + (j.names.length < 2 ? 0.5 * B : 0) + (j.degree >= 3 ? 0 : 0.15 * B) - (j.major ? 0.1 * B : 0);
+      cands.push({ j: j, d: d, brg: brg, sector: sector, score: score });
+    });
+    cands.sort(function(a, b){ return a.score - b.score; });
+    var chosen = [];
+    for (var sec = 0; sec < 8; sec++){
+      for (var i = 0; i < cands.length; i++){
+        var c = cands[i]; if (c.sector !== sec) continue;
+        var tooClose = chosen.some(function(x){ return distM(x, c.j) < 0.6 * B; }); if (tooClose) continue;
+        chosen.push({ lat: c.j.lat, lon: c.j.lon, label: labelOf(c.j), d: c.d, brg: c.brg, custom: false }); break;
+      }
+    }
+    return chosen;
+  }
+  function labelOf(j){ if (!j.names.length) return 'Corner'; if (j.names.length === 1) return j.names[0]; return j.names[0] + ' at ' + j.names[1]; }
+  function nearestJunction(p, maxM){ var best = null, bd = maxM; if (!S.streets) return null; S.streets.junctions.forEach(function(j){ var d = distM(p, j); if (d < bd){ bd = d; best = j; } }); return best; }
+  function compass(brg){ return ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'][Math.round(brg / 45) % 8]; }
+  function renderSpots(R){
+    var list = $('spots'), st = $('spotsState'), note = $('spotsNote');
+    if (S.mode !== 'foot' || !S.pin || !S.lastSeen){ list.innerHTML = ''; st.textContent = ''; spotLayer.clearLayers(); return; }
+    if (R > CFG.spotsMaxRadiusM){ list.innerHTML = ''; spotLayer.clearLayers(); st.textContent = ''; note.textContent = 'Ring is past 1.5 miles: hold the major roads and highways around it. Spots are not suggested at this size.'; note.className = 'note warn'; return; }
+    if (!S.streets){ list.innerHTML = ''; spotLayer.clearLayers(); st.textContent = S.streetsBusy ? 'loading streets...' : ''; note.textContent = S.streetsErr ? 'Street data unavailable right now; pick corners on the map.' : 'Corners just outside the ring, from the street map. Drag a marker to move a spot; it snaps to the nearest corner.'; note.className = S.streetsErr ? 'note warn' : 'note'; return; }
+    var needRecompute = !S.spots.length || (S.spotsR === null) || (!S.setAt && !S.spotsPinned && Math.abs(R - S.spotsR) > 0.5 * blockM());
+    if (needRecompute){ S.spots = computeSpots(R); S.spotsR = R; drawSpots(); }
+    st.textContent = S.setAt ? 'held' : (S.spots.length ? S.spots.length + ' corners' : '');
+    note.className = 'note';
+    note.textContent = S.spots.length ? 'Corners just outside the ring. Drag a marker to move a spot; it snaps to the nearest corner. Tap a line to see it on the map.' : 'No mapped corners near the ring yet (large lots or open land); pick positions on the map.';
+    var html = '';
+    S.spots.forEach(function(s, i){ html += '<li data-i="' + i + '"' + (s.custom ? ' class="custom"' : '') + '><span class="n">' + (i + 1) + '</span><span class="s">' + esc(s.label) + '</span><span class="d">' + compass(s.brg) + ' &middot; ' + fmtFt(s.d) + '</span></li>'; });
+    list.innerHTML = html;
+  }
+  $('spots').addEventListener('click', function(e){ var li = e.target.closest('li'); if (!li) return; var s = S.spots[parseInt(li.getAttribute('data-i'), 10)]; if (s) map.panTo([s.lat, s.lon]); });
+  function drawSpots(){
+    spotLayer.clearLayers();
+    S.spots.forEach(function(s, i){
+      var m = L.marker([s.lat, s.lon], { draggable: true, icon: L.divIcon({ className: '', html: '<div class="spot' + (s.custom ? ' custom' : '') + '">' + (i + 1) + '</div>', iconSize: [30, 30], iconAnchor: [15, 15] }), title: s.label }).addTo(spotLayer);
+      m.bindTooltip(esc(s.label), { direction: 'top', offset: [0, -14] });
+      m.on('dragend', function(){
+        var ll = m.getLatLng(), p = { lat: ll.lat, lon: ll.lng }; var j = nearestJunction(p, 60);
+        if (j){ s.lat = j.lat; s.lon = j.lon; s.label = labelOf(j); s.custom = false; } else { s.lat = p.lat; s.lon = p.lon; s.label = 'Custom spot'; s.custom = true; }
+        s.d = distM(S.pin, s); s.brg = bearing(S.pin, s); S.spotsPinned = true; drawSpots(); renderSpots(S.spotsR); toast(j ? 'Snapped to ' + s.label : 'Custom spot (no corner within 200 ft)');
+      });
+    });
+  }
+
+  // ---------- vehicle reach (OpenRouteService isochrone) ----------
+  function isoRangeSec(ms){ var sec = Math.round(ms / 1000 / 30) * 30; return Math.min(CFG.carMaxSec, Math.max(60, sec)); }
+  function requestIso(sec){
+    if (S.isoBusy || !S.pin) return; var now = Date.now();
+    var pin = { lat: S.pin.lat, lon: S.pin.lon };
+    var key = pin.lat.toFixed(5) + ',' + pin.lon.toFixed(5) + ',' + sec;
+    if ((key === S.isoLastKey && now - S.isoLast < 45000) || S.isoCount >= 80) return; // do not hammer the service with the same request
+    S.isoBusy = true; S.isoLast = now; S.isoLastKey = key; S.isoCount++;
+    var body = JSON.stringify({ locations: [[pin.lon, pin.lat]], range: [sec], range_type: 'time', smoothing: 5 });
+    var attempts = [
+      { url: 'https://api.heigit.org/openrouteservice/v2/isochrones/driving-car', headers: { 'Authorization': ORS_KEY, 'Content-Type': 'application/json', 'Accept': 'application/json, application/geo+json' } },
+      { url: 'https://api.heigit.org/openrouteservice/v2/isochrones/driving-car?api_key=' + encodeURIComponent(ORS_KEY), headers: { 'Content-Type': 'text/plain' } },
+      { url: 'https://api.openrouteservice.org/v2/isochrones/driving-car', headers: { 'Authorization': ORS_KEY, 'Content-Type': 'application/json', 'Accept': 'application/json, application/geo+json' } }
+    ];
+    var i = 0;
+    function next(){
+      if (i >= attempts.length){ S.isoBusy = false; S.isoFailed = true; render(true); return; }
+      var a = attempts[i++];
+      fetch(a.url, { method: 'POST', headers: a.headers, body: body }).then(function(r){ if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+        .then(function(j){ if (!j || !j.features || !j.features.length) throw new Error('empty'); S.iso = { geojson: j, sec: sec, pin: pin }; S.isoBusy = false; S.isoFailed = false; render(true); })
+        .catch(function(){ next(); });
+    }
+    next();
+  }
+
+  // ---------- render ----------
+  var lastDraw = { key: '' };
+  function render(force){
+    var now = Date.now();
+    $('setBtn').disabled = !(S.pin && S.lastSeen);
+    $('setBtn').textContent = S.setAt ? 'Perimeter set ' + fmtTime(S.setAt) + ' · tap to release' : 'Set perimeter';
+    $('lastSeenAbs').textContent = S.lastSeen ? fmtTime(S.lastSeen) : '';
+    var ms = delayMs(now);
+    $('elapsed').textContent = S.lastSeen ? fmtClock(S.setAt ? ms : now - S.lastSeen) : '--:--';
+    $('elapsedNote').textContent = S.lastSeen ? (S.setAt ? 'from last seen to perimeter set (held)' : 'since last seen') : 'since last seen';
+    var read = $('readout'), legend = $('legend');
+    if (!S.pin || !S.lastSeen){
+      read.innerHTML = '<div class="mute">' + (!S.pin ? 'Tap the map where they were last seen (or type an address, or use your location).' : 'Pick how long ago they were last seen.') + '</div>';
+      legend.innerHTML = ''; shapes.clearLayers(); renderSpots(0); return;
+    }
+    if (S.mode === 'foot'){
+      var R = footRadius(now), RhFull = hideBlocks() * blockM(), Rh = Math.min(RhFull, R), Rlive = S.setAt ? liveRadius(now) : null;
+      var key = ['f', Math.round(R), Math.round(Rh), S.dir, S.pin.lat.toFixed(5), S.pin.lon.toFixed(5), Rlive === null ? '' : Math.round(Rlive / 20)].join('|');
+      if (force || key !== lastDraw.key){
+        lastDraw.key = key; shapes.clearLayers();
+        L.circle([S.pin.lat, S.pin.lon], { radius: Rh, color: '#0f6e56', weight: 1, fillColor: '#0f6e56', fillOpacity: 0.16, dashArray: '2 4', interactive: false }).addTo(shapes);
+        if (S.dir !== null){
+          shapes.addLayer(L.polygon(wedge(S.pin, S.dir, 66, R), { color: '#b8923a', weight: 0, fillColor: '#b8923a', fillOpacity: 0.16, interactive: false }));
+          shapes.addLayer(L.polygon(wedge(S.pin, S.dir, 30, R), { color: '#b8923a', weight: 0, fillColor: '#b8923a', fillOpacity: 0.24, interactive: false }));
+        }
+        L.circle([S.pin.lat, S.pin.lon], { radius: R, color: '#9b2030', weight: 3, fillColor: '#9b2030', fillOpacity: 0.06, interactive: false }).addTo(shapes);
+        if (Rlive !== null && Rlive > R + 5) L.circle([S.pin.lat, S.pin.lon], { radius: Rlive, color: '#9b2030', weight: 1.5, dashArray: '6 8', fill: false, opacity: 0.6, interactive: false }).addTo(shapes);
+        var showR = Math.max(R, Rh) + 2.5 * blockM();
+        if (!S.setAt && now - S.userMovedAt > 20000 && Math.abs(showR - lastFitR) > 0.2 * Math.max(showR, lastFitR)) fitRing(showR);
+      }
+      var blkTxt = 'Block here ' + Math.round(S.blockFt) + ' ft (' + (S.blockSrc === 'measured' ? 'measured from the map' : S.blockSrc === 'link' ? 'from the shared link' : 'default until the streets load') + ')';
+      var html = '<div class="big ring">Containment ring ' + fmtMi(R) + ' <span style="font-size:18px;font-weight:600">&middot; ' + fmtFt(R) + ' &middot; about ' + fmtBlocks(R) + ' blocks</span></div>';
+      html += '<div class="hide">Likely hiding area: ' + (R <= RhFull ? 'the whole ring so far (most foot suspects go to ground within ' + hideBlocks() + ' blocks)' : 'within ' + hideBlocks() + ' blocks (' + fmtFt(Rh) + ') of the pin') + (S.dir !== null ? ', favoring ' + compass(S.dir) : '') + '</div>';
+      if (S.setAt) html += '<div>Set ' + fmtTime(S.setAt) + ', ' + fmtClock(ms) + ' after last seen. Hold it. If not contained they could have reached ' + fmtMi(Rlive) + ' by now.</div>';
+      else html += '<div class="mute">Growing ' + rateEff() + ' blocks a minute. Tap Set perimeter once units are on their spots.</div>';
+      html += '<div class="mute">' + blkTxt + '</div>';
+      read.innerHTML = html;
+      legend.innerHTML = '<span><i style="background:rgba(155,32,48,.35);border:2px solid #9b2030"></i>Containment ring</span><span><i style="background:rgba(15,110,86,.35);border:1px dashed #0f6e56"></i>Likely hiding area</span>' + (S.dir !== null ? '<span><i style="background:rgba(184,146,58,.5)"></i>Likely direction</span>' : '') + (S.setAt ? '<span><i style="border:2px dashed #9b2030;background:none"></i>Could have reached by now</span>' : '');
+      if (!S.streetsBusy && R <= CFG.spotsMaxRadiusM && ((!S.setAt && S.streets) || (!S.streets && S.streetsErr && now - (S.streetsErrAt || 0) > 30000))) loadStreets();
+      renderSpots(R);
+    } else {
+      // vehicle
+      var sec = isoRangeSec(ms);
+      var usable = S.iso && S.iso.pin.lat === S.pin.lat && S.iso.pin.lon === S.pin.lon && (S.setAt ? true : S.iso.sec === sec);
+      if (!usable && !S.setAt && ms / 1000 <= CFG.carMaxSec + 30) requestIso(sec);
+      if (!usable && S.setAt && !S.iso && !S.isoFailed) requestIso(sec);
+      var Rfb = carFallbackRadius(ms);
+      var k2 = ['c', usable ? 'iso' + S.iso.sec : 'fb' + Math.round(Rfb), S.pin.lat.toFixed(5), S.pin.lon.toFixed(5)].join('|');
+      if (force || k2 !== lastDraw.key){
+        lastDraw.key = k2; shapes.clearLayers();
+        if (usable) L.geoJSON(S.iso.geojson, { style: { color: '#9b2030', weight: 3, fillColor: '#9b2030', fillOpacity: 0.12 }, interactive: false }).addTo(shapes);
+        else L.circle([S.pin.lat, S.pin.lon], { radius: Rfb, color: '#9b2030', weight: 3, dashArray: '8 8', fillColor: '#9b2030', fillOpacity: 0.06, interactive: false }).addTo(shapes);
+        var showR2 = usable ? 0 : Rfb;
+        if (usable){ try { var bb = L.geoJSON(S.iso.geojson).getBounds(); showR2 = Math.max(distM(S.pin, { lat: bb.getNorth(), lon: bb.getEast() }), distM(S.pin, { lat: bb.getSouth(), lon: bb.getWest() })); } catch(e){} }
+        if (!S.setAt && now - S.userMovedAt > 20000 && Math.abs(showR2 - lastFitR) > 0.2 * Math.max(showR2, lastFitR)) fitRing(showR2);
+      }
+      var h2 = '';
+      if (usable) h2 += '<div class="big ring">Road reach in ' + fmtClock(S.iso.sec * 1000) + '</div><div>Streets a car could have covered at posted speeds since last seen. A fleeing driver can beat this; treat it as the inside edge.</div>';
+      else if (ms / 1000 > CFG.carMaxSec + 30) h2 += '<div class="big ring">Past 10 minutes</div><div>A car that kept going is outside any workable perimeter. Dashed circle: ' + fmtMi(Rfb) + ' at ' + CFG.carFallbackMph + ' mph.</div>';
+      else if (S.isoFailed) h2 += '<div class="big ring">About ' + fmtMi(Rfb) + ' at ' + CFG.carFallbackMph + ' mph</div><div class="note warn">Road reach service not reachable right now; this is a plain circle.</div>';
+      else h2 += '<div class="big ring">About ' + fmtMi(Rfb) + ' at ' + CFG.carFallbackMph + ' mph</div><div class="mute">Finding the road reach...</div>';
+      if (S.setAt) h2 += '<div>Set ' + fmtTime(S.setAt) + ', ' + fmtClock(ms) + ' after last seen.</div>';
+      h2 += '<div class="mute">Car found abandoned? Tap Bailed out here, then the spot on the map: a foot perimeter starts there.</div>';
+      read.innerHTML = h2;
+      legend.innerHTML = '<span><i style="background:rgba(155,32,48,.3);border:2px solid #9b2030"></i>' + (usable ? 'Road reach' : 'Reach circle') + '</span>';
+      renderSpots(0);
+    }
+  }
+  function wedge(p, brg, half, R){ var pts = [[p.lat, p.lon]]; var n = 24; for (var i = 0; i <= n; i++){ var a = brg - half + (2 * half) * i / n; var d = dest(p, a, R); pts.push([d.lat, d.lon]); } return pts; }
+
+  // ---------- boot ----------
+  var restored = readUrl();
+  if (restored && S.lastSeen){ $('mapnote').classList.remove('show'); }
+  render(true);
+  setInterval(function(){ render(false); }, 1000);
+
+  // Same self-refresh check as the other field tools: if the live copy is newer than this one, reload once.
+  (function(){
+    try {
+      fetch(location.pathname + '?cb=' + Date.now(), { cache: 'no-store' }).then(function(r){ return r.ok ? r.text() : ''; }).then(function(t){
+        var m = t.match(/Build v(\d+)/); if (!m || m[1] === BUILD) return;
+        if (new URLSearchParams(location.search).get('fresh') === m[1]) return;
+        var p = new URLSearchParams(location.search); p.set('fresh', m[1]); location.replace(location.pathname + '?' + p.toString());
+      }).catch(function(){});
+    } catch(e){}
+  })();
+
+  // exposed for tests only
+  window.__perim = { S: S, CFG: CFG, spotLayer: spotLayer, computeSpots: computeSpots, buildGraph: buildGraph, localBlockFt: localBlockFt, parseIntersection: parseIntersection, cleanStreet: cleanStreet, footRadiusM: footRadiusM, isoRangeSec: isoRangeSec, render: render, setPin: setPin, map: map, dest: dest, distM: distM, bearing: bearing, wedge: wedge };
+})();
+</script>
+</body>
+</html>

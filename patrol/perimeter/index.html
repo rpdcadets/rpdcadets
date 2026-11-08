@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- patrol/perimeter/index.html | Build v4 | 2026-11-08 | City address points and Fleeing / Unaware. House-number searches now go first to the City of Richardson GIS address points (maps.cor.gov, public ArcGIS service): every assigned address with its directional and place name, so both halves show when both exist (200 N and 200 S Greenville, for example) and the officer picks; those rows carry a City GIS tag and outrank everything else. The Census match is backup; when it has no directional and one was typed it shows as matched, without the typed letter, tagged E/W unconfirmed (never relabeled). New row "Do they know police are coming?": Fleeing (today's doctrine ring and hiding area) or Unaware (a caller saw them; they walked or drove off normally): on foot the ring grows at walking pace, 4 mph by default with 3 / 4 / 5 mph chips, no hiding area, direction of travel emphasized; in a vehicle the road reach at posted speeds is taken as is. Shared links carry the setting. v3: House numbers the address list does not carry: for a typed house number with a street name, the dropdown now also asks the US Census address matcher (street-range data covers every valid number, placed on the right block) and merges its match in, Richardson assumed when no city is typed; Google had 1466 W Spring Valley Rd and the address list did not (Tony, MDC test 11/08/26). v2: Address suggestions: a dropdown lists matching addresses, streets and places while the officer types (OpenRouteService autocomplete, Photon as fallback), Richardson results first, addresses above streets and places when a house number is typed, intersections for "X and Y"; Enter or Go takes the top suggestion. One-shot lookups (Go with no suggestions) now also try the US Census geocoder for exact house numbers before falling back. Found 11/08/26 on an MDC: "1466 west spring valley, richardson tx" landed on the Spring Valley station instead of the address. v1: New tool. Perimeter: drop the last-seen pin (tap the map, type an address or an intersection such as "Custer and Mimosa", or use the phone's GPS), pick Foot or Vehicle, pick how long ago the suspect was last seen, and the map shows where they could be. Foot: a red containment ring that grows with the clock at 2.5 blocks per minute (K9 containment doctrine, 2 to 3; adjustable; Violent felony / officer down adds a block per minute), a shaded likely-hiding area of 4 blocks (most urban foot suspects go to ground within about 4 blocks), an optional direction-of-travel wedge (half of subjects within 30 degrees, three quarters within 66), and numbered "Suggested spots to set the perimeter" on the real intersections just outside the ring with cross-street names from OpenStreetMap (corners first; markers can be dragged and snap to the nearest corner). Block size is measured from the streets around the pin (default 500 ft until the street data loads). Set perimeter freezes the ring and the spots; a faint ring keeps growing to show how far they could have reached if not contained. Vehicle: road-network reach polygon for the delay from OpenRouteService (posted speeds; falls back to a 35 mph circle if the service cannot be reached), capped at 10 minutes, plus "Bailed out here" which starts a foot perimeter at the abandoned car. Copy link and QR share the whole picture through the URL; nothing is stored anywhere. Map tiles: OpenStreetMap (street), Esri World Imagery (satellite); night mode. -->
+<!-- patrol/perimeter/index.html | Build v5 | 2026-11-08 | Street box instead of compass points. The suggested spots now come from containment doctrine (LAPD Air Support perimeter course, K9 containment literature): the tool finds the loop of streets that encloses everywhere the suspect could have reached plus a block of margin, draws that box in red, fills its corners first (numbered clockwise from the corner in the direction of travel), then adds mid-block posts at every street, alley or path that crosses a side and is not within sight of a corner (about 1,150 ft by day, 600 ft at night), then spacing posts on long sides. Posts are named for the radio by cross streets ("NE corner, Coit Rd and Spring Valley Rd"; "Spring Valley Rd at Regency Dr, mid-block"); the readout lists the streets to hold. Expand and Tighten buttons move the box out or in by one ring of blocks. The time-distance ring stays as a faint dashed circle. Alleys, paths and driveways are fetched so they count as gaps. Freeway main lanes are not used as box sides (frontage roads are). If the street network cannot be worked out (open land, data gap) the old nearest-corner method is used with a note. v4: City address points and Fleeing / Unaware. House-number searches now go first to the City of Richardson GIS address points (maps.cor.gov, public ArcGIS service): every assigned address with its directional and place name, so both halves show when both exist (200 N and 200 S Greenville, for example) and the officer picks; those rows carry a City GIS tag and outrank everything else. The Census match is backup; when it has no directional and one was typed it shows as matched, without the typed letter, tagged E/W unconfirmed (never relabeled). New row "Do they know police are coming?": Fleeing (today's doctrine ring and hiding area) or Unaware (a caller saw them; they walked or drove off normally): on foot the ring grows at walking pace, 4 mph by default with 3 / 4 / 5 mph chips, no hiding area, direction of travel emphasized; in a vehicle the road reach at posted speeds is taken as is. Shared links carry the setting. v3: House numbers the address list does not carry: for a typed house number with a street name, the dropdown now also asks the US Census address matcher (street-range data covers every valid number, placed on the right block) and merges its match in, Richardson assumed when no city is typed; Google had 1466 W Spring Valley Rd and the address list did not (Tony, MDC test 11/08/26). v2: Address suggestions: a dropdown lists matching addresses, streets and places while the officer types (OpenRouteService autocomplete, Photon as fallback), Richardson results first, addresses above streets and places when a house number is typed, intersections for "X and Y"; Enter or Go takes the top suggestion. One-shot lookups (Go with no suggestions) now also try the US Census geocoder for exact house numbers before falling back. Found 11/08/26 on an MDC: "1466 west spring valley, richardson tx" landed on the Spring Valley station instead of the address. v1: New tool. Perimeter: drop the last-seen pin (tap the map, type an address or an intersection such as "Custer and Mimosa", or use the phone's GPS), pick Foot or Vehicle, pick how long ago the suspect was last seen, and the map shows where they could be. Foot: a red containment ring that grows with the clock at 2.5 blocks per minute (K9 containment doctrine, 2 to 3; adjustable; Violent felony / officer down adds a block per minute), a shaded likely-hiding area of 4 blocks (most urban foot suspects go to ground within about 4 blocks), an optional direction-of-travel wedge (half of subjects within 30 degrees, three quarters within 66), and numbered "Suggested spots to set the perimeter" on the real intersections just outside the ring with cross-street names from OpenStreetMap (corners first; markers can be dragged and snap to the nearest corner). Block size is measured from the streets around the pin (default 500 ft until the street data loads). Set perimeter freezes the ring and the spots; a faint ring keeps growing to show how far they could have reached if not contained. Vehicle: road-network reach polygon for the delay from OpenRouteService (posted speeds; falls back to a 35 mph circle if the service cannot be reached), capped at 10 minutes, plus "Bailed out here" which starts a foot perimeter at the abandoned car. Copy link and QR share the whole picture through the URL; nothing is stored anywhere. Map tiles: OpenStreetMap (street), Esri World Imagery (satellite); night mode. -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -71,6 +71,8 @@
   .pin{width:22px;height:22px;border-radius:50%;background:var(--red);border:3px solid #fff;box-shadow:0 0 0 2px rgba(155,32,48,.6),0 2px 6px rgba(0,0,0,.5);}
   .spot{width:30px;height:30px;border-radius:50%;background:#0f6e56;color:#fff;border:2.5px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.5);display:grid;place-items:center;font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:16px;}
   .spot.custom{background:#b8923a;color:#0b1f3a;}
+  .spot.mid{background:#fff;color:#0f6e56;border-color:#0f6e56;}
+  ol.spots li.mid .n{background:#fff;color:#0f6e56;border:2px solid #0f6e56;}
 
   .panel{display:grid;gap:10px;}
   .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 12px 12px;}
@@ -240,18 +242,23 @@
 
     <div class="card" id="spotsCard">
       <div class="lab">Suggested spots to set the perimeter <span class="r" id="spotsState"></span></div>
+      <div class="chips" id="boxChips" style="margin-bottom:8px;display:none">
+        <button class="chip sm" id="boxTighten">Tighten</button>
+        <button class="chip sm" id="boxExpand">Expand one block</button>
+      </div>
+      <div class="note" id="boxStreets" style="margin-bottom:8px;display:none"></div>
       <ol class="spots" id="spots"></ol>
       <div class="note" id="spotsNote">Corners just outside the ring, from the street map. Drag a marker to move a spot; it snaps to the nearest corner.</div>
     </div>
 
     <details class="how card">
       <summary>How the picture is drawn</summary>
-      <p>Containment ring: K9 containment doctrine, 2 to 3 blocks for every minute since the suspect was last seen (2.5 by default), using the block size measured from the streets around the pin. Likely hiding area: most urban foot suspects go to ground within about 4 blocks of where they were last seen (Calgary Police dog-section study). Direction wedge: about half of fleeing or lost subjects are found within 30 degrees of their last direction of travel and three quarters within 66 (search-and-rescue dispersion data). Unaware suspects (a caller saw them, no police contact) are drawn at walking pace, 4 mph by default, with no hiding area, because they keep moving at a normal pace. Vehicle reach: travel time over the road network at posted speeds from OpenRouteService; a fleeing driver can beat it. Addresses come first from the City of Richardson GIS address points. Spots: real intersections just outside the ring, corners first. Map data &copy; OpenStreetMap contributors.</p>
+      <p>Containment ring: K9 containment doctrine, 2 to 3 blocks for every minute since the suspect was last seen (2.5 by default), using the block size measured from the streets around the pin. Likely hiding area: most urban foot suspects go to ground within about 4 blocks of where they were last seen (Calgary Police dog-section study). Direction wedge: about half of fleeing or lost subjects are found within 30 degrees of their last direction of travel and three quarters within 66 (search-and-rescue dispersion data). Unaware suspects (a caller saw them, no police contact) are drawn at walking pace, 4 mph by default, with no hiding area, because they keep moving at a normal pace. Vehicle reach: travel time over the road network at posted speeds from OpenRouteService; a fleeing driver can beat it. Addresses come first from the City of Richardson GIS address points. Spots: the loop of streets that encloses the reach plus a block (LAPD Air Support containment course: set the four corners first, then mid-block; never a half-block perimeter; it is easier to tighten than to expand), with mid-block posts where a street, alley or path crosses a side out of a corner's view. Map data &copy; OpenStreetMap contributors.</p>
     </details>
   </div>
 </main>
 
-<footer class="foot">Build v4</footer>
+<footer class="foot">Build v5</footer>
 <div class="toast" id="toast"></div>
 <div class="modal-bg" id="qrModal" role="dialog" aria-modal="true" aria-label="QR code for this perimeter">
   <div class="modal">
@@ -265,7 +272,7 @@
 <script>
 (function(){
   'use strict';
-  var BUILD = '4';
+  var BUILD = '5';
   // Free OpenRouteService Standard key (HeiGIT account, 500 isochrone and 3,000 geocode lookups a day). Public by design, like the Uploadcare key.
   var ORS_KEY = 'eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6IjIyOTQxOWZlZTc1MzQ3NGVhYzdhOTA2NmU4YTI5MzBjIiwiaCI6Im11cm11cjY0In0=';
   var CFG = {
@@ -309,6 +316,9 @@
     bailing: false,       // tap the map to mark where the car was left
     spots: [],            // [{lat, lon, label, custom}]
     spotsPinned: false,   // true after a manual drag: stop auto-recomputing until the next pin, mode or incident
+    box: null,            // current street box {loop:[{lat,lon,id}], sides:[names], faces:Set}
+    boxLevel: 0,          // extra rings of blocks added with Expand
+    boxMode: 'box',       // 'box' or 'fallback' (nearest corners around the ring)
     spotsR: null,         // ring radius the spots were computed for (m)
     streets: null,        // processed street graph
     streetsBox: null,     // {center:{lat,lon}, half:m}
@@ -346,6 +356,7 @@
   streetLayer.addTo(map);
   map.getPane('tilePane').classList.add('street');
   var shapes = L.layerGroup().addTo(map);   // ring, hide zone, wedge, iso polygon
+  var boxLayer = L.layerGroup().addTo(map);
   var spotLayer = L.layerGroup().addTo(map);
   var pinMarker = null;
   var programmaticMove = false, lastFitR = 0;
@@ -366,7 +377,7 @@
     } else pinMarker.setLatLng([lat, lon]);
     S.placing = false; $('placeBtn').classList.remove('on'); $('mapnote').classList.remove('show');
     if (!opts.keepView){ programmaticMove = true; map.setView([lat, lon], Math.max(map.getZoom(), 15), { animate: false }); setTimeout(function(){ programmaticMove = false; }, 400); S.userMovedAt = 0; lastFitR = 0; }
-    S.spots = []; S.spotsR = null; S.spotsPinned = false; S.iso = null; S.isoFailed = false;
+    S.spots = []; S.spotsR = null; S.spotsPinned = false; S.boxLevel = 0; S.iso = null; S.isoFailed = false;
     loadStreets();
     if (!S.lastSeen && !opts.silent) toast('Now pick how long ago they were last seen');
     pushUrl(); render(true);
@@ -609,22 +620,22 @@
   // ---------- chips ----------
   function chipGroup(id, attr, onPick){ $(id).addEventListener('click', function(e){ var b = e.target.closest('button.chip'); if (!b) return; onPick(b.getAttribute(attr), b); }); }
   function markChip(id, attr, val){ Array.prototype.forEach.call($(id).querySelectorAll('button.chip'), function(b){ b.classList.toggle('on', b.getAttribute(attr) === String(val)); }); }
-  chipGroup('modeChips', 'data-mode', function(v){ if (S.setAt){ toast('Perimeter is set. Tap New incident to change.'); return; } S.mode = v; S.iso = null; S.isoFailed = false; S.spots = []; S.spotsR = null; S.spotsPinned = false; syncChips(); pushUrl(); render(true); });
+  chipGroup('modeChips', 'data-mode', function(v){ if (S.setAt){ toast('Perimeter is set. Tap New incident to change.'); return; } S.mode = v; S.iso = null; S.isoFailed = false; S.spots = []; S.spotsR = null; S.spotsPinned = false; S.boxLevel = 0; syncChips(); pushUrl(); render(true); });
   chipGroup('agoChips', 'data-min', function(v, b){
     if (S.setAt){ toast('Perimeter is set. Tap New incident to change.'); return; }
     if (v === 'other'){ var inp = $('otherMin'); inp.classList.add('show'); markChip('agoChips', 'data-min', 'other'); inp.focus(); return; }
     $('otherMin').classList.remove('show');
-    S.lastSeen = Date.now() - parseFloat(v) * 60000; S.iso = null; S.isoFailed = false; S.spots = []; S.spotsR = null; S.spotsPinned = false;
+    S.lastSeen = Date.now() - parseFloat(v) * 60000; S.iso = null; S.isoFailed = false; S.spots = []; S.spotsR = null; S.spotsPinned = false; S.boxLevel = 0;
     markChip('agoChips', 'data-min', v); pushUrl(); render(true);
     if (!S.pin) toast('Now tap the map where they were last seen');
   });
-  $('otherMin').addEventListener('change', function(){ var v = parseFloat(this.value); if (isNaN(v) || v < 0) return; S.lastSeen = Date.now() - v * 60000; S.iso = null; S.spots = []; S.spotsR = null; S.spotsPinned = false; pushUrl(); render(true); });
+  $('otherMin').addEventListener('change', function(){ var v = parseFloat(this.value); if (isNaN(v) || v < 0) return; S.lastSeen = Date.now() - v * 60000; S.iso = null; S.spots = []; S.spotsR = null; S.spotsPinned = false; S.boxLevel = 0; pushUrl(); render(true); });
   $('otherMin').addEventListener('keydown', function(e){ if (e.key === 'Enter'){ this.blur(); } });
   chipGroup('dirChips', 'data-dir', function(v){ S.dir = v === '' ? null : parseFloat(v); markChip('dirChips', 'data-dir', v); pushUrl(); render(true); });
-  $('seriousBtn').addEventListener('click', function(){ if (S.setAt){ toast('Perimeter is set. Tap New incident to change.'); return; } S.serious = !S.serious; this.classList.toggle('on', S.serious); S.spots = []; S.spotsR = null; S.spotsPinned = false; pushUrl(); render(true); });
-  chipGroup('awareChips', 'data-aware', function(v){ if (S.setAt){ toast('Perimeter is set. Tap New incident to change.'); return; } S.aware = v === '1'; S.spots = []; S.spotsR = null; S.spotsPinned = false; syncChips(); pushUrl(); render(true); });
-  chipGroup('mphChips', 'data-mph', function(v){ if (S.setAt){ toast('Perimeter is set. Tap New incident to change.'); return; } S.mph = parseFloat(v); markChip('mphChips', 'data-mph', v); S.spots = []; S.spotsR = null; S.spotsPinned = false; pushUrl(); render(true); });
-  chipGroup('rateChips', 'data-rate', function(v){ if (S.setAt){ toast('Perimeter is set. Tap New incident to change.'); return; } S.rate = parseFloat(v); markChip('rateChips', 'data-rate', v); S.spots = []; S.spotsR = null; S.spotsPinned = false; pushUrl(); render(true); });
+  $('seriousBtn').addEventListener('click', function(){ if (S.setAt){ toast('Perimeter is set. Tap New incident to change.'); return; } S.serious = !S.serious; this.classList.toggle('on', S.serious); S.spots = []; S.spotsR = null; S.spotsPinned = false; S.boxLevel = 0; pushUrl(); render(true); });
+  chipGroup('awareChips', 'data-aware', function(v){ if (S.setAt){ toast('Perimeter is set. Tap New incident to change.'); return; } S.aware = v === '1'; S.spots = []; S.spotsR = null; S.spotsPinned = false; S.boxLevel = 0; syncChips(); pushUrl(); render(true); });
+  chipGroup('mphChips', 'data-mph', function(v){ if (S.setAt){ toast('Perimeter is set. Tap New incident to change.'); return; } S.mph = parseFloat(v); markChip('mphChips', 'data-mph', v); S.spots = []; S.spotsR = null; S.spotsPinned = false; S.boxLevel = 0; pushUrl(); render(true); });
+  chipGroup('rateChips', 'data-rate', function(v){ if (S.setAt){ toast('Perimeter is set. Tap New incident to change.'); return; } S.rate = parseFloat(v); markChip('rateChips', 'data-rate', v); S.spots = []; S.spotsR = null; S.spotsPinned = false; S.boxLevel = 0; pushUrl(); render(true); });
   function syncChips(){
     markChip('modeChips', 'data-mode', S.mode);
     markChip('dirChips', 'data-dir', S.dir === null ? '' : S.dir);
@@ -651,7 +662,7 @@
   });
   $('resetBtn').addEventListener('click', function(){
     S.pin = null; if (pinMarker){ map.removeLayer(pinMarker); pinMarker = null; }
-    S.lastSeen = null; S.setAt = null; S.dir = null; S.serious = false; S.rate = CFG.rate; S.aware = true; S.mph = CFG.walkMph; S.mode = 'foot'; S.spots = []; S.spotsR = null; S.spotsPinned = false; S.iso = null; S.isoFailed = false; S.isoLastKey = ''; S.bailing = false;
+    S.lastSeen = null; S.setAt = null; S.dir = null; S.serious = false; S.rate = CFG.rate; S.aware = true; S.mph = CFG.walkMph; S.mode = 'foot'; S.spots = []; S.spotsR = null; S.spotsPinned = false; S.boxLevel = 0; S.iso = null; S.isoFailed = false; S.isoLastKey = ''; S.bailing = false;
     S.blockFt = CFG.defaultBlockFt; S.blockSrc = 'default'; S.streets = null; S.streetsBox = null;
     S.placing = true; $('placeBtn').classList.remove('on'); $('mapnote').textContent = 'Tap the map where the suspect was last seen'; $('mapnote').classList.add('show');
     markChip('agoChips', 'data-min', '__none__'); $('otherMin').classList.remove('show'); $('otherMin').value = '';
@@ -716,8 +727,10 @@
   document.addEventListener('keydown', function(e){ if (e.key === 'Escape') $('qrModal').classList.remove('show'); });
 
   // ---------- street data (OpenStreetMap via Overpass) ----------
-  var HW = '^(motorway|trunk|primary|secondary|tertiary|unclassified|residential|living_street|motorway_link|trunk_link|primary_link|secondary_link|tertiary_link)$';
-  function neededHalf(){ var now = Date.now(); var R = S.mode === 'foot' ? footRadius(now) : 0; return Math.min(2900, Math.max(650, R + 3 * blockM())); }
+  var HW = '^(motorway|trunk|primary|secondary|tertiary|unclassified|residential|living_street|motorway_link|trunk_link|primary_link|secondary_link|tertiary_link|service|footway|path|cycleway|pedestrian|steps|track)$';
+  var BOX_HW = /^(primary|secondary|tertiary|unclassified|residential|living_street)$/;   // streets a perimeter can be set on (frontage roads, not freeway main lanes)
+  var ROAD_HW = /^(motorway|trunk|primary|secondary|tertiary|unclassified|residential|living_street|motorway_link|trunk_link|primary_link|secondary_link|tertiary_link)$/;
+  function neededHalf(){ var now = Date.now(); var R = S.mode === 'foot' ? footRadius(now) : 0; return Math.min(2900, Math.max(800, R + (4 + 2 * S.boxLevel) * blockM())); }
   function loadStreets(){
     if (!S.pin || S.mode !== 'foot' || S.streetsBusy) return;
     var half = neededHalf();
@@ -730,14 +743,20 @@
     overpassPost(q).then(function(j){
       S.streets = buildGraph(j.elements || []); S.streetsBox = { center: center, half: fetchHalf };
       if (S.blockSrc !== 'link'){ var mb = localBlockFt(S.streets, center, 800); if (mb){ S.blockFt = mb; S.blockSrc = 'measured'; } }
-      S.spots = []; S.spotsR = null; S.spotsPinned = false; S.streetsBusy = false; pushUrl(); render(true);
+      S.spots = []; S.spotsR = null; S.spotsPinned = false; S.boxLevel = 0; S.streetsBusy = false; pushUrl(); render(true);
     }).catch(function(e){ S.streetsBusy = false; S.streetsErr = e.message || 'error'; S.streetsErrAt = Date.now(); render(true); });
   }
   function buildGraph(elements){
     var nodes = new Map(), ways = [];
     elements.forEach(function(e){ if (e.type === 'node') nodes.set(e.id, { lat: e.lat, lon: e.lon }); else if (e.type === 'way' && e.nodes && e.nodes.length > 1) ways.push(e); });
-    var inc = new Map(), interior = new Map();
-    ways.forEach(function(w, i){ w.nodes.forEach(function(n, k){ var s = inc.get(n); if (!s){ s = []; inc.set(n, s); } s.push(i); if (k > 0 && k < w.nodes.length - 1) interior.set(n, (interior.get(n) || 0) + 1); }); });
+    var inc = new Map(), interior = new Map(), incAll = new Map();
+    ways.forEach(function(w, i){
+      var isRoad = ROAD_HW.test((w.tags && w.tags.highway) || '');
+      w.nodes.forEach(function(n, k){
+        var a = incAll.get(n); if (!a){ a = []; incAll.set(n, a); } a.push(i);
+        if (!isRoad) return;
+        var s = inc.get(n); if (!s){ s = []; inc.set(n, s); } s.push(i); if (k > 0 && k < w.nodes.length - 1) interior.set(n, (interior.get(n) || 0) + 1); });
+    });
     function nameOf(w){ return (w.tags && (w.tags.name || w.tags.ref)) || ''; }
     var junctions = [];
     inc.forEach(function(ws, n){
@@ -748,7 +767,7 @@
       var freeway = ws.some(function(i){ return /^(motorway|trunk)/.test(ways[i].tags.highway || ''); });
       junctions.push({ id: n, lat: p.lat, lon: p.lon, names: names, degree: ws.length, major: major, freeway: freeway });
     });
-    return { nodes: nodes, ways: ways, inc: inc, interior: interior, junctions: junctions, nameOf: nameOf };
+    return { nodes: nodes, ways: ways, inc: inc, incAll: incAll, interior: interior, junctions: junctions, nameOf: nameOf };
   }
   function localBlockFt(g, center, withinM){
     // residential street stretches between two intersections near the pin; median length in feet
@@ -769,6 +788,173 @@
     });
     if (lens.length < 8) return null;
     var med = pct(lens, 0.5); return Math.round(Math.min(900, Math.max(250, med)));
+  }
+
+  // ---------- street box (containment doctrine: enclose the reach area with a loop of streets, corners first) ----------
+  function makeProj(origin){ var k = Math.cos(origin.lat * toR); return function(p){ return [(p.lon - origin.lon) * 111320 * k, (p.lat - origin.lat) * 111320]; }; }
+  function polyArea(pts){ var a = 0; for (var i = 0, n = pts.length; i < n; i++){ var p = pts[i], q = pts[(i + 1) % n]; a += p[0] * q[1] - q[0] * p[1]; } return a / 2; }
+  function pointInPoly(pt, pts){ var inside = false; for (var i = 0, j = pts.length - 1; i < pts.length; j = i++){ var xi = pts[i][0], yi = pts[i][1], xj = pts[j][0], yj = pts[j][1]; if (((yi > pt[1]) !== (yj > pt[1])) && (pt[0] < (xj - xi) * (pt[1] - yi) / (yj - yi) + xi)) inside = !inside; } return inside; }
+  function buildBoxGraph(g, eligible){
+    // planar graph of through streets; dead ends pruned so cul-de-sacs do not create false faces
+    var adj = new Map();
+    function add(a, b, i){ if (!adj.has(a)) adj.set(a, new Map()); adj.get(a).set(b, i); }
+    g.ways.forEach(function(w, i){ if (!(w.tags && BOX_HW.test(w.tags.highway || ''))) return; if (eligible && !eligible(w, i)) return; for (var k = 0; k < w.nodes.length - 1; k++){ var a = w.nodes[k], b = w.nodes[k + 1]; if (a === b || !g.nodes.get(a) || !g.nodes.get(b)) continue; add(a, b, i); add(b, a, i); } });
+    var changed = true, guard = 0;
+    while (changed && guard++ < 200){ changed = false; adj.forEach(function(m, n){ if (m.size <= 1){ m.forEach(function(_, nb){ var mm = adj.get(nb); if (mm) mm.delete(n); }); adj.delete(n); changed = true; } }); }
+    return adj;
+  }
+  function traceFaces(adj, nodes, proj){
+    var order = new Map();
+    adj.forEach(function(m, n){ var p = proj(nodes.get(n)); var arr = []; m.forEach(function(_, nb){ var q = proj(nodes.get(nb)); arr.push({ nb: nb, ang: Math.atan2(q[1] - p[1], q[0] - p[0]) }); }); arr.sort(function(x, y){ return x.ang - y.ang; }); order.set(n, arr.map(function(x){ return x.nb; })); });
+    var visited = new Set(), faces = [];
+    adj.forEach(function(m, u){ m.forEach(function(_, v){
+      if (visited.has(u + '>' + v)) return;
+      var cyc = [], a = u, b = v, guard = 0;
+      while (!visited.has(a + '>' + b) && guard++ < 50000){ visited.add(a + '>' + b); cyc.push(a); var nb = order.get(b); if (!nb) break; var idx = nb.indexOf(a); var w = nb[(idx - 1 + nb.length) % nb.length]; a = b; b = w; }
+      if (cyc.length >= 3){ var pts = cyc.map(function(n){ return proj(nodes.get(n)); }); faces.push({ nodes: cyc, pts: pts, area: polyArea(pts) }); }
+    }); });
+    if (!faces.length) return faces;
+    var pos = faces.filter(function(f){ return f.area > 0; }).length, neg = faces.length - pos;
+    var innerSign = pos >= neg ? 1 : -1;   // the outer face runs the other way round
+    return faces.filter(function(f){ return (f.area > 0 ? 1 : -1) === innerSign; });
+  }
+  function dominantAngle(g, proj, within){
+    // length-weighted mean street direction near the pin, taken modulo 90 (4-theta circular mean); 0 when no grid stands out
+    var C = 0, Sn = 0, total = 0;
+    g.ways.forEach(function(w){ if (!(w.tags && BOX_HW.test(w.tags.highway || ''))) return; for (var k = 0; k < w.nodes.length - 1; k++){ var a = g.nodes.get(w.nodes[k]), b = g.nodes.get(w.nodes[k + 1]); if (!a || !b) continue; var pa = proj(a), pb = proj(b); if (Math.hypot(pa[0], pa[1]) > within && Math.hypot(pb[0], pb[1]) > within) continue; var len = Math.hypot(pb[0] - pa[0], pb[1] - pa[1]); if (len < 5) continue; var ang = Math.atan2(pb[1] - pa[1], pb[0] - pa[0]); C += len * Math.cos(4 * ang); Sn += len * Math.sin(4 * ang); total += len; } });
+    if (!total) return 0;
+    var strength = Math.hypot(C, Sn) / total; if (strength < 0.3) return 0;   // curvilinear: stay north-up
+    var th = Math.atan2(Sn, C) / 4 * toD;   // degrees in (-45, 45]
+    return th;
+  }
+  function edgeKey(a, b){ return a < b ? a + '|' + b : b + '|' + a; }
+  function faceEdges(f){ var out = []; for (var i = 0; i < f.nodes.length; i++) out.push(edgeKey(f.nodes[i], f.nodes[(i + 1) % f.nodes.length])); return out; }
+  function unionBoundary(faces, included, nodes){
+    var count = new Map(), edgeNodes = new Map();
+    included.forEach(function(fi){ faceEdges(faces[fi]).forEach(function(k){ count.set(k, (count.get(k) || 0) + 1); }); });
+    var bAdj = new Map();
+    count.forEach(function(c, k){ if (c !== 1) return; var ab = k.split('|'); var a = +ab[0], b = +ab[1]; if (!bAdj.has(a)) bAdj.set(a, []); if (!bAdj.has(b)) bAdj.set(b, []); bAdj.get(a).push(b); bAdj.get(b).push(a); });
+    var used = new Set(), loops = [];
+    bAdj.forEach(function(nbs, start){
+      nbs.forEach(function(first){
+        if (used.has(edgeKey(start, first))) return;
+        var loop = [start], prev = start, cur = first, guard = 0; used.add(edgeKey(start, first));
+        while (cur !== start && guard++ < 20000){ loop.push(cur); var cands = (bAdj.get(cur) || []).filter(function(x){ return x !== prev && !used.has(edgeKey(cur, x)); }); if (!cands.length) break; var nx = cands[0];
+          if (cands.length > 1){ // pinch point: keep turning the same way (smallest left turn)
+            var pc = nodes.get(prev), cc = nodes.get(cur), base = Math.atan2(cc.lat - pc.lat, (cc.lon - pc.lon) * Math.cos(cc.lat * toR)); var best = Infinity;
+            cands.forEach(function(x){ var xc = nodes.get(x); var ang = Math.atan2(xc.lat - cc.lat, (xc.lon - cc.lon) * Math.cos(cc.lat * toR)) - base; ang = ((ang + Math.PI * 3) % (Math.PI * 2)) - Math.PI; if (ang < best){ best = ang; nx = x; } }); }
+          used.add(edgeKey(cur, nx)); prev = cur; cur = nx; }
+        if (cur === start && loop.length >= 3) loops.push(loop);
+      });
+    });
+    return loops;
+  }
+  function computeBox(R){
+    var g = S.streets; if (!g || !S.pin) return null;
+    var first = computeBoxWith(R, null); if (!first) return null;
+    var nCorners = loopCorners(first.loop).corners.length;
+    if (nCorners <= 10) return first;
+    // jagged outline (curvilinear subdivision): try again on collectors and long residential streets only
+    var lenByName = new Map(); var proj0 = makeProj(S.pin);
+    g.ways.forEach(function(w){ if (!(w.tags && BOX_HW.test(w.tags.highway || ''))) return; var nm = g.nameOf(w); if (!nm) return; var len = 0; for (var k = 0; k < w.nodes.length - 1; k++){ var a = g.nodes.get(w.nodes[k]), b = g.nodes.get(w.nodes[k + 1]); if (a && b){ var pa = proj0(a), pb = proj0(b); len += Math.hypot(pb[0] - pa[0], pb[1] - pa[1]); } } lenByName.set(nm, (lenByName.get(nm) || 0) + len); });
+    var second = computeBoxWith(R, function(w){ var hw = w.tags.highway || ''; if (/^(primary|secondary|tertiary|unclassified)$/.test(hw)) return true; var nm = g.nameOf(w); return !!nm && (lenByName.get(nm) || 0) >= 700; });
+    if (second && loopCorners(second.loop).corners.length < nCorners && second.area < 6 * first.area) { second.tier = 2; return second; }
+    return first;
+  }
+  function computeBoxWith(R, eligible){
+    var g = S.streets; if (!g || !S.pin) return null;
+    var proj = makeProj(S.pin), pinXY = proj(S.pin);
+    var adj = buildBoxGraph(g, eligible); if (adj.size < 4) return null;
+    var faces = traceFaces(adj, g.nodes, proj); if (!faces.length) return null;
+    var home = null, homeArea = Infinity;
+    faces.forEach(function(f, i){ var a = Math.abs(f.area); if (a < homeArea && pointInPoly(pinXY, f.pts)){ home = i; homeArea = a; } });
+    if (home === null) return null;
+    // reach area: the ring plus one block, pushed forward if a direction of travel is known
+    var B = blockM(), reachR = R + B, center = [0, 0];
+    if (S.dir !== null){ var d = dest(S.pin, S.dir, 0.4 * R); center = proj(d); }
+    // the box follows the grid: find the dominant street direction near the pin and work in that frame,
+    // so a grid neighborhood gets a clean four-sided box instead of a staircase of blocks
+    var th = dominantAngle(g, proj, reachR * 1.6) * toR;
+    var rot = function(xy){ return [xy[0] * Math.cos(-th) - xy[1] * Math.sin(-th), xy[0] * Math.sin(-th) + xy[1] * Math.cos(-th)]; };
+    var c = rot(center), half = reachR, diskR = R + 0.3 * B;
+    var inDisk = function(pt){ var dx = pt[0] - center[0], dy = pt[1] - center[1]; return dx * dx + dy * dy <= diskR * diskR; };
+    var included = new Set([home]);
+    faces.forEach(function(f, i){
+      if (i === home || Math.abs(f.area) >= 4e6) return;
+      var cen = [0, 0]; f.pts.forEach(function(pt){ cen[0] += pt[0]; cen[1] += pt[1]; }); cen[0] /= f.pts.length; cen[1] /= f.pts.length;
+      var rc = rot(cen);
+      var inSquare = Math.abs(rc[0] - c[0]) <= half && Math.abs(rc[1] - c[1]) <= half;
+      var touches = f.pts.some(inDisk);
+      if (!touches) for (var k = 0; k < f.pts.length && !touches; k++){ var p1 = f.pts[k], q1 = f.pts[(k + 1) % f.pts.length]; if (inDisk([(p1[0] + q1[0]) / 2, (p1[1] + q1[1]) / 2])) touches = true; }
+      if (inSquare || touches) included.add(i);
+    });
+    // Expand: add the ring of blocks that share an edge with the current box, once per level
+    if (S.boxLevel > 0){
+      var edgeFaces = new Map(); faces.forEach(function(f, i){ faceEdges(f).forEach(function(k){ if (!edgeFaces.has(k)) edgeFaces.set(k, []); edgeFaces.get(k).push(i); }); });
+      for (var lv = 0; lv < S.boxLevel; lv++){ var addl = new Set(); included.forEach(function(fi){ faceEdges(faces[fi]).forEach(function(k){ (edgeFaces.get(k) || []).forEach(function(o){ if (!included.has(o) && Math.abs(faces[o].area) < 4e6) addl.add(o); }); }); }); addl.forEach(function(x){ included.add(x); }); }
+    }
+    var loops = unionBoundary(faces, included, g.nodes); if (!loops.length) return null;
+    var best = null, bestA = -1;
+    loops.forEach(function(lp){ var a = Math.abs(polyArea(lp.map(function(n){ return proj(g.nodes.get(n)); }))); if (a > bestA){ bestA = a; best = lp; } });
+    if (!best || bestA < 1000) return null;
+    var pts = best.map(function(n){ return proj(g.nodes.get(n)); });
+    if (polyArea(pts) > 0) { best.reverse(); pts.reverse(); }   // clockwise for numbering
+    var loop = best.map(function(n, i){ var p = g.nodes.get(n); return { id: n, lat: p.lat, lon: p.lon, xy: pts[i] }; });
+    // the street name along each boundary edge
+    function nameBetween(a, b){ var m = adj.get(a); if (!m || !m.has(b)) return ''; return g.nameOf(g.ways[m.get(b)]) || ''; }
+    loop.forEach(function(v, i){ var nx = loop[(i + 1) % loop.length]; v.nextName = nameBetween(v.id, nx.id); });
+    loop.forEach(function(v, i){ v.prevName = loop[(i - 1 + loop.length) % loop.length].nextName; });
+    var sides = []; loop.forEach(function(v){ var nm = v.nextName; if (nm && sides[sides.length - 1] !== nm) sides.push(nm); }); if (sides.length > 1 && sides[0] === sides[sides.length - 1]) sides.pop();
+    var minD = Infinity; loop.forEach(function(v){ var dd = Math.hypot(v.xy[0] - center[0], v.xy[1] - center[1]); if (dd < minD) minD = dd; });
+    return { loop: loop, sides: sides, faces: included, area: bestA, proj: proj, tight: minD < R - 1 };
+  }
+  function loopCorners(loop){
+    var n = loop.length, cum = [0];
+    for (var i = 1; i <= n; i++){ var a = loop[i - 1], b = loop[i % n]; cum.push(cum[i - 1] + Math.hypot(b.xy[0] - a.xy[0], b.xy[1] - a.xy[1])); }
+    var L = cum[n];
+    function ptAt(i){ return loop[i].xy; }
+    function dirAt(i, back){ var acc = 0, j = i, steps = 0; while (acc < 20 && steps < n){ var k = back ? (j - 1 + n) % n : (j + 1) % n; acc += Math.hypot(ptAt(k)[0] - ptAt(j)[0], ptAt(k)[1] - ptAt(j)[1]); j = k; steps++; } return back ? Math.atan2(ptAt(i)[1] - ptAt(j)[1], ptAt(i)[0] - ptAt(j)[0]) : Math.atan2(ptAt(j)[1] - ptAt(i)[1], ptAt(j)[0] - ptAt(i)[0]); }
+    var corners = [];
+    loop.forEach(function(v, i){ var t = dirAt(i, false) - dirAt(i, true); t = Math.abs(((t + Math.PI * 3) % (Math.PI * 2)) - Math.PI) * toD; v.turn = t; if (t >= 45) corners.push(i); });
+    corners = corners.filter(function(ci, k){ if (k === 0) return true; var prev = corners[k - 1]; var gap = (cum[ci] - cum[prev] + L) % L; return !(gap < 25 && loop[prev].turn >= loop[ci].turn); });
+    return { corners: corners, cum: cum, L: L };
+  }
+  function boxPosts(box){
+    var g = S.streets, loop = box.loop, n = loop.length, B = blockM();
+    var D = document.body.classList.contains('night') ? 180 : 350;   // how far a post can see along a straight side
+    // along-loop positions
+    var lc = loopCorners(loop), cum = lc.cum, L = lc.L, corners = lc.corners;
+    if (corners.length < 3){ // smooth oval (curvilinear): use the four extreme points as corners
+      var ext = [0, 0, 0, 0]; loop.forEach(function(v, i){ if (v.xy[1] > loop[ext[0]].xy[1]) ext[0] = i; if (v.xy[0] > loop[ext[1]].xy[0]) ext[1] = i; if (v.xy[1] < loop[ext[2]].xy[1]) ext[2] = i; if (v.xy[0] < loop[ext[3]].xy[0]) ext[3] = i; });
+      corners = ext.filter(function(x, k, arr){ return arr.indexOf(x) === k; }).sort(function(a, b){ return a - b; });
+    }
+    var isCorner = new Set(corners);
+    // gaps: loop nodes where another street, alley or path joins
+    var gaps = [];
+    loop.forEach(function(v, i){ if (isCorner.has(i)) return; var all = g.incAll.get(v.id) || []; var others = []; all.forEach(function(wi){ var w = g.ways[wi]; var onLoop = (w.nodes.indexOf(loop[(i - 1 + n) % n].id) >= 0 || w.nodes.indexOf(loop[(i + 1) % n].id) >= 0) && BOX_HW.test(w.tags.highway || '') && (g.nameOf(w) === v.nextName || g.nameOf(w) === v.prevName); if (!onLoop) others.push(w); }); if (others.length) gaps.push({ i: i, ways: others }); });
+    function enteringName(ways){ var named = ways.map(function(w){ var hw = w.tags.highway || ''; var nm = g.nameOf(w); if (nm) return nm; if (hw === 'service') return (w.tags.service === 'alley') ? 'the alley' : (w.tags.service === 'driveway' || w.tags.service === 'parking_aisle') ? 'the driveway' : 'the service road'; if (/footway|path|cycleway|pedestrian|steps|track/.test(hw)) return 'the path'; return 'a side street'; }); var u = named.filter(function(x, k){ return named.indexOf(x) === k; }); return u[0] || 'a side street'; }
+    var posts = corners.map(function(ci){ return { i: ci, kind: 'corner' }; });
+    function covered(gi){ var pos = cum[gi]; return posts.some(function(p){ var d = Math.abs(cum[p.i] - pos); d = Math.min(d, L - d); if (d > D) return false; var sl = Math.hypot(loop[p.i].xy[0] - loop[gi].xy[0], loop[p.i].xy[1] - loop[gi].xy[1]); return sl >= 0.9 * d; }); }
+    gaps.forEach(function(gp){ if (!covered(gp.i)) posts.push({ i: gp.i, kind: 'mid', entering: enteringName(gp.ways) }); });
+    S.boxDebug = { gaps: gaps.length, D: D, L: Math.round(L), cornersN: corners.length, afterGaps: posts.length };
+    // spacing: long straight sides get a post so no two posts are farther apart than D
+    posts.sort(function(a, b){ return a.i - b.i; });
+    var extra = [];
+    var Dsp = 1.6 * D;   // posts can be a little farther from each other than from the gaps they watch
+    for (var k = 0; k < posts.length; k++){ var a = posts[k], b = posts[(k + 1) % posts.length]; var d = (cum[b.i] - cum[a.i] + L) % L; if (d <= Dsp) continue; var pieces = Math.ceil(d / Dsp); for (var s = 1; s < pieces; s++){ var target = (cum[a.i] + d * s / pieces) % L; var bi = -1, bd = Infinity; loop.forEach(function(v, i){ var dd = Math.abs(cum[i] - target); dd = Math.min(dd, L - dd); var isGap = gaps.some(function(x){ return x.i === i; }); dd -= isGap ? 40 : 0; if (dd < bd && !posts.some(function(p){ return p.i === i; }) && !extra.some(function(p){ return p.i === i; })){ bd = dd; bi = i; } }); if (bi >= 0){ var gp = gaps.filter(function(x){ return x.i === bi; })[0]; extra.push({ i: bi, kind: 'mid', entering: gp ? enteringName(gp.ways) : null }); } } }
+    posts = posts.concat(extra).sort(function(a, b){ return a.i - b.i; });
+    // labels
+    var cx = 0, cy = 0; loop.forEach(function(v){ cx += v.xy[0]; cy += v.xy[1]; }); cx /= n; cy /= n;
+    function quad(v){ var brg = (Math.atan2(v.xy[0] - cx, v.xy[1] - cy) * toD + 360) % 360; return ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'][Math.round(brg / 45) % 8]; }
+    function cornerNames(ci){ var v = loop[ci]; var a = v.prevName, b = v.nextName; if (a && b && a !== b) return a + ' and ' + b; var one = a || b; return one ? 'on ' + one : 'street bend'; }
+    posts.forEach(function(p){ var v = loop[p.i]; if (p.kind === 'corner'){ p.label = quad(v) + ' corner, ' + cornerNames(p.i); } else { var side = v.nextName || v.prevName || 'perimeter street'; if (p.entering) p.label = side + ' at ' + p.entering + ', mid-block'; else { var pc = null, nc = null; for (var q = 1; q < n; q++){ var bi2 = (p.i - q + n) % n, fi = (p.i + q) % n; if (pc === null && isCorner.has(bi2)) pc = loop[bi2]; if (nc === null && isCorner.has(fi)) nc = loop[fi]; if (pc && nc) break; } var other = function(c){ if (!c) return null; return c.prevName !== side ? c.prevName : c.nextName; }; var A = other(pc), Bn = other(nc); p.label = side + (A && Bn ? ' between ' + A + ' and ' + Bn : '') + ', mid-block'; } } });
+    // numbering: corners first, clockwise from the lead corner (direction of travel, else the NE corner), then mid-block posts clockwise
+    var lead = corners[0];
+    if (corners.length){ var target2 = S.dir !== null ? S.dir : 45; var bestD = 999; corners.forEach(function(ci){ var v = loop[ci]; var brg = (Math.atan2(v.xy[0] - 0, v.xy[1] - 0) * toD + 360) % 360; var diff = Math.abs(((brg - target2 + 540) % 360) - 180); if (diff < bestD){ bestD = diff; lead = ci; } }); }
+    var fromLead = function(i){ return (cum[i] - cum[lead] + L) % L; };
+    var cornerPosts = posts.filter(function(p){ return p.kind === 'corner'; }).sort(function(a, b){ return fromLead(a.i) - fromLead(b.i); });
+    var midPosts = posts.filter(function(p){ return p.kind !== 'corner'; }).sort(function(a, b){ return fromLead(a.i) - fromLead(b.i); });
+    return cornerPosts.concat(midPosts).map(function(p){ var v = loop[p.i]; return { lat: v.lat, lon: v.lon, label: p.label, kind: p.kind, d: distM(S.pin, v), brg: bearing(S.pin, v), custom: false }; });
   }
 
   // ---------- suggested spots ----------
@@ -795,31 +981,49 @@
   }
   function labelOf(j){ if (!j.names.length) return 'Corner'; if (j.names.length === 1) return j.names[0]; return j.names[0] + ' at ' + j.names[1]; }
   function nearestJunction(p, maxM){ var best = null, bd = maxM; if (!S.streets) return null; S.streets.junctions.forEach(function(j){ var d = distM(p, j); if (d < bd){ bd = d; best = j; } }); return best; }
+  function drawBox(){
+    boxLayer.clearLayers();
+    if (!S.box || S.boxMode !== 'box') return;
+    L.polygon(S.box.loop.map(function(v){ return [v.lat, v.lon]; }), { color: '#9b2030', weight: 4, fillColor: '#9b2030', fillOpacity: 0.05, interactive: false }).addTo(boxLayer);
+  }
+  $('boxExpand').addEventListener('click', function(){ if (S.setAt) return; S.boxLevel++; S.spots = []; S.spotsR = null; S.spotsPinned = false; loadStreets(); render(true); });
+  $('boxTighten').addEventListener('click', function(){ if (S.setAt || S.boxLevel <= 0) return; S.boxLevel--; S.spots = []; S.spotsR = null; S.spotsPinned = false; render(true); });
   function compass(brg){ return ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'][Math.round(brg / 45) % 8]; }
   function renderSpots(R){
     var list = $('spots'), st = $('spotsState'), note = $('spotsNote');
-    if (S.mode !== 'foot' || !S.pin || !S.lastSeen){ list.innerHTML = ''; st.textContent = ''; spotLayer.clearLayers(); return; }
-    if (R > CFG.spotsMaxRadiusM){ list.innerHTML = ''; spotLayer.clearLayers(); st.textContent = ''; note.textContent = 'Ring is past 1.5 miles: hold the major roads and highways around it. Spots are not suggested at this size.'; note.className = 'note warn'; return; }
-    if (!S.streets){ list.innerHTML = ''; spotLayer.clearLayers(); st.textContent = S.streetsBusy ? 'loading streets...' : ''; note.textContent = S.streetsErr ? 'Street data unavailable right now; pick corners on the map.' : 'Corners just outside the ring, from the street map. Drag a marker to move a spot; it snaps to the nearest corner.'; note.className = S.streetsErr ? 'note warn' : 'note'; return; }
+    if (S.mode !== 'foot' || !S.pin || !S.lastSeen){ list.innerHTML = ''; st.textContent = ''; spotLayer.clearLayers(); boxLayer.clearLayers(); $('boxChips').style.display = 'none'; $('boxStreets').style.display = 'none'; return; }
+    if (R > CFG.spotsMaxRadiusM){ list.innerHTML = ''; spotLayer.clearLayers(); boxLayer.clearLayers(); $('boxChips').style.display = 'none'; $('boxStreets').style.display = 'none'; st.textContent = ''; note.textContent = 'Ring is past 1.5 miles: hold the major roads and highways around it. Spots are not suggested at this size.'; note.className = 'note warn'; return; }
+    if (!S.streets){ list.innerHTML = ''; spotLayer.clearLayers(); boxLayer.clearLayers(); $('boxChips').style.display = 'none'; $('boxStreets').style.display = 'none'; st.textContent = S.streetsBusy ? 'loading streets...' : ''; note.textContent = S.streetsErr ? 'Street data unavailable right now; pick corners on the map.' : 'Corners just outside the ring, from the street map. Drag a marker to move a spot; it snaps to the nearest corner.'; note.className = S.streetsErr ? 'note warn' : 'note'; return; }
     var needRecompute = !S.spots.length || (S.spotsR === null) || (!S.setAt && !S.spotsPinned && Math.abs(R - S.spotsR) > 0.5 * blockM());
-    if (needRecompute){ S.spots = computeSpots(R); S.spotsR = R; drawSpots(); }
-    st.textContent = S.setAt ? 'held' : (S.spots.length ? S.spots.length + ' corners' : '');
+    if (needRecompute){
+      var box = null; try { box = computeBox(R); } catch(e){ box = null; }
+      if (box){ S.box = box; S.boxMode = 'box'; try { S.spots = boxPosts(box); } catch(e){ S.spots = []; } }
+      if (!box || !S.spots.length){ S.box = null; S.boxMode = 'fallback'; S.spots = computeSpots(R); }
+      S.spotsR = R; drawSpots(); drawBox();
+    }
+    var corners = S.spots.filter(function(x){ return x.kind === 'corner'; }).length;
+    st.textContent = S.setAt ? 'held' : (S.spots.length ? (S.boxMode === 'box' ? corners + ' corners, ' + (S.spots.length - corners) + ' mid-block' : S.spots.length + ' corners') : '');
     note.className = 'note';
-    note.textContent = S.spots.length ? 'Corners just outside the ring. Drag a marker to move a spot; it snaps to the nearest corner. Tap a line to see it on the map.' : 'No mapped corners near the ring yet (large lots or open land); pick positions on the map.';
+    $('boxChips').style.display = S.boxMode === 'box' && !S.setAt ? '' : 'none';
+    $('boxTighten').disabled = S.boxLevel <= 0;
+    var bs = $('boxStreets');
+    if (S.boxMode === 'box' && S.box && S.box.sides.length){ bs.style.display = ''; bs.innerHTML = '<b>Hold these streets:</b> ' + esc(S.box.sides.slice(0, 8).join(' / ')) + (S.box.sides.length > 8 ? ' and more' : ''); } else bs.style.display = 'none';
+    if (S.boxMode === 'box'){ note.textContent = 'Corners first (numbered clockwise from the lead corner), then mid-block where a street, alley or path crosses a side out of a corner\u2019s view. Drag a marker to move a spot; it snaps to the nearest corner.'; if (S.box && S.box.tight){ note.className = 'note warn'; note.textContent = 'The box is tighter than the dashed reach ring on at least one side (the street map may end there). Tap Expand one block if the ground allows.'; } }
+    else { note.className = 'note warn'; note.textContent = S.spots.length ? 'Could not work out a street box here (open land or thin map data): these are the nearest corners around the ring.' : 'No mapped corners near the ring yet (large lots or open land); pick positions on the map.'; }
     var html = '';
-    S.spots.forEach(function(s, i){ html += '<li data-i="' + i + '"' + (s.custom ? ' class="custom"' : '') + '><span class="n">' + (i + 1) + '</span><span class="s">' + esc(s.label) + '</span><span class="d">' + compass(s.brg) + ' &middot; ' + fmtFt(s.d) + '</span></li>'; });
+    S.spots.forEach(function(s, i){ html += '<li data-i="' + i + '" class="' + (s.custom ? 'custom' : s.kind === 'mid' ? 'mid' : '') + '"><span class="n">' + (i + 1) + '</span><span class="s">' + esc(s.label) + '</span><span class="d">' + compass(s.brg) + ' &middot; ' + fmtFt(s.d) + '</span></li>'; });
     list.innerHTML = html;
   }
   $('spots').addEventListener('click', function(e){ var li = e.target.closest('li'); if (!li) return; var s = S.spots[parseInt(li.getAttribute('data-i'), 10)]; if (s) map.panTo([s.lat, s.lon]); });
   function drawSpots(){
     spotLayer.clearLayers();
     S.spots.forEach(function(s, i){
-      var m = L.marker([s.lat, s.lon], { draggable: true, icon: L.divIcon({ className: '', html: '<div class="spot' + (s.custom ? ' custom' : '') + '">' + (i + 1) + '</div>', iconSize: [30, 30], iconAnchor: [15, 15] }), title: s.label }).addTo(spotLayer);
+      var m = L.marker([s.lat, s.lon], { draggable: true, icon: L.divIcon({ className: '', html: '<div class="spot' + (s.custom ? ' custom' : s.kind === 'mid' ? ' mid' : '') + '">' + (i + 1) + '</div>', iconSize: [30, 30], iconAnchor: [15, 15] }), title: s.label }).addTo(spotLayer);
       m.bindTooltip(esc(s.label), { direction: 'top', offset: [0, -14] });
       m.on('dragend', function(){
         var ll = m.getLatLng(), p = { lat: ll.lat, lon: ll.lng }; var j = nearestJunction(p, 60);
         if (j){ s.lat = j.lat; s.lon = j.lon; s.label = labelOf(j); s.custom = false; } else { s.lat = p.lat; s.lon = p.lon; s.label = 'Custom spot'; s.custom = true; }
-        s.d = distM(S.pin, s); s.brg = bearing(S.pin, s); S.spotsPinned = true; drawSpots(); renderSpots(S.spotsR); toast(j ? 'Snapped to ' + s.label : 'Custom spot (no corner within 200 ft)');
+        s.d = distM(S.pin, s); s.brg = bearing(S.pin, s); s.kind = s.kind || 'mid'; S.spotsPinned = true; drawSpots(); renderSpots(S.spotsR); toast(j ? 'Snapped to ' + s.label : 'Custom spot (no corner within 200 ft)');
       });
     });
   }
@@ -867,7 +1071,7 @@
     if (S.mode === 'foot'){
       var R = footRadius(now), RhFull = hideBlocks() * blockM(), Rh = Math.min(RhFull, R), Rlive = S.setAt ? liveRadius(now) : null;
       if (!S.aware){ RhFull = 0; Rh = 0; }
-      var key = ['f', S.aware ? 'a' : 'u', Math.round(R), Math.round(Rh), S.dir, S.pin.lat.toFixed(5), S.pin.lon.toFixed(5), Rlive === null ? '' : Math.round(Rlive / 20)].join('|');
+      var key = ['f', S.aware ? 'a' : 'u', Math.round(R), Math.round(Rh), S.dir, S.pin.lat.toFixed(5), S.pin.lon.toFixed(5), Rlive === null ? '' : Math.round(Rlive / 20), S.boxMode, S.spots.length ? 1 : 0].join('|');
       if (force || key !== lastDraw.key){
         lastDraw.key = key; shapes.clearLayers();
         if (Rh > 0) L.circle([S.pin.lat, S.pin.lon], { radius: Rh, color: '#0f6e56', weight: 1, fillColor: '#0f6e56', fillOpacity: 0.16, dashArray: '2 4', interactive: false }).addTo(shapes);
@@ -875,20 +1079,22 @@
           shapes.addLayer(L.polygon(wedge(S.pin, S.dir, 66, R), { color: '#b8923a', weight: 0, fillColor: '#b8923a', fillOpacity: 0.16, interactive: false }));
           shapes.addLayer(L.polygon(wedge(S.pin, S.dir, 30, R), { color: '#b8923a', weight: 0, fillColor: '#b8923a', fillOpacity: 0.24, interactive: false }));
         }
-        L.circle([S.pin.lat, S.pin.lon], { radius: R, color: '#9b2030', weight: 3, fillColor: '#9b2030', fillOpacity: 0.06, interactive: false }).addTo(shapes);
+        var hasBox = S.boxMode === 'box' && S.box && S.spots.length;
+        L.circle([S.pin.lat, S.pin.lon], { radius: R, color: '#9b2030', weight: hasBox ? 1.5 : 3, dashArray: hasBox ? '4 6' : null, fillColor: '#9b2030', fillOpacity: hasBox ? 0.03 : 0.06, interactive: false }).addTo(shapes);
         if (Rlive !== null && Rlive > R + 5) L.circle([S.pin.lat, S.pin.lon], { radius: Rlive, color: '#9b2030', weight: 1.5, dashArray: '6 8', fill: false, opacity: 0.6, interactive: false }).addTo(shapes);
         var showR = Math.max(R, Rh) + 2.5 * blockM();
         if (!S.setAt && now - S.userMovedAt > 20000 && Math.abs(showR - lastFitR) > 0.2 * Math.max(showR, lastFitR)) fitRing(showR);
       }
       var blkTxt = 'Block here ' + Math.round(S.blockFt) + ' ft (' + (S.blockSrc === 'measured' ? 'measured from the map' : S.blockSrc === 'link' ? 'from the shared link' : 'default until the streets load') + ')';
-      var html = '<div class="big ring">' + (S.aware ? 'Containment ring ' : 'Walking ring ') + fmtMi(R) + ' <span style="font-size:18px;font-weight:600">&middot; ' + fmtFt(R) + ' &middot; about ' + fmtBlocks(R) + ' blocks</span></div>';
+      var html = '<div class="big ring">' + (S.aware ? 'Could have run ' : 'Could have walked ') + fmtMi(R) + ' <span style="font-size:18px;font-weight:600">&middot; ' + fmtFt(R) + ' &middot; about ' + fmtBlocks(R) + ' blocks</span></div>';
       if (S.aware) html += '<div class="hide">Likely hiding area: ' + (R <= RhFull ? 'the whole ring so far (most foot suspects go to ground within ' + hideBlocks() + ' blocks)' : 'within ' + hideBlocks() + ' blocks (' + fmtFt(Rh) + ') of the pin') + (S.dir !== null ? ', favoring ' + compass(S.dir) : '') + '</div>';
       else html += '<div class="hide">Unaware: likely still moving at a normal pace' + (S.dir !== null ? ' toward the ' + compass(S.dir) : ', so direction of travel matters most') + '. Not hiding. Look for the description on foot inside the ring.</div>';
       if (S.setAt) html += '<div>Set ' + fmtTime(S.setAt) + ', ' + fmtClock(ms) + ' after last seen. Hold it. If not contained they could have reached ' + fmtMi(Rlive) + ' by now.</div>';
       else html += '<div class="mute">Growing ' + (S.aware ? rateEff() + ' blocks a minute' : (S.mph + (S.serious ? 1 : 0)) + ' mph, walking') + '. Tap Set perimeter once units are on their spots.</div>';
       html += '<div class="mute">' + blkTxt + '</div>';
       read.innerHTML = html;
-      legend.innerHTML = '<span><i style="background:rgba(155,32,48,.35);border:2px solid #9b2030"></i>' + (S.aware ? 'Containment ring' : 'Walking ring') + '</span>' + (S.aware ? '<span><i style="background:rgba(15,110,86,.35);border:1px dashed #0f6e56"></i>Likely hiding area</span>' : '') + (S.dir !== null ? '<span><i style="background:rgba(184,146,58,.5)"></i>Likely direction</span>' : '') + (S.setAt ? '<span><i style="border:2px dashed #9b2030;background:none"></i>Could have reached by now</span>' : '');
+      var boxed = S.boxMode === 'box' && S.box && S.spots.length;
+      legend.innerHTML = (boxed ? '<span><i style="background:rgba(155,32,48,.15);border:3px solid #9b2030;border-radius:3px"></i>Perimeter box (streets to hold)</span><span><i style="border:1.5px dashed #9b2030;background:none"></i>' + (S.aware ? 'How far they could have run' : 'How far they could have walked') + '</span>' : '<span><i style="background:rgba(155,32,48,.35);border:2px solid #9b2030"></i>' + (S.aware ? 'Containment ring' : 'Walking ring') + '</span>') + (S.aware ? '<span><i style="background:rgba(15,110,86,.35);border:1px dashed #0f6e56"></i>Likely hiding area</span>' : '') + (S.dir !== null ? '<span><i style="background:rgba(184,146,58,.5)"></i>Likely direction</span>' : '') + (S.setAt ? '<span><i style="border:2px dashed #9b2030;background:none"></i>Could have reached by now</span>' : '');
       if (!S.streetsBusy && R <= CFG.spotsMaxRadiusM && ((!S.setAt && S.streets) || (!S.streets && S.streetsErr && now - (S.streetsErrAt || 0) > 30000))) loadStreets();
       renderSpots(R);
     } else {
@@ -939,7 +1145,7 @@
   })();
 
   // exposed for tests only
-  window.__perim = { S: S, CFG: CFG, spotLayer: spotLayer, rankItems: rankItems, SUG: SUG, computeSpots: computeSpots, buildGraph: buildGraph, localBlockFt: localBlockFt, parseIntersection: parseIntersection, cleanStreet: cleanStreet, footRadiusM: footRadiusM, isoRangeSec: isoRangeSec, render: render, setPin: setPin, map: map, dest: dest, distM: distM, bearing: bearing, wedge: wedge };
+  window.__perim = { S: S, CFG: CFG, spotLayer: spotLayer, boxLayer: boxLayer, computeBox: computeBox, boxPosts: boxPosts, rankItems: rankItems, SUG: SUG, computeSpots: computeSpots, buildGraph: buildGraph, localBlockFt: localBlockFt, parseIntersection: parseIntersection, cleanStreet: cleanStreet, footRadiusM: footRadiusM, isoRangeSec: isoRangeSec, render: render, setPin: setPin, map: map, dest: dest, distM: distM, bearing: bearing, wedge: wedge };
 })();
 </script>
 </body>

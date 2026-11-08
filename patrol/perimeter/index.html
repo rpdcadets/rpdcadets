@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- patrol/perimeter/index.html | Build v2 | 2026-11-08 | Address suggestions: a dropdown lists matching addresses, streets and places while the officer types (OpenRouteService autocomplete, Photon as fallback), Richardson results first, addresses above streets and places when a house number is typed, intersections for "X and Y"; Enter or Go takes the top suggestion. One-shot lookups (Go with no suggestions) now also try the US Census geocoder for exact house numbers before falling back. Found 11/08/26 on an MDC: "1466 west spring valley, richardson tx" landed on the Spring Valley station instead of the address. v1: New tool. Perimeter: drop the last-seen pin (tap the map, type an address or an intersection such as "Custer and Mimosa", or use the phone's GPS), pick Foot or Vehicle, pick how long ago the suspect was last seen, and the map shows where they could be. Foot: a red containment ring that grows with the clock at 2.5 blocks per minute (K9 containment doctrine, 2 to 3; adjustable; Violent felony / officer down adds a block per minute), a shaded likely-hiding area of 4 blocks (most urban foot suspects go to ground within about 4 blocks), an optional direction-of-travel wedge (half of subjects within 30 degrees, three quarters within 66), and numbered "Suggested spots to set the perimeter" on the real intersections just outside the ring with cross-street names from OpenStreetMap (corners first; markers can be dragged and snap to the nearest corner). Block size is measured from the streets around the pin (default 500 ft until the street data loads). Set perimeter freezes the ring and the spots; a faint ring keeps growing to show how far they could have reached if not contained. Vehicle: road-network reach polygon for the delay from OpenRouteService (posted speeds; falls back to a 35 mph circle if the service cannot be reached), capped at 10 minutes, plus "Bailed out here" which starts a foot perimeter at the abandoned car. Copy link and QR share the whole picture through the URL; nothing is stored anywhere. Map tiles: OpenStreetMap (street), Esri World Imagery (satellite); night mode. -->
+<!-- patrol/perimeter/index.html | Build v3 | 2026-11-08 | House numbers the address list does not carry: for a typed house number with a street name, the dropdown now also asks the US Census address matcher (street-range data covers every valid number, placed on the right block) and merges its match in, Richardson assumed when no city is typed; Google had 1466 W Spring Valley Rd and the address list did not (Tony, MDC test 11/08/26). v2: Address suggestions: a dropdown lists matching addresses, streets and places while the officer types (OpenRouteService autocomplete, Photon as fallback), Richardson results first, addresses above streets and places when a house number is typed, intersections for "X and Y"; Enter or Go takes the top suggestion. One-shot lookups (Go with no suggestions) now also try the US Census geocoder for exact house numbers before falling back. Found 11/08/26 on an MDC: "1466 west spring valley, richardson tx" landed on the Spring Valley station instead of the address. v1: New tool. Perimeter: drop the last-seen pin (tap the map, type an address or an intersection such as "Custer and Mimosa", or use the phone's GPS), pick Foot or Vehicle, pick how long ago the suspect was last seen, and the map shows where they could be. Foot: a red containment ring that grows with the clock at 2.5 blocks per minute (K9 containment doctrine, 2 to 3; adjustable; Violent felony / officer down adds a block per minute), a shaded likely-hiding area of 4 blocks (most urban foot suspects go to ground within about 4 blocks), an optional direction-of-travel wedge (half of subjects within 30 degrees, three quarters within 66), and numbered "Suggested spots to set the perimeter" on the real intersections just outside the ring with cross-street names from OpenStreetMap (corners first; markers can be dragged and snap to the nearest corner). Block size is measured from the streets around the pin (default 500 ft until the street data loads). Set perimeter freezes the ring and the spots; a faint ring keeps growing to show how far they could have reached if not contained. Vehicle: road-network reach polygon for the delay from OpenRouteService (posted speeds; falls back to a 35 mph circle if the service cannot be reached), capped at 10 minutes, plus "Bailed out here" which starts a foot perimeter at the abandoned car. Copy link and QR share the whole picture through the URL; nothing is stored anywhere. Map tiles: OpenStreetMap (street), Esri World Imagery (satellite); night mode. -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -238,7 +238,7 @@
   </div>
 </main>
 
-<footer class="foot">Build v2</footer>
+<footer class="foot">Build v3</footer>
 <div class="toast" id="toast"></div>
 <div class="modal-bg" id="qrModal" role="dialog" aria-modal="true" aria-label="QR code for this perimeter">
   <div class="modal">
@@ -252,7 +252,7 @@
 <script>
 (function(){
   'use strict';
-  var BUILD = '2';
+  var BUILD = '3';
   // Free OpenRouteService Standard key (HeiGIT account, 500 isochrone and 3,000 geocode lookups a day). Public by design, like the Uploadcare key.
   var ORS_KEY = 'eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6IjIyOTQxOWZlZTc1MzQ3NGVhYzdhOTA2NmU4YTI5MzBjIiwiaCI6Im11cm11cjY0In0=';
   var CFG = {
@@ -433,9 +433,9 @@
     return new Promise(function(resolve){
       var cb = '__censusCb' + Date.now(), sc = document.createElement('script'), done = false;
       var finish = function(v){ if (done) return; done = true; try { delete window[cb]; } catch(e){ window[cb] = undefined; } if (sc.parentNode) sc.parentNode.removeChild(sc); resolve(v); };
-      window[cb] = function(j){ var ms = (j && j.result && j.result.addressMatches) || []; finish(ms.map(function(m){ var a = m.matchedAddress || ''; var city = (m.addressComponents && m.addressComponents.city) || (a.split(',')[1] || '').trim(); return { lat: m.coordinates.y, lon: m.coordinates.x, primary: a.split(',')[0], secondary: [city, (m.addressComponents && m.addressComponents.state) || 'TX'].join(', '), city: city, layer: 'address', label: a }; })); };
+      window[cb] = function(j){ var ms = (j && j.result && j.result.addressMatches) || []; finish(ms.map(function(m){ var a = m.matchedAddress || ''; var city = titleCase((m.addressComponents && m.addressComponents.city) || (a.split(',')[1] || '').trim()); var prim = titleCase(a.split(',')[0]); return { lat: m.coordinates.y, lon: m.coordinates.x, primary: prim, secondary: [city, (m.addressComponents && m.addressComponents.state) || 'TX'].join(', '), city: city, layer: 'address', label: prim + ', ' + city + ', TX', census: true }; })); };
       sc.onerror = function(){ finish([]); }; setTimeout(function(){ finish([]); }, 6000);
-      var q = /\b(tx|texas)\b/i.test(text) ? text : text + ', TX';
+      var q = withCity(text);
       sc.src = 'https://geocoding.geo.census.gov/geocoder/locations/onelineaddress?benchmark=Public_AR_Current&format=jsonp&callback=' + cb + '&address=' + encodeURIComponent(q);
       document.head.appendChild(sc);
     });
@@ -465,6 +465,11 @@
     });
   }
   function cap(t){ return t.replace(/\b\w/g, function(c){ return c.toUpperCase(); }); }
+  function titleCase(t){ return String(t).toLowerCase().replace(/\b([a-z])/g, function(c){ return c.toUpperCase(); }).replace(/\b(Nw|Ne|Sw|Se)\b/g, function(c){ return c.toUpperCase(); }); }
+  var CITY_RX = /\b(richardson|dallas|plano|garland|addison|carrollton|farmers branch|sachse|wylie|murphy|allen|frisco|mckinney|mesquite|rowlett|irving|university park|highland park|the colony|lewisville|rockwall|balch springs)\b/i;
+  function withCity(text){ var t = text.trim().replace(/\s+/g, ' '); if (/\b\d{5}\b/.test(t) || CITY_RX.test(t)) return /\b(tx|texas)\b/i.test(t) ? t : t + ', TX'; return t.replace(/,\s*$/, '') + ', Richardson, TX'; }
+  function wantsCensus(text){ var t = text.trim(); return startsWithNumber(t) && t.split(/\s+/).length >= 3; }
+  function sameItem(a, b){ var n = function(x){ return (x.primary + '|' + (x.city || '')).toLowerCase().replace(/[.,]/g, '').replace(/\s+/g, ' '); }; return n(a) === n(b); }
 
   // ---- dropdown ----
   var SUG = { items: [], active: -1, seq: 0, timer: null, ctrl: null, open: false };
@@ -480,9 +485,17 @@
   function pickItem(it){ if (!it) return; hideSug(); qEl.value = it.primary + (it.secondary ? ', ' + it.secondary : ''); setPin(it.lat, it.lon); qEl.blur(); }
   function requestSuggestions(text){
     var seq = ++SUG.seq; if (SUG.ctrl) SUG.ctrl.abort(); var ctrl = new AbortController(); SUG.ctrl = ctrl;
-    var ix = parseIntersection(text);
+    var ix = parseIntersection(text), got = { list: null, census: null };
+    var merge = function(){
+      if (seq !== SUG.seq) return;
+      var items = (got.list || []).slice();
+      (got.census || []).forEach(function(c){ if (!items.some(function(it){ return sameItem(it, c); })) items.push(c); });
+      if (!got.list && !got.census) return;
+      showSug(rankItems(items, text));
+    };
     var p = ix ? intersectionItems(ix[0], ix[1], ctrl.signal).catch(function(e){ if (e.name === 'AbortError') throw e; return []; }) : suggestions(text, ctrl.signal);
-    p.then(function(items){ if (seq !== SUG.seq) return; showSug(items); }).catch(function(e){ if (e.name === 'AbortError') return; if (seq === SUG.seq) hideSug(); });
+    p.then(function(items){ got.list = items; merge(); }).catch(function(e){ if (e.name === 'AbortError') return; got.list = []; merge(); if (seq === SUG.seq && !got.census) hideSug(); });
+    if (!ix && wantsCensus(text)) censusLookup(text).then(function(cs){ got.census = cs; merge(); });
   }
   qEl.addEventListener('input', function(){ var v = qEl.value.trim(); clearTimeout(SUG.timer); if (v.length < 3){ hideSug(); return; } SUG.timer = setTimeout(function(){ requestSuggestions(v); }, 320); });
   qEl.addEventListener('keydown', function(e){

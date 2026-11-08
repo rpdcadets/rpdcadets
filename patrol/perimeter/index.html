@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- patrol/perimeter/index.html | Build v3 | 2026-11-08 | House numbers the address list does not carry: for a typed house number with a street name, the dropdown now also asks the US Census address matcher (street-range data covers every valid number, placed on the right block) and merges its match in, Richardson assumed when no city is typed; Google had 1466 W Spring Valley Rd and the address list did not (Tony, MDC test 11/08/26). v2: Address suggestions: a dropdown lists matching addresses, streets and places while the officer types (OpenRouteService autocomplete, Photon as fallback), Richardson results first, addresses above streets and places when a house number is typed, intersections for "X and Y"; Enter or Go takes the top suggestion. One-shot lookups (Go with no suggestions) now also try the US Census geocoder for exact house numbers before falling back. Found 11/08/26 on an MDC: "1466 west spring valley, richardson tx" landed on the Spring Valley station instead of the address. v1: New tool. Perimeter: drop the last-seen pin (tap the map, type an address or an intersection such as "Custer and Mimosa", or use the phone's GPS), pick Foot or Vehicle, pick how long ago the suspect was last seen, and the map shows where they could be. Foot: a red containment ring that grows with the clock at 2.5 blocks per minute (K9 containment doctrine, 2 to 3; adjustable; Violent felony / officer down adds a block per minute), a shaded likely-hiding area of 4 blocks (most urban foot suspects go to ground within about 4 blocks), an optional direction-of-travel wedge (half of subjects within 30 degrees, three quarters within 66), and numbered "Suggested spots to set the perimeter" on the real intersections just outside the ring with cross-street names from OpenStreetMap (corners first; markers can be dragged and snap to the nearest corner). Block size is measured from the streets around the pin (default 500 ft until the street data loads). Set perimeter freezes the ring and the spots; a faint ring keeps growing to show how far they could have reached if not contained. Vehicle: road-network reach polygon for the delay from OpenRouteService (posted speeds; falls back to a 35 mph circle if the service cannot be reached), capped at 10 minutes, plus "Bailed out here" which starts a foot perimeter at the abandoned car. Copy link and QR share the whole picture through the URL; nothing is stored anywhere. Map tiles: OpenStreetMap (street), Esri World Imagery (satellite); night mode. -->
+<!-- patrol/perimeter/index.html | Build v4 | 2026-11-08 | City address points and Fleeing / Unaware. House-number searches now go first to the City of Richardson GIS address points (maps.cor.gov, public ArcGIS service): every assigned address with its directional and place name, so both halves show when both exist (200 N and 200 S Greenville, for example) and the officer picks; those rows carry a City GIS tag and outrank everything else. The Census match is backup; when it has no directional and one was typed it shows as matched, without the typed letter, tagged E/W unconfirmed (never relabeled). New row "Do they know police are coming?": Fleeing (today's doctrine ring and hiding area) or Unaware (a caller saw them; they walked or drove off normally): on foot the ring grows at walking pace, 4 mph by default with 3 / 4 / 5 mph chips, no hiding area, direction of travel emphasized; in a vehicle the road reach at posted speeds is taken as is. Shared links carry the setting. v3: House numbers the address list does not carry: for a typed house number with a street name, the dropdown now also asks the US Census address matcher (street-range data covers every valid number, placed on the right block) and merges its match in, Richardson assumed when no city is typed; Google had 1466 W Spring Valley Rd and the address list did not (Tony, MDC test 11/08/26). v2: Address suggestions: a dropdown lists matching addresses, streets and places while the officer types (OpenRouteService autocomplete, Photon as fallback), Richardson results first, addresses above streets and places when a house number is typed, intersections for "X and Y"; Enter or Go takes the top suggestion. One-shot lookups (Go with no suggestions) now also try the US Census geocoder for exact house numbers before falling back. Found 11/08/26 on an MDC: "1466 west spring valley, richardson tx" landed on the Spring Valley station instead of the address. v1: New tool. Perimeter: drop the last-seen pin (tap the map, type an address or an intersection such as "Custer and Mimosa", or use the phone's GPS), pick Foot or Vehicle, pick how long ago the suspect was last seen, and the map shows where they could be. Foot: a red containment ring that grows with the clock at 2.5 blocks per minute (K9 containment doctrine, 2 to 3; adjustable; Violent felony / officer down adds a block per minute), a shaded likely-hiding area of 4 blocks (most urban foot suspects go to ground within about 4 blocks), an optional direction-of-travel wedge (half of subjects within 30 degrees, three quarters within 66), and numbered "Suggested spots to set the perimeter" on the real intersections just outside the ring with cross-street names from OpenStreetMap (corners first; markers can be dragged and snap to the nearest corner). Block size is measured from the streets around the pin (default 500 ft until the street data loads). Set perimeter freezes the ring and the spots; a faint ring keeps growing to show how far they could have reached if not contained. Vehicle: road-network reach polygon for the delay from OpenRouteService (posted speeds; falls back to a 35 mph circle if the service cannot be reached), capped at 10 minutes, plus "Bailed out here" which starts a foot perimeter at the abandoned car. Copy link and QR share the whole picture through the URL; nothing is stored anywhere. Map tiles: OpenStreetMap (street), Esri World Imagery (satellite); night mode. -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -58,6 +58,8 @@
   .si .p{font-size:16px;font-weight:600;color:var(--ink);line-height:1.25;}
   .si .s{font-size:13px;color:var(--muted);margin-top:1px;}
   .si .tag{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#0f6e56;border:1px solid #0f6e56;border-radius:999px;padding:1px 7px;margin-left:6px;vertical-align:1px;}
+  .si .tag.warn{color:#8a5a00;border-color:#8a5a00;}
+  body.night .si .tag.warn{color:#f5c060;border-color:#f5c060;}
   body.night .si .tag{color:#5dcaa5;border-color:#5dcaa5;}
   .mbtn{font-family:"Barlow Condensed",sans-serif;font-size:15px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;min-height:40px;min-width:40px;padding:6px 10px;border:1.5px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.25);display:inline-flex;align-items:center;gap:6px;}
   .mbtn.on{background:#0b1f3a;color:#fff;border-color:#0b1f3a;}
@@ -169,6 +171,12 @@
         <button class="chip on" data-mode="foot">On foot</button>
         <button class="chip" data-mode="car">Vehicle</button>
       </div>
+      <div class="lab" style="margin-top:12px">Do they know police are coming?</div>
+      <div class="chips" id="awareChips">
+        <button class="chip on" data-aware="1">Fleeing</button>
+        <button class="chip" data-aware="0">Unaware</button>
+      </div>
+      <div class="note" id="awareNote" style="margin-top:6px">Fleeing: ran from an officer or knows a call went out. Unaware: a caller saw them and they walked or drove off at a normal pace.</div>
       <div class="lab" style="margin-top:12px">Last seen <span class="r" id="lastSeenAbs"></span></div>
       <div class="chips" id="agoChips">
         <button class="chip" data-min="0">Just now</button>
@@ -201,11 +209,16 @@
       <div class="chips" style="margin-top:10px">
         <button class="chip sm warn" id="seriousBtn">Violent felony / officer down: bigger ring</button>
       </div>
-      <div class="lab" style="margin-top:12px">Ring growth <span class="r">blocks per minute</span></div>
+      <div class="lab" style="margin-top:12px" id="rateLab">Ring growth <span class="r">blocks per minute</span></div>
       <div class="chips" id="rateChips">
         <button class="chip sm" data-rate="2">2</button>
         <button class="chip sm on" data-rate="2.5">2.5</button>
         <button class="chip sm" data-rate="3">3</button>
+      </div>
+      <div class="chips" id="mphChips" style="display:none">
+        <button class="chip sm" data-mph="3">3 mph</button>
+        <button class="chip sm on" data-mph="4">4 mph</button>
+        <button class="chip sm" data-mph="5">5 mph</button>
       </div>
     </div>
 
@@ -233,12 +246,12 @@
 
     <details class="how card">
       <summary>How the picture is drawn</summary>
-      <p>Containment ring: K9 containment doctrine, 2 to 3 blocks for every minute since the suspect was last seen (2.5 by default), using the block size measured from the streets around the pin. Likely hiding area: most urban foot suspects go to ground within about 4 blocks of where they were last seen (Calgary Police dog-section study). Direction wedge: about half of fleeing or lost subjects are found within 30 degrees of their last direction of travel and three quarters within 66 (search-and-rescue dispersion data). Vehicle reach: travel time over the road network at posted speeds from OpenRouteService; a fleeing driver can beat it. Spots: real intersections just outside the ring, corners first. Map data &copy; OpenStreetMap contributors.</p>
+      <p>Containment ring: K9 containment doctrine, 2 to 3 blocks for every minute since the suspect was last seen (2.5 by default), using the block size measured from the streets around the pin. Likely hiding area: most urban foot suspects go to ground within about 4 blocks of where they were last seen (Calgary Police dog-section study). Direction wedge: about half of fleeing or lost subjects are found within 30 degrees of their last direction of travel and three quarters within 66 (search-and-rescue dispersion data). Unaware suspects (a caller saw them, no police contact) are drawn at walking pace, 4 mph by default, with no hiding area, because they keep moving at a normal pace. Vehicle reach: travel time over the road network at posted speeds from OpenRouteService; a fleeing driver can beat it. Addresses come first from the City of Richardson GIS address points. Spots: real intersections just outside the ring, corners first. Map data &copy; OpenStreetMap contributors.</p>
     </details>
   </div>
 </main>
 
-<footer class="foot">Build v3</footer>
+<footer class="foot">Build v4</footer>
 <div class="toast" id="toast"></div>
 <div class="modal-bg" id="qrModal" role="dialog" aria-modal="true" aria-label="QR code for this perimeter">
   <div class="modal">
@@ -252,7 +265,7 @@
 <script>
 (function(){
   'use strict';
-  var BUILD = '3';
+  var BUILD = '4';
   // Free OpenRouteService Standard key (HeiGIT account, 500 isochrone and 3,000 geocode lookups a day). Public by design, like the Uploadcare key.
   var ORS_KEY = 'eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6IjIyOTQxOWZlZTc1MzQ3NGVhYzdhOTA2NmU4YTI5MzBjIiwiaCI6Im11cm11cjY0In0=';
   var CFG = {
@@ -262,6 +275,7 @@
     hideBlocks: 4, hideBlocksSerious: 6,
     minRadiusBlocks: 1,
     carFallbackMph: 35,
+    walkMph: 4,
     carMaxSec: 600,
     spotsMaxRadiusM: 2414,      // 1.5 miles; past that, hold major roads
     richardson: { lat: 32.9483, lon: -96.7299 },
@@ -286,6 +300,8 @@
     setAt: null,          // ms epoch when the perimeter was set (frozen)
     dir: null,            // bearing degrees or null
     serious: false,
+    aware: true,          // true = fleeing (doctrine ring); false = unaware, walked or drove off normally
+    mph: 4,               // walking pace for an unaware suspect on foot
     rate: CFG.rate,
     blockFt: CFG.defaultBlockFt,
     blockSrc: 'default',  // 'default' | 'measured' | 'link'
@@ -317,7 +333,7 @@
   function rateEff(){ return S.rate + (S.serious ? CFG.seriousBonus : 0); }
   function hideBlocks(){ return S.serious ? CFG.hideBlocksSerious : CFG.hideBlocks; }
   function delayMs(now){ if (!S.lastSeen) return 0; return Math.max(0, (S.setAt || now) - S.lastSeen); }
-  function footRadiusM(ms){ var min = ms / 60000; return Math.max(CFG.minRadiusBlocks, rateEff() * min) * blockM(); }
+  function footRadiusM(ms){ var min = ms / 60000; if (!S.aware){ var mph = S.mph + (S.serious ? 1 : 0); return Math.max(0.5 * blockM(), mph * MI * (ms / 3600000)); } return Math.max(CFG.minRadiusBlocks, rateEff() * min) * blockM(); }
   function footRadius(now){ return footRadiusM(delayMs(now)); }
   function liveRadius(now){ return footRadiusM(Math.max(0, now - S.lastSeen)); }
   function carFallbackRadius(ms){ return Math.max(blockM(), CFG.carFallbackMph * MI * (ms / 3600000)); }
@@ -389,6 +405,8 @@
     items.forEach(function(it, i){
       var sc = i * 0.01;                                   // keep the service's own order as a tiebreaker
       if (isRichardson(it.city)) sc -= 10;                 // Richardson first
+      if (it.cityGis) sc -= 20;                            // the city's own address points outrank every other source
+      if (it.dirMatch === true) sc -= 3; else if (it.dirMatch === false) sc += 1;
       if (num){ if (it.layer === 'address') sc -= 5; else if (it.layer === 'street') sc -= 1; else sc += 2; } // a typed house number wants an address, not a station or a park
       else if (it.layer === 'venue' || it.layer === 'address') sc -= 0.5;
       var d = distM(f, it); sc += Math.min(3, d / 15000);   // then nearer to Richardson
@@ -428,12 +446,64 @@
       .catch(function(e){ if (e.name === 'AbortError') throw e; return getJson(photonUrl(text, 8), signal).then(photonItems); })
       .then(function(items){ return rankItems(items, text); });
   }
+  // City of Richardson GIS address points (public ArcGIS service): the authoritative list, with directionals and place names
+  var COR_AP = 'https://maps.cor.gov/arcgis/rest/services/OpenData/AddressPoints/MapServer/0/query';
+  var DIRWORD = { N: 'NORTH', S: 'SOUTH', E: 'EAST', W: 'WEST' };
+  function parseHouse(text){
+    var t = text.trim().replace(/,/g, ' ').replace(/\s+/g, ' ');
+    var m = t.match(/^(\d+[A-Za-z]?)\s+(.*)$/); if (!m) return null;
+    var num = m[1].toUpperCase(), rest = m[2];
+    rest = rest.replace(/\b(tx|texas)\b/ig, ' ').replace(/\b\d{5}\b/g, ' ').replace(CITY_RX, ' ').replace(/\s+/g, ' ').trim();
+    var unit = null, um = rest.match(/(?:#|\b(?:apt|apartment|ste|suite|unit|bldg|building|rm|room)\b\.?\s*#?)\s*([A-Za-z0-9\-]+)\s*$/i);
+    if (um){ unit = um[1].toUpperCase(); rest = rest.slice(0, um.index).trim(); }
+    var dir = null, dm = rest.match(/^(n|s|e|w|north|south|east|west)\b\.?\s+/i);
+    if (dm){ dir = dm[1][0].toUpperCase(); rest = rest.slice(dm[0].length); }
+    rest = rest.replace(SUFFIX, '').trim();
+    var street = rest.replace(/[^A-Za-z0-9 ']/g, '').replace(/\s+/g, ' ').trim().toUpperCase();
+    return { num: num, dir: dir, street: street, unit: unit, typedDir: dir };
+  }
+  function sqlStr(v){ return "'" + String(v).replace(/'/g, "''") + "'"; }
+  function arcgisGet(url){
+    return fetch(url).then(function(r){ if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .catch(function(){ return new Promise(function(resolve, reject){ // JSONP fallback (ArcGIS REST supports callback=)
+        var cb = '__corCb' + Date.now() + Math.floor(Math.random() * 1000), sc = document.createElement('script'), done = false;
+        var finish = function(ok, v){ if (done) return; done = true; try { delete window[cb]; } catch(e){ window[cb] = undefined; } if (sc.parentNode) sc.parentNode.removeChild(sc); ok ? resolve(v) : reject(new Error('jsonp')); };
+        window[cb] = function(j){ finish(true, j); }; sc.onerror = function(){ finish(false); }; setTimeout(function(){ finish(false); }, 7000);
+        sc.src = url + '&callback=' + cb; document.head.appendChild(sc);
+      }); });
+  }
+  function cityItems(text){
+    var h = parseHouse(text); if (!h || h.street.length < 2) return Promise.resolve([]);
+    var like = "UPPER(FULLNAME) LIKE " + sqlStr(h.street + '%');
+    if (h.dir) like = '(' + like + " OR UPPER(FULLNAME) LIKE " + sqlStr(DIRWORD[h.dir] + ' ' + h.street + '%') + ')';
+    var where = "ADDRNUM = " + sqlStr(h.num) + " AND " + like;
+    var url = COR_AP + '?f=json&outSR=4326&returnGeometry=true&resultRecordCount=40&outFields=FULLADDR,FULLNAME,ROADPREDIR,ADDRNUM,UNITTYPE,UNITID,PLACENAME,MUNICIPALITY,LIFECYCLE&where=' + encodeURIComponent(where);
+    return arcgisGet(url).then(function(j){
+      if (!j || j.error || !j.features) return [];
+      var items = [];
+      j.features.forEach(function(f){
+        var a = f.attributes || {}, g = f.geometry; if (!g) return;
+        var unit = (a.UNITID || '').toString().trim(), primary = (a.FULLADDR || '').toString().trim();
+        if (!primary) primary = [a.ADDRNUM, a.ROADPREDIR, a.FULLNAME].filter(Boolean).join(' ');
+        if (unit && primary.toUpperCase().indexOf(unit.toUpperCase()) < 0) primary += ' ' + (a.UNITTYPE ? a.UNITTYPE + ' ' : '#') + unit;
+        if (h.unit && unit && unit.toUpperCase() !== h.unit) return;
+        var city = (a.MUNICIPALITY || 'Richardson').toString();
+        var place = (a.PLACENAME || '').toString().trim();
+        items.push({ lat: g.y, lon: g.x, primary: primary, secondary: (place ? place + ' \u00b7 ' : '') + city + ', TX', city: city, layer: 'address', label: primary + ', ' + city + ', TX', cityGis: true, dir: (a.ROADPREDIR || '').toString().toUpperCase(), unit: unit, retired: /retire|demol|inactive/i.test((a.LIFECYCLE || '').toString()) });
+      });
+      // one row per address: prefer the row with no unit, then the typed directional
+      var seen = {}; items.sort(function(x, y){ return (x.unit ? 1 : 0) - (y.unit ? 1 : 0); });
+      items = items.filter(function(it){ var k = it.primary.toUpperCase(); if (seen[k]) return false; seen[k] = 1; return !it.retired; });
+      items.forEach(function(it){ it.dirMatch = h.typedDir ? (it.dir === h.typedDir) : null; });
+      return items;
+    }).catch(function(){ return []; });
+  }
   // US Census geocoder (JSONP, no key): exact house numbers for a one-shot lookup when the suggestion services miss
   function censusLookup(text){
     return new Promise(function(resolve){
       var cb = '__censusCb' + Date.now(), sc = document.createElement('script'), done = false;
       var finish = function(v){ if (done) return; done = true; try { delete window[cb]; } catch(e){ window[cb] = undefined; } if (sc.parentNode) sc.parentNode.removeChild(sc); resolve(v); };
-      window[cb] = function(j){ var ms = (j && j.result && j.result.addressMatches) || []; finish(ms.map(function(m){ var a = m.matchedAddress || ''; var city = titleCase((m.addressComponents && m.addressComponents.city) || (a.split(',')[1] || '').trim()); var prim = titleCase(a.split(',')[0]); return { lat: m.coordinates.y, lon: m.coordinates.x, primary: prim, secondary: [city, (m.addressComponents && m.addressComponents.state) || 'TX'].join(', '), city: city, layer: 'address', label: prim + ', ' + city + ', TX', census: true }; })); };
+      window[cb] = function(j){ var ms = (j && j.result && j.result.addressMatches) || []; finish(ms.map(function(m){ var a = m.matchedAddress || ''; var city = titleCase((m.addressComponents && m.addressComponents.city) || (a.split(',')[1] || '').trim()); var prim = titleCase(a.split(',')[0]); var pre = ((m.addressComponents && m.addressComponents.preDirection) || '').toString().toUpperCase(); return { lat: m.coordinates.y, lon: m.coordinates.x, primary: prim, secondary: [city, (m.addressComponents && m.addressComponents.state) || 'TX'].join(', '), city: city, layer: 'address', label: prim + ', ' + city + ', TX', census: true, dir: pre }; })); };
       sc.onerror = function(){ finish([]); }; setTimeout(function(){ finish([]); }, 6000);
       var q = withCity(text);
       sc.src = 'https://geocoding.geo.census.gov/geocoder/locations/onelineaddress?benchmark=Public_AR_Current&format=jsonp&callback=' + cb + '&address=' + encodeURIComponent(q);
@@ -441,7 +511,14 @@
     });
   }
   function lookupOnce(text){
-    // Go or Enter with nothing to pick from: ranked one-shot search, then Census for a typed house number, then Nominatim
+    // Go or Enter with nothing to pick from: city address points for a house number, then a ranked one-shot search, then Census, then Nominatim
+    var first = startsWithNumber(text) ? cityItems(text) : Promise.resolve([]);
+    return first.then(function(cityHits){
+      if (cityHits.length){ var r = rankItems(cityHits, text); return r[0]; }
+      return lookupRest(text);
+    });
+  }
+  function lookupRest(text){
     return getJson(peliasUrl('search', text, 6)).then(peliasItems).catch(function(){ return []; }).then(function(items){
       items = rankItems(items, text);
       var good = items[0] && (!startsWithNumber(text) || items[0].layer === 'address');
@@ -478,24 +555,33 @@
   function showSug(items){
     SUG.items = items; SUG.active = -1;
     if (!items.length){ hideSug(); return; }
-    sugEl.innerHTML = items.map(function(it, i){ return '<div class="si" role="option" data-i="' + i + '"><div class="p">' + esc(it.primary) + (it.layer === 'street' ? '<span class="tag">street</span>' : it.layer === 'intersection' ? '<span class="tag">corner</span>' : '') + '</div>' + (it.secondary ? '<div class="s">' + esc(it.secondary) + '</div>' : '') + '</div>'; }).join('');
+    sugEl.innerHTML = items.map(function(it, i){ var tag = it.cityGis ? '<span class="tag">City GIS</span>' : it.unconfirmed ? '<span class="tag warn">E/W unconfirmed</span>' : it.layer === 'street' ? '<span class="tag">street</span>' : it.layer === 'intersection' ? '<span class="tag">corner</span>' : ''; return '<div class="si" role="option" data-i="' + i + '"><div class="p">' + esc(it.primary) + tag + '</div>' + (it.secondary ? '<div class="s">' + esc(it.secondary) + '</div>' : '') + '</div>'; }).join('');
     sugEl.classList.add('show'); SUG.open = true; qEl.setAttribute('aria-expanded', 'true');
   }
   function setActive(i){ SUG.active = i; Array.prototype.forEach.call(sugEl.children, function(el, k){ el.classList.toggle('active', k === i); }); if (i >= 0 && sugEl.children[i]) sugEl.children[i].scrollIntoView({ block: 'nearest' }); }
   function pickItem(it){ if (!it) return; hideSug(); qEl.value = it.primary + (it.secondary ? ', ' + it.secondary : ''); setPin(it.lat, it.lon); qEl.blur(); }
+  function flagCensus(items, text){
+    // a Census match with no directional, when one was typed and the city file did not answer: show it as matched, never relabeled
+    var h = startsWithNumber(text) ? parseHouse(text) : null;
+    var cityHit = items.some(function(it){ return it.cityGis; });
+    items.forEach(function(it){ it.unconfirmed = !!(it.census && h && h.typedDir && !it.dir && !cityHit); });
+    return items;
+  }
   function requestSuggestions(text){
     var seq = ++SUG.seq; if (SUG.ctrl) SUG.ctrl.abort(); var ctrl = new AbortController(); SUG.ctrl = ctrl;
-    var ix = parseIntersection(text), got = { list: null, census: null };
+    var ix = parseIntersection(text), got = { list: null, census: null, city: null };
     var merge = function(){
       if (seq !== SUG.seq) return;
-      var items = (got.list || []).slice();
+      var items = (got.city || []).slice();
+      (got.list || []).forEach(function(c){ if (!items.some(function(it){ return sameItem(it, c); })) items.push(c); });
       (got.census || []).forEach(function(c){ if (!items.some(function(it){ return sameItem(it, c); })) items.push(c); });
-      if (!got.list && !got.census) return;
-      showSug(rankItems(items, text));
+      if (!got.list && !got.census && !got.city) return;
+      showSug(flagCensus(rankItems(items, text), text));
     };
     var p = ix ? intersectionItems(ix[0], ix[1], ctrl.signal).catch(function(e){ if (e.name === 'AbortError') throw e; return []; }) : suggestions(text, ctrl.signal);
     p.then(function(items){ got.list = items; merge(); }).catch(function(e){ if (e.name === 'AbortError') return; got.list = []; merge(); if (seq === SUG.seq && !got.census) hideSug(); });
     if (!ix && wantsCensus(text)) censusLookup(text).then(function(cs){ got.census = cs; merge(); });
+    if (!ix && startsWithNumber(text)) cityItems(text).then(function(cs){ got.city = cs; merge(); });
   }
   qEl.addEventListener('input', function(){ var v = qEl.value.trim(); clearTimeout(SUG.timer); if (v.length < 3){ hideSug(); return; } SUG.timer = setTimeout(function(){ requestSuggestions(v); }, 320); });
   qEl.addEventListener('keydown', function(e){
@@ -536,11 +622,19 @@
   $('otherMin').addEventListener('keydown', function(e){ if (e.key === 'Enter'){ this.blur(); } });
   chipGroup('dirChips', 'data-dir', function(v){ S.dir = v === '' ? null : parseFloat(v); markChip('dirChips', 'data-dir', v); pushUrl(); render(true); });
   $('seriousBtn').addEventListener('click', function(){ if (S.setAt){ toast('Perimeter is set. Tap New incident to change.'); return; } S.serious = !S.serious; this.classList.toggle('on', S.serious); S.spots = []; S.spotsR = null; S.spotsPinned = false; pushUrl(); render(true); });
+  chipGroup('awareChips', 'data-aware', function(v){ if (S.setAt){ toast('Perimeter is set. Tap New incident to change.'); return; } S.aware = v === '1'; S.spots = []; S.spotsR = null; S.spotsPinned = false; syncChips(); pushUrl(); render(true); });
+  chipGroup('mphChips', 'data-mph', function(v){ if (S.setAt){ toast('Perimeter is set. Tap New incident to change.'); return; } S.mph = parseFloat(v); markChip('mphChips', 'data-mph', v); S.spots = []; S.spotsR = null; S.spotsPinned = false; pushUrl(); render(true); });
   chipGroup('rateChips', 'data-rate', function(v){ if (S.setAt){ toast('Perimeter is set. Tap New incident to change.'); return; } S.rate = parseFloat(v); markChip('rateChips', 'data-rate', v); S.spots = []; S.spotsR = null; S.spotsPinned = false; pushUrl(); render(true); });
   function syncChips(){
     markChip('modeChips', 'data-mode', S.mode);
     markChip('dirChips', 'data-dir', S.dir === null ? '' : S.dir);
     markChip('rateChips', 'data-rate', S.rate);
+    markChip('awareChips', 'data-aware', S.aware ? '1' : '0');
+    markChip('mphChips', 'data-mph', S.mph);
+    $('rateChips').style.display = S.aware ? '' : 'none';
+    $('mphChips').style.display = S.aware ? 'none' : '';
+    $('rateLab').innerHTML = S.aware ? 'Ring growth <span class="r">blocks per minute</span>' : 'Walking pace <span class="r">how fast they walk</span>';
+    $('seriousBtn').textContent = S.aware ? 'Violent felony / officer down: bigger ring' : 'Hurrying: add 1 mph';
     $('seriousBtn').classList.toggle('on', S.serious);
     $('footOpts').style.display = S.mode === 'foot' ? '' : 'none';
     $('spotsCard').style.display = S.mode === 'foot' ? '' : 'none';
@@ -557,7 +651,7 @@
   });
   $('resetBtn').addEventListener('click', function(){
     S.pin = null; if (pinMarker){ map.removeLayer(pinMarker); pinMarker = null; }
-    S.lastSeen = null; S.setAt = null; S.dir = null; S.serious = false; S.rate = CFG.rate; S.mode = 'foot'; S.spots = []; S.spotsR = null; S.spotsPinned = false; S.iso = null; S.isoFailed = false; S.isoLastKey = ''; S.bailing = false;
+    S.lastSeen = null; S.setAt = null; S.dir = null; S.serious = false; S.rate = CFG.rate; S.aware = true; S.mph = CFG.walkMph; S.mode = 'foot'; S.spots = []; S.spotsR = null; S.spotsPinned = false; S.iso = null; S.isoFailed = false; S.isoLastKey = ''; S.bailing = false;
     S.blockFt = CFG.defaultBlockFt; S.blockSrc = 'default'; S.streets = null; S.streetsBox = null;
     S.placing = true; $('placeBtn').classList.remove('on'); $('mapnote').textContent = 'Tap the map where the suspect was last seen'; $('mapnote').classList.add('show');
     markChip('agoChips', 'data-min', '__none__'); $('otherMin').classList.remove('show'); $('otherMin').value = '';
@@ -578,6 +672,8 @@
     if (S.dir !== null) p.set('dir', String(S.dir));
     if (S.serious) p.set('sev', '1');
     if (S.rate !== CFG.rate) p.set('rate', String(S.rate));
+    if (!S.aware) p.set('aw', '0');
+    if (S.mph !== CFG.walkMph) p.set('mph', String(S.mph));
     if (S.pin && S.lastSeen) p.set('blk', String(Math.round(S.blockFt)));
     var qs = p.toString();
     try { history.replaceState(null, '', location.pathname + (qs ? '?' + qs : '')); } catch(e){}
@@ -591,6 +687,8 @@
     if (p.get('dir') !== null && p.get('dir') !== '') S.dir = parseFloat(p.get('dir'));
     if (p.get('sev') === '1') S.serious = true;
     if (p.get('rate')) S.rate = parseFloat(p.get('rate')) || CFG.rate;
+    if (p.get('aw') === '0') S.aware = false;
+    if (p.get('mph')) S.mph = parseFloat(p.get('mph')) || CFG.walkMph;
     if (p.get('blk')) { var b = parseInt(p.get('blk'), 10); if (b >= 150 && b <= 1500){ S.blockFt = b; S.blockSrc = 'link'; } }
     syncChips();
     if (!isNaN(lat) && !isNaN(lon)){ restored = true; setPin(lat, lon, { silent: true }); }
@@ -768,10 +866,11 @@
     }
     if (S.mode === 'foot'){
       var R = footRadius(now), RhFull = hideBlocks() * blockM(), Rh = Math.min(RhFull, R), Rlive = S.setAt ? liveRadius(now) : null;
-      var key = ['f', Math.round(R), Math.round(Rh), S.dir, S.pin.lat.toFixed(5), S.pin.lon.toFixed(5), Rlive === null ? '' : Math.round(Rlive / 20)].join('|');
+      if (!S.aware){ RhFull = 0; Rh = 0; }
+      var key = ['f', S.aware ? 'a' : 'u', Math.round(R), Math.round(Rh), S.dir, S.pin.lat.toFixed(5), S.pin.lon.toFixed(5), Rlive === null ? '' : Math.round(Rlive / 20)].join('|');
       if (force || key !== lastDraw.key){
         lastDraw.key = key; shapes.clearLayers();
-        L.circle([S.pin.lat, S.pin.lon], { radius: Rh, color: '#0f6e56', weight: 1, fillColor: '#0f6e56', fillOpacity: 0.16, dashArray: '2 4', interactive: false }).addTo(shapes);
+        if (Rh > 0) L.circle([S.pin.lat, S.pin.lon], { radius: Rh, color: '#0f6e56', weight: 1, fillColor: '#0f6e56', fillOpacity: 0.16, dashArray: '2 4', interactive: false }).addTo(shapes);
         if (S.dir !== null){
           shapes.addLayer(L.polygon(wedge(S.pin, S.dir, 66, R), { color: '#b8923a', weight: 0, fillColor: '#b8923a', fillOpacity: 0.16, interactive: false }));
           shapes.addLayer(L.polygon(wedge(S.pin, S.dir, 30, R), { color: '#b8923a', weight: 0, fillColor: '#b8923a', fillOpacity: 0.24, interactive: false }));
@@ -782,13 +881,14 @@
         if (!S.setAt && now - S.userMovedAt > 20000 && Math.abs(showR - lastFitR) > 0.2 * Math.max(showR, lastFitR)) fitRing(showR);
       }
       var blkTxt = 'Block here ' + Math.round(S.blockFt) + ' ft (' + (S.blockSrc === 'measured' ? 'measured from the map' : S.blockSrc === 'link' ? 'from the shared link' : 'default until the streets load') + ')';
-      var html = '<div class="big ring">Containment ring ' + fmtMi(R) + ' <span style="font-size:18px;font-weight:600">&middot; ' + fmtFt(R) + ' &middot; about ' + fmtBlocks(R) + ' blocks</span></div>';
-      html += '<div class="hide">Likely hiding area: ' + (R <= RhFull ? 'the whole ring so far (most foot suspects go to ground within ' + hideBlocks() + ' blocks)' : 'within ' + hideBlocks() + ' blocks (' + fmtFt(Rh) + ') of the pin') + (S.dir !== null ? ', favoring ' + compass(S.dir) : '') + '</div>';
+      var html = '<div class="big ring">' + (S.aware ? 'Containment ring ' : 'Walking ring ') + fmtMi(R) + ' <span style="font-size:18px;font-weight:600">&middot; ' + fmtFt(R) + ' &middot; about ' + fmtBlocks(R) + ' blocks</span></div>';
+      if (S.aware) html += '<div class="hide">Likely hiding area: ' + (R <= RhFull ? 'the whole ring so far (most foot suspects go to ground within ' + hideBlocks() + ' blocks)' : 'within ' + hideBlocks() + ' blocks (' + fmtFt(Rh) + ') of the pin') + (S.dir !== null ? ', favoring ' + compass(S.dir) : '') + '</div>';
+      else html += '<div class="hide">Unaware: likely still moving at a normal pace' + (S.dir !== null ? ' toward the ' + compass(S.dir) : ', so direction of travel matters most') + '. Not hiding. Look for the description on foot inside the ring.</div>';
       if (S.setAt) html += '<div>Set ' + fmtTime(S.setAt) + ', ' + fmtClock(ms) + ' after last seen. Hold it. If not contained they could have reached ' + fmtMi(Rlive) + ' by now.</div>';
-      else html += '<div class="mute">Growing ' + rateEff() + ' blocks a minute. Tap Set perimeter once units are on their spots.</div>';
+      else html += '<div class="mute">Growing ' + (S.aware ? rateEff() + ' blocks a minute' : (S.mph + (S.serious ? 1 : 0)) + ' mph, walking') + '. Tap Set perimeter once units are on their spots.</div>';
       html += '<div class="mute">' + blkTxt + '</div>';
       read.innerHTML = html;
-      legend.innerHTML = '<span><i style="background:rgba(155,32,48,.35);border:2px solid #9b2030"></i>Containment ring</span><span><i style="background:rgba(15,110,86,.35);border:1px dashed #0f6e56"></i>Likely hiding area</span>' + (S.dir !== null ? '<span><i style="background:rgba(184,146,58,.5)"></i>Likely direction</span>' : '') + (S.setAt ? '<span><i style="border:2px dashed #9b2030;background:none"></i>Could have reached by now</span>' : '');
+      legend.innerHTML = '<span><i style="background:rgba(155,32,48,.35);border:2px solid #9b2030"></i>' + (S.aware ? 'Containment ring' : 'Walking ring') + '</span>' + (S.aware ? '<span><i style="background:rgba(15,110,86,.35);border:1px dashed #0f6e56"></i>Likely hiding area</span>' : '') + (S.dir !== null ? '<span><i style="background:rgba(184,146,58,.5)"></i>Likely direction</span>' : '') + (S.setAt ? '<span><i style="border:2px dashed #9b2030;background:none"></i>Could have reached by now</span>' : '');
       if (!S.streetsBusy && R <= CFG.spotsMaxRadiusM && ((!S.setAt && S.streets) || (!S.streets && S.streetsErr && now - (S.streetsErrAt || 0) > 30000))) loadStreets();
       renderSpots(R);
     } else {
@@ -808,7 +908,7 @@
         if (!S.setAt && now - S.userMovedAt > 20000 && Math.abs(showR2 - lastFitR) > 0.2 * Math.max(showR2, lastFitR)) fitRing(showR2);
       }
       var h2 = '';
-      if (usable) h2 += '<div class="big ring">Road reach in ' + fmtClock(S.iso.sec * 1000) + '</div><div>Streets a car could have covered at posted speeds since last seen. A fleeing driver can beat this; treat it as the inside edge.</div>';
+      if (usable) h2 += '<div class="big ring">Road reach in ' + fmtClock(S.iso.sec * 1000) + '</div><div>' + (S.aware ? 'Streets a car could have covered at posted speeds since last seen. A fleeing driver can beat this; treat it as the inside edge.' : 'Streets a car driving normally could have covered since last seen. Unaware drivers keep to posted speeds, so this is the picture.') + '</div>';
       else if (ms / 1000 > CFG.carMaxSec + 30) h2 += '<div class="big ring">Past 10 minutes</div><div>A car that kept going is outside any workable perimeter. Dashed circle: ' + fmtMi(Rfb) + ' at ' + CFG.carFallbackMph + ' mph.</div>';
       else if (S.isoFailed) h2 += '<div class="big ring">About ' + fmtMi(Rfb) + ' at ' + CFG.carFallbackMph + ' mph</div><div class="note warn">Road reach service not reachable right now; this is a plain circle.</div>';
       else h2 += '<div class="big ring">About ' + fmtMi(Rfb) + ' at ' + CFG.carFallbackMph + ' mph</div><div class="mute">Finding the road reach...</div>';

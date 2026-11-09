@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- waivers.html | Build v4 | 11/09/26 | v4: event packets. An event code (one shared code per special event, made on /admin) opens an event screen: title, date, location, and the list of cadets on the event; the family picks the cadet and then the usual who / name / form / done flow runs for that cadet with the forms in that cadet's packet (wv.js eventCadetInvite). Signers register with the cadet's name (reg.cadet) under the one event node, and the status only counts signers of the picked cadet. Parent options now appear whenever a form in the packet needs a parent, so the medical consent (a parent signs for every cadet under 21) works for an 18 to 20 year old cadet too. New form fields: a second phone number (optional) and the allergies / medical problems / medications box (required; type None if there are none); the activity and date blanks fill from the event. The allergies text is never kept in this phone's storage. Own-copy PDFs for the Garland ISD waiver and the medical consent. Different cadet / Sign for another cadet buttons. Cache-buster wv.js?v=4. Build v3 notes: v3: every parent or guardian of a minor cadet is asked which Release of Liability applies (married parents or a single guardian, or divorced parents) on the name screen, required before continuing while that paper form is still missing; the answer is stored on their signing record (meta.liab, next to the second-parent answer) so the advisors and sergeants see which paper version the family needs. The finish screen starts from that answer, and tapping the other version there updates it. Phone number and home address are required wherever a form asks for them (cadet and parent); only email stays optional. Cache-buster wv.js?v=3. Build v2 notes: v2: picking who you are now starts that person clean: the signature, the electronic-signing consent, and the session's signed-forms list are reset, so a cadet who signs first and a parent who signs next on the same phone never share a signature (Tony caught the cadet's typed signature prefilled on the parent's form, 10/28/26). Build v1 notes: New page: online signing of the cadet waivers (rpdcadets.com/waivers). A parent or cadet enters the 8-character code an advisor or sergeant generated, picks who they are (cadet, parent or guardian, other parent or guardian), reads each form in full, agrees to sign electronically once, draws or types a signature once and applies it per form, and each form saves the moment it is signed. Which forms and which signatures are needed comes from wv.js (PSC Agreement, Photo and Video Release, Simunitions; adult cadets sign alone, minors need a parent, the Photo and Simunitions forms need the other parent only when the first parent says so or the other parent asks to sign). Everything written is encrypted: status stubs under the code-derived key, the signed records sealed to the reference public key so only the full advisor passcode opens them. This page deliberately does NOT load roster.js (its seed carries cadet names). Download a copy builds the signer's own PDF from the official form with pdf-lib. -->
+<!-- waivers.html | Build v5 | 11/09/26 | v5, from Tony's live test of the Garland event: (1) the second-parent question no longer names the Photo and Simunitions forms; it reads "A second signature is required only when the cadet's parents are divorced or unmarried with shared rights..." for every code. (2) "Your copy" PDFs now carry every signature made on this phone during the visit for that cadet, not just the current signer's: when the cadet and a parent sign back to back on one phone, the second one's copy shows both (the Garland form with the parent or guardian block under the cadet's lines). Records are kept per cadet, form, and signer for the visit (S.allRecs); the button says how many signatures the copy carries. Signatures made on another phone cannot be included (they are sealed to the advisors), so the note says so; the advisors' PDF on /admin always has everything. (3) The finish screen's "Sign for another cadet" button is gone; Back to the list returns to the who-signs list for the code, which on an event code still has Different cadet. Build v4 notes: v4: event packets. An event code (one shared code per special event, made on /admin) opens an event screen: title, date, location, and the list of cadets on the event; the family picks the cadet and then the usual who / name / form / done flow runs for that cadet with the forms in that cadet's packet (wv.js eventCadetInvite). Signers register with the cadet's name (reg.cadet) under the one event node, and the status only counts signers of the picked cadet. Parent options now appear whenever a form in the packet needs a parent, so the medical consent (a parent signs for every cadet under 21) works for an 18 to 20 year old cadet too. New form fields: a second phone number (optional) and the allergies / medical problems / medications box (required; type None if there are none); the activity and date blanks fill from the event. The allergies text is never kept in this phone's storage. Own-copy PDFs for the Garland ISD waiver and the medical consent. Different cadet / Sign for another cadet buttons. Cache-buster wv.js?v=4. Build v3 notes: v3: every parent or guardian of a minor cadet is asked which Release of Liability applies (married parents or a single guardian, or divorced parents) on the name screen, required before continuing while that paper form is still missing; the answer is stored on their signing record (meta.liab, next to the second-parent answer) so the advisors and sergeants see which paper version the family needs. The finish screen starts from that answer, and tapping the other version there updates it. Phone number and home address are required wherever a form asks for them (cadet and parent); only email stays optional. Cache-buster wv.js?v=3. Build v2 notes: v2: picking who you are now starts that person clean: the signature, the electronic-signing consent, and the session's signed-forms list are reset, so a cadet who signs first and a parent who signs next on the same phone never share a signature (Tony caught the cadet's typed signature prefilled on the parent's form, 10/28/26). Build v1 notes: New page: online signing of the cadet waivers (rpdcadets.com/waivers). A parent or cadet enters the 8-character code an advisor or sergeant generated, picks who they are (cadet, parent or guardian, other parent or guardian), reads each form in full, agrees to sign electronically once, draws or types a signature once and applies it per form, and each form saves the moment it is signed. Which forms and which signatures are needed comes from wv.js (PSC Agreement, Photo and Video Release, Simunitions; adult cadets sign alone, minors need a parent, the Photo and Simunitions forms need the other parent only when the first parent says so or the other parent asks to sign). Everything written is encrypted: status stubs under the code-derived key, the signed records sealed to the reference public key so only the full advisor passcode opens them. This page deliberately does NOT load roster.js (its seed carries cadet names). Download a copy builds the signer's own PDF from the official form with pdf-lib. -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -162,7 +162,7 @@ textarea.t.miss{border-color:rgba(231,76,60,0.7)}
     <div id="secondQ" style="display:none">
       <h3>One more question</h3>
       <p class="lead">Does a second parent or guardian also need to sign?</p>
-      <p class="fine" style="margin-top:0">A second signature is required on the Photo and Simunitions forms only when the cadet's parents are divorced or unmarried with shared rights. It is not required if one parent has sole legal custody, or for married parents or a single guardian.</p>
+      <p class="fine" style="margin-top:0">A second signature is required only when the cadet's parents are divorced or unmarried with shared rights. It is not required if one parent has sole legal custody, or for married parents or a single guardian.</p>
       <div class="roles" id="secondBtns">
         <button type="button" class="role" data-second="no">No, my signature is enough<small>Married parents, a single guardian, or sole legal custody</small></button>
         <button type="button" class="role" data-second="yes">Yes, the other parent or guardian also signs<small>Divorced or unmarried with shared rights; they use this same code</small></button>
@@ -219,17 +219,17 @@ textarea.t.miss{border-color:rgba(231,76,60,0.7)}
     <div id="doneDl"></div>
     <div id="donePaper"></div>
     <div class="err" id="doneErr" role="alert"></div>
-    <div class="btn-row"><button type="button" class="btn-sub" id="doneBack">Back to the list</button><button type="button" class="btn-sub" id="doneOther" style="display:none">Sign for another cadet</button></div>
+    <div class="btn-row"><button type="button" class="btn-sub" id="doneBack">Back to the list</button></div>
   </div>
 
   <!-- busy -->
   <div class="card" id="cBusy"><div class="spin"></div><p class="lead center" id="busyTxt">One moment</p></div>
 
-  <div class="foot">Richardson Police Department Public Safety Cadets<br>200 N. Greenville Ave, Richardson, TX 75081 &nbsp;|&nbsp; (972) 744-4801<br><span style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase">Build v4</span></div>
+  <div class="foot">Richardson Police Department Public Safety Cadets<br>200 N. Greenville Ave, Richardson, TX 75081 &nbsp;|&nbsp; (972) 744-4801<br><span style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase">Build v5</span></div>
 </div>
 
 <script>
-console.log('[waivers] Build v4');
+console.log('[waivers] Build v5');
 /* Same Firebase project as the rest of the site. This page deliberately does NOT load roster.js. */
 const firebaseConfig = {
   apiKey:            "AIzaSyDV0vuyGg7gpPXJd2jRqZtUTeKiP3yPxhU",
@@ -249,6 +249,9 @@ const esc = W.esc;
 
 const S = { code:'', id:'', key:null, invite:null, event:null, cadet:'', signers:[], st:null, token:'', role:'', slot:'', name:'', isSecond:false, fields:{ phone:'', email:'', address:'', phone2:'', meds:'' }, queue:[], idx:0, sig:'', sigMode:'', consentAt:0, pub:'', signedNow:[], records:{} };
 const blankFields = () => ({ phone:'', email:'', address:'', phone2:'', meds:'' });   // Build v4: phone2 and the allergies box (medical consent)
+S.allRecs = {};   // Build v5: every record signed on this phone during the visit, keyed cadet|form|slot, so a copy can carry both the cadet's and the parent's signatures
+const recKey = (cadet, k, slot) => W.normName(cadet)+'|'+k+'|'+slot;
+function recsFor(cadet, k){ const out={}; Object.keys(S.allRecs).forEach(key=>{ const [c,f,slot]=key.split('|'); if(c===W.normName(cadet) && f===k) out[slot]=S.allRecs[key]; }); return out; }
 
 function show(id){ document.querySelectorAll('.card').forEach(c=>c.classList.toggle('on', c.id===id)); window.scrollTo(0,0); }
 function busy(txt){ $('busyTxt').textContent = txt || 'One moment'; show('cBusy'); }
@@ -273,6 +276,7 @@ async function enter(){
     if(!inv || !inv.blob){ throw new Error('nf'); }
     let obj; try{ obj = JSON.parse(await W.keyDecrypt(inv.blob, d.key)); }catch(e){ throw new Error('nf'); }
     if(inv.exp && Date.now() > inv.exp) throw new Error('exp');
+    if(S.id!==d.id) S.allRecs={};   // Build v5: a different code starts a new visit
     S.code=code; S.id=d.id; S.key=d.key;
     try{ location.hash = W.formatCode(code); }catch(e){}
     if(obj.kind==='event'){ S.event=obj; S.invite=null; S.cadet=''; S.signers=[]; S.st=null; renderEvent(); }   // Build v4: one shared code for a trip or training event
@@ -317,7 +321,7 @@ async function pickCadet(name){
   catch(e){ show('cEvent'); $('evErr').textContent='Could not reach the server. Check your connection and try again.'; }
 }
 $('whoOther').addEventListener('click', ()=>{ if(S.event) renderEvent(); });
-$('doneOther').addEventListener('click', ()=>{ if(S.event) renderEvent(); });
+
 function mySlot(){
   if(S.role==='cadet') return 'cadet';
   if(S.role!=='parent') return '';
@@ -536,7 +540,7 @@ $('fSign').addEventListener('click', async ()=>{
     const e = await W.envelope(JSON.stringify(rec), S.pub);
     const s = await W.keyEncrypt(JSON.stringify({ at, name:S.name, role:S.role, cadet:S.event?S.cadet:undefined }), S.key);
     await db.ref(ROOT+'/wvSigs/'+S.id+'/'+S.token+'/forms/'+k).set({ s, e, t:TS() });
-    S.records[k]=rec; S.signedNow.push(k); saveLocal();
+    S.records[k]=rec; S.signedNow.push(k); S.allRecs[recKey(S.invite.cadet, k, S.slot)]=rec; saveLocal();   // Build v5: kept for the visit
     S.idx++;
     if(S.idx < S.queue.length) renderForm(); else renderDone();
   }catch(e){
@@ -552,9 +556,11 @@ async function renderDone(lead){
   const mineLeft = S.invite.forms.filter(k=>{ const f=S.st.forms[k]; return f && f.needed.includes(S.slot) && !f.signed[S.slot]; });
   $('doneTitle').textContent = S.signedNow.length ? 'Signed' : 'Nothing to sign';
   $('doneLead').textContent = lead || (S.signedNow.length===1 ? 'Your signature is saved on 1 form.' : 'Your signature is saved on '+S.signedNow.length+' forms.') + (S.st.allComplete ? ' Every form for '+S.invite.cadet+(S.event?' for '+(S.event.title||'this event'):'')+' is now complete; the advisors have it.' : ' The list below shows who still needs to sign.');
-  $('doneOther').style.display = S.event ? 'inline-block' : 'none';   // Build v4
   formRows($('doneForms'), S.slot);
-  $('doneDl').innerHTML = S.signedNow.length ? '<h3>Your copy</h3><p class="fine" style="margin-top:0">A PDF of each form with your signature and details, built here on your phone.</p><div class="btn-row">'+S.signedNow.map(k=>`<button type="button" class="btn-sub" data-dl="${k}">${esc(W.FORMS[k].short)} PDF</button>`).join('')+'</div>' : '';
+  // Build v5: a copy per form signed on this phone for this cadet, carrying every signature made here (cadet and parent when both signed on this phone)
+  const copyForms = S.invite.forms.filter(k=>Object.keys(recsFor(S.invite.cadet, k)).length);
+  const anyOther = copyForms.some(k=>{ const f=S.st.forms[k]; return f && Object.keys(f.signed).some(sl=>!recsFor(S.invite.cadet, k)[sl]); });
+  $('doneDl').innerHTML = copyForms.length ? '<h3>Your copy</h3><p class="fine" style="margin-top:0">A PDF of each form, built here on your phone, with the signatures made on this phone.'+(anyOther?' A signature made on another phone cannot be shown here; the advisors\' copy has every signature.':'')+'</p><div class="btn-row">'+copyForms.map(k=>{ const n=Object.keys(recsFor(S.invite.cadet, k)).length; return `<button type="button" class="btn-sub" data-dl="${k}">${esc(W.FORMS[k].short)} PDF${n>1?' ('+n+' signatures)':''}</button>`; }).join('')+'</div>' : '';
   $('doneDl').querySelectorAll('[data-dl]').forEach(b=>b.addEventListener('click', ()=>downloadCopy(b.dataset.dl, b)));
   $('donePaper').innerHTML = paperHtml(); paperBind();
   $('doneErr').textContent='';
@@ -608,12 +614,12 @@ $('doneBack').addEventListener('click', async ()=>{ busy('Refreshing'); try{ awa
 let pdfLibP=null;
 function loadPdfLib(){ if(window.PDFLib) return Promise.resolve(); if(!pdfLibP) pdfLibP=new Promise((res,rej)=>{ const s=document.createElement('script'); s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js'; s.onload=()=>res(); s.onerror=()=>{ pdfLibP=null; rej(new Error('pdf-lib')); }; document.head.appendChild(s); }); return pdfLibP; }
 async function downloadCopy(k, btn){
-  const rec=S.records[k]; if(!rec) return; btn.disabled=true; $('doneErr').textContent='';
+  const recs=recsFor(S.invite.cadet, k); if(!Object.keys(recs).length) return; btn.disabled=true; $('doneErr').textContent='';   // Build v5: every signer on this phone
   try{
     await loadPdfLib();
     const F=W.FORMS[k];
     const blank = await (await fetch(F.file+'?v='+encodeURIComponent(F.version))).arrayBuffer();
-    const sections={}; sections[S.slot] = { name:rec.name, phone:rec.phone, email:rec.email, address:rec.address, phone2:rec.phone2||'', meds:rec.meds||'', date:W.fmtDateUS(rec.at), at:rec.at, sig:rec.sig };
+    const sections={}; Object.keys(recs).forEach(slot=>{ const rec=recs[slot]; sections[slot] = { name:rec.name, phone:rec.phone, email:rec.email, address:rec.address, phone2:rec.phone2||'', meds:rec.meds||'', date:W.fmtDateUS(rec.at), at:rec.at, sig:rec.sig }; });
     const bytes = await W.fillPdf(window.PDFLib, k, blank, { cadet:S.invite.cadet, sections, event:S.invite.event||undefined });   // Build v4: the event fills the activity, date, and agency
     const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([bytes],{type:'application/pdf'})); a.download=(S.invite.cadet.replace(/[^A-Za-z0-9]+/g,'_')+'_'+F.short.replace(/[^A-Za-z0-9]+/g,'_')+'.pdf'); document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },2000);
   }catch(e){ $('doneErr').textContent='Could not build the PDF right now. The signature itself is saved.'; }

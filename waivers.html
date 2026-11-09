@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- waivers.html | Build v3 | 10/28/26 | v3: every parent or guardian of a minor cadet is asked which Release of Liability applies (married parents or a single guardian, or divorced parents) on the name screen, required before continuing while that paper form is still missing; the answer is stored on their signing record (meta.liab, next to the second-parent answer) so the advisors and sergeants see which paper version the family needs. The finish screen starts from that answer, and tapping the other version there updates it. Phone number and home address are required wherever a form asks for them (cadet and parent); only email stays optional. Cache-buster wv.js?v=3. Build v2 notes: v2: picking who you are now starts that person clean: the signature, the electronic-signing consent, and the session's signed-forms list are reset, so a cadet who signs first and a parent who signs next on the same phone never share a signature (Tony caught the cadet's typed signature prefilled on the parent's form, 10/28/26). Build v1 notes: New page: online signing of the cadet waivers (rpdcadets.com/waivers). A parent or cadet enters the 8-character code an advisor or sergeant generated, picks who they are (cadet, parent or guardian, other parent or guardian), reads each form in full, agrees to sign electronically once, draws or types a signature once and applies it per form, and each form saves the moment it is signed. Which forms and which signatures are needed comes from wv.js (PSC Agreement, Photo and Video Release, Simunitions; adult cadets sign alone, minors need a parent, the Photo and Simunitions forms need the other parent only when the first parent says so or the other parent asks to sign). Everything written is encrypted: status stubs under the code-derived key, the signed records sealed to the reference public key so only the full advisor passcode opens them. This page deliberately does NOT load roster.js (its seed carries cadet names). Download a copy builds the signer's own PDF from the official form with pdf-lib. -->
+<!-- waivers.html | Build v4 | 11/09/26 | v4: event packets. An event code (one shared code per special event, made on /admin) opens an event screen: title, date, location, and the list of cadets on the event; the family picks the cadet and then the usual who / name / form / done flow runs for that cadet with the forms in that cadet's packet (wv.js eventCadetInvite). Signers register with the cadet's name (reg.cadet) under the one event node, and the status only counts signers of the picked cadet. Parent options now appear whenever a form in the packet needs a parent, so the medical consent (a parent signs for every cadet under 21) works for an 18 to 20 year old cadet too. New form fields: a second phone number (optional) and the allergies / medical problems / medications box (required; type None if there are none); the activity and date blanks fill from the event. The allergies text is never kept in this phone's storage. Own-copy PDFs for the Garland ISD waiver and the medical consent. Different cadet / Sign for another cadet buttons. Cache-buster wv.js?v=4. Build v3 notes: v3: every parent or guardian of a minor cadet is asked which Release of Liability applies (married parents or a single guardian, or divorced parents) on the name screen, required before continuing while that paper form is still missing; the answer is stored on their signing record (meta.liab, next to the second-parent answer) so the advisors and sergeants see which paper version the family needs. The finish screen starts from that answer, and tapping the other version there updates it. Phone number and home address are required wherever a form asks for them (cadet and parent); only email stays optional. Cache-buster wv.js?v=3. Build v2 notes: v2: picking who you are now starts that person clean: the signature, the electronic-signing consent, and the session's signed-forms list are reset, so a cadet who signs first and a parent who signs next on the same phone never share a signature (Tony caught the cadet's typed signature prefilled on the parent's form, 10/28/26). Build v1 notes: New page: online signing of the cadet waivers (rpdcadets.com/waivers). A parent or cadet enters the 8-character code an advisor or sergeant generated, picks who they are (cadet, parent or guardian, other parent or guardian), reads each form in full, agrees to sign electronically once, draws or types a signature once and applies it per form, and each form saves the moment it is signed. Which forms and which signatures are needed comes from wv.js (PSC Agreement, Photo and Video Release, Simunitions; adult cadets sign alone, minors need a parent, the Photo and Simunitions forms need the other parent only when the first parent says so or the other parent asks to sign). Everything written is encrypted: status stubs under the code-derived key, the signed records sealed to the reference public key so only the full advisor passcode opens them. This page deliberately does NOT load roster.js (its seed carries cadet names). Download a copy builds the signer's own PDF from the official form with pdf-lib. -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -11,7 +11,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@300;400;500;600;700&family=Barlow+Condensed:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
-<script src="wv.js?v=3"></script>
+<script src="wv.js?v=4"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{--navy:#1a2744;--navy-deep:#0f1a30;--red:#c0392b;--red-glow:#e74c3c;--gold:#d4a952;--gold-light:#f0d68a;--green:#27ae60;--white:#fff;--text-muted:#8899b0;--card-bg:rgba(255,255,255,0.025);--card-border:rgba(255,255,255,0.06);--input-bg:rgba(255,255,255,0.04);--input-border:rgba(255,255,255,0.1);--input-focus:rgba(192,57,43,0.4)}
@@ -61,6 +61,16 @@ input.t{width:100%;background:var(--input-bg);border:1px solid var(--input-borde
 input.t:focus{border-color:var(--gold)}
 input.t[readonly]{color:#c6d0de}
 input.t.miss{border-color:rgba(231,76,60,0.7)}
+textarea.t{width:100%;background:var(--input-bg);border:1px solid var(--input-border);border-radius:10px;padding:13px 14px;color:var(--white);font-family:'Barlow',sans-serif;font-size:16px;outline:none;resize:vertical;min-height:88px;line-height:1.45}
+textarea.t:focus{border-color:var(--gold)}
+textarea.t.miss{border-color:rgba(231,76,60,0.7)}
+.opt{color:var(--text-muted);letter-spacing:0;text-transform:none;font-weight:400}
+.ev-head{background:rgba(212,169,82,0.07);border:1px solid rgba(212,169,82,0.28);border-radius:12px;padding:14px 16px;margin-bottom:18px}
+.ev-title{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:1.5px;line-height:1.1;margin:3px 0 4px;overflow-wrap:anywhere}
+.ev-sub{font-size:14px;color:#b6c2d4;line-height:1.5}
+.ev-line{font-size:13.5px;color:#b6c2d4;margin-top:10px;line-height:1.5}
+.ev-line b{color:#fff}
+#evFind{margin-bottom:10px}
 .progress{font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--gold);margin-bottom:6px}
 .doc{background:#fff;color:#1b1f27;border-radius:12px;padding:18px 16px;font-family:Georgia,'Times New Roman',serif;font-size:14.5px;line-height:1.6;max-height:46vh;overflow:auto;margin:10px 0 4px;border:1px solid rgba(0,0,0,0.1)}
 .doc h4{font-family:'Barlow Condensed',sans-serif;font-size:13px;letter-spacing:1.5px;text-transform:uppercase;color:#1a2744;margin:14px 0 6px}
@@ -113,22 +123,34 @@ input.t.miss{border-color:rgba(231,76,60,0.7)}
   <!-- 1. code -->
   <div class="card on" id="cEnter">
     <h2>Enter your code</h2>
-    <p class="lead">An advisor or sergeant gave your family an 8-character code. Enter it to sign the cadet's program forms on this phone.</p>
+    <p class="lead">An advisor or sergeant gave your family an 8-character code, either for the cadet's program forms or for a trip or training event. Enter it to sign on this phone.</p>
     <input type="text" class="code-in" id="codeIn" placeholder="XXXX-XXXX" autocomplete="off" autocapitalize="characters" spellcheck="false" inputmode="text" maxlength="9">
     <div class="err" id="enterErr" role="alert"></div>
     <button type="button" class="btn-main" id="enterBtn">Continue</button>
     <p class="fine">Everything you sign is encrypted on this phone before it is saved, and only the cadet program's advisors can open it.</p>
   </div>
 
+  <!-- 1b. event code: which cadet (Build v4) -->
+  <div class="card" id="cEvent">
+    <div class="ev-head"><div class="who-l">Event waivers</div><div class="ev-title" id="evTitle"></div><div class="ev-sub" id="evSub"></div></div>
+    <h2>Which cadet are you signing for?</h2>
+    <p class="lead">Pick the cadet. The cadet and a parent or guardian each sign from their own phone with this same code, or back to back on one phone.</p>
+    <input type="text" class="t" id="evFind" placeholder="Type a name to find it" autocomplete="off">
+    <div class="roles" id="evCadets"></div>
+    <div class="err" id="evErr" role="alert"></div>
+    <p class="fine">Everything you sign is encrypted on this phone before it is saved, and only the cadet program's advisors can open it.</p>
+  </div>
+
   <!-- 2. who -->
   <div class="card" id="cWho">
-    <div class="who"><div class="who-l">Signing for</div><div class="who-name" id="whoCadet"></div><div class="who-by" id="whoSub"></div></div>
+    <div class="who"><div class="who-l">Signing for</div><div class="who-name" id="whoCadet"></div><div class="who-by" id="whoSub"></div><div class="ev-line" id="whoEvent" style="display:none"></div></div>
     <h3>Forms</h3>
     <div class="status-list" id="whoForms"></div>
     <h3>Who are you?</h3>
     <div class="roles" id="whoRoles"></div>
     <div class="err" id="whoErr" role="alert"></div>
     <p class="fine">Each person signs from their own phone with this same code, or back to back on one phone. Come back any time; what is already signed stays signed.</p>
+    <div class="btn-row" id="whoEvBtns" style="display:none"><button type="button" class="btn-sub" id="whoOther">Different cadet</button></div>
   </div>
 
   <!-- 3. your name (and, for a parent, the second-parent question) -->
@@ -197,17 +219,17 @@ input.t.miss{border-color:rgba(231,76,60,0.7)}
     <div id="doneDl"></div>
     <div id="donePaper"></div>
     <div class="err" id="doneErr" role="alert"></div>
-    <div class="btn-row"><button type="button" class="btn-sub" id="doneBack">Back to the list</button></div>
+    <div class="btn-row"><button type="button" class="btn-sub" id="doneBack">Back to the list</button><button type="button" class="btn-sub" id="doneOther" style="display:none">Sign for another cadet</button></div>
   </div>
 
   <!-- busy -->
   <div class="card" id="cBusy"><div class="spin"></div><p class="lead center" id="busyTxt">One moment</p></div>
 
-  <div class="foot">Richardson Police Department Public Safety Cadets<br>200 N. Greenville Ave, Richardson, TX 75081 &nbsp;|&nbsp; (972) 744-4801<br><span style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase">Build v3</span></div>
+  <div class="foot">Richardson Police Department Public Safety Cadets<br>200 N. Greenville Ave, Richardson, TX 75081 &nbsp;|&nbsp; (972) 744-4801<br><span style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase">Build v4</span></div>
 </div>
 
 <script>
-console.log('[waivers] Build v3');
+console.log('[waivers] Build v4');
 /* Same Firebase project as the rest of the site. This page deliberately does NOT load roster.js. */
 const firebaseConfig = {
   apiKey:            "AIzaSyDV0vuyGg7gpPXJd2jRqZtUTeKiP3yPxhU",
@@ -225,13 +247,14 @@ const TS = () => (firebase.database.ServerValue && firebase.database.ServerValue
 const $ = id => document.getElementById(id);
 const esc = W.esc;
 
-const S = { code:'', id:'', key:null, invite:null, signers:[], st:null, token:'', role:'', slot:'', name:'', isSecond:false, fields:{ phone:'', email:'', address:'' }, queue:[], idx:0, sig:'', sigMode:'', consentAt:0, pub:'', signedNow:[], records:{} };
+const S = { code:'', id:'', key:null, invite:null, event:null, cadet:'', signers:[], st:null, token:'', role:'', slot:'', name:'', isSecond:false, fields:{ phone:'', email:'', address:'', phone2:'', meds:'' }, queue:[], idx:0, sig:'', sigMode:'', consentAt:0, pub:'', signedNow:[], records:{} };
+const blankFields = () => ({ phone:'', email:'', address:'', phone2:'', meds:'' });   // Build v4: phone2 and the allergies box (medical consent)
 
 function show(id){ document.querySelectorAll('.card').forEach(c=>c.classList.toggle('on', c.id===id)); window.scrollTo(0,0); }
 function busy(txt){ $('busyTxt').textContent = txt || 'One moment'; show('cBusy'); }
 /* One saved entry per signer (role + name) per code, so a cadet and a parent sharing one phone never inherit each other's token or details. */
-function storeKey(role, name){ return 'rpdwv_' + S.id + '_' + role + '_' + W.normName(name); }
-function saveLocal(){ if(!S.token) return; try{ localStorage.setItem(storeKey(S.role, S.name), JSON.stringify({ token:S.token, fields:S.fields, isSecond:S.isSecond })); }catch(e){} }
+function storeKey(role, name){ return 'rpdwv_' + S.id + (S.event ? '_' + W.normName(S.cadet) : '') + '_' + role + '_' + W.normName(name); }   // Build v4: per cadet on an event code
+function saveLocal(){ if(!S.token) return; try{ const f=Object.assign({}, S.fields); delete f.meds; localStorage.setItem(storeKey(S.role, S.name), JSON.stringify({ token:S.token, fields:f, isSecond:S.isSecond })); }catch(e){} }   // the allergies text never goes in this phone's storage
 function loadLocal(role, name){ try{ return JSON.parse(localStorage.getItem(storeKey(role, name))||'null'); }catch(e){ return null; } }
 
 /* ── 1. code ── */
@@ -250,10 +273,10 @@ async function enter(){
     if(!inv || !inv.blob){ throw new Error('nf'); }
     let obj; try{ obj = JSON.parse(await W.keyDecrypt(inv.blob, d.key)); }catch(e){ throw new Error('nf'); }
     if(inv.exp && Date.now() > inv.exp) throw new Error('exp');
-    S.code=code; S.id=d.id; S.key=d.key; S.invite=obj;
-    await loadStatus();
+    S.code=code; S.id=d.id; S.key=d.key;
     try{ location.hash = W.formatCode(code); }catch(e){}
-    renderWho();
+    if(obj.kind==='event'){ S.event=obj; S.invite=null; S.cadet=''; S.signers=[]; S.st=null; renderEvent(); }   // Build v4: one shared code for a trip or training event
+    else { S.event=null; S.cadet=''; S.invite=obj; await loadStatus(); renderWho(); }
   }catch(e){
     show('cEnter');
     err.textContent = e.message==='nf' ? 'That code did not open anything. Check it with the advisor or sergeant who gave it to you.' : (e.message==='exp' ? 'That code has expired. Ask the advisor or sergeant for a new one.' : 'Could not reach the server. Check your connection and try again.');
@@ -263,9 +286,38 @@ async function enter(){
 async function loadStatus(){
   const snap = await db.ref(ROOT+'/wvSigs/'+S.id).once('value');
   const raw = snap.exists() ? snap.val() : {};
-  S.signers = await W.decodeSigs(raw, S.key);
+  const all = await W.decodeSigs(raw, S.key);
+  S.signers = S.event ? all.filter(x=>W.normName(x.cadet)===W.normName(S.cadet)) : all;   // Build v4: an event node holds every cadet's signers
   S.st = W.status(S.invite, S.signers);
 }
+/* ── 1b. event code: pick the cadet (Build v4) ── */
+function renderEvent(){
+  const ev=S.event;
+  $('evTitle').textContent = ev.title || 'Event';
+  $('evSub').textContent = [W.fmtIsoLong(ev.date), ev.location].filter(Boolean).join(' · ');
+  $('evFind').value='';
+  renderEventList('');
+  $('evErr').textContent='';
+  show('cEvent');
+}
+function renderEventList(q){
+  const list=(S.event.cadets||[]).filter(c=>c && c.name).slice().sort((a,b)=>a.name.localeCompare(b.name));
+  const qq=W.normName(q);
+  const shown=list.filter(c=>!qq || W.normName(c.name).includes(qq));
+  $('evCadets').innerHTML = shown.length ? shown.map(c=>`<button type="button" class="role" data-ev-cadet="${esc(c.name)}">${esc(c.name)}<small>${(c.forms||[]).length ? (c.forms||[]).filter(k=>W.FORMS[k]).map(k=>W.FORMS[k].short).join(', ') : 'Nothing to sign'}</small></button>`).join('') : '<p class="fine" style="margin:0">No cadet by that name is on this event. Check the spelling, or ask the advisor to add the cadet.</p>';
+  $('evCadets').querySelectorAll('[data-ev-cadet]').forEach(b=>b.addEventListener('click', ()=>pickCadet(b.dataset.evCadet)));
+}
+$('evFind').addEventListener('input', e=>renderEventList(e.target.value));
+async function pickCadet(name){
+  const c=(S.event.cadets||[]).find(x=>x && x.name===name); if(!c) return;
+  S.cadet=c.name; S.invite=W.eventCadetInvite(S.event, c);
+  S.role=''; S.slot=''; S.name=''; S.token=''; S.fields=blankFields(); S.sig=''; S.sigMode=''; S.consentAt=0; S.signedNow=[]; S.records={};
+  busy('Opening');
+  try{ await loadStatus(); renderWho(); }
+  catch(e){ show('cEvent'); $('evErr').textContent='Could not reach the server. Check your connection and try again.'; }
+}
+$('whoOther').addEventListener('click', ()=>{ if(S.event) renderEvent(); });
+$('doneOther').addEventListener('click', ()=>{ if(S.event) renderEvent(); });
 function mySlot(){
   if(S.role==='cadet') return 'cadet';
   if(S.role!=='parent') return '';
@@ -290,12 +342,17 @@ function formRows(host, mineSlot){
 function renderWho(){
   const inv=S.invite, st=S.st;
   $('whoCadet').textContent = inv.cadet;
-  $('whoSub').textContent = inv.adult ? 'Adult cadet: signs for themselves.' : 'Minor cadet: a parent or guardian signs with the cadet.';
+  // Build v4: which roles the packet needs decides the wording and the buttons (an adult cadet's medical consent is still signed by a parent)
+  const needsCadet = Object.keys(st.forms).some(k=>st.forms[k].needed.includes('cadet'));
+  const needsParent = Object.keys(st.forms).some(k=>st.forms[k].needed.includes('parent1'));
+  $('whoSub').textContent = inv.adult ? (needsParent ? (needsCadet ? 'Adult cadet: signs for themselves; a parent or guardian signs the medical consent.' : 'A parent or guardian signs the medical consent for this cadet.') : 'Adult cadet: signs for themselves.') : 'Minor cadet: a parent or guardian signs with the cadet.';
+  if(S.event){ $('whoEvent').innerHTML = '<b>'+esc(S.event.title||'Event')+'</b><br>'+esc([W.fmtIsoLong(S.event.date), S.event.location].filter(Boolean).join(' · ')); $('whoEvent').style.display='block'; $('whoEvBtns').style.display='flex'; }
+  else { $('whoEvent').style.display='none'; $('whoEvBtns').style.display='none'; }
   formRows($('whoForms'), '');
   const roles=[]; const sl=st.slots;
   const cadetDone = Object.keys(st.forms).every(k=>!st.forms[k].needed.includes('cadet') || st.forms[k].signed.cadet);
-  roles.push(`<button type="button" class="role" data-role="cadet" ${cadetDone?'disabled':''}>${esc(inv.cadet)}<small>${inv.adult?'The cadet, 18 or older':'The cadet'}${cadetDone?' · everything signed':''}</small></button>`);
-  if(!inv.adult){
+  roles.push(`<button type="button" class="role" data-role="cadet" ${cadetDone?'disabled':''}>${esc(inv.cadet)}<small>${inv.adult?'The cadet, 18 or older':'The cadet'}${cadetDone?(needsCadet?' · everything signed':' · nothing for the cadet to sign'):''}</small></button>`);
+  if(needsParent){
     const parentDone = p => Object.keys(st.forms).every(k=>!st.forms[k].needed.includes(p) || st.forms[k].signed[p]);
     const named = n => (sl.parent1 && W.normName(sl.parent1.name)===W.normName(n)) || (sl.parent2 && W.normName(sl.parent2.name)===W.normName(n));
     if(sl.parent1) roles.push(`<button type="button" class="role" data-role="parent" data-name="${esc(sl.parent1.name)}" ${parentDone('parent1')?'disabled':''}>${esc(sl.parent1.name)}<small>Parent or guardian${parentDone('parent1')?' · everything signed':' · continue signing'}</small></button>`);
@@ -303,7 +360,7 @@ function renderWho(){
     const onFile = (inv.parent && inv.parent.name && !named(inv.parent.name)) ? inv.parent.name : '';
     const onFile2 = (inv.parent2 && inv.parent2.name && !named(inv.parent2.name)) ? inv.parent2.name : '';
     if(!sl.parent1){
-      roles.push(`<button type="button" class="role" data-role="parent" data-name="${esc(onFile)}">${onFile?esc(onFile):'Parent or guardian'}<small>${onFile?'Parent or guardian on file':'Signs for the cadet'}</small></button>`);
+      roles.push(`<button type="button" class="role" data-role="parent" data-name="${esc(onFile)}">${onFile?esc(onFile):'Parent or guardian'}<small>${onFile?'Parent or guardian on file':(inv.adult?'Signs the medical consent':'Signs for the cadet')}</small></button>`);
       if(onFile) roles.push(`<button type="button" class="role link" data-role="parent" data-name="">I'm a different parent or guardian</button>`);
     } else if(!sl.parent2){
       const prefill = onFile2 || onFile;
@@ -317,7 +374,7 @@ function renderWho(){
   show('cWho');
 }
 function pickRole(role, name, isSecond){
-  S.role = role; S.isSecond = !!isSecond; S.token = ''; S.fields = { phone:'', email:'', address:'' };
+  S.role = role; S.isSecond = !!isSecond; S.token = ''; S.fields = blankFields();
   S.name = role==='cadet' ? S.invite.cadet : (name || '');
   // Everything a signer makes on this phone belongs to that one person: a new pick starts clean, so a cadet's
   // signature and consent never carry over to the parent who signs next on the same phone (and the reverse).
@@ -327,14 +384,14 @@ function pickRole(role, name, isSecond){
 }
 // Details on file for this signer (from the invite), then anything this device saved for the same role and name.
 function prefillFor(role, name){
-  const f = { phone:'', email:'', address:'' };
+  const f = blankFields();
   if(role==='cadet'){ f.phone = S.invite.cadetPhone||''; f.email = S.invite.cadetEmail||''; }
   else {
     const src = (S.invite.parent && W.normName(S.invite.parent.name)===W.normName(name)) ? S.invite.parent : ((S.invite.parent2 && W.normName(S.invite.parent2.name)===W.normName(name)) ? S.invite.parent2 : null);
     if(src){ f.phone = src.phone||''; f.email = src.email||''; }
   }
   const loc = loadLocal(role, name);
-  if(loc && loc.fields){ ['phone','email','address'].forEach(k=>{ if(loc.fields[k]) f[k]=loc.fields[k]; }); }
+  if(loc && loc.fields){ ['phone','email','address','phone2'].forEach(k=>{ if(loc.fields[k]) f[k]=loc.fields[k]; }); }
   return { fields:f, token:(loc && loc.token) || '' };
 }
 /* ── 3. name + second-parent question ── */
@@ -376,7 +433,7 @@ $('nameBtn').addEventListener('click', async ()=>{
     const slot = mySlot();
     if(S.role==='parent' && !slot) throw new Error('full');
     S.slot = slot;
-    const regS = await W.keyEncrypt(JSON.stringify({ role:S.role, name:S.name, at:Date.now(), ua:navigator.userAgent }), S.key);
+    const regS = await W.keyEncrypt(JSON.stringify({ role:S.role, name:S.name, cadet:S.event?S.cadet:undefined, at:Date.now(), ua:navigator.userAgent }), S.key);   // Build v4: cadet on an event code
     await db.ref(ROOT+'/wvSigs/'+S.id+'/'+S.token+'/reg').set({ s:regS, t:TS() });
     if(S.role==='parent' && (askSecond || S.isSecond || (askLiab && liabAnswer))){
       // Build v3: one meta record per signer: the second-parent answer and the Release of Liability answer, merged with what this token already holds
@@ -436,14 +493,25 @@ function renderForm(){
   $('fTitle').textContent = F.title;
   const roleTxt = S.role==='cadet' ? (S.invite.adult ? 'You are signing as the cadet, 18 or older.' : 'You are signing as the cadet; a parent or guardian signs this form too.') : (S.slot==='parent2' ? 'You are signing as the other parent or guardian of '+S.invite.cadet+'.' : 'You are signing as the parent or guardian of '+S.invite.cadet+'.');
   $('fLead').textContent = roleTxt;
+  const evi = S.invite.event || {};
   let html = F.html.replace(/<span class="wv-blank" data-blank="cadet">[^<]*<\/span>/g, '<span class="wv-blank">'+esc(S.invite.cadet)+'</span>')
-                   .replace(/<span class="wv-blank" data-blank="parent">[^<]*<\/span>/g, '<span class="wv-blank">'+esc(S.role==='parent'?S.name:'the parent or guardian')+'</span>');
+                   .replace(/<span class="wv-blank" data-blank="parent">[^<]*<\/span>/g, '<span class="wv-blank">'+esc(S.role==='parent'?S.name:'the parent or guardian')+'</span>')
+                   .replace(/<span class="wv-blank" data-blank="activity">[^<]*<\/span>/g, '<span class="wv-blank">'+esc(evi.title||'the activity')+'</span>')   // Build v4
+                   .replace(/<span class="wv-blank" data-blank="date">[^<]*<\/span>/g, '<span class="wv-blank">'+esc(evi.date?W.fmtIsoLong(evi.date):'the date')+'</span>')
+                   .replace(/<span class="wv-blank" data-blank="agency">[^<]*<\/span>/g, '<span class="wv-blank">'+esc(evi.agency||W.DEFAULT_AGENCY)+'</span>');
   $('fDoc').innerHTML = html; $('fDoc').scrollTop=0;
   $('fDocLen').textContent = Math.max(1, Math.round($('fDoc').textContent.split(/\s+/).length/200)) + ' min read';
   const spec = fieldSpec(); const f=S.fields;
-  const labels = { name:'Printed name', phone:'Phone number', email:'Email', address:'Home address' };
-  const req = { name:true, phone:true, email:false, address:true };   // Build v3: phone and address are required wherever a form asks for them
-  $('fFields').innerHTML = spec.map(x=>`<label class="f" for="fld_${x}">${labels[x]}${req[x]?' <span class="req">*</span>':' <span style="color:var(--text-muted);letter-spacing:0;text-transform:none;font-weight:400">(optional)</span>'}</label><input type="text" class="t" id="fld_${x}" value="${esc(x==='name'?S.name:(f[x]||''))}" ${x==='name'?'readonly':''} autocomplete="${x==='phone'?'tel':x==='email'?'email':x==='address'?'street-address':'name'}" inputmode="${x==='phone'?'tel':x==='email'?'email':'text'}">`).join('');
+  const med = (k==='medtrip');
+  const labels = { name:'Printed name', phone: med?'Phone number during the activity':'Phone number', email:'Email', address:'Home address', phone2:'Second phone number', meds:'Allergies, medical problems, and medications' };
+  const req = { name:true, phone:true, email:false, address:true, phone2:false, meds:true };   // Build v3: phone and address are required wherever a form asks for them; v4: the allergies box too
+  const hint = { phone2:'Another number where you can be reached that day.', meds:'Everything the medical staff should know about the cadet. Type None if there are none.' };
+  $('fFields').innerHTML = spec.map(x=>{
+    const lab = `<label class="f" for="fld_${x}">${labels[x]}${req[x]?' <span class="req">*</span>':' <span class="opt">(optional)</span>'}</label>`;
+    const h = hint[x] ? `<p class="fine" style="margin-top:6px">${hint[x]}</p>` : '';
+    if(x==='meds') return lab+`<textarea class="t" id="fld_${x}" rows="3" maxlength="400" placeholder="Type None if there are none">${esc(f[x]||'')}</textarea>`+h;
+    return lab+`<input type="text" class="t" id="fld_${x}" value="${esc(x==='name'?S.name:(f[x]||''))}" ${x==='name'?'readonly':''} autocomplete="${(x==='phone'||x==='phone2')?'tel':x==='email'?'email':x==='address'?'street-address':'name'}" inputmode="${(x==='phone'||x==='phone2')?'tel':x==='email'?'email':'text'}">`+h;
+  }).join('');
   $('consentWrap').style.display = S.consentAt ? 'none' : 'flex'; $('consentChk').checked=false; $('consentTxt').textContent = W.CONSENT; $('consentWrap').classList.remove('miss');
   $('fDate').textContent = new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
   $('fErr').textContent='';
@@ -456,7 +524,7 @@ $('fBack').addEventListener('click', async ()=>{ busy('Refreshing'); try{ await 
 $('fSign').addEventListener('click', async ()=>{
   const k=S.queue[S.idx], F=W.FORMS[k]; const err=$('fErr'); err.textContent='';
   const spec=fieldSpec(); let bad=false;
-  spec.forEach(x=>{ const el=$('fld_'+x); const v=(el.value||'').trim(); el.classList.remove('miss'); if(x!=='name') S.fields[x]=v; if(x==='phone' && v.replace(/\D/g,'').length<7){ el.classList.add('miss'); bad=true; } if(x==='address' && v.length<5){ el.classList.add('miss'); bad=true; } if(x==='email' && v && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)){ el.classList.add('miss'); bad=true; } });
+  spec.forEach(x=>{ const el=$('fld_'+x); const v=(el.value||'').trim(); el.classList.remove('miss'); if(x!=='name') S.fields[x]=v; if(x==='phone' && v.replace(/\D/g,'').length<7){ el.classList.add('miss'); bad=true; } if(x==='phone2' && v && v.replace(/\D/g,'').length<7){ el.classList.add('miss'); bad=true; } if(x==='address' && v.length<5){ el.classList.add('miss'); bad=true; } if(x==='meds' && v.length<2){ el.classList.add('miss'); bad=true; } if(x==='email' && v && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)){ el.classList.add('miss'); bad=true; } });   // Build v4: phone2 optional, the allergies box required (None counts)
   if(bad){ err.textContent='Check the highlighted field.'; return; }
   if(!S.consentAt){ if(!$('consentChk').checked){ $('consentWrap').classList.add('miss'); err.textContent='Tick the box to agree to sign electronically.'; return; } S.consentAt=Date.now(); }
   if(!S.sig){ if(!pad.has){ $('sigBox').classList.add('miss'); err.textContent='Sign in the white box, or tap Type instead.'; return; } S.sig=padExport(); S.sigMode=pad.mode||'drawn'; if(!S.sig){ err.textContent='The signature came out empty. Try again.'; return; } }
@@ -464,9 +532,9 @@ $('fSign').addEventListener('click', async ()=>{
   try{
     if(!S.pub){ const ps=await db.ref(ROOT+'/refPub').once('value'); if(!ps.exists()) throw new Error('nokey'); S.pub=ps.val(); }
     const at=Date.now();
-    const rec = { v:1, form:k, formVersion:F.version, id:S.id, token:S.token, role:S.role, slot:S.slot, cadet:S.invite.cadet, name:S.name, phone:S.fields.phone||'', email:S.fields.email||'', address:S.fields.address||'', at, consent:W.CONSENT, consentAt:S.consentAt, ua:navigator.userAgent, sig:S.sig, sigMode:S.sigMode, second:S.role==='parent'?(S.isSecond||secondAnswer===true):undefined };
+    const rec = { v:S.event?2:1, form:k, formVersion:F.version, id:S.id, token:S.token, role:S.role, slot:S.slot, cadet:S.invite.cadet, name:S.name, phone:S.fields.phone||'', email:S.fields.email||'', address:S.fields.address||'', phone2:S.fields.phone2||'', meds:(k==='medtrip'?(S.fields.meds||''):undefined), event:S.event?{ key:S.event.key||'', title:S.event.title||'', date:S.event.date||'', location:S.event.location||'' }:undefined, at, consent:W.CONSENT, consentAt:S.consentAt, ua:navigator.userAgent, sig:S.sig, sigMode:S.sigMode, second:S.role==='parent'?(S.isSecond||secondAnswer===true):undefined };   // Build v4: phone2, meds, event
     const e = await W.envelope(JSON.stringify(rec), S.pub);
-    const s = await W.keyEncrypt(JSON.stringify({ at, name:S.name, role:S.role }), S.key);
+    const s = await W.keyEncrypt(JSON.stringify({ at, name:S.name, role:S.role, cadet:S.event?S.cadet:undefined }), S.key);
     await db.ref(ROOT+'/wvSigs/'+S.id+'/'+S.token+'/forms/'+k).set({ s, e, t:TS() });
     S.records[k]=rec; S.signedNow.push(k); saveLocal();
     S.idx++;
@@ -483,7 +551,8 @@ async function renderDone(lead){
   try{ await loadStatus(); }catch(e){}
   const mineLeft = S.invite.forms.filter(k=>{ const f=S.st.forms[k]; return f && f.needed.includes(S.slot) && !f.signed[S.slot]; });
   $('doneTitle').textContent = S.signedNow.length ? 'Signed' : 'Nothing to sign';
-  $('doneLead').textContent = lead || (S.signedNow.length===1 ? 'Your signature is saved on 1 form.' : 'Your signature is saved on '+S.signedNow.length+' forms.') + (S.st.allComplete ? ' Every form for '+S.invite.cadet+' is now complete; the advisors have it.' : ' The list below shows who still needs to sign.');
+  $('doneLead').textContent = lead || (S.signedNow.length===1 ? 'Your signature is saved on 1 form.' : 'Your signature is saved on '+S.signedNow.length+' forms.') + (S.st.allComplete ? ' Every form for '+S.invite.cadet+(S.event?' for '+(S.event.title||'this event'):'')+' is now complete; the advisors have it.' : ' The list below shows who still needs to sign.');
+  $('doneOther').style.display = S.event ? 'inline-block' : 'none';   // Build v4
   formRows($('doneForms'), S.slot);
   $('doneDl').innerHTML = S.signedNow.length ? '<h3>Your copy</h3><p class="fine" style="margin-top:0">A PDF of each form with your signature and details, built here on your phone.</p><div class="btn-row">'+S.signedNow.map(k=>`<button type="button" class="btn-sub" data-dl="${k}">${esc(W.FORMS[k].short)} PDF</button>`).join('')+'</div>' : '';
   $('doneDl').querySelectorAll('[data-dl]').forEach(b=>b.addEventListener('click', ()=>downloadCopy(b.dataset.dl, b)));
@@ -544,8 +613,8 @@ async function downloadCopy(k, btn){
     await loadPdfLib();
     const F=W.FORMS[k];
     const blank = await (await fetch(F.file+'?v='+encodeURIComponent(F.version))).arrayBuffer();
-    const sections={}; sections[S.slot] = { name:rec.name, phone:rec.phone, email:rec.email, address:rec.address, date:W.fmtDateUS(rec.at), at:rec.at, sig:rec.sig };
-    const bytes = await W.fillPdf(window.PDFLib, k, blank, { cadet:S.invite.cadet, sections });
+    const sections={}; sections[S.slot] = { name:rec.name, phone:rec.phone, email:rec.email, address:rec.address, phone2:rec.phone2||'', meds:rec.meds||'', date:W.fmtDateUS(rec.at), at:rec.at, sig:rec.sig };
+    const bytes = await W.fillPdf(window.PDFLib, k, blank, { cadet:S.invite.cadet, sections, event:S.invite.event||undefined });   // Build v4: the event fills the activity, date, and agency
     const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([bytes],{type:'application/pdf'})); a.download=(S.invite.cadet.replace(/[^A-Za-z0-9]+/g,'_')+'_'+F.short.replace(/[^A-Za-z0-9]+/g,'_')+'.pdf'); document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },2000);
   }catch(e){ $('doneErr').textContent='Could not build the PDF right now. The signature itself is saved.'; }
   btn.disabled=false;

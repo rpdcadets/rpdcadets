@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- waivers.html | Build v6 | 11/09/26 | v6: a parent's typed name is saved and printed with each word capitalized (wv.js capName: "tst testparent" becomes "Tst Testparent", "JOHN SMITH" becomes "John Smith", "McDonald" stays), so the signing record, the status lines, the PDFs, and anything that reaches Cadet Records carry it that way however it was typed. Cache-buster wv.js?v=5. Build v5 notes: v5, from Tony's live test of the Garland event: (1) the second-parent question no longer names the Photo and Simunitions forms; it reads "A second signature is required only when the cadet's parents are divorced or unmarried with shared rights..." for every code. (2) "Your copy" PDFs now carry every signature made on this phone during the visit for that cadet, not just the current signer's: when the cadet and a parent sign back to back on one phone, the second one's copy shows both (the Garland form with the parent or guardian block under the cadet's lines). Records are kept per cadet, form, and signer for the visit (S.allRecs); the button says how many signatures the copy carries. Signatures made on another phone cannot be included (they are sealed to the advisors), so the note says so; the advisors' PDF on /admin always has everything. (3) The finish screen's "Sign for another cadet" button is gone; Back to the list returns to the who-signs list for the code, which on an event code still has Different cadet. Build v4 notes: v4: event packets. An event code (one shared code per special event, made on /admin) opens an event screen: title, date, location, and the list of cadets on the event; the family picks the cadet and then the usual who / name / form / done flow runs for that cadet with the forms in that cadet's packet (wv.js eventCadetInvite). Signers register with the cadet's name (reg.cadet) under the one event node, and the status only counts signers of the picked cadet. Parent options now appear whenever a form in the packet needs a parent, so the medical consent (a parent signs for every cadet under 21) works for an 18 to 20 year old cadet too. New form fields: a second phone number (optional) and the allergies / medical problems / medications box (required; type None if there are none); the activity and date blanks fill from the event. The allergies text is never kept in this phone's storage. Own-copy PDFs for the Garland ISD waiver and the medical consent. Different cadet / Sign for another cadet buttons. Cache-buster wv.js?v=4. Build v3 notes: v3: every parent or guardian of a minor cadet is asked which Release of Liability applies (married parents or a single guardian, or divorced parents) on the name screen, required before continuing while that paper form is still missing; the answer is stored on their signing record (meta.liab, next to the second-parent answer) so the advisors and sergeants see which paper version the family needs. The finish screen starts from that answer, and tapping the other version there updates it. Phone number and home address are required wherever a form asks for them (cadet and parent); only email stays optional. Cache-buster wv.js?v=3. Build v2 notes: v2: picking who you are now starts that person clean: the signature, the electronic-signing consent, and the session's signed-forms list are reset, so a cadet who signs first and a parent who signs next on the same phone never share a signature (Tony caught the cadet's typed signature prefilled on the parent's form, 10/28/26). Build v1 notes: New page: online signing of the cadet waivers (rpdcadets.com/waivers). A parent or cadet enters the 8-character code an advisor or sergeant generated, picks who they are (cadet, parent or guardian, other parent or guardian), reads each form in full, agrees to sign electronically once, draws or types a signature once and applies it per form, and each form saves the moment it is signed. Which forms and which signatures are needed comes from wv.js (PSC Agreement, Photo and Video Release, Simunitions; adult cadets sign alone, minors need a parent, the Photo and Simunitions forms need the other parent only when the first parent says so or the other parent asks to sign). Everything written is encrypted: status stubs under the code-derived key, the signed records sealed to the reference public key so only the full advisor passcode opens them. This page deliberately does NOT load roster.js (its seed carries cadet names). Download a copy builds the signer's own PDF from the official form with pdf-lib. -->
+<!-- waivers.html | Build v7 | 11/09/26 | v7: (1) wherever a form asks for a home address it is now four required boxes: street, city, state (starts at TX; a full state name is accepted and shortened), and ZIP (5 digits, or ZIP+4). Families were typing only a house number and street. A whole address typed in the first box in the street, city, ST ZIP shape is spread over the boxes. The record and the PDFs still carry one line, "123 Main St, Richardson, TX 75081", built by wv.js joinAddress, which also takes a repeated city, state or ZIP off the end of the street box and gives lower-case words a capital. An address saved on this phone by an earlier build is split back into the boxes when it has that shape, otherwise it lands in the street box with the rest left to fill. (2) Phone numbers are saved and printed as 972-555-0101 however they were typed (wv.js fmtPhone), and the box shows that format when the signer leaves it. (3) cache-buster wv.js?v=6 (wv.js Build v6: the medical consent is for cadets under 18 only, and the PSC Agreement can ride in an event packet). Build v6 notes: v6: a parent's typed name is saved and printed with each word capitalized (wv.js capName: "tst testparent" becomes "Tst Testparent", "JOHN SMITH" becomes "John Smith", "McDonald" stays), so the signing record, the status lines, the PDFs, and anything that reaches Cadet Records carry it that way however it was typed. Cache-buster wv.js?v=5. Build v5 notes: v5, from Tony's live test of the Garland event: (1) the second-parent question no longer names the Photo and Simunitions forms; it reads "A second signature is required only when the cadet's parents are divorced or unmarried with shared rights..." for every code. (2) "Your copy" PDFs now carry every signature made on this phone during the visit for that cadet, not just the current signer's: when the cadet and a parent sign back to back on one phone, the second one's copy shows both (the Garland form with the parent or guardian block under the cadet's lines). Records are kept per cadet, form, and signer for the visit (S.allRecs); the button says how many signatures the copy carries. Signatures made on another phone cannot be included (they are sealed to the advisors), so the note says so; the advisors' PDF on /admin always has everything. (3) The finish screen's "Sign for another cadet" button is gone; Back to the list returns to the who-signs list for the code, which on an event code still has Different cadet. Build v4 notes: v4: event packets. An event code (one shared code per special event, made on /admin) opens an event screen: title, date, location, and the list of cadets on the event; the family picks the cadet and then the usual who / name / form / done flow runs for that cadet with the forms in that cadet's packet (wv.js eventCadetInvite). Signers register with the cadet's name (reg.cadet) under the one event node, and the status only counts signers of the picked cadet. Parent options now appear whenever a form in the packet needs a parent, so the medical consent (a parent signs for every cadet under 21) works for an 18 to 20 year old cadet too. New form fields: a second phone number (optional) and the allergies / medical problems / medications box (required; type None if there are none); the activity and date blanks fill from the event. The allergies text is never kept in this phone's storage. Own-copy PDFs for the Garland ISD waiver and the medical consent. Different cadet / Sign for another cadet buttons. Cache-buster wv.js?v=4. Build v3 notes: v3: every parent or guardian of a minor cadet is asked which Release of Liability applies (married parents or a single guardian, or divorced parents) on the name screen, required before continuing while that paper form is still missing; the answer is stored on their signing record (meta.liab, next to the second-parent answer) so the advisors and sergeants see which paper version the family needs. The finish screen starts from that answer, and tapping the other version there updates it. Phone number and home address are required wherever a form asks for them (cadet and parent); only email stays optional. Cache-buster wv.js?v=3. Build v2 notes: v2: picking who you are now starts that person clean: the signature, the electronic-signing consent, and the session's signed-forms list are reset, so a cadet who signs first and a parent who signs next on the same phone never share a signature (Tony caught the cadet's typed signature prefilled on the parent's form, 10/28/26). Build v1 notes: New page: online signing of the cadet waivers (rpdcadets.com/waivers). A parent or cadet enters the 8-character code an advisor or sergeant generated, picks who they are (cadet, parent or guardian, other parent or guardian), reads each form in full, agrees to sign electronically once, draws or types a signature once and applies it per form, and each form saves the moment it is signed. Which forms and which signatures are needed comes from wv.js (PSC Agreement, Photo and Video Release, Simunitions; adult cadets sign alone, minors need a parent, the Photo and Simunitions forms need the other parent only when the first parent says so or the other parent asks to sign). Everything written is encrypted: status stubs under the code-derived key, the signed records sealed to the reference public key so only the full advisor passcode opens them. This page deliberately does NOT load roster.js (its seed carries cadet names). Download a copy builds the signer's own PDF from the official form with pdf-lib. -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -11,7 +11,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@300;400;500;600;700&family=Barlow+Condensed:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
-<script src="wv.js?v=5"></script>
+<script src="wv.js?v=6"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{--navy:#1a2744;--navy-deep:#0f1a30;--red:#c0392b;--red-glow:#e74c3c;--gold:#d4a952;--gold-light:#f0d68a;--green:#27ae60;--white:#fff;--text-muted:#8899b0;--card-bg:rgba(255,255,255,0.025);--card-border:rgba(255,255,255,0.06);--input-bg:rgba(255,255,255,0.04);--input-border:rgba(255,255,255,0.1);--input-focus:rgba(192,57,43,0.4)}
@@ -65,6 +65,7 @@ textarea.t{width:100%;background:var(--input-bg);border:1px solid var(--input-bo
 textarea.t:focus{border-color:var(--gold)}
 textarea.t.miss{border-color:rgba(231,76,60,0.7)}
 .opt{color:var(--text-muted);letter-spacing:0;text-transform:none;font-weight:400}
+.addr2{display:flex;gap:10px}.addr2>div{flex:1;min-width:0}.addr2>div.st{flex:0 0 104px}   /* Build v7: state and ZIP side by side */
 .ev-head{background:rgba(212,169,82,0.07);border:1px solid rgba(212,169,82,0.28);border-radius:12px;padding:14px 16px;margin-bottom:18px}
 .ev-title{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:1.5px;line-height:1.1;margin:3px 0 4px;overflow-wrap:anywhere}
 .ev-sub{font-size:14px;color:#b6c2d4;line-height:1.5}
@@ -225,11 +226,11 @@ textarea.t.miss{border-color:rgba(231,76,60,0.7)}
   <!-- busy -->
   <div class="card" id="cBusy"><div class="spin"></div><p class="lead center" id="busyTxt">One moment</p></div>
 
-  <div class="foot">Richardson Police Department Public Safety Cadets<br>200 N. Greenville Ave, Richardson, TX 75081 &nbsp;|&nbsp; (972) 744-4801<br><span style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase">Build v6</span></div>
+  <div class="foot">Richardson Police Department Public Safety Cadets<br>200 N. Greenville Ave, Richardson, TX 75081 &nbsp;|&nbsp; (972) 744-4801<br><span style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase">Build v7</span></div>
 </div>
 
 <script>
-console.log('[waivers] Build v6');
+console.log('[waivers] Build v7');
 /* Same Firebase project as the rest of the site. This page deliberately does NOT load roster.js. */
 const firebaseConfig = {
   apiKey:            "AIzaSyDV0vuyGg7gpPXJd2jRqZtUTeKiP3yPxhU",
@@ -248,7 +249,14 @@ const $ = id => document.getElementById(id);
 const esc = W.esc;
 
 const S = { code:'', id:'', key:null, invite:null, event:null, cadet:'', signers:[], st:null, token:'', role:'', slot:'', name:'', isSecond:false, fields:{ phone:'', email:'', address:'', phone2:'', meds:'' }, queue:[], idx:0, sig:'', sigMode:'', consentAt:0, pub:'', signedNow:[], records:{} };
-const blankFields = () => ({ phone:'', email:'', address:'', phone2:'', meds:'' });   // Build v4: phone2 and the allergies box (medical consent)
+const blankFields = () => ({ phone:'', email:'', address:'', phone2:'', meds:'', street:'', city:'', state:'', zip:'' });   // Build v4: phone2 and the allergies box (medical consent); v7: the address parts
+// Build v7: what goes in the four address boxes. The parts when this signer already gave them; else an address saved by an
+// earlier build, split when it has the street, city, ST ZIP shape and otherwise put in the street box; the state starts at TX.
+function addrBoxes(f){
+  if(f.street || f.city || f.zip) return { street:f.street||'', city:f.city||'', state:f.state||'TX', zip:f.zip||'' };
+  const p = f.address ? W.splitAddress(f.address) : null;
+  return p || { street:f.address||'', city:'', state:'TX', zip:'' };
+}
 S.allRecs = {};   // Build v5: every record signed on this phone during the visit, keyed cadet|form|slot, so a copy can carry both the cadet's and the parent's signatures
 const recKey = (cadet, k, slot) => W.normName(cadet)+'|'+k+'|'+slot;
 function recsFor(cadet, k){ const out={}; Object.keys(S.allRecs).forEach(key=>{ const [c,f,slot]=key.split('|'); if(c===W.normName(cadet) && f===k) out[slot]=S.allRecs[key]; }); return out; }
@@ -395,7 +403,7 @@ function prefillFor(role, name){
     if(src){ f.phone = src.phone||''; f.email = src.email||''; }
   }
   const loc = loadLocal(role, name);
-  if(loc && loc.fields){ ['phone','email','address','phone2'].forEach(k=>{ if(loc.fields[k]) f[k]=loc.fields[k]; }); }
+  if(loc && loc.fields){ ['phone','email','address','phone2','street','city','state','zip'].forEach(k=>{ if(loc.fields[k]) f[k]=loc.fields[k]; }); }   // v7: the address parts too
   return { fields:f, token:(loc && loc.token) || '' };
 }
 /* ── 3. name + second-parent question ── */
@@ -515,8 +523,17 @@ function renderForm(){
     const lab = `<label class="f" for="fld_${x}">${labels[x]}${req[x]?' <span class="req">*</span>':' <span class="opt">(optional)</span>'}</label>`;
     const h = hint[x] ? `<p class="fine" style="margin-top:6px">${hint[x]}</p>` : '';
     if(x==='meds') return lab+`<textarea class="t" id="fld_${x}" rows="3" maxlength="400" placeholder="Type None if there are none">${esc(f[x]||'')}</textarea>`+h;
+    if(x==='address'){   // Build v7: street, city, state, ZIP, all required (families were typing only a house number and street)
+      const a = addrBoxes(f); const star = ' <span class="req">*</span>';
+      return `<label class="f" for="fld_address">Home address (street)${star}</label><input type="text" class="t" id="fld_address" value="${esc(a.street)}" autocomplete="address-line1" autocapitalize="words" placeholder="Number and street, apartment">`
+        + `<label class="f" for="fld_city">City${star}</label><input type="text" class="t" id="fld_city" value="${esc(a.city)}" autocomplete="address-level2" autocapitalize="words">`
+        + `<div class="addr2"><div class="st"><label class="f" for="fld_state">State${star}</label><input type="text" class="t" id="fld_state" value="${esc(a.state)}" autocomplete="address-level1" autocapitalize="characters"></div>`
+        + `<div><label class="f" for="fld_zip">ZIP code${star}</label><input type="text" class="t" id="fld_zip" value="${esc(a.zip)}" autocomplete="postal-code" inputmode="numeric" maxlength="10"></div></div>`;
+    }
     return lab+`<input type="text" class="t" id="fld_${x}" value="${esc(x==='name'?S.name:(f[x]||''))}" ${x==='name'?'readonly':''} autocomplete="${(x==='phone'||x==='phone2')?'tel':x==='email'?'email':x==='address'?'street-address':'name'}" inputmode="${(x==='phone'||x==='phone2')?'tel':x==='email'?'email':'text'}">`+h;
   }).join('');
+  ['phone','phone2'].forEach(x=>{ const el=$('fld_'+x); if(el) el.addEventListener('blur', ()=>{ el.value = W.fmtPhone(el.value); }); });   // Build v7: 9725550101 shows as 972-555-0101
+  { const st=$('fld_state'); if(st) st.addEventListener('blur', ()=>{ const a=W.stateAbbr(st.value); if(a) st.value=a; }); }                  // Texas shows as TX
   $('consentWrap').style.display = S.consentAt ? 'none' : 'flex'; $('consentChk').checked=false; $('consentTxt').textContent = W.CONSENT; $('consentWrap').classList.remove('miss');
   $('fDate').textContent = new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
   $('fErr').textContent='';
@@ -528,9 +545,24 @@ $('sigRedo').addEventListener('click', ()=>{ S.sig=''; S.sigMode=''; renderForm(
 $('fBack').addEventListener('click', async ()=>{ busy('Refreshing'); try{ await loadStatus(); }catch(e){} renderWho(); });
 $('fSign').addEventListener('click', async ()=>{
   const k=S.queue[S.idx], F=W.FORMS[k]; const err=$('fErr'); err.textContent='';
-  const spec=fieldSpec(); let bad=false;
-  spec.forEach(x=>{ const el=$('fld_'+x); const v=(el.value||'').trim(); el.classList.remove('miss'); if(x!=='name') S.fields[x]=v; if(x==='phone' && v.replace(/\D/g,'').length<7){ el.classList.add('miss'); bad=true; } if(x==='phone2' && v && v.replace(/\D/g,'').length<7){ el.classList.add('miss'); bad=true; } if(x==='address' && v.length<5){ el.classList.add('miss'); bad=true; } if(x==='meds' && v.length<2){ el.classList.add('miss'); bad=true; } if(x==='email' && v && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)){ el.classList.add('miss'); bad=true; } });   // Build v4: phone2 optional, the allergies box required (None counts)
-  if(bad){ err.textContent='Check the highlighted field.'; return; }
+  const spec=fieldSpec(); let bad=false; const why=[];
+  spec.forEach(x=>{ const el=$('fld_'+x); const v=(el.value||'').trim(); el.classList.remove('miss'); if(x!=='name') S.fields[x]=v; if(x==='phone' && v.replace(/\D/g,'').length<7){ el.classList.add('miss'); bad=true; } if(x==='phone2' && v && v.replace(/\D/g,'').length<7){ el.classList.add('miss'); bad=true; } if(x==='meds' && v.length<2){ el.classList.add('miss'); bad=true; } if(x==='email' && v && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)){ el.classList.add('miss'); bad=true; }
+    if((x==='phone' || x==='phone2') && v){ S.fields[x]=W.fmtPhone(v); el.value=S.fields[x]; }   // Build v7: kept as 972-555-0101 however it was typed
+    if(x==='address'){   // Build v7: street, city, state and ZIP are each required; the record carries them as one line
+      const cEl=$('fld_city'), sEl=$('fld_state'), zEl=$('fld_zip'); [cEl,sEl,zEl].forEach(e=>e.classList.remove('miss'));
+      if(!cEl.value.trim() && !zEl.value.trim()){ const sp=W.splitAddress(v); if(sp){ el.value=sp.street; cEl.value=sp.city; sEl.value=sp.state; zEl.value=sp.zip; } }   // the whole address typed in the first box, in full: spread it over the boxes
+      const a=W.addrParts(el.value, cEl.value, sEl.value, zEl.value); const stOk=!!W.stateAbbr(sEl.value), zOk=W.zipOk(a.zip);
+      const strOk=a.street.length>=4 && /\p{L}/u.test(a.street), cOk=a.city.length>=2 && /^[\p{L} .'\-]+$/u.test(a.city);
+      if(!strOk){ el.classList.add('miss'); bad=true; }
+      if(!cOk){ cEl.classList.add('miss'); bad=true; }
+      if(!stOk){ sEl.classList.add('miss'); bad=true; why.push('The state is two letters, like TX.'); }
+      if(!zOk){ zEl.classList.add('miss'); bad=true; why.push('The ZIP code is 5 digits.'); }
+      S.fields.street=a.street; S.fields.city=a.city; S.fields.state=stOk?a.state:(sEl.value||'').trim(); S.fields.zip=a.zip;
+      S.fields.address = (strOk && cOk && stOk && zOk) ? W.joinAddress(a.street, a.city, a.state, a.zip) : '';
+      if(strOk && cOk && stOk && zOk){ el.value=a.street; cEl.value=a.city; sEl.value=a.state; zEl.value=a.zip; }
+    }
+  });   // Build v4: phone2 optional, the allergies box required (None counts)
+  if(bad){ err.textContent='Check the highlighted field.'+(why.length?' '+why.join(' '):''); return; }
   if(!S.consentAt){ if(!$('consentChk').checked){ $('consentWrap').classList.add('miss'); err.textContent='Tick the box to agree to sign electronically.'; return; } S.consentAt=Date.now(); }
   if(!S.sig){ if(!pad.has){ $('sigBox').classList.add('miss'); err.textContent='Sign in the white box, or tap Type instead.'; return; } S.sig=padExport(); S.sigMode=pad.mode||'drawn'; if(!S.sig){ err.textContent='The signature came out empty. Try again.'; return; } }
   $('fSign').disabled=true; busy('Saving your signature');

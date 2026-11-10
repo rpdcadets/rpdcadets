@@ -1,4 +1,4 @@
-/* wv.js  |  Build v5  |  updated 2026-11-09  |  v5 (Tony's first live run of the Garland event): (1) capName(): names are saved and printed with the first letter of every word capitalized, however the family typed them (waivers.html Build v6 applies it before saving; the approve card applies it to names going into Cadet Records). (2) Test entries: a signer or cadet whose name has a word starting with "test", or a phone number with the 555 area code or 555-555-5555, is a test. Test signers show "(test)" in every status line, never mark the tracker Received, and never reach the Cadet Records card, so Tony can run a form through with a test family without touching real records. (3) The "New parent contacts" card is now "Cadet Records: changes from online signing": every sealed record from every code (onboarding and event packets) is read once on /admin and any value that differs from Cadet Records becomes a line to approve, checked by default: cadet phone, email, home address (new field), parent or second parent name, phone, email (the parent matched by name, or put into an empty slot; a third name gets a chooser), and the medical consent's address. Update records writes the checked values with records.save(obj, "Online: name") so roster.js VERSION 39 keeps the old values in the cadet's change history; Skip leaves the record alone. Records with nothing new are marked reviewed quietly. Build v4 notes: v4: event packets. One shared code per special event (first use: Active Shooter Simunitions Training at Garland ISD, 12/17/2026): /admin creates the event (title, date, location, forms, cadets from the active roster, closing day), every family enters the same code on /waivers, picks the cadet, and signs. Two new forms: gisd (the Garland ISD Training Center waiver, a flat PDF: the cadet signs its own lines and for a minor a parent or guardian signs an added line beneath; agency prefilled) and medtrip (Parent Permission / Consent to Medical Treatment, per trip: activity and date from the event, allergies / medical / medications box, address, two phone numbers; a parent signs for every cadet under 21). The Simunitions release (sim) can ride in the packet too: every cadet signs it again except those whose tracker entry already came from online signing, and the new online signature marks the tracker Received "Online: name" over any paper copy (the old entry kept under prev). A cadet who signs sim through their own code meanwhile is dropped from the packet (evSync). Event section (panel.events) on the Waiver Tracker (/admin) and the Waivers tab (/sgt): code, Copy link, Share, QR, per-cadet grid with Signed / Waiting / Paper / Not needed cells, paper marks by tap (both panels), Still missing filter; admin only: New event, Cadets (edit the list), PDF per cadet, All PDFs merged per form, Print still missing (letterhead PDF, CADET/EVENTWV V1), Clear signatures per cadet, Close / Reopen / Delete. decodeSigs now carries reg.cadet; eventStatus() groups signers by cadet and reuses status(). Needs roster.js VERSION 38 (esign.eventsGet/eventsMutate, node roster/wvEvents). The onboarding block names a Simunitions release signed through an event packet instead of showing it as waiting. Build v3 notes: v3: which paper Release of Liability version the family needs now comes from the online signing. waivers.html v3 asks every parent or guardian of a minor cadet which version applies (required, on the name screen) and stores the answer on their signing record (meta.liab); a tap on the finish screen updates it. status() returns liab: the latest parent answer (how: chosen), else, for families who signed before the question existed, the version the second-parent answer suggests (how: inferred), else adult for an adult cadet. panel.liabFor(name) hands it to the tracker dialogs on /admin and /sgt, which preselect a chosen version and say who chose it (an inferred one is only suggested, never preselected); the tracker row block names it while the paper release is still missing. Build v2 notes: v2: the /admin block lists who has signed, with Clear per person and Clear all, so someone who messed up can start over with the same code; clearing deletes those signatures and flips every tracker cell that had been auto-marked Received from them back to Missing (a cell already Filed is left alone and named in the toast). Build v1 notes: Online waiver signing (e-sign), shared by /waivers (public, no roster.js),
+/* wv.js  |  Build v6  |  updated 2026-11-09  |  v6: (1) The medical consent (medtrip) is for cadets under 18 only: a cadet 18 or older skips it (the cutoff was 21), because a parent cannot consent for an adult and the PSC Agreement already carries the cadet's own consent to emergency medical care. (2) The PSC Agreement (psc) can ride in an event packet like the Simunitions release: every cadet signs it again except those whose tracker entry came from online signing and is still good (not due for the re-sign at 18), and the event signature marks the tracker Received "Online: name" over any paper copy (EVENT_TRACKER is now sim and psc). (3) Packets reconcile themselves every time /admin or /sgt loads the events (evSync): each cadet's packet becomes what the rules say today (the forms on the event, the tracker, the cadet's age) under one hard rule, a form that already has a signature from that family never leaves the packet, so nothing already signed is hidden or lost. A cadet who has turned 18 moves to the adult packet only if the family has not started signing; a cadet the records now show as a minor always gets the minor packet, and a cadet whose birthdate cannot be seen keeps the age calls already made. Skipped when the tracker or Cadet Records cannot be read. The panel reads its status from the sealed entry, and the public invite is rewritten from it whenever the two differ (which also heals an invite a failed write left stale). (4) Admin: a Forms button on each open event edits which forms are on it, so the PSC Agreement can be added to an event already out. The grid shows a column for every form on the event or in any cadet's packet. (5) Approve card: when a cadet has no parent on file and two different parents signed, the first goes to the parent slot and the second to the second parent slot (they were both offered the first slot), and a second, different value for the same field starts unticked so it cannot silently replace the first. Update records now honors the ticks and the replace-a-parent choice: the handler looked the card up with closest('[data-wvocadet]'), which matched the button itself, so in Build v5 every listed item was written even when unticked and the replace choice was ignored. Every line on the card now carries its own field and value and the card carries the signed records it was built from, so only what is on screen is written or marked reviewed. Clear signatures (on a cadet code or an event) also removes the reviewed marks of the signatures it deletes, so what the family enters when signing again is offered (a phone keeps its signer token, so the second signing used to look already reviewed). (6) Clear signatures re-runs the packet rules for the event right away. (7) Tracker merges: a signature the tracker already holds from the same cadet code is not written again (a cadet who signed online as a minor and then turned 18 had it rewritten on every load), and an event's signature goes over the tracker only when it is the newer of the two, so a later paper re-sign at 18 or a later online signature stays. (8) Phone numbers are compared by their digits and written as 972-555-0101 (fmtPhone, samePhone): a number typed without dashes is no longer offered as a change on the approve card. (9) Home addresses: helpers for the four boxes on waivers.html Build v7 (addrParts, joinAddress, splitAddress, stateAbbr, zipOk); on the approve card the same address typed another way is not a change (addrKey), a street-only address that is the start of the one on file is not a change, and any other street-only address starts unticked. Build v5 notes: v5 (Tony's first live run of the Garland event): (1) capName(): names are saved and printed with the first letter of every word capitalized, however the family typed them (waivers.html Build v6 applies it before saving; the approve card applies it to names going into Cadet Records). (2) Test entries: a signer or cadet whose name has a word starting with "test", or a phone number with the 555 area code or 555-555-5555, is a test. Test signers show "(test)" in every status line, never mark the tracker Received, and never reach the Cadet Records card, so Tony can run a form through with a test family without touching real records. (3) The "New parent contacts" card is now "Cadet Records: changes from online signing": every sealed record from every code (onboarding and event packets) is read once on /admin and any value that differs from Cadet Records becomes a line to approve, checked by default: cadet phone, email, home address (new field), parent or second parent name, phone, email (the parent matched by name, or put into an empty slot; a third name gets a chooser), and the medical consent's address. Update records writes the checked values with records.save(obj, "Online: name") so roster.js VERSION 39 keeps the old values in the cadet's change history; Skip leaves the record alone. Records with nothing new are marked reviewed quietly. Build v4 notes: v4: event packets. One shared code per special event (first use: Active Shooter Simunitions Training at Garland ISD, 12/17/2026): /admin creates the event (title, date, location, forms, cadets from the active roster, closing day), every family enters the same code on /waivers, picks the cadet, and signs. Two new forms: gisd (the Garland ISD Training Center waiver, a flat PDF: the cadet signs its own lines and for a minor a parent or guardian signs an added line beneath; agency prefilled) and medtrip (Parent Permission / Consent to Medical Treatment, per trip: activity and date from the event, allergies / medical / medications box, address, two phone numbers; a parent signs for every cadet under 21). The Simunitions release (sim) can ride in the packet too: every cadet signs it again except those whose tracker entry already came from online signing, and the new online signature marks the tracker Received "Online: name" over any paper copy (the old entry kept under prev). A cadet who signs sim through their own code meanwhile is dropped from the packet (evSync). Event section (panel.events) on the Waiver Tracker (/admin) and the Waivers tab (/sgt): code, Copy link, Share, QR, per-cadet grid with Signed / Waiting / Paper / Not needed cells, paper marks by tap (both panels), Still missing filter; admin only: New event, Cadets (edit the list), PDF per cadet, All PDFs merged per form, Print still missing (letterhead PDF, CADET/EVENTWV V1), Clear signatures per cadet, Close / Reopen / Delete. decodeSigs now carries reg.cadet; eventStatus() groups signers by cadet and reuses status(). Needs roster.js VERSION 38 (esign.eventsGet/eventsMutate, node roster/wvEvents). The onboarding block names a Simunitions release signed through an event packet instead of showing it as waiting. Build v3 notes: v3: which paper Release of Liability version the family needs now comes from the online signing. waivers.html v3 asks every parent or guardian of a minor cadet which version applies (required, on the name screen) and stores the answer on their signing record (meta.liab); a tap on the finish screen updates it. status() returns liab: the latest parent answer (how: chosen), else, for families who signed before the question existed, the version the second-parent answer suggests (how: inferred), else adult for an adult cadet. panel.liabFor(name) hands it to the tracker dialogs on /admin and /sgt, which preselect a chosen version and say who chose it (an inferred one is only suggested, never preselected); the tracker row block names it while the paper release is still missing. Build v2 notes: v2: the /admin block lists who has signed, with Clear per person and Clear all, so someone who messed up can start over with the same code; clearing deletes those signatures and flips every tracker cell that had been auto-marked Received from them back to Missing (a cell already Filed is left alone and named in the toast). Build v1 notes: Online waiver signing (e-sign), shared by /waivers (public, no roster.js),
    /sgt, and /admin. Holds everything the three pages must agree on: the code recipe, the three online forms (wording,
    who signs, PDF field maps), the signature status rules, the envelope format, the PDF filling, and the panel block that
    /sgt and /admin show on each tracker row (code, status, Copy link, Share, QR, admin PDFs and contact merge).
@@ -29,8 +29,8 @@
   const ONLINE_KEYS = ['psc', 'photo', 'sim'];
   const DAYS = 30;
   // Build v4: event packets. gisd and medtrip exist only inside an event code; sim is shared with the onboarding set.
-  const EVENT_KEYS = ['gisd', 'medtrip', 'sim'];
-  const EVENT_TRACKER = { sim: 'sim' };   // event forms that are also tracker waivers: the event signature overrides paper
+  const EVENT_KEYS = ['gisd', 'medtrip', 'sim', 'psc'];   // Build v6: the PSC Agreement can ride in an event packet
+  const EVENT_TRACKER = { sim: 'sim', psc: 'psc' };   // event forms that are also tracker waivers: the event signature overrides paper
   const DEFAULT_AGENCY = 'Richardson Police Department Public Safety Cadets';
   const GISD_LOCATION = 'Garland ISD Training Center, 1821 Old Gate Lane, Garland, TX 75042';
   const CONSENT = 'I agree to sign these forms electronically. My electronic signature has the same force and effect as my handwritten signature, and I can download a copy of what I sign.';
@@ -184,6 +184,52 @@
   // phone number marks a test signer: shown as (test), never marks the tracker, never reaches the Cadet Records card.
   function isTestName(s) { return /(^|[^a-z])test/i.test(String(s || '')); }
   function isTestPhone(p) { let d = String(p || '').replace(/\D/g, ''); if (d.length === 11 && d[0] === '1') d = d.slice(1); return d.length >= 7 && (d.slice(0, 3) === '555' || d === '5555555555'); }
+  /* Build v6: phone numbers are compared by their digits and kept as 972-555-0101 however they were typed, so 9725550101,
+     (972) 555-0101 and 972.555.0101 are one number, not three. Anything that is not a plain 10-digit number (an extension,
+     another country) is kept as typed. */
+  function phoneKey(p) { let d = String(p || '').replace(/\D/g, ''); if (d.length === 11 && d[0] === '1') d = d.slice(1); return d; }
+  function fmtPhone(p) {
+    const raw = String(p || '').trim().replace(/\s+/g, ' '); const d = phoneKey(raw);
+    return (d.length === 10 && /^[\d\s().+\-]+$/.test(raw)) ? d.slice(0, 3) + '-' + d.slice(3, 6) + '-' + d.slice(6) : raw;
+  }
+  function samePhone(a, b) { const x = phoneKey(a), y = phoneKey(b); return (x || y) ? x === y : String(a || '').trim().toLowerCase() === String(b || '').trim().toLowerCase(); }
+  /* Build v6: a home address is asked for as street, city, state and ZIP (waivers.html) and kept as one line,
+     "123 Main St, Richardson, TX 75081". */
+  const US_STATES = { alabama: 'AL', alaska: 'AK', arizona: 'AZ', arkansas: 'AR', california: 'CA', colorado: 'CO', connecticut: 'CT', delaware: 'DE', 'district of columbia': 'DC', florida: 'FL', georgia: 'GA', hawaii: 'HI', idaho: 'ID', illinois: 'IL', indiana: 'IN', iowa: 'IA', kansas: 'KS', kentucky: 'KY', louisiana: 'LA', maine: 'ME', maryland: 'MD', massachusetts: 'MA', michigan: 'MI', minnesota: 'MN', mississippi: 'MS', missouri: 'MO', montana: 'MT', nebraska: 'NE', nevada: 'NV', 'new hampshire': 'NH', 'new jersey': 'NJ', 'new mexico': 'NM', 'new york': 'NY', 'north carolina': 'NC', 'north dakota': 'ND', ohio: 'OH', oklahoma: 'OK', oregon: 'OR', pennsylvania: 'PA', 'rhode island': 'RI', 'south carolina': 'SC', 'south dakota': 'SD', tennessee: 'TN', texas: 'TX', utah: 'UT', vermont: 'VT', virginia: 'VA', washington: 'WA', 'west virginia': 'WV', wisconsin: 'WI', wyoming: 'WY', 'puerto rico': 'PR', guam: 'GU', 'virgin islands': 'VI', 'american samoa': 'AS', 'northern mariana islands': 'MP' };
+  const US_ABBR = new Set(Object.values(US_STATES).concat(['AA', 'AE', 'AP']));   // the states, DC, the territories, and the military codes
+  // tx, Tx., Texas -> TX; '' when it is not a state
+  function stateAbbr(s) { const v = String(s || '').trim().replace(/\./g, '').replace(/\s+/g, ' ').toLowerCase(); if (!v) return ''; if (v.length === 2) return US_ABBR.has(v.toUpperCase()) ? v.toUpperCase() : ''; return US_STATES[v] || ''; }
+  function zipOk(z) { return /^\d{5}(-\d{4})?$/.test(String(z || '').trim()); }
+  // Words typed all in lower case get a capital first letter (directions and PO in full capitals); anything typed with a capital
+  // or a digit in it stays as typed (NE, 4B, McKinney).
+  const CAP_UP = { n: 'N', s: 'S', e: 'E', w: 'W', ne: 'NE', nw: 'NW', se: 'SE', sw: 'SW', po: 'PO' };
+  function capWords(s) { return String(s || '').trim().replace(/\s+/g, ' ').replace(/[A-Za-z0-9'.]+/g, w => /^[a-z][a-z']*\.?$/.test(w) ? (CAP_UP[w.replace(/\./g, '')] || (w.charAt(0).toUpperCase() + w.slice(1))) : w); }
+  /* The four boxes, cleaned. People type the whole address in the first box out of habit, so a street that already ends with
+     the same ZIP, state or city has that tail taken off (the state and city only when the ZIP was there too or a comma sets
+     them apart, so "100 Richardson Dr" in Richardson keeps its street name). */
+  function addrParts(street, city, state, zip) {
+    const tidy = v => String(v || '').trim().replace(/\s+/g, ' ').replace(/^[\s,]+|[\s,]+$/g, '');
+    const re = t => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    let s = tidy(street); const c = tidy(city), z = String(zip || '').trim(); const st = stateAbbr(state) || tidy(state).toUpperCase();
+    let cut = false, m;
+    if (/^\d{5}/.test(z)) { m = new RegExp('[\\s,]+' + re(z.slice(0, 5)) + '(-\\d{4})?$').exec(s); if (m) { s = s.slice(0, m.index); cut = true; } }
+    if (st) { const full = Object.keys(US_STATES).find(k => US_STATES[k] === st) || ''; m = new RegExp('([\\s,]+)(' + re(st) + (full ? '|' + re(full) : '') + ')\\.?$', 'i').exec(s); if (m && (cut || /,/.test(m[1]))) { s = s.slice(0, m.index); cut = true; } }
+    if (c) { m = new RegExp('([\\s,]+)' + re(c) + '$', 'i').exec(s); if (m && (cut || /,/.test(m[1]))) s = s.slice(0, m.index); }
+    s = tidy(s); if (cut && (s.toLowerCase() === c.toLowerCase() || s.toUpperCase() === st)) s = '';   // the street box held nothing but the tail
+    return { street: capWords(s), city: capWords(c), state: st, zip: z };
+  }
+  function joinAddress(street, city, state, zip) { const p = addrParts(street, city, state, zip); return [p.street, p.city, [p.state, p.zip].filter(Boolean).join(' ')].filter(Boolean).join(', '); }
+  // "123 Main St, Richardson, TX 75081" back into its four parts; null when it is not in that shape
+  function splitAddress(a) {
+    const m = /^(.*?),\s*([^,]+?),?\s+([A-Za-z]{2}|[A-Za-z][A-Za-z ]+?)\.?,?\s+(\d{5}(?:-\d{4})?)$/.exec(String(a || '').trim()); if (!m) return null;
+    const st = stateAbbr(m[3]); return st ? { street: m[1].trim(), city: m[2].trim(), state: st, zip: m[4] } : null;
+  }
+  // Complete enough for a record: it ends with a ZIP code. A street-only entry ("123 Main St") is not.
+  function addrComplete(a) { return /(^|[\s,])\d{5}(-\d{4})?$/.test(String(a || '').trim()); }
+  // Two spellings of one address compare equal: case, punctuation and spacing are ignored, the usual words count the same as
+  // their abbreviations (Street and St, North and N, Apartment and Apt, Texas and TX), and a ZIP+4 counts as its ZIP.
+  const ADDR_WORDS = { street: 'st', avenue: 'ave', av: 'ave', drive: 'dr', lane: 'ln', road: 'rd', court: 'ct', circle: 'cir', boulevard: 'blvd', place: 'pl', trail: 'trl', parkway: 'pkwy', highway: 'hwy', terrace: 'ter', square: 'sq', north: 'n', south: 's', east: 'e', west: 'w', northeast: 'ne', northwest: 'nw', southeast: 'se', southwest: 'sw', apartment: 'apt', suite: 'ste', texas: 'tx' };
+  function addrKey(a) { return String(a || '').toLowerCase().replace(/[.,#]/g, ' ').replace(/\s+/g, ' ').trim().replace(/(\d{5})-\d{4}$/, '$1').split(' ').map(w => ADDR_WORDS[w] || w).join(' '); }
   function nameTag(n) { return esc(n) + (isTestName(n) ? ' (test)' : ''); }
   // raw = the wvSigs/<id> node; returns one entry per signer device with the code-key stubs decoded
   async function decodeSigs(raw, key) {
@@ -422,6 +468,7 @@
           if (isTestName(x.name) || x.f.by.some(isTestName)) return;   // v5: a test signer never marks the tracker
           const rec = P.host.rec(x.name) || {};
           const c = obj.cadets[x.name] || {};
+          if (c[x.k] && c[x.k].via === 'online' && c[x.k].wvId === x.id) return;   // v6: already recorded from this code (it may read Re-sign at 18 now; a new signature is what clears that)
           const stt = RPDRoster.waivers.status(x.k, c[x.k], rec.waiverSet, rec.dob);
           if (stt.state !== 'missing' && stt.state !== 'resign') return;   // paper, or already marked (from either panel)
           const prev = c[x.k];
@@ -543,8 +590,10 @@
     const st = P.st[name]; if (!st) return;
     const who = slot === 'all' ? 'everyone' : ((st.slots[slot] || {}).name || slot);
     if (!confirm('Delete the online signatures for ' + who + ' on ' + name + '? They can sign again with the same code. Tracker cells marked from those signatures go back to Missing.')) { pFill(name); return; }
+    const gone = slot === 'all' ? null : ((st.slots[slot] || {}).tokens || []).slice();
     if (slot === 'all') await RPDRoster.esign.sigsClear(st._id);
     else for (const tok of ((st.slots[slot] || {}).tokens || [])) await RPDRoster.esign.sigsRemove(st._id, tok);
+    await pUnreview(st._id, gone);   // v6
     const raw = await RPDRoster.esign.sigsGet(st._id);
     const signers = await decodeSigs(raw, st._key);
     const next = status(P.inv[name], signers); next._id = st._id; next._key = st._key; next._raw = raw;
@@ -637,16 +686,25 @@
       c.keys.push(ckey);
       const who = capName(r.name || src.name); const via = who + ' · ' + (FORMS[src.form] ? FORMS[src.form].short : src.form);
       const clean = v => String(v || '').trim().replace(/\s+/g, ' ');
+      if (!c.slotNames) c.slotNames = { parent: clean(rec.parentName), parent2: clean(rec.parent2Name) };   // v6: who holds each parent slot during this pass
       const add = (field, to) => {
-        to = clean(to); if (!to) return; const from = clean(rec[field]);
-        if (field.endsWith('Name') ? normName(from) === normName(to) : from.toLowerCase() === to.toLowerCase()) return;
-        if (c.items.some(i => i.field === field && i.to.toLowerCase() === to.toLowerCase())) return;
-        c.items.push({ field, label: recLabel(field), from, to, who, via });
+        const isPhone = field === 'phone' || field.endsWith('Phone'), isAddr = field === 'address';
+        to = clean(isPhone ? fmtPhone(to) : to); if (!to) return; const from = clean(rec[field]);
+        const eq = (a, b) => field.endsWith('Name') ? normName(a) === normName(b) : (isPhone ? samePhone(a, b) : (isAddr ? addrKey(a) === addrKey(b) : a.toLowerCase() === b.toLowerCase()));
+        const partial = isAddr && !addrComplete(to);   // street only: no city, state, or ZIP
+        const within = other => partial && addrKey(other).startsWith(addrKey(to) + ' ');   // the same place with less of it typed
+        if (eq(from, to) || within(from)) return;   // v6: the same number or the same place typed another way is not a change
+        if (c.items.some(i => i.field === field && (eq(i.to, to) || within(i.to)))) return;
+        if (isAddr && !partial) c.items = c.items.filter(i => !(i.field === 'address' && i.partial && addrKey(to).startsWith(addrKey(i.to) + ' ')));   // the full address replaces its own street-only version
+        // v6: a second, different value for one field starts unticked, and so does a street-only address
+        c.items.push({ field, label: recLabel(field), from, to, who, via, partial, alt: c.items.some(i => i.field === field && !i.alt && !i.partial) });
       };
       if (src.role === 'cadet') { add('phone', r.phone); add('email', r.email); add('address', r.address); }
       else {
-        const pre = normName(rec.parentName) === normName(who) ? 'parent' : (normName(rec.parent2Name) === normName(who) ? 'parent2' : (!clean(rec.parentName) ? 'parent' : (!clean(rec.parent2Name) ? 'parent2' : '')));
-        if (!pre) { if (!c.unmatched.some(u => normName(u.name) === normName(who))) c.unmatched.push({ name: who, phone: clean(r.phone), email: clean(r.email), via }); }
+        const sn = c.slotNames;
+        const pre = normName(sn.parent) === normName(who) ? 'parent' : (normName(sn.parent2) === normName(who) ? 'parent2' : (!sn.parent ? 'parent' : (!sn.parent2 ? 'parent2' : '')));
+        if (pre && !sn[pre]) sn[pre] = who;   // v6: an empty slot this signer takes stays theirs, so a second new parent goes to the other slot
+        if (!pre) { if (!c.unmatched.some(u => normName(u.name) === normName(who))) c.unmatched.push({ name: who, phone: fmtPhone(clean(r.phone)), email: clean(r.email), via }); }
         else { add(pre + 'Name', who); add(pre + 'Phone', r.phone); add(pre + 'Email', r.email); }
         add('address', r.address);
       }
@@ -661,23 +719,39 @@
     const rec = n => P.host.rec(n) || {};
     return `<div class="wvo-contacts"><div class="wvo-l">Cadet Records: changes from online signing</div>
       <div class="wvo-muted">What families entered that differs from Cadet Records. Untick anything you do not want, then Update records; the old values stay in the cadet's change history. Skip leaves the record as it is.</div>${list.map(c => `
-      <div class="wvo-contact" data-wvocadet="${esc(c.cadet)}"><div><b>${esc(c.cadet)}</b></div>
-      ${c.items.map((it, i) => `<label class="wvo-chg"><input type="checkbox" checked data-wvoitem="${i}"><span><b>${esc(it.label)}:</b> ${it.from ? '<s>' + esc(it.from) + '</s> ' : ''}${esc(it.to)}<small>${esc(it.via)}</small></span></label>`).join('')}
+      <div class="wvo-contact" data-wvocadet="${esc(c.cadet)}" data-wvokeys="${esc(JSON.stringify(c.keys))}"><div><b>${esc(c.cadet)}</b></div>
+      ${c.items.map((it, i) => `<label class="wvo-chg"><input type="checkbox"${(it.alt || it.partial) ? '' : ' checked'} data-wvoitem="${i}" data-wvofield="${esc(it.field)}" data-wvoto="${esc(it.to)}" data-wvowho="${esc(it.who)}"><span><b>${esc(it.label)}:</b> ${it.from ? '<s>' + esc(it.from) + '</s> ' : ''}${esc(it.to)}<small>${esc(it.via)}${it.partial ? ' · no city, state, or ZIP; left unticked' : (it.alt ? ' · a different value from another form; tick it to use this one instead' : '')}</small></span></label>`).join('')}
       ${c.unmatched.map((u, i) => `<div class="wvo-chg"><span><b>${esc(u.name)}</b>${u.phone ? ' · ' + esc(u.phone) : ''}${u.email ? ' · ' + esc(u.email) : ''}<small>${esc(u.via)}: not the parent or second parent on file, and both slots are taken</small>
-        <select class="wvo-sel" data-wvou="${i}"><option value="">Leave the record as it is</option><option value="parent">Replace parent / guardian (${esc(rec(c.cadet).parentName || 'empty')})</option><option value="parent2">Replace second parent (${esc(rec(c.cadet).parent2Name || 'empty')})</option></select></span></div>`).join('')}
+        <select class="wvo-sel" data-wvou="${i}" data-wvoname="${esc(u.name)}" data-wvophone="${esc(u.phone)}" data-wvoemail="${esc(u.email)}"><option value="">Leave the record as it is</option><option value="parent">Replace parent / guardian (${esc(rec(c.cadet).parentName || 'empty')})</option><option value="parent2">Replace second parent (${esc(rec(c.cadet).parent2Name || 'empty')})</option></select></span></div>`).join('')}
       <div class="wvo-acts"><button type="button" class="wvo-btn go" data-wvoc="apply" data-wvocadet="${esc(c.cadet)}">Update records</button><button type="button" class="wvo-btn" data-wvoc="skip" data-wvocadet="${esc(c.cadet)}">Skip</button></div></div>`).join('')}</div>`;
   }
+  // Build v6: Update records and Skip act on what the card on screen shows. The ticked lines and the replace choices are read
+  // from the card itself (each carries its field and value), and only the signed records that card was built from are marked
+  // reviewed, so a signature that came in after the card was drawn is still offered the next time.
+  // Build v6: the reviewed marks (wvCodes.contacts, "<code id>:<signer token>:<form>") of signatures that were just deleted go with
+  // them (tokens = null: every signer under that code), so what the person enters when signing again is offered on the card.
+  async function pUnreview(id, tokens) {
+    try {
+      P.codes = await RPDRoster.esign.codesMutate(obj => {
+        const m = obj.contacts; if (!m) return false; let n = 0;
+        Object.keys(m).forEach(k => { const p = k.split(':'); if (p[0] === id && (!tokens || tokens.includes(p[1]))) { delete m[k]; n++; } });
+        return n ? undefined : false;
+      });
+      pChangesCache = null;
+    } catch (e) { }
+  }
   async function pContactAct(cadet, which, btn) {
-    const list = await pChanges(); const c = list.find(x => x.cadet === cadet); if (!c) return;
-    const card = btn.closest('[data-wvocadet]');
-    const patch = {}; const names = [];
+    const card = btn && btn.closest('.wvo-contact');
+    if (!card) { evToast('Could not read the card; reload the page and try again'); if (btn) btn.disabled = false; return; }   // never write blind
+    let keys = []; try { keys = JSON.parse(card.dataset.wvokeys || '[]'); } catch (e) { keys = []; }
+    const patch = {}; const names = []; const by = n => { if (n && !names.includes(n)) names.push(n); };
     if (which === 'apply') {
-      c.items.forEach((it, i) => { const cb = card && card.querySelector(`[data-wvoitem="${i}"]`); if (cb && !cb.checked) return; patch[it.field] = it.to; if (!names.includes(it.who)) names.push(it.who); });
-      c.unmatched.forEach((u, i) => { const sel = card && card.querySelector(`[data-wvou="${i}"]`); const pre = sel && sel.value; if (!pre) return; patch[pre + 'Name'] = u.name; if (u.phone) patch[pre + 'Phone'] = u.phone; if (u.email) patch[pre + 'Email'] = u.email; if (!names.includes(u.name)) names.push(u.name); });
+      card.querySelectorAll('input[data-wvofield]').forEach(cb => { if (!cb.checked) return; patch[cb.dataset.wvofield] = cb.dataset.wvoto || ''; by(cb.dataset.wvowho); });
+      card.querySelectorAll('select[data-wvou]').forEach(sel => { const pre = sel.value; if (!pre) return; patch[pre + 'Name'] = sel.dataset.wvoname || ''; if (sel.dataset.wvophone) patch[pre + 'Phone'] = sel.dataset.wvophone; if (sel.dataset.wvoemail) patch[pre + 'Email'] = sel.dataset.wvoemail; by(sel.dataset.wvoname); });
       if (!Object.keys(patch).length) { evToast('Nothing ticked; use Skip to leave the record as it is'); if (btn) btn.disabled = false; return; }
       await P.host.recSave(cadet, patch, 'Online: ' + names.join(', '));
     }
-    P.codes = await RPDRoster.esign.codesMutate(obj => { obj.contacts = obj.contacts || {}; c.keys.forEach(k => obj.contacts[k] = which === 'skip' ? 'skipped' : 'applied'); });
+    if (keys.length) P.codes = await RPDRoster.esign.codesMutate(obj => { obj.contacts = obj.contacts || {}; keys.forEach(k => obj.contacts[k] = which === 'skip' ? 'skipped' : 'applied'); });
     pChangesCache = null;
     if (P.host.rerender) P.host.rerender();
   }
@@ -701,7 +775,7 @@
      cadet's tracker cell Received "Online: name" even over a paper copy (Tony, 11/09/26: the new online signature
      overrides paper), keeping the old entry underneath as history. A cadet who signs it through their own code in the
      meantime drops it from the packet. */
-  const E = { data: null, st: {}, inv: {}, raw: {}, id: {}, key: {}, filter: {}, open: {}, form: false, err: '', bound: false };
+  const E = { data: null, st: {}, inv: {}, invStored: {}, raw: {}, id: {}, key: {}, filter: {}, open: {}, form: false, err: '', bound: false };   // v6: invStored = fingerprint of the public invite as last read or written
   function evHostEl() { return document.getElementById((P.host && P.host.eventsHost) || 'wveHost'); }
   function evActive() { try { return RPDRoster.activeSorted().map(p => ({ name: p.name, rank: p.rank || '' })); } catch (e) { return []; } }
   function evRank(name) { const p = evActive().find(x => x.name === name); return p ? p.rank : ''; }
@@ -711,25 +785,58 @@
   // A fresh read of the tracker (another device may have marked something since this page loaded); null when unreadable.
   async function evTracker() { try { return await RPDRoster.waivers.get(); } catch (e) { return null; } }
   function evTrackerEntry(name, k, tr) { if (tr && tr.cadets) return (tr.cadets[name] || {})[k]; return P.host.entry ? P.host.entry(name, k) : null; }
-  // The tracker's Simunitions entry came from online signing (received or filed): that cadet does not sign it again.
-  function evSimOnline(name, tr) {
+  // The tracker's entry for one of the tracker forms (Simunitions, PSC Agreement) came from online signing and is still good
+  // (received or filed, not due for the re-sign at 18): that cadet does not sign it again.
+  function evOnline(name, k, tr) {
     try {
-      const e = evTrackerEntry(name, 'sim', tr); if (!e || e.via !== 'online') return false;
-      const rec = P.host.rec(name) || {}; const stt = RPDRoster.waivers.status('sim', e, rec.waiverSet, rec.dob);
+      const tk = EVENT_TRACKER[k]; if (!tk) return false;
+      const e = evTrackerEntry(name, tk, tr); if (!e || e.via !== 'online') return false;
+      const rec = P.host.rec(name) || {}; const stt = RPDRoster.waivers.status(tk, e, rec.waiverSet, rec.dob);
       return stt.state === 'received' || stt.state === 'filed';
     } catch (e) { return false; }
   }
-  // Which of the event's forms a cadet needs, and why any are skipped (sim: signed online already; medtrip: 21 or older).
-  function evCadetForms(ev, name, tr) {
+  // Canonical order for packet forms and grid columns: the EVENT_KEYS order, anything else after it.
+  function evOrder(keys) { const set = new Set(keys); return EVENT_KEYS.filter(k => set.has(k)).concat(Array.from(set).filter(k => !EVENT_KEYS.includes(k))); }
+  // Every form on the event or in any cadet's packet (a signed form stays in a packet even after it is taken off the event).
+  function evCols(ev) { const all = (ev.forms || []).slice(); Object.values(ev.cadets || {}).forEach(c => ((c && c.forms) || []).forEach(k => { if (!all.includes(k)) all.push(k); })); return evOrder(all).filter(k => FORMS[k]); }
+  // Which of the event's forms a cadet needs, and why any are skipped: a tracker form already signed online ('online'), the
+  // medical consent for a cadet 18 or older ('adult'; a parent cannot consent for an adult, and the PSC Agreement carries the
+  // cadet's own consent to emergency care). Older entries may carry 'age' (21 or older) from Build v4 and v5.
+  // cur is the cadet's packet as it stands, when there is one: a cadet whose birthdate cannot be seen right now keeps the age
+  // calls already made for them (adult or minor, medical consent skipped or not) instead of being read as a minor.
+  function evCadetForms(ev, name, tr, cur) {
     const rec = P.host.rec(name) || {}; const sum = P.host.sum(name) || {};
+    const known = !!rec.dob;
+    const wasSkipped = !!(cur && cur.skip && (cur.skip.medtrip === 'adult' || cur.skip.medtrip === 'age'));
     const forms = [], skip = {};
     (ev.forms || []).forEach(k => {
       if (!FORMS[k]) return;
-      if (k === 'sim' && evSimOnline(name, tr)) { skip[k] = 'online'; return; }
-      if (k === 'medtrip' && rec.dob && isAtLeast(rec.dob, 21)) { skip[k] = 'age'; return; }
+      if (EVENT_TRACKER[k] && evOnline(name, k, tr)) { skip[k] = 'online'; return; }
+      if (k === 'medtrip' && (known ? isAtLeast(rec.dob, 18) : wasSkipped)) { skip[k] = 'adult'; return; }
       forms.push(k);
     });
-    return { adult: !!(sum.age && sum.age.adult), forms, skip };
+    return { adult: known ? !!(sum.age && sum.age.adult) : !!(cur && cur.adult), forms: evOrder(forms), skip };
+  }
+  // The forms that already carry a signature from this cadet's family in this event, whatever the packet says now.
+  function evSignedForms(st, name) {
+    const out = new Set(); const cs = st && st.cadets[name]; if (!cs) return out;
+    ['cadet', 'parent1', 'parent2'].forEach(r => { const sl = cs.slots[r]; if (sl) Object.keys(sl.forms || {}).forEach(k => { if (FORMS[k]) out.add(k); }); });
+    return out;
+  }
+  // What a cadet's packet should be right now: what the rules say today, plus every form the family has already signed
+  // (a signed form never leaves the packet). Adult or minor follows Cadet Records, except that a cadet who has turned 18
+  // keeps the minor packet once the family has started signing (the tracker's Re-sign at 18 flag takes it from there).
+  function evPacketNow(ev, name, st, tr) {
+    const cur = (ev.cadets || {})[name] || {}; const fresh = evCadetForms(ev, name, tr, cur); const signed = evSignedForms(st, name);
+    const adult = fresh.adult ? (!!cur.adult || signed.size === 0) : false;
+    const forms = evOrder(fresh.forms.concat(Array.from(signed)));
+    const skip = {}; (ev.forms || []).forEach(k => { if (!forms.includes(k) && fresh.skip[k]) skip[k] = fresh.skip[k]; });
+    return { adult, forms, skip };
+  }
+  function evPacketKey(c) { const sk = (c && c.skip) || {}; return JSON.stringify([!!(c && c.adult), (c && c.forms) || [], Object.keys(sk).sort().map(k => [k, sk[k]])]); }
+  function evInviteKey(inv) {
+    const cadets = ((inv && inv.cadets) || []).filter(c => c && c.name).map(c => [c.name, evPacketKey(c)]).sort((a, b) => a[0].localeCompare(b[0]));
+    return JSON.stringify([inv.title || '', inv.date || '', inv.location || '', inv.agency || '', inv.forms || [], inv.exp || 0, cadets]);
   }
   function evInviteFrom(ev) {
     const cadets = Object.keys(ev.cadets || {}).map(n => Object.assign({ name: n }, ev.cadets[n]));
@@ -742,6 +849,7 @@
     const inv = evInviteFrom(ev);
     const blob = await keyEncrypt(JSON.stringify(inv), d.key);
     await RPDRoster.esign.inviteSet(d.id, { blob, at: ev.at, exp: ev.closed ? Math.min(ev.exp || Date.now(), ev.closedAt || Date.now()) : ev.exp });
+    E.invStored[ev.key] = evInviteKey(inv);   // v6
     return inv;
   }
   function evSetStatus(key, signers) { const st = eventStatus(E.inv[key], signers); st._signers = signers; E.st[key] = st; return st; }
@@ -755,10 +863,11 @@
       try {
         const d = await pDerive(ev.code);
         E.id[ev.key] = d.id; E.key[ev.key] = d.key;
-        let inv = null;
+        let stored = null;
         const rawInv = await RPDRoster.esign.inviteGet(d.id);
-        if (rawInv && rawInv.blob) { try { inv = JSON.parse(await keyDecrypt(rawInv.blob, d.key)); } catch (e) { inv = null; } }
-        if (!inv || inv.kind !== 'event') inv = evInviteFrom(ev);   // a closed event, or an invite that went missing: the stored entry is the picture
+        if (rawInv && rawInv.blob) { try { stored = JSON.parse(await keyDecrypt(rawInv.blob, d.key)); } catch (e) { stored = null; } }
+        E.invStored[ev.key] = (stored && stored.kind === 'event') ? evInviteKey(stored) : '';
+        const inv = evInviteFrom(ev);   // v6: the sealed entry is the picture; the public invite is rewritten from it when the two differ (evSync)
         const raw = await RPDRoster.esign.sigsGet(d.id);
         E.inv[ev.key] = inv; E.raw[ev.key] = raw;
         evSetStatus(ev.key, await decodeSigs(raw, d.key));
@@ -766,26 +875,44 @@
     }
     await evSync(); await evMerge();
   }
-  // A cadet who signed the Simunitions release through their own code since the packet was made drops it from the packet.
+  /* Build v6. Runs on every load of the events (and after the Forms editor saves). For each open event whose signatures were
+     read: (1) every cadet's packet is brought to what the rules say now (evPacketNow), which adds a form newly put on the
+     event, drops an unsigned form the cadet no longer needs (the medical consent at 18, a tracker form signed online through
+     the cadet's own code), and never drops a signed one; (2) the public invite is rewritten when it differs from the sealed
+     entry. Step 1 is skipped when the tracker or Cadet Records cannot be read, so a page that cannot see ages changes nothing.
+     Returns true when step 1 ran. */
   async function evSync() {
-    if (!E.data) return;
-    const drops = []; const tr = await evTracker();
-    Object.values(E.data.events || {}).forEach(ev => {
-      if (!ev || ev.closed) return; const st = E.st[ev.key]; if (!st) return;
-      Object.keys(ev.cadets || {}).forEach(name => {
-        const c = ev.cadets[name]; if (!c || !(c.forms || []).includes('sim')) return;
-        const f = st.cadets[name] && st.cadets[name].forms.sim; if (f && Object.keys(f.signed).length) return;   // already signing it here
-        const e = evTrackerEntry(name, 'sim', tr);
-        if (e && e.via === 'online' && e.wvId !== E.id[ev.key] && evSimOnline(name, tr)) drops.push({ key: ev.key, name });
+    if (!E.data) return false;
+    const evs = Object.values(E.data.events || {}).filter(ev => ev && ev.key && !ev.closed && E.st[ev.key]);
+    if (!evs.length) return false;
+    let changes = [], ran = false;
+    const tr = await evTracker();
+    let recsOk = false; try { recsOk = !!(RPDRoster.records && RPDRoster.records.isUnlocked && RPDRoster.records.isUnlocked()); } catch (e) { recsOk = false; }
+    if (tr && recsOk) {
+      evs.forEach(ev => {
+        const names = Object.keys(ev.cadets || {});
+        if (!names.some(n => (P.host.rec(n) || {}).dob)) return;   // no birthdates visible here: ages unknown, leave these packets alone
+        ran = true;
+        names.forEach(name => { const next = evPacketNow(ev, name, E.st[ev.key], tr); if (evPacketKey(next) !== evPacketKey(ev.cadets[name])) changes.push({ key: ev.key, name, next }); });
       });
-    });
-    if (!drops.length) return;
-    try {
-      E.data = await RPDRoster.esign.eventsMutate(obj => {
-        drops.forEach(x => { const c = obj.events[x.key] && obj.events[x.key].cadets && obj.events[x.key].cadets[x.name]; if (!c) return; c.forms = (c.forms || []).filter(k => k !== 'sim'); c.skip = Object.assign({}, c.skip, { sim: 'online' }); });
-      });
-      for (const key of Array.from(new Set(drops.map(x => x.key)))) { const ev = E.data.events[key]; if (!ev) continue; E.inv[key] = await evWriteInvite(ev); evSetStatus(key, (E.st[key] && E.st[key]._signers) || []); }
-    } catch (e) { }
+    }
+    if (changes.length) {
+      try {
+        E.data = await RPDRoster.esign.eventsMutate(obj => {
+          let n = 0;
+          changes.forEach(x => { const e = obj.events && obj.events[x.key]; if (!e || e.closed || !e.cadets || !e.cadets[x.name]) return; e.cadets[x.name] = x.next; n++; });
+          return n ? undefined : false;
+        });
+      } catch (e) { changes = []; }
+    }
+    for (const ev0 of evs) {
+      const ev = (E.data.events || {})[ev0.key]; if (!ev || ev.closed) continue;
+      const inv = evInviteFrom(ev);
+      try { if (E.invStored[ev.key] !== evInviteKey(inv)) await evWriteInvite(ev); } catch (e) { }
+      E.inv[ev.key] = inv; evSetStatus(ev.key, (E.st[ev.key] && E.st[ev.key]._signers) || []);
+    }
+    if (changes.length) { const n = new Set(changes.map(x => x.key + '|' + x.name)).size; evToast('Event packets updated for ' + n + (n === 1 ? ' cadet' : ' cadets')); }
+    return ran;
   }
   // Every tracker waiver that an event packet carries (the Simunitions release) and now has all its signatures is marked
   // Received on the tracker as "Online: name", over whatever was there (paper included); the old entry stays under prev.
@@ -804,6 +931,8 @@
           if (isTestName(x.name) || x.f.by.some(isTestName)) return;   // v5: a test signer never marks the tracker
           const tk = EVENT_TRACKER[x.k]; const c = obj.cadets[x.name] || {}; const cur = c[tk];
           if (cur && cur.via === 'online' && cur.wvId === x.id) return;   // already recorded from this event
+          const curOn = (cur && (cur.s === 'received' || cur.s === 'filed')) ? String(cur.rAt || cur.fAt || '') : ''; const signedOn = dateIso(x.f.at);
+          if (curOn && (curOn > signedOn || (curOn === signedOn && cur.via === 'online'))) return;   // v6: what the tracker holds is newer than this event's signature (a re-sign at 18, a later code): it stays
           c[tk] = { s: 'received', rAt: dateIso(x.f.at), rBy: 'Online: ' + x.f.by.join(', '), at: Date.now(), via: 'online', wvId: x.id, ev: x.ev.key, prev: (cur && cur.s) ? cur : undefined };
           obj.cadets[x.name] = c; done.push(x);
         });
@@ -867,6 +996,7 @@
     if (!confirm('Delete the online signatures for ' + name + ' on "' + ev.title + '"? They can sign again with the same code. Tracker cells marked from this event go back to what they were.')) return;
     const toks = (st._signers || []).filter(s => normName(s.cadet) === normName(name)).map(s => s.token);
     for (const t of toks) await RPDRoster.esign.sigsRemove(E.id[key], t);
+    await pUnreview(E.id[key], toks);   // v6
     const raw = await RPDRoster.esign.sigsGet(E.id[key]); E.raw[key] = raw;
     const next = evSetStatus(key, await decodeSigs(raw, E.key[key])).cadets[name];
     const id = E.id[key], revert = [], filed = [];
@@ -885,6 +1015,7 @@
         obj.cadets[name] = c;
       });
     } catch (e) { }
+    try { await evSync(); } catch (e) { }   // v6: the packet follows the rules again now that nothing is signed
     if (P.host.rerender) await P.host.rerender(); else evFill();
     evToast('Signatures cleared for ' + name + (revert.length ? '; ' + revert.map(k => FORMS[k].short).join(', ') + ' back to what it was on the tracker' : '') + (filed.length ? '. Already filed, left as is: ' + filed.join(', ') : ''));
   }
@@ -1020,7 +1151,7 @@
     });
     const paperRows = []; names.forEach(n => Object.keys((ev.paper || {})[n] || {}).forEach(k => { if (FORMS[k]) paperRows.push(who(n) + ': ' + FORMS[k].title + ', paper, ' + fmtDate(ev.paper[n][k].at) + (ev.paper[n][k].by ? ' (' + ev.paper[n][k].by + ')' : '')); }));
     if (paperRows.length) { section('Signed on paper'); paperRows.forEach(t => para(t, F, 9, 12)); }
-    const skips = []; names.forEach(n => { const c = ev.cadets[n] || {}; Object.keys(c.skip || {}).forEach(k => { if (FORMS[k]) skips.push(who(n) + ': ' + FORMS[k].title + (c.skip[k] === 'online' ? ', already signed online' : (c.skip[k] === 'age' ? ', 21 or older' : ''))); }); });
+    const skips = []; names.forEach(n => { const c = ev.cadets[n] || {}; Object.keys(c.skip || {}).forEach(k => { if (FORMS[k]) skips.push(who(n) + ': ' + FORMS[k].title + (c.skip[k] === 'online' ? ', already signed online' : (c.skip[k] === 'adult' ? ', 18 or older' : (c.skip[k] === 'age' ? ', 21 or older' : '')))); }); });
     if (skips.length) { section('Not needed'); skips.forEach(t => para(t, F, 9, 12)); }
     pages.forEach((p, i) => { p.drawLine({ start: { x: L, y: 45 }, end: { x: R, y: 45 }, thickness: 0.5, color: GOLD }); const addr = '200 N. Greenville Ave, Richardson, TX 75081  |  (972) 744-4801'; p.drawText(addr, { x: (W - F.widthOfTextAtSize(addr, 7)) / 2, y: 34, size: 7, font: F, color: BG }); p.drawText('CADET/EVENTWV V1', { x: L, y: 22, size: 7, font: F, color: BG }); p.drawText('Page ' + (i + 1) + ' of ' + pages.length, { x: R - F.widthOfTextAtSize('Page ' + (i + 1) + ' of ' + pages.length, 7), y: 22, size: 7, font: F, color: BG }); });
     dlBytes(await doc.save(), 'Event_Waivers_Missing_' + fileSafe(ev.title) + '_' + dateIso() + '.pdf');
@@ -1046,7 +1177,12 @@
     evs.forEach(ev => { html += evCardHtml(ev); });
     return html + '</div>';
   }
-  function evFormNote(k) { return k === 'sim' ? 'Everyone signs it again, except cadets whose Simunitions release was already signed online' : (k === 'medtrip' ? 'A parent or guardian signs for every cadet under 21' : 'The cadet signs; a parent or guardian also signs for a minor'); }
+  function evFormNote(k) {
+    if (k === 'sim') return 'Everyone signs it again, except cadets whose Simunitions release was already signed online';
+    if (k === 'psc') return 'Everyone signs it again, except cadets whose PSC Agreement was already signed online. It carries each cadet\'s own consent to emergency medical care';
+    if (k === 'medtrip') return 'A parent or guardian signs for every cadet under 18. Cadets 18 or older skip it';
+    return 'The cadet signs; a parent or guardian also signs for a minor';
+  }
   function evFormHtml() {
     const names = evActive(); const today = dateIso();
     return `<form class="wve-form" data-wve-form="new" autocomplete="off">
@@ -1075,7 +1211,7 @@
       <div class="wvo-acts">
         ${ev.closed ? '' : `<button type="button" class="wvo-btn" data-wve="copy">Copy link</button><button type="button" class="wvo-btn" data-wve="share">Share</button><button type="button" class="wvo-btn" data-wve="qr">QR</button>`}
         <button type="button" class="wvo-btn" data-wve="refresh">Refresh</button>
-        ${P.host.admin ? `${ev.closed ? '' : '<button type="button" class="wvo-btn" data-wve="editcadets">Cadets</button>'}${(ev.forms || []).filter(k => FORMS[k]).map(k => `<button type="button" class="wvo-btn" data-wve="pdfall" data-wve-form="${k}">All ${esc(FORMS[k].short)} PDFs</button>`).join('')}<button type="button" class="wvo-btn" data-wve="missingpdf">Print still missing</button>${ev.closed ? `<button type="button" class="wvo-btn" data-wve="reopen">Reopen</button><button type="button" class="wvo-btn danger" data-wve="delete">Delete</button>` : `<button type="button" class="wvo-btn danger" data-wve="close">Close event</button>`}` : ''}
+        ${P.host.admin ? `${ev.closed ? '' : '<button type="button" class="wvo-btn" data-wve="editcadets">Cadets</button><button type="button" class="wvo-btn" data-wve="editforms">Forms</button>'}${evCols(ev).map(k => `<button type="button" class="wvo-btn" data-wve="pdfall" data-wve-form="${k}">All ${esc(FORMS[k].short)} PDFs</button>`).join('')}<button type="button" class="wvo-btn" data-wve="missingpdf">Print still missing</button>${ev.closed ? `<button type="button" class="wvo-btn" data-wve="reopen">Reopen</button><button type="button" class="wvo-btn danger" data-wve="delete">Delete</button>` : `<button type="button" class="wvo-btn danger" data-wve="close">Close event</button>`}` : ''}
       </div>
       <div class="wve-filter"><button type="button" class="wve-f${filt === 'all' ? ' on' : ''}" data-wve="filter" data-wve-f="all">Everyone (${names.length})</button><button type="button" class="wve-f${filt === 'missing' ? ' on' : ''}" data-wve="filter" data-wve-f="missing">Still missing (${tally.missing})</button></div>
       <div class="wve-rows">${rows}</div>`;
@@ -1085,11 +1221,11 @@
   }
   function evRowHtml(ev, st, name) {
     const c = (ev.cadets || {})[name] || {}; const cs = st && st.cadets[name];
-    const cells = (ev.forms || []).filter(k => FORMS[k]).map(k => {
+    const cells = evCols(ev).map(k => {   // v6: every form on the event or in any cadet's packet
       const F = FORMS[k]; const paper = ((ev.paper || {})[name] || {})[k];
       let cls = 'need', s = 'Not signed', b = '';
       if (paper) { cls = 'paper'; s = 'Paper ' + fmtDate(paper.at); b = paper.by ? 'by ' + paper.by : ''; }
-      else if (!(c.forms || []).includes(k)) { cls = 'skip'; s = 'Not needed'; b = (c.skip || {})[k] === 'online' ? 'already signed online' : ((c.skip || {})[k] === 'age' ? '21 or older' : ''); }
+      else if (!(c.forms || []).includes(k)) { cls = 'skip'; s = 'Not needed'; const why = (c.skip || {})[k]; b = why === 'online' ? 'already signed online' : (why === 'adult' ? '18 or older' : (why === 'age' ? '21 or older' : '')); }
       else if (cs && cs.forms[k]) {
         const f = cs.forms[k];
         if (f.complete) { cls = 'ok'; s = 'Signed ' + fmtDate(f.at); b = f.by.length ? 'by ' + f.by.map(nameTag).join(', ') : ''; }
@@ -1122,6 +1258,34 @@
       if (dropped.length && !confirm('Remove ' + dropped.join(', ') + ' from the event? Their signatures stay stored but are hidden until they are added back.')) return;
       b.disabled = true; try { await evSaveCadets(key, picked); } catch (err) { evToast('Could not save: ' + (err && err.message ? err.message : err)); } m.remove();
     });
+  }
+  // Admin (Build v6): which forms are on an event. Adding one puts it in the packet of every cadet who needs it; taking one
+  // off removes it from the cadets who have not signed it. The packets and the public invite are brought in line by evSync.
+  function evFormsModal(key) {
+    const ev = E.data.events[key]; if (!ev) return;
+    const m = evModal(`<div class="wvo-l">Forms on "${esc(ev.title)}"</div><p class="wvo-muted" style="margin:6px 0 10px">Adding a form puts it in the packet of every cadet who needs it. Taking one off removes it only from cadets who have not signed it; a signed form stays on that cadet's row.</p>
+      <div class="wve-checks">${EVENT_KEYS.filter(k => FORMS[k]).map(k => `<label class="wve-chk"><input type="checkbox" name="forms" value="${k}"${(ev.forms || []).includes(k) ? ' checked' : ''}><span>${esc(FORMS[k].title)}<small>${esc(evFormNote(k))}</small></span></label>`).join('')}</div>
+      <div class="wvo-f wait" data-wvem-err></div>
+      <div class="wve-acts" style="margin-top:10px"><button type="button" class="wvo-btn go" data-wvem="save">Save</button><button type="button" class="wvo-btn" data-wvem="cancel">Cancel</button></div>`);
+    m.querySelector('.wve-modal-card').addEventListener('click', async e => {
+      const b = e.target.closest('[data-wvem]'); if (!b) return;
+      if (b.dataset.wvem === 'cancel') { m.remove(); return; }
+      const picked = Array.from(m.querySelectorAll('input[name=forms]:checked')).map(x => x.value);
+      if (!picked.length) { const er = m.querySelector('[data-wvem-err]'); if (er) er.textContent = 'Keep at least one form on the event.'; return; }
+      b.disabled = true;
+      try { await evSaveForms(key, picked); } catch (err) { evToast('Could not save: ' + (err && err.message ? err.message : err)); }
+      m.remove();
+    });
+  }
+  async function evSaveForms(key, forms) {
+    const before = ((E.data.events[key] || {}).forms || []).slice();
+    E.data = await RPDRoster.esign.eventsMutate(obj => { const e = obj.events[key]; if (!e) return false; e.forms = evOrder(forms); });
+    const ran = await evSync();
+    evFill();
+    const now = ((E.data.events[key] || {}).forms || []);
+    const added = now.filter(k => !before.includes(k)).map(k => FORMS[k] ? FORMS[k].short : k), removed = before.filter(k => !now.includes(k)).map(k => FORMS[k] ? FORMS[k].short : k);
+    if (!ran) { evToast('Forms saved, but the cadets\' packets could not be updated right now. Tap Refresh.'); return; }
+    evToast(added.length || removed.length ? ((added.length ? 'Added: ' + added.join(', ') : '') + (added.length && removed.length ? '. ' : '') + (removed.length ? 'Taken off: ' + removed.join(', ') : '')) : 'No change to the forms');
   }
   function evModal(inner) {
     let m = document.getElementById('wveModal'); if (m) m.remove();
@@ -1160,13 +1324,14 @@
       if (act === 'refresh') { btn.disabled = true; await pRefresh(); return; }
       if (act === 'cell') {
         const c = (ev.cadets || {})[name] || {}; const cs = E.st[key] && E.st[key].cadets[name]; const paper = ((ev.paper || {})[name] || {})[k];
-        if (!paper && !(c.forms || []).includes(k)) { evToast((c.skip || {})[k] === 'online' ? name + ' already signed the Simunitions release online; nothing to do.' : ((c.skip || {})[k] === 'age' ? 'The medical consent covers participants under 21 only.' : 'Not in this cadet\'s packet.')); return; }
+        if (!paper && !(c.forms || []).includes(k)) { const why = (c.skip || {})[k]; evToast(why === 'online' ? name + ' already signed the ' + (k === 'sim' ? 'Simunitions release' : FORMS[k].short) + ' online; nothing to do.' : ((why === 'adult' || why === 'age') ? 'The medical consent is for cadets under 18. An adult cadet\'s own consent to emergency care is in their PSC Agreement.' : 'Not in this cadet\'s packet.')); return; }
         if (!paper && cs && cs.forms[k] && Object.keys(cs.forms[k].signed).length) { evToast(cs.forms[k].complete ? 'Signed online.' + (P.host.admin ? ' Use the PDF button on the row.' : '') : 'Partly signed online; waiting on ' + cs.forms[k].waiting.map(roleLabel).join(' and ') + '.'); return; }
         if (ev.closed && !P.host.admin) { evToast('This event is closed.'); return; }
         btn.disabled = true; await evPaper(key, name, k); return;
       }
       if (!P.host.admin) return;
       if (act === 'editcadets') { evCadetsModal(key); return; }
+      if (act === 'editforms') { evFormsModal(key); return; }   // v6
       if (act === 'pdf') { btn.disabled = true; try { await evPdf(key, name, k); } finally { btn.disabled = false; } return; }
       if (act === 'pdfall') { btn.disabled = true; try { await evPdfAll(key, k); } finally { btn.disabled = false; } return; }
       if (act === 'missingpdf') { btn.disabled = true; try { await evMissingPdf(key); } finally { btn.disabled = false; } return; }
@@ -1289,6 +1454,7 @@
     decodeSigs, assignRoles, status, roleLabel, dateIso, fmtDate, fmtDateTime, fmtDateUS, esc, normName,
     eventCadetInvite, eventStatus, fmtIsoUS, fmtIsoLong, isAtLeast,   // v4
     capName, isTestName, isTestPhone,   // v5
+    phoneKey, fmtPhone, samePhone, stateAbbr, zipOk, capWords, addrParts, joinAddress, splitAddress, addrComplete, addrKey,   // v6
     fillPdf, qrSvg,
     panel: { init: pInit, bind: pBind, refresh: pRefresh, fill: pFill, contactsHtml: pContactsHtml, state: P, blockHtml: pBlockHtml, pdf: pPdf,
              liabFor: name => (P.st[name] && P.st[name].liab) || null,   // Build v3: the Release of Liability version the online signing points to
